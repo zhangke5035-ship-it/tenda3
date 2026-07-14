@@ -159,7 +159,7 @@
     <div class="auth-brand">
       <div class="brand-mark">Tenda 波兰控制台</div>
       <div class="brand-sub">中国总部 · 波兰站点</div>
-      <div class="brand-ver">数据版本 26M71</div>
+ <div class="brand-ver" id="brandVer">数据版本 26M71</div>
     </div>
     <div class="auth-title">密码登录</div>
     <div class="auth-desc">账号由管理员线下创建并分配，如无账号请联系管理员，本页面不提供自助注册。</div>
@@ -267,7 +267,7 @@
         表中「未税净价」「单位盈亏」「净利率」均为报价表原始计算结果，已包含品牌预留、MDF 预留、风险与指标预留等费用，口径与总部一致。「生命周期」取自《报价型号生命周期_26年6月》清单；「EAN」取自《Q3_Price》价目表。报价明细覆盖了 <b>257 款型号 × 6 个客户</b>（Incom / Action / Eltrox / SGM / Intelek / DC-Link），并新增了<b>报价周期筛选</b>：Eltrox 同时有 Q2、Q3 两个季度的真实价目表，可以切换"Q3（当前）/ Q2（上一季度）/ 全部季度"查看价格随时间的变化，「环比(QoQ)」列会标出未税净价相对上一季度的涨跌幅。其余客户（Incom/Action/SGM 有10款、Intelek/DC-Link 全部）暂时只有 Q3 这一个快照，其中 10 款有 Incom、Action、SGM 的真实出厂成本和净利率数据（来自 26M71 报价表），剩余的客户 × 型号组合是<b>空报价</b>（显示"—"）。等你提供其他季度或其他客户的价格表，我可以继续补上。新增行为你手工补充的数据，需要自行核对口径。
       </div>
 
-      <div class="panel">
+     <div class="panel" style="display:none;">
         <div class="panel-head"><h3>新增报价项</h3></div>
         <div class="form-grid">
           <div class="field"><label>产品型号</label><input id="p_product" list="modelDatalist" placeholder="例如 W15-Pro"></div>
@@ -3069,6 +3069,16 @@ if (priceTableBodyForTiers){
   injectAgentTiers();
 }
 </script>
+</script>
+  <script>
+const priceVersionInput = document.getElementById('priceVersion');
+const brandVerEl = document.getElementById('brandVer');
+if (priceVersionInput && brandVerEl){
+  priceVersionInput.addEventListener('input', ()=>{
+    const v = priceVersionInput.value.trim() || '26M71';
+    brandVerEl.textContent = '数据版本 ' + v;
+  });
+}
 </script>
 </body>
 </html>

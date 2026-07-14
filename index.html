@@ -190,6 +190,7 @@
       <div class="navitem active" data-view="overview"><span class="dot"></span>总览</div>
       <div class="navitem" data-view="pricing"><span class="dot"></span>报价管理</div>
       <div class="navitem" data-view="promo"><span class="dot"></span>营销费用</div>
+      <div class="navitem" data-view="orders"><span class="dot"></span>销售订单</div>
     </nav>
     <div class="sidebar-foot">
       <div class="rate-box">
@@ -315,6 +316,47 @@
         <div class="catalog-grid" id="catalogGrid"></div>
       </div>
     </section>
+    <!-- ===================== 销售订单 ===================== -->
+<section class="view" id="view-orders">
+  <div class="viewhead">
+    <div><h2>销售订单</h2><p>记录波兰站点客户的实际销售订单，跟踪发货与完成状态</p></div>
+  </div>
+
+  <div class="kpi-row" id="orderKpiRow"></div>
+
+  <div class="panel">
+    <div class="panel-head"><h3>新增订单</h3></div>
+    <div class="form-grid">
+      <div class="field"><label>订单号</label><input id="o_no" placeholder="例如 PL-20260714-001"></div>
+      <div class="field"><label>客户</label><select id="o_customer"></select></div>
+      <div class="field"><label>产品型号</label><input id="o_product" list="modelDatalist" placeholder="例如 W15-Pro"></div>
+      <div class="field"><label>下单日期</label><input id="o_date" type="date"></div>
+      <div class="field mono"><label>数量</label><input id="o_qty" type="number" placeholder="100"></div>
+      <div class="field mono"><label>单价 (PLN)</label><input id="o_price" type="number" placeholder="199"></div>
+      <div class="field"><label>状态</label>
+        <select id="o_status">
+          <option>待处理</option>
+          <option>已发货</option>
+          <option>已完成</option>
+          <option>已取消</option>
+        </select>
+      </div>
+    </div>
+    <button class="btn" id="addOrderBtn">新增订单</button>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head"><h3>订单列表</h3><div class="desc" id="orderCount"></div></div>
+    <div class="cust-tabs" id="orderStatusTabs"></div>
+    <div class="cust-tabs" id="orderCustTabs"></div>
+    <table>
+      <thead><tr>
+        <th>订单号</th><th>下单日期</th><th>客户</th><th>产品型号</th><th>数量</th><th>单价(PLN)</th><th>金额(PLN)</th><th>状态</th><th></th>
+      </tr></thead>
+      <tbody id="orderTableBody"></tbody>
+    </table>
+  </div>
+</section>
 
     <!-- ===================== 营销费用 ===================== -->
     <section class="view" id="view-promo">
@@ -2716,6 +2758,125 @@ sb.auth.onAuthStateChange((event, session)=>{
     showLogin();
   }
 })();
+</script>
+  <script>
+let nextOrderId = 5000;
+let orderList = [];
+let orderStatusFilter = '全部';
+let orderCustFilter = '全部';
+
+function populateOrderCustomerSelect(){
+  const sel = document.getElementById('o_customer');
+  if (!sel) return;
+  sel.innerHTML = '';
+  Object.keys(CUSTOMERS).forEach(key=>{
+    const opt = document.createElement('option');
+    opt.value = key;
+    opt.textContent = CUSTOMERS[key].name;
+    sel.appendChild(opt);
+  });
+}
+
+function renderOrderKpi(){
+  const box = document.getElementById('orderKpiRow');
+  if (!box) return;
+  const total = orderList.length;
+  const totalAmount = orderList.reduce((s,o)=>s + o.qty*o.price, 0);
+  const pending = orderList.filter(o=>o.status==='待处理').length;
+  box.innerHTML = `
+    <div class="kpi"><div class="label">订单总数</div><div class="value">${total}</div><div class="sub">${total?('累计 '+total+' 单'):'暂无订单'}</div></div>
+    <div class="kpi"><div class="label">订单总金额</div><div class="value copper">${totalAmount.toFixed(1)} zł</div><div class="sub">按下单数量 × 单价计算</div></div>
+    <div class="kpi"><div class="label">待处理订单</div><div class="value ${pending>0?'alert':''}">${pending}</div><div class="sub">尚未发货的订单数</div></div>
+  `;
+}
+
+function renderOrderTabs(){
+  const statusBox = document.getElementById('orderStatusTabs');
+  const custBox = document.getElementById('orderCustTabs');
+  if (!statusBox || !custBox) return;
+  const statuses = ['全部','待处理','已发货','已完成','已取消'];
+  statusBox.innerHTML = statuses.map(s=>{
+    const count = s==='全部' ? orderList.length : orderList.filter(o=>o.status===s).length;
+    return `<div class="cust-tab ${orderStatusFilter===s?'active':''}" data-status="${s}">${s}<span class="count">${count}</span></div>`;
+  }).join('');
+  const custKeys = ['全部', ...Object.keys(CUSTOMERS)];
+  custBox.innerHTML = custKeys.map(k=>{
+    const label = k==='全部' ? '全部客户' : CUSTOMERS[k].name;
+    const count = k==='全部' ? orderList.length : orderList.filter(o=>o.cust===k).length;
+    return `<div class="cust-tab ${orderCustFilter===k?'active':''}" data-cust="${k}">${label}<span class="count">${count}</span></div>`;
+  }).join('');
+  statusBox.querySelectorAll('.cust-tab').forEach(tab=>{
+    tab.addEventListener('click', ()=>{ orderStatusFilter = tab.dataset.status; renderOrders(); });
+  });
+  custBox.querySelectorAll('.cust-tab').forEach(tab=>{
+    tab.addEventListener('click', ()=>{ orderCustFilter = tab.dataset.cust; renderOrders(); });
+  });
+}
+
+function renderOrderTable(){
+  const body = document.getElementById('orderTableBody');
+  const countBox = document.getElementById('orderCount');
+  if (!body) return;
+  let rows = orderList;
+  if (orderStatusFilter !== '全部') rows = rows.filter(o=>o.status===orderStatusFilter);
+  if (orderCustFilter !== '全部') rows = rows.filter(o=>o.cust===orderCustFilter);
+  if (countBox) countBox.textContent = `共 ${rows.length} 条订单（总 ${orderList.length} 条）`;
+  body.innerHTML = rows.map(o=>{
+    const amount = (o.qty*o.price).toFixed(1);
+    const custName = CUSTOMERS[o.cust] ? CUSTOMERS[o.cust].name : (o.cust||'');
+    const statusClass = o.status==='待处理'?'plan':(o.status==='已完成'?'done':'live');
+    return `<tr>
+      <td class="mono">${o.no}</td>
+      <td>${o.date||''}</td>
+      <td>${custName}</td>
+      <td>${o.product}</td>
+      <td class="num-cell">${o.qty}</td>
+      <td class="num-cell">${o.price}</td>
+      <td class="num-cell">${amount}</td>
+      <td><span class="status ${statusClass}"><span class="sdot"></span>${o.status}</span></td>
+      <td><button class="del-btn" data-id="${o.id}" title="删除">✕</button></td>
+    </tr>`;
+  }).join('');
+  body.querySelectorAll('.del-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const id = Number(btn.dataset.id);
+      orderList = orderList.filter(o=>o.id!==id);
+      renderOrders();
+    });
+  });
+}
+
+function renderOrders(){
+  renderOrderKpi();
+  renderOrderTabs();
+  renderOrderTable();
+}
+
+const addOrderBtn = document.getElementById('addOrderBtn');
+if (addOrderBtn){
+  addOrderBtn.addEventListener('click', ()=>{
+    const no = document.getElementById('o_no').value.trim();
+    const cust = document.getElementById('o_customer').value;
+    const product = document.getElementById('o_product').value.trim();
+    const date = document.getElementById('o_date').value;
+    const qty = parseFloat(document.getElementById('o_qty').value) || 0;
+    const price = parseFloat(document.getElementById('o_price').value) || 0;
+    const status = document.getElementById('o_status').value;
+    if (!no || !product || !qty || !price){
+      alert('请填写订单号、产品型号、数量和单价');
+      return;
+    }
+    orderList.push({id: nextOrderId++, no, cust, product, date, qty, price, status});
+    renderOrders();
+    document.getElementById('o_no').value='';
+    document.getElementById('o_product').value='';
+    document.getElementById('o_qty').value='';
+    document.getElementById('o_price').value='';
+  });
+}
+
+populateOrderCustomerSelect();
+renderOrders();
 </script>
 </body>
 </html>

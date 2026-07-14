@@ -3169,7 +3169,7 @@ function injectAgentTiers(){
     const countryText = cells[idxCountry].innerText;
     const custText = cells[idxCust].innerText;
     const isEltrox = custText.indexOf('Eltrox') !== -1;
-    const defaultProfit = isEltrox ? 11 : 7;
+    const fixedProfit = isEltrox ? 11 : 7;
     const vatRate = computeVat(countryText);
     const effectiveVat = vatRate !== null ? vatRate : 0.23;
 
@@ -3191,25 +3191,12 @@ function injectAgentTiers(){
     const td3 = document.createElement('td'); td3.className='num-cell'; td3.textContent = fmtMoney(tier3);
 
     const tdProfit = document.createElement('td');
-    const profitInput = document.createElement('input');
-    profitInput.type = 'number';
-    profitInput.value = String(defaultProfit);
-    profitInput.step = '0.1';
-    Object.assign(profitInput.style, {
-      width:'60px', background:'var(--surface-alt)', border:'1px solid var(--border)',
-      color:'var(--text)', borderRadius:'var(--radius)', padding:'5px 6px', fontFamily:"'IBM Plex Mono'"
-    });
-    tdProfit.appendChild(profitInput);
-    tdProfit.appendChild(document.createTextNode(' %'));
+    tdProfit.className = 'num-cell';
+    tdProfit.textContent = fixedProfit + ' %';
 
     const tdFinal = document.createElement('td');
     tdFinal.className = 'num-cell';
-    function updateFinal(){
-      const pct = parseFloat(profitInput.value) || 0;
-      tdFinal.textContent = fmtMoney(computeFinalPurchasePrice(retail, pct, effectiveVat));
-    }
-    profitInput.addEventListener('input', updateFinal);
-    updateFinal();
+    tdFinal.textContent = fmtMoney(computeFinalPurchasePrice(retail, fixedProfit, effectiveVat));
 
     const buttonCell = row.lastElementChild;
     row.insertBefore(td1, buttonCell);

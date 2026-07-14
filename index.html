@@ -329,7 +329,7 @@
         <div class="cust-tabs" id="brandTabs"></div>
         <table>
          <thead><tr>
-  <th>类目</th><th>品牌</th><th>产品型号</th><th>EAN</th><th>生命周期</th><th>客户</th><th>国家</th><th>含税零售价(PLN)</th><th>未税净价(PLN)</th>
+  <th>类目</th><th>品牌</th><th>产品型号</th><th>EAN</th><th>生命周期</th><th>客户</th><th>国家</th><th>币种</th><th>含税零售价(PLN)</th><th>未税净价(PLN)</th>
   <th>一级客户报价(PLN)</th><th>二级客户报价(PLN)</th><th>三级客户报价(PLN)</th><th>代理商利润点位</th><th>最终采购价(PLN)</th><th></th>
 </tr></thead>
           <tbody id="priceTableBody"></tbody>
@@ -2365,6 +2365,8 @@ const rate = () => parseFloat(document.getElementById('fxRate').value) || 3.98;
 
 function custName(code){ return (CUSTOMERS[code]||{}).name || code; }
 function custCountry(code){ return (CUSTOMERS[code]||{}).country || '待确认'; }
+function custCurrency(cust){ return custCountry(cust).indexOf('捷克') !== -1 ? 'CZK' : 'PLN'; }
+function currencySymbol(code){ return code === 'CZK' ? 'Kč' : 'zł'; }
 function lifecycleOf(product){ return LIFECYCLE_MAP[product] || '未收录'; }
 const EAN_MAP_LC = Object.fromEntries(Object.entries(EAN_MAP).map(([k,v])=>[k.toLowerCase(), v]));
 function eanOf(product){ return EAN_MAP[product] || EAN_MAP_LC[(product||'').toLowerCase()] || ''; }
@@ -2696,8 +2698,9 @@ function renderPriceTable(){
       <td><span class="lc-badge ${lifecycleClass(lifecycleOf(p.product))}">${lifecycleOf(p.product)}</span></td>
       <td><span class="tag ${custTypeClass(p.cust)}">${custName(p.cust)}</span></td>
       <td>${custCountry(p.cust)}</td>
-      <td class="num-cell">${p.retailPLN ? fmt(p.retailPLN)+' zł' : dash}</td>
-      <td class="num-cell">${p.netPLN ? fmt(p.netPLN)+' zł' : dash}</td>
+      <td>${custCurrency(p.cust)}</td>
+      <td class="num-cell">${p.retailPLN ? fmt(p.retailPLN)+' '+currencySymbol(custCurrency(p.cust)) : dash}</td>
+      <td class="num-cell">${p.netPLN ? fmt(p.netPLN)+' '+currencySymbol(custCurrency(p.cust)) : dash}</td>
       <td class="num-cell">${deltaCell}</td>
       <td class="num-cell">${hasCost ? usd(p.costUSD) : dash}</td>
       <td class="num-cell">${hasCost ? usd(p.profitUSD) : dash}</td>
@@ -3397,8 +3400,11 @@ function parseMoneyText(text){
   if (!text) return NaN;
   return parseFloat(text.replace(/[^\d.\-]/g,''));
 }
-function fmtMoney(n){
-  return isNaN(n) ? '—' : (n.toFixed(2) + ' zł');
+function fmtMoney(n, symbol){
+  return isNaN(n) ? '—' : (n.toFixed(2) + ' ' + (symbol || 'zł'));
+}
+function currencySymbolFromCountry(countryText){
+  return (countryText && countryText.indexOf('捷克') !== -1) ? 'Kč' : 'zł';
 }
 function computeVat(countryText){
   if (!countryText) return null;
@@ -3440,13 +3446,14 @@ function injectAgentTiers(){
     const retail = parseMoneyText(cells[idxRetail].innerText);
     const countryText = cells[idxCountry].innerText;
     const custText = cells[idxCust].innerText;
+    const symbol = currencySymbolFromCountry(countryText);
     const isEltrox = custText.indexOf('Eltrox') !== -1;
     const fixedProfit = isEltrox ? 11 : 7;
     const vatRate = computeVat(countryText);
     const effectiveVat = vatRate !== null ? vatRate : 0.23;
 
     if (vatRate !== null && !isNaN(retail)){
-      cells[idxNet].textContent = fmtMoney(retail/(1+vatRate));
+      cells[idxNet].textContent = fmtMoney(retail/(1+vatRate), symbol);
     }
 
     // 未税净价之后紧跟的4列是旧的 环比/出厂成本/单位盈亏/净利率，从后往前删
@@ -3458,9 +3465,9 @@ function injectAgentTiers(){
     const tier2 = retail/(1+effectiveVat)*(1-0.15);
     const tier3 = retail/(1+effectiveVat)*(1-0.25);
 
-    const td1 = document.createElement('td'); td1.className='num-cell'; td1.textContent = fmtMoney(tier1);
-    const td2 = document.createElement('td'); td2.className='num-cell'; td2.textContent = fmtMoney(tier2);
-    const td3 = document.createElement('td'); td3.className='num-cell'; td3.textContent = fmtMoney(tier3);
+    const td1 = document.createElement('td'); td1.className='num-cell'; td1.textContent = fmtMoney(tier1, symbol);
+    const td2 = document.createElement('td'); td2.className='num-cell'; td2.textContent = fmtMoney(tier2, symbol);
+    const td3 = document.createElement('td'); td3.className='num-cell'; td3.textContent = fmtMoney(tier3, symbol);
 
     const tdProfit = document.createElement('td');
     tdProfit.className = 'num-cell';
@@ -3468,7 +3475,7 @@ function injectAgentTiers(){
 
     const tdFinal = document.createElement('td');
     tdFinal.className = 'num-cell';
-    tdFinal.textContent = fmtMoney(computeFinalPurchasePrice(retail, fixedProfit, effectiveVat));
+    tdFinal.textContent = fmtMoney(computeFinalPurchasePrice(retail, fixedProfit, effectiveVat), symbol);
 
     const buttonCell = row.lastElementChild;
     row.insertBefore(td1, buttonCell);

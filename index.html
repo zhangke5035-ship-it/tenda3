@@ -296,8 +296,6 @@
         </div>
       </div>
       <div class="user-badge" id="userBadge"></div>
-      <button type="button" class="btn ghost" id="exportCsvBtn">导出当前表格 CSV</button>
-<button type="button" class="btn ghost" id="exportPdfBtn">打印 / 导出 PDF</button>
       <button type="button" class="btn ghost logout-btn" id="logoutBtn">退出登录</button>
     </div>
   </aside>
@@ -403,6 +401,10 @@
         <div class="cust-tabs" id="custTabs"></div>
         <div class="cust-tabs" id="categoryTabs"></div>
         <div class="cust-tabs" id="brandTabs"></div>
+        <div class="price-export-row" style="display:flex;justify-content:flex-end;gap:10px;margin:0 0 12px 0;">
+          <button type="button" class="btn ghost" id="exportCsvBtn">导出当前表格 CSV</button>
+          <button type="button" class="btn ghost" id="exportPdfBtn">打印 / 导出 PDF</button>
+        </div>
         <table>
          <thead><tr>
   <th>类目</th><th>品牌</th><th>产品型号</th><th>产品信息描述</th><th>EAN</th><th>生命周期</th><th data-key="customer">客户</th><th data-key="country">国家</th><th>币种</th><th data-key="retail">含税零售价</th><th data-key="net">未税净价</th>

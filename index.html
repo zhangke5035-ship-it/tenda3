@@ -321,6 +321,7 @@
 
 <div class="panel">
         <div class="panel-head"><h3>报价明细</h3><div class="desc" id="priceCount"></div></div>
+        <div class="catalog-search"><input id="priceSearch" placeholder="搜索产品型号，例如 TE6L、W15-Pro..."></div>
         <div class="cust-tabs" id="quarterTabs"></div>
         <div class="cust-tabs" id="countryTabs"></div>
         <div class="cust-tabs" id="custTabs"></div>
@@ -2352,6 +2353,7 @@ let activeCountryFilter = 'ALL';
 let activeQuarterFilter = 'Q3';
 let activeCategoryFilter = 'ALL';
 let activeBrandFilter = 'ALL';
+let priceSearchTerm = '';
 let activeLifecycleFilter = 'ALL';
 let catalogSearchTerm = '';
 
@@ -2678,6 +2680,7 @@ function renderPriceTable(){
   if(activeCustFilter!=='ALL') rows = rows.filter(p=>p.cust===activeCustFilter);
   if(activeCategoryFilter!=='ALL') rows = rows.filter(p=>productType(p.product)===activeCategoryFilter);
   if(activeBrandFilter!=='ALL') rows = rows.filter(p=>productBrand(p.product)===activeBrandFilter);
+  if(priceSearchTerm) rows = rows.filter(p=>p.product.toLowerCase().includes(priceSearchTerm.toLowerCase()));
   const dash = '<span style="color:var(--text-faint)">—</span>';
   tbody.innerHTML = rows.map(p=>{
     const hasCost = typeof p.costUSD === 'number';
@@ -2907,6 +2910,10 @@ document.getElementById('fxRate').addEventListener('input', refreshAll);
 document.getElementById('routeSelect').addEventListener('change', renderRoute);
 document.getElementById('catalogSearch').addEventListener('input', e=>{
   catalogSearchTerm = e.target.value; renderCatalog();
+});
+
+document.getElementById('priceSearch').addEventListener('input', e=>{
+  priceSearchTerm = e.target.value; renderPriceTable();
 });
 
 document.getElementById('addPriceBtn').addEventListener('click', ()=>{

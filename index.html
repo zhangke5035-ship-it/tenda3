@@ -2991,8 +2991,14 @@ function parseMoneyText(text){
 function fmtMoney(n){
   return isNaN(n) ? '—' : (n.toFixed(2) + ' zł');
 }
-function computeFinalPurchasePrice(retail, profitPct){
-  return (retail/1.23) * (1 - profitPct/100);
+function computeVat(countryText){
+  if (!countryText) return null;
+  if (countryText.indexOf('波兰') !== -1) return 0.23;
+  if (countryText.indexOf('捷克') !== -1) return 0.21;
+  return null; // 乌克兰等未指定国家，暂无对应税率
+}
+function computeFinalPurchasePrice(retail, profitPct, vat){
+  return (retail/(1+vat)) * (1 - profitPct/100);
 }
 
 function injectAgentTiers(){
@@ -3003,14 +3009,23 @@ function injectAgentTiers(){
     if (row.dataset.tiersInjected === '1') return;
     const cells = Array.from(row.children);
     if (cells.length < 13) return;
+
     const retail = parseMoneyText(cells[6].innerText);
+    const countryText = cells[5].innerText;
+    const vatRate = computeVat(countryText);
+    const effectiveVat = vatRate !== null ? vatRate : 0.23; // 未指定国家兜底用23%
+
+    // 未税净价：只有波兰/捷克才重新换算，其他国家维持原样
+    if (vatRate !== null && !isNaN(retail)){
+      cells[7].textContent = fmtMoney(retail/(1+vatRate));
+    }
 
     // 删除 环比(QoQ)/出厂成本/单位盈亏/净利率 这4列（索引 8,9,10,11），从高到低删避免错位
     [11,10,9,8].forEach(idx=>{ if (row.children[idx]) row.removeChild(row.children[idx]); });
 
-    const tier1 = retail/1.23*(1-0.05);
-    const tier2 = retail/1.23*(1-0.15);
-    const tier3 = retail/1.23*(1-0.25);
+    const tier1 = retail/(1+effectiveVat)*(1-0.05);
+    const tier2 = retail/(1+effectiveVat)*(1-0.15);
+    const tier3 = retail/(1+effectiveVat)*(1-0.25);
 
     const td1 = document.createElement('td'); td1.className='num-cell'; td1.textContent = fmtMoney(tier1);
     const td2 = document.createElement('td'); td2.className='num-cell'; td2.textContent = fmtMoney(tier2);
@@ -3032,12 +3047,12 @@ function injectAgentTiers(){
     tdFinal.className = 'num-cell';
     function updateFinal(){
       const pct = parseFloat(profitInput.value) || 0;
-      tdFinal.textContent = fmtMoney(computeFinalPurchasePrice(retail, pct));
+      tdFinal.textContent = fmtMoney(computeFinalPurchasePrice(retail, pct, effectiveVat));
     }
     profitInput.addEventListener('input', updateFinal);
     updateFinal();
 
-    const buttonCell = row.children[8]; // 删除4列后，原来的删除按钮格现在在索引8
+    const buttonCell = row.children[8];
     row.insertBefore(td1, buttonCell);
     row.insertBefore(td2, buttonCell);
     row.insertBefore(td3, buttonCell);
@@ -3053,6 +3068,7 @@ if (priceTableBodyForTiers){
   new MutationObserver(()=>{ injectAgentTiers(); }).observe(priceTableBodyForTiers, {childList:true});
   injectAgentTiers();
 }
+</script>
 </script>
 </body>
 </html>

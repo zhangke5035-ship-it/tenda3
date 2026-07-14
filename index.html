@@ -301,7 +301,14 @@
         <button class="btn" id="addPriceBtn">新增报价</button>
       </div>
 
-      <div class="panel">
+            <div class="panel">
+        <div class="panel-head"><h3>报价版本号码</h3><div class="desc">总部每月更新报价表后，在此同步最新版本号，会自动同步到左侧边栏</div></div>
+        <div class="form-grid" style="grid-template-columns:260px;">
+          <div class="field mono"><label>当前报价版本</label><input id="priceVersion" value="26M71" placeholder="例如 26M71"></div>
+        </div>
+      </div>
+
+<div class="panel">
         <div class="panel-head"><h3>报价明细</h3><div class="desc" id="priceCount"></div></div>
         <div class="cust-tabs" id="quarterTabs"></div>
         <div class="cust-tabs" id="countryTabs"></div>

@@ -166,6 +166,68 @@
   #langSwitcher .lang-btn{background:transparent;border:none;color:var(--text-dim);font-size:12px;font-weight:500;padding:6px 12px;border-radius:16px;cursor:pointer;transition:background .12s ease,color .12s ease;}
   #langSwitcher .lang-btn:hover{color:var(--text);}
   #langSwitcher .lang-btn.active{background:var(--copper);color:#1A130B;}
+  .inv-note{display:flex;gap:12px;align-items:flex-start;background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--copper);border-radius:var(--radius);padding:14px 16px;font-size:13px;color:var(--text-dim);margin-bottom:20px;}
+  .inv-stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:20px;}
+  .inv-stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px;}
+  .inv-stat-label{font-size:12px;color:var(--text-dim);}
+  .inv-stat-value{font-size:24px;font-weight:700;color:#fff;margin-top:8px;}
+  .inv-stat-value.warn{color:#D9A94E;}
+  .inv-stat-value.danger{color:var(--alert);}
+  .inv-stat-delta{font-size:11.5px;margin-top:6px;color:var(--text-faint);}
+  .inv-toolbar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:14px;}
+  .inv-filters{display:flex;gap:8px;flex-wrap:wrap;}
+  .inv-field{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:8px 12px;color:var(--text);font-size:13px;min-width:120px;}
+  .inv-field:focus{outline:none;border-color:var(--copper);}
+  select.inv-field{cursor:pointer;}
+  .inv-search{display:flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:8px 12px;min-width:220px;}
+  .inv-search input{background:transparent;border:none;outline:none;color:var(--text);font-size:13px;width:100%;}
+  .inv-search svg{flex-shrink:0;opacity:.5;}
+  .inv-btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:var(--radius);font-size:13px;font-weight:600;cursor:pointer;border:1px solid transparent;}
+  .inv-btn-primary{background:var(--copper);color:#241505;}
+  .inv-btn-primary:hover{background:#dd9a5c;}
+  .inv-btn-ghost{background:transparent;border-color:var(--border);color:var(--text-dim);}
+  .inv-btn-ghost:hover{color:var(--text);border-color:var(--text-faint);}
+  .inv-table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+  .inv-table-wrap table{width:100%;border-collapse:collapse;}
+  .inv-table-wrap thead th{text-align:left;font-size:12px;font-weight:600;color:var(--text-faint);text-transform:uppercase;letter-spacing:.03em;padding:12px 16px;border-bottom:1px solid var(--border);background:rgba(255,255,255,0.02);white-space:nowrap;}
+  .inv-table-wrap tbody td{padding:13px 16px;border-bottom:1px solid var(--border-soft);font-size:13.5px;color:var(--text);white-space:nowrap;}
+  .inv-table-wrap tbody tr:last-child td{border-bottom:none;}
+  .inv-table-wrap tbody tr:hover{background:rgba(255,255,255,0.02);}
+  .inv-sku{color:var(--text-dim);font-family:'IBM Plex Mono',monospace;font-size:12.5px;}
+  .inv-prod-name{font-weight:600;color:#fff;}
+  .inv-prod-cat{font-size:12px;color:var(--text-dim);margin-top:2px;}
+  .inv-qty{font-weight:700;color:#fff;}
+  .inv-unit{color:var(--text-faint);font-size:12px;margin-left:2px;}
+  .inv-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:11.5px;font-weight:600;}
+  .inv-badge .inv-bdot{width:6px;height:6px;border-radius:50%;}
+  .inv-badge-ok{background:var(--good-soft);color:var(--good);}
+  .inv-badge-ok .inv-bdot{background:var(--good);}
+  .inv-badge-low{background:rgba(217,169,78,0.14);color:#D9A94E;}
+  .inv-badge-low .inv-bdot{background:#D9A94E;}
+  .inv-badge-out{background:var(--alert-soft);color:var(--alert);}
+  .inv-badge-out .inv-bdot{background:var(--alert);}
+  .inv-row-actions{display:flex;gap:14px;}
+  .inv-row-actions a{font-size:12.5px;color:var(--text-dim);cursor:pointer;}
+  .inv-row-actions a:hover{color:var(--copper);}
+  .inv-stock-wrap{width:90px;height:5px;background:var(--border);border-radius:4px;overflow:hidden;margin-top:6px;}
+  .inv-stock-bar{height:100%;border-radius:4px;}
+  .inv-pagination{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-top:1px solid var(--border);font-size:12.5px;color:var(--text-dim);}
+  .inv-page-btns{display:flex;gap:6px;}
+  .inv-page-btn{width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:var(--radius);border:1px solid var(--border);color:var(--text-dim);cursor:pointer;font-size:12.5px;}
+  .inv-page-btn.active{background:var(--copper);border-color:var(--copper);color:#241505;font-weight:700;}
+  .inv-overlay{position:fixed;inset:0;background:rgba(4,8,16,0.6);display:none;align-items:center;justify-content:center;z-index:50;}
+  .inv-overlay.open{display:flex;}
+  .inv-modal{width:480px;max-width:92vw;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:22px 24px;max-height:88vh;overflow-y:auto;}
+  .inv-modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+  .inv-modal-title{font-size:16px;font-weight:700;color:#fff;}
+  .inv-modal-close{cursor:pointer;color:var(--text-dim);font-size:18px;}
+  .inv-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  .inv-form-group{display:flex;flex-direction:column;gap:6px;}
+  .inv-form-group.full{grid-column:1/-1;}
+  .inv-form-label{font-size:12px;color:var(--text-dim);}
+  .inv-form-group .inv-field{width:100%;}
+  .inv-modal-footer{display:flex;justify-content:flex-end;gap:10px;margin-top:20px;}
+  @media (max-width:1100px){.inv-stat-grid{grid-template-columns:repeat(2,1fr);}}
 </style>
 <div id="authGate">
   <div class="auth-card">
@@ -485,10 +547,149 @@
     <!-- ================ 库存管理 ================ -->
 <section class="view" id="view-inventory">
   <div class="viewhead">
-    <div><h2>库存管理</h2><p>内容待录入</p></div>
+    <div><h2>库存管理</h2><p>波兰站点 · 实时库存概览与出入库记录</p></div>
   </div>
-  <div class="notebox">
-    库存管理模块框架已搭建，具体字段与数据将在后续录入。
+
+  <div class="inv-note">
+    示例数据展示：以下库存数据为演示用途，接入真实仓储系统后将替换为实时数据。
+  </div>
+
+  <div class="inv-stat-grid">
+    <div class="inv-stat-card">
+      <div class="inv-stat-label">SKU 总数</div>
+      <div class="inv-stat-value" id="invStatTotalSku">--</div>
+      <div class="inv-stat-delta">覆盖全部仓库</div>
+    </div>
+    <div class="inv-stat-card">
+      <div class="inv-stat-label">库存总值 (PLN)</div>
+      <div class="inv-stat-value" id="invStatTotalValue">--</div>
+      <div class="inv-stat-delta">当前估值</div>
+    </div>
+    <div class="inv-stat-card">
+      <div class="inv-stat-label">低库存预警</div>
+      <div class="inv-stat-value warn" id="invStatLow">--</div>
+      <div class="inv-stat-delta">需在 7 日内补货</div>
+    </div>
+    <div class="inv-stat-card">
+      <div class="inv-stat-label">缺货商品数</div>
+      <div class="inv-stat-value danger" id="invStatOut">--</div>
+      <div class="inv-stat-delta">影响在途订单</div>
+    </div>
+  </div>
+
+  <div class="inv-toolbar">
+    <div class="inv-filters">
+      <select class="inv-field" id="invFilterWarehouse">
+        <option value="">全部仓库</option>
+        <option value="WAW-01">华沙仓 WAW-01</option>
+        <option value="POZ-02">波兹南仓 POZ-02</option>
+        <option value="GDN-03">格但斯克仓 GDN-03</option>
+      </select>
+      <select class="inv-field" id="invFilterCategory">
+        <option value="">全部分类</option>
+        <option value="路由器">路由器</option>
+        <option value="交换机">交换机</option>
+        <option value="摄像头">摄像头</option>
+        <option value="配件">配件</option>
+      </select>
+      <select class="inv-field" id="invFilterStatus">
+        <option value="">全部状态</option>
+        <option value="ok">库存正常</option>
+        <option value="low">低库存</option>
+        <option value="out">缺货</option>
+      </select>
+      <div class="inv-search">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="invSearchInput" placeholder="搜索 SKU 或产品名称">
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button class="inv-btn inv-btn-ghost" id="invBtnExport">导出 Excel</button>
+      <button class="inv-btn inv-btn-primary" id="invBtnAdd">＋ 新增库存</button>
+    </div>
+  </div>
+
+  <div class="inv-table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>SKU 编码</th>
+          <th>产品信息</th>
+          <th>仓库</th>
+          <th>当前库存</th>
+          <th>安全库存</th>
+          <th>单价 (PLN)</th>
+          <th>库存状态</th>
+          <th>最后更新</th>
+          <th>操作</th>
+        </tr>
+      </thead>
+      <tbody id="invTableBody"></tbody>
+    </table>
+    <div class="inv-pagination">
+      <span id="invPageInfo">共 0 条记录</span>
+      <div class="inv-page-btns" id="invPageBtns"></div>
+    </div>
+  </div>
+
+  <div class="inv-overlay" id="invModalOverlay">
+    <div class="inv-modal">
+      <div class="inv-modal-header">
+        <div class="inv-modal-title" id="invModalTitle">新增库存</div>
+        <div class="inv-modal-close" id="invModalClose">✕</div>
+      </div>
+      <div class="inv-form-grid">
+        <div class="inv-form-group">
+          <label class="inv-form-label">SKU 编码</label>
+          <input class="inv-field" id="invFSku" placeholder="如 TND-RTX-0192">
+        </div>
+        <div class="inv-form-group">
+          <label class="inv-form-label">产品名称</label>
+          <input class="inv-field" id="invFName" placeholder="产品名称">
+        </div>
+        <div class="inv-form-group">
+          <label class="inv-form-label">分类</label>
+          <select class="inv-field" id="invFCategory">
+            <option>路由器</option>
+            <option>交换机</option>
+            <option>摄像头</option>
+            <option>配件</option>
+          </select>
+        </div>
+        <div class="inv-form-group">
+          <label class="inv-form-label">所属仓库</label>
+          <select class="inv-field" id="invFWarehouse">
+            <option value="WAW-01">华沙仓 WAW-01</option>
+            <option value="POZ-02">波兹南仓 POZ-02</option>
+            <option value="GDN-03">格但斯克仓 GDN-03</option>
+          </select>
+        </div>
+        <div class="inv-form-group">
+          <label class="inv-form-label">当前库存</label>
+          <input class="inv-field" type="number" id="invFQty" placeholder="0">
+        </div>
+        <div class="inv-form-group">
+          <label class="inv-form-label">安全库存</label>
+          <input class="inv-field" type="number" id="invFSafety" placeholder="0">
+        </div>
+        <div class="inv-form-group">
+          <label class="inv-form-label">单价 (PLN)</label>
+          <input class="inv-field" type="number" id="invFPrice" placeholder="0.00">
+        </div>
+        <div class="inv-form-group">
+          <label class="inv-form-label">单位</label>
+          <input class="inv-field" id="invFUnit" placeholder="台 / 个 / 箱">
+        </div>
+        <div class="inv-form-group full">
+          <label class="inv-form-label">备注</label>
+          <input class="inv-field" id="invFNote" placeholder="选填">
+        </div>
+      </div>
+      <div class="inv-modal-footer">
+        <button class="inv-btn inv-btn-ghost" id="invBtnCancel">取消</button>
+        <button class="inv-btn inv-btn-primary" id="invBtnSave">保存</button>
+      </div>
+    </div>
   </div>
 </section>
 
@@ -3646,6 +3847,178 @@ new MutationObserver(()=>{
 }).observe(document.body, {childList:true, subtree:true});
 
 applyLanguage(currentLang);
+</script>
+<script>
+(function(){
+  let mockInventoryData = [
+    {sku:"TND-RTX-0192", name:"AX3000 双频路由器", cat:"路由器", wh:"WAW-01", qty:342, safety:100, price:189.90, unit:"台", updated:"2026-07-13"},
+    {sku:"TND-SWT-0055", name:"8口千兆交换机", cat:"交换机", wh:"POZ-02", qty:58, safety:80, price:245.00, unit:"台", updated:"2026-07-12"},
+    {sku:"TND-CAM-0311", name:"户外4K监控摄像头", cat:"摄像头", wh:"WAW-01", qty:0, safety:50, price:329.50, unit:"台", updated:"2026-07-10"},
+    {sku:"TND-RTX-0201", name:"AC1200 双频路由器", cat:"路由器", wh:"GDN-03", qty:210, safety:120, price:129.00, unit:"台", updated:"2026-07-13"},
+    {sku:"TND-ACC-0088", name:"千兆网线 3米", cat:"配件", wh:"POZ-02", qty:1520, safety:500, price:9.90, unit:"根", updated:"2026-07-11"},
+    {sku:"TND-SWT-0061", name:"24口网管交换机", cat:"交换机", wh:"WAW-01", qty:24, safety:40, price:890.00, unit:"台", updated:"2026-07-09"},
+    {sku:"TND-CAM-0322", name:"室内云台摄像头", cat:"摄像头", wh:"GDN-03", qty:12, safety:60, price:259.00, unit:"台", updated:"2026-07-08"},
+    {sku:"TND-ACC-0093", name:"POE 供电模块", cat:"配件", wh:"WAW-01", qty:305, safety:150, price:45.00, unit:"个", updated:"2026-07-13"}
+  ];
+
+  const INV_PAGE_SIZE = 6;
+  let invCurrentPage = 1;
+
+  function invStatusOf(item){
+    if(item.qty === 0) return "out";
+    if(item.qty < item.safety) return "low";
+    return "ok";
+  }
+  function invBadgeHtml(status){
+    const map = {
+      ok:{cls:"inv-badge-ok", label:"库存正常"},
+      low:{cls:"inv-badge-low", label:"低库存"},
+      out:{cls:"inv-badge-out", label:"缺货"}
+    };
+    const m = map[status];
+    return '<span class="inv-badge ' + m.cls + '"><span class="inv-bdot"></span>' + m.label + '</span>';
+  }
+  function invWarehouseLabel(code){
+    return {"WAW-01":"华沙仓","POZ-02":"波兹南仓","GDN-03":"格但斯克仓"}[code] || code;
+  }
+
+  function invGetFiltered(){
+    const wh = document.getElementById('invFilterWarehouse').value;
+    const cat = document.getElementById('invFilterCategory').value;
+    const st = document.getElementById('invFilterStatus').value;
+    const q = document.getElementById('invSearchInput').value.trim().toLowerCase();
+    return mockInventoryData.filter(function(item){
+      if(wh && item.wh !== wh) return false;
+      if(cat && item.cat !== cat) return false;
+      if(st && invStatusOf(item) !== st) return false;
+      if(q && !(item.sku.toLowerCase().includes(q) || item.name.toLowerCase().includes(q))) return false;
+      return true;
+    });
+  }
+
+  function renderInventoryStats(){
+    const totalSku = mockInventoryData.length;
+    const totalValue = mockInventoryData.reduce(function(s,i){ return s+i.qty*i.price; },0);
+    const low = mockInventoryData.filter(function(i){ return invStatusOf(i)==="low"; }).length;
+    const out = mockInventoryData.filter(function(i){ return invStatusOf(i)==="out"; }).length;
+    document.getElementById('invStatTotalSku').textContent = totalSku;
+    document.getElementById('invStatTotalValue').textContent = totalValue.toLocaleString('pl-PL',{maximumFractionDigits:0});
+    document.getElementById('invStatLow').textContent = low;
+    document.getElementById('invStatOut').textContent = out;
+  }
+
+  function renderInventoryTable(){
+    const filtered = invGetFiltered();
+    const totalPages = Math.max(1, Math.ceil(filtered.length / INV_PAGE_SIZE));
+    if(invCurrentPage > totalPages) invCurrentPage = totalPages;
+    const start = (invCurrentPage-1)*INV_PAGE_SIZE;
+    const pageItems = filtered.slice(start, start+INV_PAGE_SIZE);
+
+    const tbody = document.getElementById('invTableBody');
+    if(pageItems.length === 0){
+      tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--text-faint);padding:30px;">未找到匹配的库存记录</td></tr>';
+    } else {
+      tbody.innerHTML = pageItems.map(function(item){
+        const status = invStatusOf(item);
+        const pct = Math.min(100, Math.round((item.qty / (item.safety*2 || 1))*100));
+        const barColor = status==="ok" ? "var(--good)" : status==="low" ? "#D9A94E" : "var(--alert)";
+        return '<tr>' +
+          '<td class="inv-sku">' + item.sku + '</td>' +
+          '<td><div class="inv-prod-name">' + item.name + '</div><div class="inv-prod-cat">' + item.cat + '</div></td>' +
+          '<td>' + invWarehouseLabel(item.wh) + '</td>' +
+          '<td><span class="inv-qty">' + item.qty + '</span><span class="inv-unit">' + item.unit + '</span>' +
+          '<div class="inv-stock-wrap"><div class="inv-stock-bar" style="width:' + pct + '%;background:' + barColor + ';"></div></div></td>' +
+          '<td>' + item.safety + ' ' + item.unit + '</td>' +
+          '<td>' + item.price.toFixed(2) + '</td>' +
+          '<td>' + invBadgeHtml(status) + '</td>' +
+          '<td>' + item.updated + '</td>' +
+          '<td><div class="inv-row-actions"><a data-action="edit" data-sku="' + item.sku + '">编辑</a><a data-action="log" data-sku="' + item.sku + '">出入库记录</a></div></td>' +
+          '</tr>';
+      }).join('');
+    }
+
+    document.getElementById('invPageInfo').textContent = '共 ' + filtered.length + ' 条记录';
+    const pageBtns = document.getElementById('invPageBtns');
+    pageBtns.innerHTML = '';
+    for(let p=1; p<=totalPages; p++){
+      const btn = document.createElement('div');
+      btn.className = 'inv-page-btn' + (p===invCurrentPage ? ' active' : '');
+      btn.textContent = p;
+      btn.onclick = (function(pp){ return function(){ invCurrentPage = pp; renderInventoryTable(); }; })(p);
+      pageBtns.appendChild(btn);
+    }
+  }
+
+  function refreshInventory(){
+    renderInventoryStats();
+    renderInventoryTable();
+  }
+
+  ['invFilterWarehouse','invFilterCategory','invFilterStatus'].forEach(function(id){
+    document.getElementById(id).addEventListener('change', function(){ invCurrentPage=1; renderInventoryTable(); });
+  });
+  document.getElementById('invSearchInput').addEventListener('input', function(){ invCurrentPage=1; renderInventoryTable(); });
+
+  const invOverlay = document.getElementById('invModalOverlay');
+  function openInventoryModal(mode, item){
+    document.getElementById('invModalTitle').textContent = mode === 'edit' ? '编辑库存' : '新增库存';
+    document.getElementById('invFSku').value = item ? item.sku : '';
+    document.getElementById('invFSku').disabled = mode === 'edit';
+    document.getElementById('invFName').value = item ? item.name : '';
+    document.getElementById('invFCategory').value = item ? item.cat : '路由器';
+    document.getElementById('invFWarehouse').value = item ? item.wh : 'WAW-01';
+    document.getElementById('invFQty').value = item ? item.qty : '';
+    document.getElementById('invFSafety').value = item ? item.safety : '';
+    document.getElementById('invFPrice').value = item ? item.price : '';
+    document.getElementById('invFUnit').value = item ? item.unit : '';
+    document.getElementById('invFNote').value = '';
+    invOverlay.classList.add('open');
+  }
+  function closeInventoryModal(){ invOverlay.classList.remove('open'); }
+
+  document.getElementById('invBtnAdd').onclick = function(){ openInventoryModal('add', null); };
+  document.getElementById('invModalClose').onclick = closeInventoryModal;
+  document.getElementById('invBtnCancel').onclick = closeInventoryModal;
+  invOverlay.addEventListener('click', function(e){ if(e.target === invOverlay) closeInventoryModal(); });
+
+  document.getElementById('invBtnSave').onclick = function(){
+    const sku = document.getElementById('invFSku').value.trim();
+    const name = document.getElementById('invFName').value.trim();
+    if(!sku || !name){ alert('请填写 SKU 编码与产品名称'); return; }
+    const payload = {
+      sku: sku, name: name,
+      cat: document.getElementById('invFCategory').value,
+      wh: document.getElementById('invFWarehouse').value,
+      qty: Number(document.getElementById('invFQty').value) || 0,
+      safety: Number(document.getElementById('invFSafety').value) || 0,
+      price: Number(document.getElementById('invFPrice').value) || 0,
+      unit: document.getElementById('invFUnit').value || '台',
+      updated: new Date().toISOString().slice(0,10)
+    };
+    const idx2 = mockInventoryData.findIndex(function(i){ return i.sku === sku; });
+    if(idx2 >= 0){ mockInventoryData[idx2] = payload; } else { mockInventoryData.push(payload); }
+    closeInventoryModal();
+    refreshInventory();
+  };
+
+  document.getElementById('invTableBody').addEventListener('click', function(e){
+    const target = e.target.closest('a[data-action]');
+    if(!target) return;
+    const sku = target.dataset.sku;
+    const item = mockInventoryData.find(function(i){ return i.sku === sku; });
+    if(target.dataset.action === 'edit'){
+      openInventoryModal('edit', item);
+    } else if(target.dataset.action === 'log'){
+      alert('出入库记录（示例）\nSKU: ' + item.sku + '\n产品: ' + item.name + '\n\n此处可接入出入库流水弹窗 / 抽屉组件。');
+    }
+  });
+
+  document.getElementById('invBtnExport').onclick = function(){
+    alert('导出 Excel（示例）：接入实际导出接口后替换此处逻辑。');
+  };
+
+  refreshInventory();
+})();
 </script>
 </body>
 </html>

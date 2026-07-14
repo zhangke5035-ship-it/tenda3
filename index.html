@@ -420,6 +420,7 @@
       <div class="field"><label>产品型号</label><input id="pd_product" list="modelDatalist" placeholder="例如 W15-Pro"></div>
       <div class="field"><label>原价 (PLN)</label><input id="pd_original" type="number" placeholder="199"></div>
       <div class="field"><label>促销价 (PLN)</label><input id="pd_promo" type="number" placeholder="169"></div>
+      <div class="field"><label>促销类型</label><select id="pd_type"><option>DDP-满减促销(一级客户)</option><option>DMP促销(二级客户)</option><option>Sell-in价格促销</option></select></div>
       <div class="field"><label>开始日期</label><input id="pd_start" type="date"></div>
       <div class="field"><label>结束日期</label><input id="pd_end" type="date"></div>
       <div class="field"><label>状态</label>
@@ -438,8 +439,9 @@
     <div class="panel-head"><h3>促销列表</h3></div>
     <div class="cust-tabs" id="promoDealStatusTabs"></div>
     <div class="cust-tabs" id="promoDealCustTabs"></div>
+    <div class="cust-tabs" id="promoDealTypeTabs"></div>
     <table>
-      <thead><tr><th>促销名称</th><th>客户</th><th>产品型号</th><th>原价(PLN)</th><th>促销价(PLN)</th><th>折扣</th><th>开始日期</th><th>结束日期</th><th>状态</th><th></th></tr></thead>
+      <thead><tr><th>促销名称</th><th>促销类型</th><th>客户</th><th>产品型号</th><th>原价(PLN)</th><th>促销价(PLN)</th><th>折扣</th><th>开始日期</th><th>结束日期</th><th>状态</th><th></th></tr></thead>
       <tbody id="promoDealTableBody"></tbody>
     </table>
   </div>
@@ -2696,6 +2698,8 @@ let promoDeals = [];
 let nextPromoDealId = 8000;
 let promoDealStatusFilter = '全部';
 let promoDealCustFilter = '全部';
+let promoDealTypeFilter = '全部';
+const PROMO_TYPE_LIST = ['DDP-满减促销(一级客户)','DMP促销(二级客户)','Sell-in价格促销'];
 
 function populatePromoDealSelects(){
   const sel = document.getElementById('pd_customer');
@@ -2736,6 +2740,7 @@ function renderPromoDealKpi(){
 function renderPromoDealTabs(){
   const statusBox = document.getElementById('promoDealStatusTabs');
   const custBox = document.getElementById('promoDealCustTabs');
+  const typeBox = document.getElementById('promoDealTypeTabs');
   if (!statusBox || !custBox) return;
   const statuses = ['全部','未开始','进行中','已结束','已取消'];
   statusBox.innerHTML = statuses.map(s=>{
@@ -2748,6 +2753,16 @@ function renderPromoDealTabs(){
     const count = k==='全部' ? promoDeals.length : promoDeals.filter(p=>p.cust===k).length;
     return `<div class="cust-tab ${promoDealCustFilter===k?'active':''}" data-cust="${k}">${label}<span class="count">${count}</span></div>`;
   }).join('');
+  if (typeBox){
+    const typeKeys = ['全部', ...PROMO_TYPE_LIST];
+    typeBox.innerHTML = typeKeys.map(t=>{
+      const count = t==='全部' ? promoDeals.length : promoDeals.filter(p=>p.type===t).length;
+      return `<div class="cust-tab ${promoDealTypeFilter===t?'active':''}" data-type="${t}">${t}<span class="count">${count}</span></div>`;
+    }).join('');
+    typeBox.querySelectorAll('.cust-tab').forEach(tab=>{
+      tab.addEventListener('click', ()=>{ promoDealTypeFilter = tab.dataset.type; renderPromoDealAll(); });
+    });
+  }
   statusBox.querySelectorAll('.cust-tab').forEach(tab=>{
     tab.addEventListener('click', ()=>{ promoDealStatusFilter = tab.dataset.status; renderPromoDealAll(); });
   });
@@ -2755,17 +2770,18 @@ function renderPromoDealTabs(){
     tab.addEventListener('click', ()=>{ promoDealCustFilter = tab.dataset.cust; renderPromoDealAll(); });
   });
 }
-
 function renderPromoDealTable(){
   const tbody = document.getElementById('promoDealTableBody');
   if (!tbody) return;
   let rows = promoDeals;
   if (promoDealStatusFilter !== '全部') rows = rows.filter(p=>p.status===promoDealStatusFilter);
   if (promoDealCustFilter !== '全部') rows = rows.filter(p=>p.cust===promoDealCustFilter);
+  if (promoDealTypeFilter !== '全部') rows = rows.filter(p=>p.type===promoDealTypeFilter);
   tbody.innerHTML = rows.map(p=>{
     const discount = p.original>0 ? promoDealDiscountPct(p).toFixed(1)+'%' : '—';
     return `<tr>
       <td>${p.name}</td>
+      <td>${p.type||'—'}</td>
       <td>${custName(p.cust)}</td>
       <td class="mono">${p.product}</td>
       <td class="num-cell">${p.original.toFixed(2)}</td>
@@ -2778,7 +2794,6 @@ function renderPromoDealTable(){
     </tr>`;
   }).join('');
 }
-
 function deletePromoDeal(id){
   promoDeals = promoDeals.filter(p=>p.id!==id);
   renderPromoDealAll();
@@ -2895,6 +2910,7 @@ document.getElementById('addPromoDealBtn').addEventListener('click', ()=>{
   promoDeals.push({
     id: nextPromoDealId++, name, product,
     cust: document.getElementById('pd_customer').value,
+    type: document.getElementById('pd_type').value,
     original, promo,
     start: document.getElementById('pd_start').value,
     end: document.getElementById('pd_end').value,

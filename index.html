@@ -329,7 +329,7 @@
         <div class="cust-tabs" id="brandTabs"></div>
         <table>
          <thead><tr>
-  <th>类目</th><th>品牌</th><th>产品型号</th><th>产品信息描述</th><th>EAN</th><th>生命周期</th><th>客户</th><th>国家</th><th>币种</th><th>含税零售价</th><th>未税净价</th>
+  <th>类目</th><th>品牌</th><th>产品型号</th><th>产品信息描述</th><th>EAN</th><th>生命周期</th><th data-key="customer">客户</th><th data-key="country">国家</th><th>币种</th><th data-key="retail">含税零售价</th><th data-key="net">未税净价</th>
   <th>一级客户报价</th><th>二级客户报价</th><th>三级客户报价</th><th>代理商利润点位</th><th>最终采购价</th><th></th>
 </tr></thead>
           <tbody id="priceTableBody"></tbody>
@@ -3294,6 +3294,9 @@ function getPriceHeaderIndex(prefix){
   if (!table) return -1;
   const ths = table.querySelectorAll('thead th');
   for (let i=0;i<ths.length;i++){
+    if (ths[i].dataset && ths[i].dataset.key === prefix) return i;
+  }
+  for (let i=0;i<ths.length;i++){
     if (ths[i].textContent.trim().indexOf(prefix) === 0) return i;
   }
   return -1;
@@ -3302,10 +3305,10 @@ function getPriceHeaderIndex(prefix){
 function injectAgentTiers(){
   const tbody = document.getElementById('priceTableBody');
   if (!tbody) return;
-  const idxRetail = getPriceHeaderIndex('含税零售价');
-  const idxCountry = getPriceHeaderIndex('国家');
-  const idxCust = getPriceHeaderIndex('客户');
-  const idxNet = getPriceHeaderIndex('未税净价');
+  const idxRetail = getPriceHeaderIndex('retail');
+  const idxCountry = getPriceHeaderIndex('country');
+  const idxCust = getPriceHeaderIndex('customer');
+  const idxNet = getPriceHeaderIndex('net');
   if (idxRetail===-1 || idxCountry===-1 || idxCust===-1 || idxNet===-1) return;
 
   const rows = Array.from(tbody.querySelectorAll('tr'));

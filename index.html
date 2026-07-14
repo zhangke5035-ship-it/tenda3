@@ -316,9 +316,10 @@
         <div class="cust-tabs" id="countryTabs"></div>
         <div class="cust-tabs" id="custTabs"></div>
         <div class="cust-tabs" id="categoryTabs"></div>
+        <div class="cust-tabs" id="brandTabs"></div>
         <table>
          <thead><tr>
-  <th>类目</th><th>产品型号</th><th>EAN</th><th>生命周期</th><th>客户</th><th>国家</th><th>含税零售价(PLN)</th><th>未税净价(PLN)</th>
+  <th>类目</th><th>品牌</th><th>产品型号</th><th>EAN</th><th>生命周期</th><th>客户</th><th>国家</th><th>含税零售价(PLN)</th><th>未税净价(PLN)</th>
   <th>一级客户报价(PLN)</th><th>二级客户报价(PLN)</th><th>三级客户报价(PLN)</th><th>代理商利润点位</th><th>最终采购价(PLN)</th><th></th>
 </tr></thead>
           <tbody id="priceTableBody"></tbody>
@@ -2263,6 +2264,7 @@ let activeCustFilter = 'ALL';
 let activeCountryFilter = 'ALL';
 let activeQuarterFilter = 'Q3';
 let activeCategoryFilter = 'ALL';
+let activeBrandFilter = 'ALL';
 let activeLifecycleFilter = 'ALL';
 let catalogSearchTerm = '';
 
@@ -2318,6 +2320,9 @@ function productType(product){
   return '无线路由器';
 }
 const CATEGORY_LIST = ['Mesh路由系统','USB无线网卡','室外CPE','4G/5G路由器','交换机','NVR录像机','智能摄像机','企业AP/天线','网络配件','无线路由器'];
+const BRAND_LIST = ['Tenda','IP-COM'];
+const IPCOM_MODELS = new Set([]);
+function productBrand(product){ return IPCOM_MODELS.has(product) ? 'IP-COM' : 'Tenda'; }
 function categoryClass(cat){
   return ({
     'Mesh路由系统':'cat-mesh','USB无线网卡':'cat-usb','室外CPE':'cat-cpe','4G/5G路由器':'cat-4g',
@@ -2505,7 +2510,7 @@ function renderQuarterTabs(){
     t.addEventListener('click', ()=>{
       activeQuarterFilter = t.dataset.quarter;
       activeCountryFilter = 'ALL'; activeCustFilter = 'ALL';
-      renderQuarterTabs(); renderCountryTabs(); renderCustTabs(); renderCategoryTabs(); renderPriceTable(); renderKPI(); renderCharts();
+      renderQuarterTabs(); renderCountryTabs(); renderCustTabs(); renderCategoryTabs(); renderBrandTabs(); renderPriceTable(); renderKPI(); renderCharts();
     });
   });
 }
@@ -2563,12 +2568,29 @@ function renderCategoryTabs(){
   });
 }
 
+function renderBrandTabs(){
+  const presentBrands = [...new Set(visibleRows().map(p=>productBrand(p.product)))];
+  const orderedBrands = BRAND_LIST.filter(b=>presentBrands.includes(b));
+  if(!orderedBrands.includes(activeBrandFilter) && activeBrandFilter!=='ALL') activeBrandFilter='ALL';
+  const counts = b => visibleRows().filter(p=>productBrand(p.product)===b).length;
+  const tabs = ['ALL', ...orderedBrands];
+  const el = document.getElementById('brandTabs');
+  el.innerHTML = tabs.map(b=>{
+    const label = b==='ALL' ? '全部品牌' : b;
+    const count = b==='ALL' ? visibleRows().length : counts(b);
+    return `<div class="cust-tab ${activeBrandFilter===b?'active':''}" data-brand="${b}">${label}<span class="count">${count}</span></div>`;
+  }).join('');
+  el.querySelectorAll('.cust-tab').forEach(t=>{
+    t.addEventListener('click', ()=>{ activeBrandFilter = t.dataset.brand; renderBrandTabs(); renderPriceTable(); });
+  });
+}
 function renderPriceTable(){
   const tbody = document.getElementById('priceTableBody');
   let rows = visibleRows();
   if(activeCountryFilter!=='ALL') rows = rows.filter(p=>custCountry(p.cust)===activeCountryFilter);
   if(activeCustFilter!=='ALL') rows = rows.filter(p=>p.cust===activeCustFilter);
   if(activeCategoryFilter!=='ALL') rows = rows.filter(p=>productType(p.product)===activeCategoryFilter);
+  if(activeBrandFilter!=='ALL') rows = rows.filter(p=>productBrand(p.product)===activeBrandFilter);
   const dash = '<span style="color:var(--text-faint)">—</span>';
   tbody.innerHTML = rows.map(p=>{
     const hasCost = typeof p.costUSD === 'number';
@@ -2578,6 +2600,7 @@ function renderPriceTable(){
     return `
     <tr>
       <td><span class="cat-badge ${categoryClass(productType(p.product))}">${productType(p.product)}</span></td>
+      <td>${productBrand(p.product)}</td>
       <td title="${productDescription(p.product)}">${p.product}${p.category?` <span style="color:var(--text-faint);font-size:11px;">(${p.category})</span>`:''}</td>
       <td class="num-cell">${(p.ean || eanOf(p.product)) || dash}</td>
       <td><span class="lc-badge ${lifecycleClass(lifecycleOf(p.product))}">${lifecycleOf(p.product)}</span></td>

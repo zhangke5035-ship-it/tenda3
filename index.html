@@ -154,6 +154,17 @@
 <body>
 
 <!-- ===================== 登录门禁 ===================== -->
+  <div id="langSwitcher">
+  <button type="button" class="lang-btn" data-lang="zh">中文</button>
+  <button type="button" class="lang-btn" data-lang="en">EN</button>
+  <button type="button" class="lang-btn" data-lang="pl">PL</button>
+</div>
+<style>
+  #langSwitcher{position:fixed;top:14px;right:20px;z-index:1100;display:flex;gap:4px;background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:4px;box-shadow:0 4px 14px rgba(0,0,0,0.35);}
+  #langSwitcher .lang-btn{background:transparent;border:none;color:var(--text-dim);font-size:12px;font-weight:500;padding:6px 12px;border-radius:16px;cursor:pointer;transition:background .12s ease,color .12s ease;}
+  #langSwitcher .lang-btn:hover{color:var(--text);}
+  #langSwitcher .lang-btn.active{background:var(--copper);color:#1A130B;}
+</style>
 <div id="authGate">
   <div class="auth-card">
     <div class="auth-brand">
@@ -3079,6 +3090,209 @@ if (priceVersionInput && brandVerEl){
     brandVerEl.textContent = '数据版本 ' + v;
   });
 }
+</script>
+  <script>
+const I18N_LANG_KEY = 'tenda_lang';
+let currentLang = localStorage.getItem(I18N_LANG_KEY) || 'zh';
+
+// [中文, English, Polski] —— 可以随时往这个数组里加新条目
+const I18N_DICT = [
+  ['密码登录','Sign in','Logowanie hasłem'],
+  ['账号由管理员线下创建并分配，如无账号请联系管理员，本页面不提供自助注册。','Accounts are created offline by an admin. Contact your admin if you need one — self-registration is not available.','Konta tworzy administrator offline. Skontaktuj się z administratorem — brak samodzielnej rejestracji.'],
+  ['邮箱','Email','E-mail'],
+  ['密码','Password','Hasło'],
+  ['登录','Log in','Zaloguj'],
+  ['仅限管理员分配的账号登录','Only accounts assigned by an admin can sign in','Logowanie tylko dla kont przydzielonych przez administratora'],
+  ['Tenda 波兰控制台','Tenda Poland Console','Tenda Konsola Polska'],
+  ['中国总部','China HQ','Centrala Chiny'],
+  ['波兰站点','Poland Site','Oddział Polska'],
+  ['数据版本','Data Version','Wersja danych'],
+  ['参考汇率','Reference Rate','Kurs referencyjny'],
+  ['退出登录','Log out','Wyloguj się'],
+  ['导出当前表格 CSV','Export table as CSV','Eksportuj tabelę CSV'],
+  ['打印 / 导出 PDF','Print / Export PDF','Drukuj / Eksportuj PDF'],
+  ['总览','Overview','Przegląd'],
+  ['报价管理','Pricing','Zarządzanie cenami'],
+  ['营销费用','Marketing Spend','Wydatki marketingowe'],
+  ['销售订单','Sales Orders','Zamówienia sprzedaży'],
+  ['波兰站点 Incom / Action / Eltrox / SGM 代理的报价与利润健康度（数据来自 26M71 月度价格表）','Pricing & margin health for Poland-site agents Incom / Action / Eltrox / SGM (from the 26M71 monthly price list)','Kondycja cen i marż dla agentów Incom / Action / Eltrox / SGM (dane z listy cen 26M71)'],
+  ['目前只有波兰站点（Incom / Action / Eltrox）有完整报价数据。SGM 属于捷克/斯洛伐克市场，Intelek 属于捷克，DC-Link 属于乌克兰——这三家客户信息已经录入，但还没有对应的月度价格表，报价和利润数据会显示为空。上传各自国家的价格文件后即可补全。','Only the Poland site (Incom / Action / Eltrox) has full quote data. SGM covers Czech/Slovakia, Intelek covers Czech, DC-Link covers Ukraine — these customers are registered but have no monthly price list yet, so their quote and margin data show as empty. Upload each country\'s price file to complete it.','Pełne dane ofertowe ma tylko oddział Polska (Incom / Action / Eltrox). SGM obejmuje Czechy/Słowację, Intelek Czechy, DC-Link Ukrainę — dane klientów są wprowadzone, ale brak cennika miesięcznego, więc dane ofert i marż są puste. Prześlij cennik danego kraju, aby uzupełnić.'],
+  ['价格航线：从出厂成本到零售价','Price route: from factory cost to retail','Ścieżka ceny: od kosztu fabrycznego do detalicznej'],
+  ['选择一个','Select a','Wybierz'],
+  ['产品 × 客户','product × customer','produkt × klient'],
+  ['组合，查看真实报价表中的加价结构','combo to see the real markup structure from the quote sheet','kombinację, aby zobaczyć strukturę marży z arkusza ofert'],
+  ['价格变化 Top 10','Top 10 price changes','Top 10 zmian cen'],
+  ['按未税净价环比变化幅度排序，目前只有 Eltrox 有跨季度数据','Sorted by QoQ change in net price; only Eltrox has cross-quarter data so far','Sortowane wg zmiany ceny netto kw/kw; tylko Eltrox ma dane międzykwartalne'],
+  ['产品型号','Product Model','Model produktu'],
+  ['未税净价','Net Price','Cena netto'],
+  ['环比变化','QoQ Change','Zmiana kw/kw'],
+  ['各客户净利率对比','Net Margin by Customer','Marża netto wg klienta'],
+  ['按客户汇总的平均净利率（来自报价表','Average net margin by customer (from the quote sheet ','Średnia marża netto wg klienta (z arkusza ofert '],
+  ['产品净利率分布','Product Margin Distribution','Rozkład marży produktu'],
+  ['各产品在不同客户下的净利率区间','Margin range per product across customers','Zakres marży produktu u różnych klientów'],
+  ['覆盖产品数','Products Covered','Liczba produktów'],
+  ['平均净利率','Avg Net Margin','Średnia marża netto'],
+  ['预警组合数','Alert Combos','Kombinacje ostrzegawcze'],
+  ['条报价','quotes','ofert'],
+  ['个客户','customers','klientów'],
+  ['基于','Based on','Na podstawie'],
+  ['条有完整成本数据的报价','quotes with full cost data','ofert z pełnymi danymi kosztowymi'],
+  ['净利率低于','Net margin below','Marża netto poniżej'],
+  ['阈值','threshold','progu'],
+  ['提取自总部《财务价26M71》波兰站','Extracted from HQ "Finance Price 26M71" Poland sheet','Wyodrębnione z arkusza HQ "Cena finansowa 26M71" Polska'],
+  ['报价','quote','oferta'],
+  ['工作表','worksheet','arkusz'],
+  ['报价版本号码','Quote Version','Wersja oferty'],
+  ['总部每月更新报价表后，在此同步最新版本号，会自动同步到左侧边栏','After HQ updates the monthly quote sheet, sync the latest version here — it updates the sidebar automatically','Po aktualizacji arkusza przez centralę zsynchronizuj tu numer wersji — pasek boczny zaktualizuje się automatycznie'],
+  ['当前报价版本','Current Quote Version','Aktualna wersja oferty'],
+  ['报价明细','Quote Details','Szczegóły ofert'],
+  ['待录入','pending entry','oczekuje na wpis'],
+  ['当前','current','bieżący'],
+  ['上一季度','last quarter','poprzedni kwartał'],
+  ['全部季度','all quarters','wszystkie kwartały'],
+  ['全部国家','all countries','wszystkie kraje'],
+  ['全部客户','all customers','wszyscy klienci'],
+  ['全部类目','all categories','wszystkie kategorie'],
+  ['波兰','Poland','Polska'],
+  ['捷克','Czech','Czechy'],
+  ['斯洛伐克','Slovakia','Słowacja'],
+  ['乌克兰','Ukraine','Ukraina'],
+  ['类目','Category','Kategoria'],
+  ['生命周期','Lifecycle','Cykl życia'],
+  ['客户','Customer','Klient'],
+  ['国家','Country','Kraj'],
+  ['含税零售价','Retail Price (incl. VAT)','Cena detaliczna (z VAT)'],
+  ['一级客户报价','Tier-1 Customer Price','Cena klienta 1. poziomu'],
+  ['二级客户报价','Tier-2 Customer Price','Cena klienta 2. poziomu'],
+  ['三级客户报价','Tier-3 Customer Price','Cena klienta 3. poziomu'],
+  ['代理商利润点位','Agent Margin %','Marża agenta %'],
+  ['最终采购价','Final Purchase Price','Ostateczna cena zakupu'],
+  ['成长期','Growth','Wzrost'],
+  ['成熟期','Mature','Dojrzały'],
+  ['衰退期','Decline','Spadek'],
+  ['淘汰期','Phase-out','Wycofywany'],
+  ['Mesh路由系统','Mesh Systems','Systemy Mesh'],
+  ['USB无线网卡','USB Wi-Fi Adapters','Karty Wi-Fi USB'],
+  ['室外CPE','Outdoor CPE','CPE zewnętrzne'],
+  ['4G/5G路由器','4G/5G Routers','Routery 4G/5G'],
+  ['交换机','Switches','Switche'],
+  ['NVR录像机','NVR Recorders','Rejestratory NVR'],
+  ['智能摄像机','Smart Cameras','Kamery IP'],
+  ['企业AP/天线','Enterprise AP/Antenna','AP/Antena biznesowa'],
+  ['网络配件','Network Accessories','Akcesoria sieciowe'],
+  ['无线路由器','Wireless Routers','Routery bezprzewodowe'],
+  ['直接客户','Direct Customer','Klient bezpośredni'],
+  ['代理商','Agent','Agent'],
+  ['型号生命周期库','Model Lifecycle Library','Biblioteka cyklu życia modeli'],
+  ['搜索型号，例如','Search model, e.g.','Szukaj modelu, np.'],
+  ['新增活动','Add Campaign','Dodaj kampanię'],
+  ['活动名称','Campaign Name','Nazwa kampanii'],
+  ['活动类型','Campaign Type','Typ kampanii'],
+  ['月份','Month','Miesiąc'],
+  ['预留金额','Budget','Budżet'],
+  ['实际使用','Actual Spend','Rzeczywisty wydatek'],
+  ['状态','Status','Status'],
+  ['活动列表','Campaign List','Lista kampanii'],
+  ['品牌营销','Brand Marketing','Marketing marki'],
+  ['渠道营销','Channel Marketing','Marketing kanałowy'],
+  ['渠道激励','Channel Incentive','Zachęta kanałowa'],
+  ['媒体软文','Media Article','Artykuł sponsorowany'],
+  ['社群媒体','Social Media','Media społecznościowe'],
+  ['促销','Promotion','Promocja'],
+  ['线上营销','Online Marketing','Marketing online'],
+  ['线下营销','Offline Marketing','Marketing offline'],
+  ['一次性投入','One-time Investment','Inwestycja jednorazowa'],
+  ['计划中','Planned','Planowane'],
+  ['进行中','In Progress','W toku'],
+  ['已结束','Completed','Zakończone'],
+  ['记录波兰站点客户的实际销售订单，跟踪发货与完成状态','Track actual sales orders for Poland-site customers, from shipping to completion','Śledź rzeczywiste zamówienia klientów oddziału Polska, od wysyłki do realizacji'],
+  ['新增订单','Add Order','Dodaj zamówienie'],
+  ['订单号','Order No.','Nr zamówienia'],
+  ['下单日期','Order Date','Data zamówienia'],
+  ['数量','Quantity','Ilość'],
+  ['单价','Unit Price','Cena jednostkowa'],
+  ['金额','Amount','Kwota'],
+  ['待处理','Pending','Oczekujące'],
+  ['已发货','Shipped','Wysłane'],
+  ['已完成','Completed','Zakończone'],
+  ['已取消','Cancelled','Anulowane'],
+  ['订单列表','Order List','Lista zamówień'],
+  ['订单总数','Total Orders','Liczba zamówień'],
+  ['订单总金额','Total Order Value','Łączna wartość zamówień'],
+  ['待处理订单','Pending Orders','Oczekujące zamówienia'],
+  ['上一页','Previous','Poprzednia'],
+  ['下一页','Next','Następna'],
+  ['产品简介','Product Summary','Opis produktu'],
+  ['新增','Add','Dodaj'],
+  ['删除','Delete','Usuń'],
+  ['编辑','Edit','Edytuj'],
+  ['搜索','Search','Szukaj'],
+  ['筛选','Filter','Filtruj'],
+  ['共','Total','Razem'],
+  ['条','items','poz.']
+];
+I18N_DICT.sort((a,b)=>b[0].length-a[0].length);
+
+function translateOne(original){
+  if (currentLang === 'zh') return original;
+  let result = original;
+  I18N_DICT.forEach(([zh, en, pl])=>{
+    if (result.indexOf(zh) !== -1){
+      const target = currentLang === 'en' ? en : pl;
+      result = result.split(zh).join(target);
+    }
+  });
+  return result;
+}
+
+const i18nOriginalText = new WeakMap();
+
+function translateTextNodes(root){
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null);
+  const nodes = [];
+  let n;
+  while ((n = walker.nextNode())) nodes.push(n);
+  nodes.forEach(node=>{
+    const parentTag = node.parentNode && node.parentNode.nodeName;
+    if (parentTag === 'SCRIPT' || parentTag === 'STYLE') return;
+    let original = i18nOriginalText.get(node);
+    if (original === undefined){
+      original = node.nodeValue;
+      i18nOriginalText.set(node, original);
+    }
+    node.nodeValue = translateOne(original);
+  });
+}
+
+function translatePlaceholders(root){
+  root.querySelectorAll('[placeholder]').forEach(el=>{
+    if (el.dataset.i18nOrigPh === undefined){
+      el.dataset.i18nOrigPh = el.getAttribute('placeholder');
+    }
+    el.setAttribute('placeholder', translateOne(el.dataset.i18nOrigPh));
+  });
+}
+
+function applyLanguage(lang){
+  currentLang = lang;
+  localStorage.setItem(I18N_LANG_KEY, lang);
+  translateTextNodes(document.body);
+  translatePlaceholders(document.body);
+  document.querySelectorAll('#langSwitcher .lang-btn').forEach(btn=>{
+    btn.classList.toggle('active', btn.dataset.lang === lang);
+  });
+}
+
+document.querySelectorAll('#langSwitcher .lang-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=> applyLanguage(btn.dataset.lang));
+});
+
+new MutationObserver(()=>{
+  translateTextNodes(document.body);
+  translatePlaceholders(document.body);
+}).observe(document.body, {childList:true, subtree:true});
+
+applyLanguage(currentLang);
 </script>
 </body>
 </html>

@@ -230,6 +230,18 @@
   @media (max-width:1100px){.inv-stat-grid{grid-template-columns:repeat(2,1fr);}}
   .tier-cell{cursor:pointer;}
   .tier-cell.masked{color:var(--text-faint);letter-spacing:2px;user-select:none;}
+  .dmp-cell{cursor:pointer;color:var(--text-faint);font-size:12.5px;text-decoration:underline dotted;text-underline-offset:2px;}
+  .dmp-cell:hover{color:var(--text-dim);}
+  .dmp-cell.open{color:var(--copper);text-decoration:none;font-weight:600;}
+  .dmp-detail-row td{background:rgba(255,255,255,0.015);padding:16px 20px;}
+  .dmp-detail-title{font-size:12px;color:var(--text-dim);margin-bottom:10px;}
+  .dmp-rank-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+  .dmp-rank-row:last-child{margin-bottom:0;}
+  .dmp-rank-badge{width:20px;height:20px;border-radius:50%;background:var(--copper);color:#241505;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .dmp-rank-label{width:70px;flex-shrink:0;font-size:12.5px;color:var(--text-dim);}
+  .dmp-bar-track{flex:1;height:10px;background:var(--border-soft);border-radius:5px;overflow:hidden;}
+  .dmp-bar-fill{height:100%;background:var(--copper);border-radius:5px;}
+  .dmp-rank-value{width:90px;text-align:right;flex-shrink:0;font-size:13px;font-weight:600;color:#fff;}
 </style>
 <div id="authGate">
   <div class="auth-card">
@@ -394,7 +406,7 @@
         <table>
          <thead><tr>
   <th>类目</th><th>品牌</th><th>产品型号</th><th>产品信息描述</th><th>EAN</th><th>生命周期</th><th data-key="customer">客户</th><th data-key="country">国家</th><th>币种</th><th data-key="retail">含税零售价</th><th data-key="net">未税净价</th>
-  <th>一级客户报价</th><th>二级客户报价</th><th>三级客户报价</th><th>代理商利润点位</th><th>最终采购价</th><th></th>
+  <th>DMP建议销售价</th><th>代理商利润点位</th><th>最终采购价</th><th></th>
 </tr></thead>
           <tbody id="priceTableBody"></tbody>
         </table>
@@ -3578,9 +3590,13 @@ function injectAgentTiers(){
     const tier2 = retail/(1+effectiveVat)*(1-0.15);
     const tier3 = retail/(1+effectiveVat)*(1-0.25);
 
-    const td1 = document.createElement('td'); td1.className='num-cell tier-cell masked'; td1.dataset.value = fmtMoney(tier1, symbol); td1.textContent = '•••••';
-    const td2 = document.createElement('td'); td2.className='num-cell tier-cell masked'; td2.dataset.value = fmtMoney(tier2, symbol); td2.textContent = '•••••';
-    const td3 = document.createElement('td'); td3.className='num-cell tier-cell masked'; td3.dataset.value = fmtMoney(tier3, symbol); td3.textContent = '•••••';
+    const tdDmp = document.createElement('td');
+    tdDmp.className = 'num-cell dmp-cell';
+    tdDmp.dataset.tier1 = tier1.toFixed(2);
+    tdDmp.dataset.tier2 = tier2.toFixed(2);
+    tdDmp.dataset.tier3 = tier3.toFixed(2);
+    tdDmp.dataset.symbol = symbol;
+    tdDmp.textContent = '点击产品查看';
 
     const tdProfit = document.createElement('td');
     tdProfit.className = 'num-cell';
@@ -3591,9 +3607,7 @@ function injectAgentTiers(){
     tdFinal.textContent = fmtMoney(computeFinalPurchasePrice(retail, fixedProfit, effectiveVat), symbol);
 
     const buttonCell = row.lastElementChild;
-    row.insertBefore(td1, buttonCell);
-    row.insertBefore(td2, buttonCell);
-    row.insertBefore(td3, buttonCell);
+    row.insertBefore(tdDmp, buttonCell);
     row.insertBefore(tdProfit, buttonCell);
     row.insertBefore(tdFinal, buttonCell);
 
@@ -3601,26 +3615,60 @@ function injectAgentTiers(){
   });
 }
 
+function toggleDmpDetailRow(row, cell){
+  const existing = row.nextElementSibling;
+  if (existing && existing.classList.contains('dmp-detail-row')){
+    existing.remove();
+    cell.textContent = '点击产品查看';
+    cell.classList.remove('open');
+    return;
+  }
+  document.querySelectorAll('.dmp-detail-row').forEach(r=>r.remove());
+  document.querySelectorAll('.dmp-cell.open').forEach(c=>{ c.textContent = '点击产品查看'; c.classList.remove('open'); });
+
+  const t1 = parseFloat(cell.dataset.tier1);
+  const t2 = parseFloat(cell.dataset.tier2);
+  const t3 = parseFloat(cell.dataset.tier3);
+  const symbol = cell.dataset.symbol;
+  const maxVal = t1 || 1;
+  const tiers = [
+    {label:'一级报价', value:t1},
+    {label:'二级报价', value:t2},
+    {label:'三级报价', value:t3}
+  ];
+  const barsHtml = tiers.map((t,i)=>{
+    const pct = Math.max(4, Math.round((t.value/maxVal)*100));
+    return '<div class="dmp-rank-row">' +
+      '<span class="dmp-rank-badge">' + (i+1) + '</span>' +
+      '<span class="dmp-rank-label">' + t.label + '</span>' +
+      '<div class="dmp-bar-track"><div class="dmp-bar-fill" style="width:' + pct + '%;"></div></div>' +
+      '<span class="dmp-rank-value">' + fmtMoney(t.value, symbol) + '</span>' +
+      '</div>';
+  }).join('');
+
+  const colCount = row.children.length;
+  const detailRow = document.createElement('tr');
+  detailRow.className = 'dmp-detail-row';
+  const detailTd = document.createElement('td');
+  detailTd.colSpan = colCount;
+  detailTd.innerHTML = '<div class="dmp-detail-title">DMP建议销售价排名</div>' + barsHtml;
+  detailRow.appendChild(detailTd);
+  row.parentNode.insertBefore(detailRow, row.nextSibling);
+
+  cell.textContent = '收起 ▲';
+  cell.classList.add('open');
+}
+
 const priceTableBodyForTiers = document.getElementById('priceTableBody');
 if (priceTableBodyForTiers){
   new MutationObserver(()=>{ injectAgentTiers(); }).observe(priceTableBodyForTiers, {childList:true});
   injectAgentTiers();
   priceTableBodyForTiers.addEventListener('click', (e)=>{
-    if (e.target.closest('.del-btn') || e.target.closest('.desc-edit')) return;
-    const row = e.target.closest('tr');
+    const cell = e.target.closest('.dmp-cell');
+    if (!cell) return;
+    const row = cell.closest('tr');
     if (!row) return;
-    const cells = row.querySelectorAll('.tier-cell');
-    if (!cells.length) return;
-    const reveal = cells[0].classList.contains('masked');
-    cells.forEach(td=>{
-      if (reveal){
-        td.textContent = td.dataset.value || '';
-        td.classList.remove('masked');
-      } else {
-        td.textContent = '•••••';
-        td.classList.add('masked');
-      }
-    });
+    toggleDmpDetailRow(row, cell);
   });
 }
 </script>
@@ -3735,6 +3783,7 @@ const I18N_DICT = [
   ['客户','Customer','Klient'],
   ['国家','Country','Kraj'],
   ['含税零售价','Retail Price (incl. VAT)','Cena detaliczna (z VAT)'],
+  ['DMP建议销售价','DMP Suggested Price','Sugerowana cena DMP'],
   ['一级客户报价','Tier-1 Customer Price','Cena klienta 1. poziomu'],
   ['二级客户报价','Tier-2 Customer Price','Cena klienta 2. poziomu'],
   ['三级客户报价','Tier-3 Customer Price','Cena klienta 3. poziomu'],

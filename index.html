@@ -275,6 +275,11 @@
       <div class="viewhead">
         <div><h2>报价管理</h2><p>提取自总部《财务价26M71》波兰站"报价"工作表</p></div>
       </div>
+      <div class="cust-tabs" id="pricingSubTabs">
+        <div class="cust-tab active" data-subview="customer">客户报价</div>
+        <div class="cust-tab" data-subview="hq">总部报价</div>
+      </div>
+      <div id="pricingSubview-customer">
       <div class="notebox">
         表中「未税净价」「单位盈亏」「净利率」均为报价表原始计算结果，已包含品牌预留、MDF 预留、风险与指标预留等费用，口径与总部一致。「生命周期」取自《报价型号生命周期_26年6月》清单；「EAN」取自《Q3_Price》价目表。报价明细覆盖了 <b>257 款型号 × 6 个客户</b>（Incom / Action / Eltrox / SGM / Intelek / DC-Link），并新增了<b>报价周期筛选</b>：Eltrox 同时有 Q2、Q3 两个季度的真实价目表，可以切换"Q3（当前）/ Q2（上一季度）/ 全部季度"查看价格随时间的变化，「环比(QoQ)」列会标出未税净价相对上一季度的涨跌幅。其余客户（Incom/Action/SGM 有10款、Intelek/DC-Link 全部）暂时只有 Q3 这一个快照，其中 10 款有 Incom、Action、SGM 的真实出厂成本和净利率数据（来自 26M71 报价表），剩余的客户 × 型号组合是<b>空报价</b>（显示"—"）。等你提供其他季度或其他客户的价格表，我可以继续补上。新增行为你手工补充的数据，需要自行核对口径。
       </div>
@@ -340,7 +345,30 @@
         <div class="catalog-count" id="catalogCount"></div>
         <div class="catalog-grid" id="catalogGrid"></div>
       </div>
-    </section>
+    </div>
+      <div id="pricingSubview-hq" style="display:none;">
+        <div class="notebox">
+          总部报价子模块框架已搭建，具体字段与数据将在后续录入（如总部指导零售价、总部结算价、生效日期等）。
+        </div>
+        <div class="panel">
+          <div class="panel-head"><h3>新增总部报价</h3></div>
+          <div class="form-grid">
+            <div class="field"><label>产品型号</label><input id="hq_product" list="modelDatalist" placeholder="例如 W15-Pro"></div>
+            <div class="field"><label>总部指导零售价 (PLN)</label><input id="hq_retail" type="number" placeholder="199"></div>
+            <div class="field"><label>总部结算价 (PLN)</label><input id="hq_settle" type="number" placeholder="120"></div>
+            <div class="field"><label>生效日期</label><input id="hq_date" type="date"></div>
+          </div>
+          <button class="btn" id="addHqPriceBtn">新增</button>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><h3>总部报价列表</h3></div>
+          <table>
+            <thead><tr><th>产品型号</th><th>总部指导零售价(PLN)</th><th>总部结算价(PLN)</th><th>生效日期</th><th></th></tr></thead>
+            <tbody id="hqPriceTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+      </section>
     <!-- ===================== 销售订单 ===================== -->
 <section class="view" id="view-orders">
   <div class="viewhead">
@@ -2848,7 +2876,7 @@ function renderCharts(){
 /* ============ 汇总刷新 ============ */
 function refreshAll(){
   renderQuarterTabs(); populateRouteSelect(); populatePromoSelects(); populatePromoDealSelects(); renderCountryTabs(); renderCustTabs(); renderCategoryTabs(); populateModelDatalist(); renderCatalog();
-  renderKPI(); renderRoute(); renderPriceTable(); renderPromoTable(); renderPromoDealAll(); renderCharts(); renderQoQTable();
+  renderKPI(); renderRoute(); renderPriceTable(); renderPromoTable(); renderPromoDealAll(); renderCharts(); renderQoQTable(); renderHqPriceTable();
 }
 
 /* ============ 事件绑定 ============ */
@@ -2919,6 +2947,53 @@ document.getElementById('addPromoDealBtn').addEventListener('click', ()=>{
   ['pd_name','pd_product','pd_original','pd_promo'].forEach(id=>document.getElementById(id).value='');
   renderPromoDealAll();
 });
+
+let hqPrices = [];
+let nextHqPriceId = 9000;
+
+function renderHqPriceTable(){
+  const tbody = document.getElementById('hqPriceTableBody');
+  if (!tbody) return;
+  tbody.innerHTML = hqPrices.map(h=>`<tr>
+    <td class="mono">${h.product}</td>
+    <td class="num-cell">${h.retail.toFixed(2)}</td>
+    <td class="num-cell">${h.settle.toFixed(2)}</td>
+    <td>${h.date||'—'}</td>
+    <td><button class="del-btn" onclick="deleteHqPrice(${h.id})" title="删除">✕</button></td>
+  </tr>`).join('');
+}
+function deleteHqPrice(id){
+  hqPrices = hqPrices.filter(h=>h.id!==id);
+  renderHqPriceTable();
+}
+
+const pricingSubTabsEl = document.getElementById('pricingSubTabs');
+if (pricingSubTabsEl){
+  pricingSubTabsEl.addEventListener('click', e=>{
+    const tab = e.target.closest('.cust-tab'); if(!tab) return;
+    pricingSubTabsEl.querySelectorAll('.cust-tab').forEach(t=>t.classList.remove('active'));
+    tab.classList.add('active');
+    const sub = tab.dataset.subview;
+    document.getElementById('pricingSubview-customer').style.display = sub==='customer' ? '' : 'none';
+    document.getElementById('pricingSubview-hq').style.display = sub==='hq' ? '' : 'none';
+  });
+}
+
+const addHqPriceBtn = document.getElementById('addHqPriceBtn');
+if (addHqPriceBtn){
+  addHqPriceBtn.addEventListener('click', ()=>{
+    const product = document.getElementById('hq_product').value.trim();
+    const retail = parseFloat(document.getElementById('hq_retail').value) || 0;
+    const settle = parseFloat(document.getElementById('hq_settle').value) || 0;
+    const date = document.getElementById('hq_date').value;
+    if(!product){ alert('请填写产品型号'); return; }
+    hqPrices.push({id: nextHqPriceId++, product, retail, settle, date});
+    document.getElementById('hq_product').value='';
+    document.getElementById('hq_retail').value='';
+    document.getElementById('hq_settle').value='';
+    renderHqPriceTable();
+  });
+}
 
 /* ============ 初始化 ============ */
 refreshAll();

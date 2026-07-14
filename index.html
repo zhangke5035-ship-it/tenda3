@@ -202,6 +202,7 @@
       <div class="navitem" data-view="pricing"><span class="dot"></span>报价管理</div>
       <div class="navitem" data-view="promo"><span class="dot"></span>营销费用</div>
       <div class="navitem" data-view="orders"><span class="dot"></span>销售订单</div>
+      <div class="navitem" data-view="promodeals"><span class="dot"></span>促销管理</div>
     </nav>
     <div class="sidebar-foot">
       <div class="rate-box">
@@ -401,6 +402,46 @@
         <tbody id="orderItemTableBody"></tbody>
       </table>
     </div>
+  </div>
+</section>
+    <!-- ================ 促销管理 ================ -->
+<section class="view" id="view-promodeals">
+  <div class="viewhead">
+    <div><h2>促销管理</h2><p>登记各客户/型号的限时促销价格，跟踪促销周期与折扣力度</p></div>
+  </div>
+
+  <div class="kpi-row" id="promoDealKpiRow"></div>
+
+  <div class="panel">
+    <div class="panel-head"><h3>新增促销</h3></div>
+    <div class="form-grid">
+      <div class="field"><label>促销名称</label><input id="pd_name" placeholder="例如 W15-Pro 夏季促销"></div>
+      <div class="field"><label>客户</label><select id="pd_customer"></select></div>
+      <div class="field"><label>产品型号</label><input id="pd_product" list="modelDatalist" placeholder="例如 W15-Pro"></div>
+      <div class="field"><label>原价 (PLN)</label><input id="pd_original" type="number" placeholder="199"></div>
+      <div class="field"><label>促销价 (PLN)</label><input id="pd_promo" type="number" placeholder="169"></div>
+      <div class="field"><label>开始日期</label><input id="pd_start" type="date"></div>
+      <div class="field"><label>结束日期</label><input id="pd_end" type="date"></div>
+      <div class="field"><label>状态</label>
+        <select id="pd_status">
+          <option>未开始</option>
+          <option>进行中</option>
+          <option>已结束</option>
+          <option>已取消</option>
+        </select>
+      </div>
+    </div>
+    <button class="btn" id="addPromoDealBtn">新增促销</button>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head"><h3>促销列表</h3></div>
+    <div class="cust-tabs" id="promoDealStatusTabs"></div>
+    <div class="cust-tabs" id="promoDealCustTabs"></div>
+    <table>
+      <thead><tr><th>促销名称</th><th>客户</th><th>产品型号</th><th>原价(PLN)</th><th>促销价(PLN)</th><th>折扣</th><th>开始日期</th><th>结束日期</th><th>状态</th><th></th></tr></thead>
+      <tbody id="promoDealTableBody"></tbody>
+    </table>
   </div>
 </section>
 
@@ -2650,6 +2691,105 @@ function renderPromoTable(){
 }
 function deletePromo(id){ promotions = promotions.filter(m=>m.id!==id); refreshAll(); }
 
+/* ================ 促销管理 ================ */
+let promoDeals = [];
+let nextPromoDealId = 8000;
+let promoDealStatusFilter = '全部';
+let promoDealCustFilter = '全部';
+
+function populatePromoDealSelects(){
+  const sel = document.getElementById('pd_customer');
+  if (!sel) return;
+  sel.innerHTML = uniqueCustomers().map(c=>`<option value="${c}">${custName(c)}</option>`).join('');
+}
+
+function promoDealDiscountPct(p){
+  return p.original>0 ? (1-p.promo/p.original)*100 : 0;
+}
+
+function renderPromoDealKpi(){
+  const box = document.getElementById('promoDealKpiRow');
+  if (!box) return;
+  const total = promoDeals.length;
+  const active = promoDeals.filter(p=>p.status==='进行中').length;
+  const discounts = promoDeals.filter(p=>p.original>0).map(promoDealDiscountPct);
+  const avgDiscount = discounts.length ? (discounts.reduce((a,b)=>a+b,0)/discounts.length) : 0;
+  box.innerHTML = `
+    <div class="kpi">
+      <div class="label">促销活动总数</div>
+      <div class="value">${total}</div>
+      <div class="sub">${total?('累计登记 '+total+' 个促销'):'暂无促销活动'}</div>
+    </div>
+    <div class="kpi">
+      <div class="label">进行中促销</div>
+      <div class="value">${active}</div>
+      <div class="sub">当前状态为"进行中"的促销数</div>
+    </div>
+    <div class="kpi">
+      <div class="label">平均折扣力度</div>
+      <div class="value">${avgDiscount.toFixed(1)}%</div>
+      <div class="sub">按(原价-促销价)/原价计算</div>
+    </div>
+  `;
+}
+
+function renderPromoDealTabs(){
+  const statusBox = document.getElementById('promoDealStatusTabs');
+  const custBox = document.getElementById('promoDealCustTabs');
+  if (!statusBox || !custBox) return;
+  const statuses = ['全部','未开始','进行中','已结束','已取消'];
+  statusBox.innerHTML = statuses.map(s=>{
+    const count = s==='全部' ? promoDeals.length : promoDeals.filter(p=>p.status===s).length;
+    return `<div class="cust-tab ${promoDealStatusFilter===s?'active':''}" data-status="${s}">${s}<span class="count">${count}</span></div>`;
+  }).join('');
+  const custKeys = ['全部', ...uniqueCustomers()];
+  custBox.innerHTML = custKeys.map(k=>{
+    const label = k==='全部' ? '全部客户' : custName(k);
+    const count = k==='全部' ? promoDeals.length : promoDeals.filter(p=>p.cust===k).length;
+    return `<div class="cust-tab ${promoDealCustFilter===k?'active':''}" data-cust="${k}">${label}<span class="count">${count}</span></div>`;
+  }).join('');
+  statusBox.querySelectorAll('.cust-tab').forEach(tab=>{
+    tab.addEventListener('click', ()=>{ promoDealStatusFilter = tab.dataset.status; renderPromoDealAll(); });
+  });
+  custBox.querySelectorAll('.cust-tab').forEach(tab=>{
+    tab.addEventListener('click', ()=>{ promoDealCustFilter = tab.dataset.cust; renderPromoDealAll(); });
+  });
+}
+
+function renderPromoDealTable(){
+  const tbody = document.getElementById('promoDealTableBody');
+  if (!tbody) return;
+  let rows = promoDeals;
+  if (promoDealStatusFilter !== '全部') rows = rows.filter(p=>p.status===promoDealStatusFilter);
+  if (promoDealCustFilter !== '全部') rows = rows.filter(p=>p.cust===promoDealCustFilter);
+  tbody.innerHTML = rows.map(p=>{
+    const discount = p.original>0 ? promoDealDiscountPct(p).toFixed(1)+'%' : '—';
+    return `<tr>
+      <td>${p.name}</td>
+      <td>${custName(p.cust)}</td>
+      <td class="mono">${p.product}</td>
+      <td class="num-cell">${p.original.toFixed(2)}</td>
+      <td class="num-cell">${p.promo.toFixed(2)}</td>
+      <td class="num-cell">${discount}</td>
+      <td>${p.start||'—'}</td>
+      <td>${p.end||'—'}</td>
+      <td><span class="status ${statusClass(p.status)}"><span class="sdot"></span>${p.status}</span></td>
+      <td><button class="del-btn" onclick="deletePromoDeal(${p.id})" title="删除">✕</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function deletePromoDeal(id){
+  promoDeals = promoDeals.filter(p=>p.id!==id);
+  renderPromoDealAll();
+}
+
+function renderPromoDealAll(){
+  renderPromoDealKpi();
+  renderPromoDealTabs();
+  renderPromoDealTable();
+}
+
 /* ============ 利润监控表 ============ */
 /* ============ 图表 ============ */
 let chartCustomerMargin, chartProductMargin;
@@ -2692,8 +2832,8 @@ function renderCharts(){
 
 /* ============ 汇总刷新 ============ */
 function refreshAll(){
-  renderQuarterTabs(); populateRouteSelect(); populatePromoSelects(); renderCountryTabs(); renderCustTabs(); renderCategoryTabs(); populateModelDatalist(); renderCatalog();
-  renderKPI(); renderRoute(); renderPriceTable(); renderPromoTable(); renderCharts(); renderQoQTable();
+  renderQuarterTabs(); populateRouteSelect(); populatePromoSelects(); populatePromoDealSelects(); renderCountryTabs(); renderCustTabs(); renderCategoryTabs(); populateModelDatalist(); renderCatalog();
+  renderKPI(); renderRoute(); renderPriceTable(); renderPromoTable(); renderPromoDealAll(); renderCharts(); renderQoQTable();
 }
 
 /* ============ 事件绑定 ============ */
@@ -2744,6 +2884,24 @@ document.getElementById('addPromoBtn').addEventListener('click', ()=>{
   });
   ['m_name','m_month','m_budget','m_actual'].forEach(id=>document.getElementById(id).value='');
   refreshAll();
+});
+
+document.getElementById('addPromoDealBtn').addEventListener('click', ()=>{
+  const name = document.getElementById('pd_name').value.trim();
+  const product = document.getElementById('pd_product').value.trim();
+  const original = parseFloat(document.getElementById('pd_original').value) || 0;
+  const promo = parseFloat(document.getElementById('pd_promo').value) || 0;
+  if(!name || !product || !original || !promo){ alert('请填写促销名称、产品型号、原价和促销价'); return; }
+  promoDeals.push({
+    id: nextPromoDealId++, name, product,
+    cust: document.getElementById('pd_customer').value,
+    original, promo,
+    start: document.getElementById('pd_start').value,
+    end: document.getElementById('pd_end').value,
+    status: document.getElementById('pd_status').value
+  });
+  ['pd_name','pd_product','pd_original','pd_promo'].forEach(id=>document.getElementById(id).value='');
+  renderPromoDealAll();
 });
 
 /* ============ 初始化 ============ */

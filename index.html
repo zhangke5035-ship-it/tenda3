@@ -3132,36 +3132,55 @@ function computeVat(countryText){
   if (!countryText) return null;
   if (countryText.indexOf('波兰') !== -1) return 0.23;
   if (countryText.indexOf('捷克') !== -1) return 0.21;
-  return null; // 乌克兰等未指定国家，暂无对应税率
+  return null;
 }
 function computeFinalPurchasePrice(retail, profitPct, vat){
   return (retail/(1+vat)) * (1 - 0.25) * (1 - profitPct/100);
 }
 
+function getPriceHeaderIndex(prefix){
+  const tbody = document.getElementById('priceTableBody');
+  if (!tbody) return -1;
+  const table = tbody.closest('table');
+  if (!table) return -1;
+  const ths = table.querySelectorAll('thead th');
+  for (let i=0;i<ths.length;i++){
+    if (ths[i].textContent.trim().indexOf(prefix) === 0) return i;
+  }
+  return -1;
+}
+
 function injectAgentTiers(){
   const tbody = document.getElementById('priceTableBody');
   if (!tbody) return;
+  const idxRetail = getPriceHeaderIndex('含税零售价');
+  const idxCountry = getPriceHeaderIndex('国家');
+  const idxCust = getPriceHeaderIndex('客户');
+  const idxNet = getPriceHeaderIndex('未税净价');
+  if (idxRetail===-1 || idxCountry===-1 || idxCust===-1 || idxNet===-1) return;
+
   const rows = Array.from(tbody.querySelectorAll('tr'));
   rows.forEach(row=>{
     if (row.dataset.tiersInjected === '1') return;
     const cells = Array.from(row.children);
-    if (cells.length < 13) return;
+    if (cells.length < idxNet+5) return;
 
-    const retail = parseMoneyText(cells[6].innerText);
-    const countryText = cells[5].innerText;
-    const custText = cells[4].innerText;
+    const retail = parseMoneyText(cells[idxRetail].innerText);
+    const countryText = cells[idxCountry].innerText;
+    const custText = cells[idxCust].innerText;
     const isEltrox = custText.indexOf('Eltrox') !== -1;
     const defaultProfit = isEltrox ? 11 : 7;
     const vatRate = computeVat(countryText);
-    const effectiveVat = vatRate !== null ? vatRate : 0.23; // 未指定国家兜底用23%
+    const effectiveVat = vatRate !== null ? vatRate : 0.23;
 
-    // 未税净价：只有波兰/捷克才重新换算，其他国家维持原样
     if (vatRate !== null && !isNaN(retail)){
-      cells[7].textContent = fmtMoney(retail/(1+vatRate));
+      cells[idxNet].textContent = fmtMoney(retail/(1+vatRate));
     }
 
-    // 删除 环比(QoQ)/出厂成本/单位盈亏/净利率 这4列（索引 8,9,10,11），从高到低删避免错位
-    [11,10,9,8].forEach(idx=>{ if (row.children[idx]) row.removeChild(row.children[idx]); });
+    // 未税净价之后紧跟的4列是旧的 环比/出厂成本/单位盈亏/净利率，从后往前删
+    [idxNet+4, idxNet+3, idxNet+2, idxNet+1].forEach(i=>{
+      if (row.children[i]) row.removeChild(row.children[i]);
+    });
 
     const tier1 = retail/(1+effectiveVat)*(1-0.05);
     const tier2 = retail/(1+effectiveVat)*(1-0.15);
@@ -3192,7 +3211,7 @@ function injectAgentTiers(){
     profitInput.addEventListener('input', updateFinal);
     updateFinal();
 
-    const buttonCell = row.children[8];
+    const buttonCell = row.lastElementChild;
     row.insertBefore(td1, buttonCell);
     row.insertBefore(td2, buttonCell);
     row.insertBefore(td3, buttonCell);

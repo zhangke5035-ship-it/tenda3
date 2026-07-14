@@ -301,10 +301,12 @@
         <button class="btn" id="addPriceBtn">新增报价</button>
       </div>
 
-            <div class="panel">
-        <div class="panel-head"><h3>报价版本号码</h3><div class="desc">总部每月更新报价表后，在此同步最新版本号，会自动同步到左侧边栏</div></div>
-        <div class="form-grid" style="grid-template-columns:260px;">
-          <div class="field mono"><label>当前报价版本</label><input id="priceVersion" value="26M71" placeholder="例如 26M71"></div>
+                  <div class="panel">
+        <div class="panel-head"><h3>报价版本号码</h3><div class="desc">总部每月更新报价表后，在此选择或新增最新版本号，会自动同步到左侧边栏</div></div>
+        <div class="form-grid" style="grid-template-columns:200px 200px auto;">
+          <div class="field"><label>当前报价版本</label><select id="priceVersion"></select></div>
+          <div class="field mono"><label>新增版本号</label><input id="newPriceVersion" placeholder="例如 26M72"></div>
+          <div class="field" style="display:flex;align-items:flex-end;"><button class="btn" type="button" id="addPriceVersionBtn">新增版本</button></div>
         </div>
       </div>
 
@@ -3087,14 +3089,40 @@ if (priceTableBodyForTiers){
   injectAgentTiers();
 }
 </script>
-</script>
   <script>
-const priceVersionInput = document.getElementById('priceVersion');
-const brandVerEl = document.getElementById('brandVer');
-if (priceVersionInput && brandVerEl){
-  priceVersionInput.addEventListener('input', ()=>{
-    const v = priceVersionInput.value.trim() || '26M71';
-    brandVerEl.textContent = '数据版本 ' + v;
+let priceVersions = ['26M71'];
+function renderPriceVersionOptions(){
+  const sel = document.getElementById('priceVersion');
+  if (!sel) return;
+  const keep = sel.value;
+  sel.innerHTML = priceVersions.map(v=>'<option value="'+v+'">'+v+'</option>').join('');
+  if (priceVersions.includes(keep)) sel.value = keep;
+  else sel.value = priceVersions[priceVersions.length-1];
+}
+function syncBrandVer(){
+  const sel = document.getElementById('priceVersion');
+  const brandVerEl = document.getElementById('brandVer');
+  if (!sel || !brandVerEl) return;
+  brandVerEl.textContent = '数据版本 ' + sel.value;
+}
+renderPriceVersionOptions();
+syncBrandVer();
+const priceVersionSelectEl = document.getElementById('priceVersion');
+if (priceVersionSelectEl){
+  priceVersionSelectEl.addEventListener('change', syncBrandVer);
+}
+const addPriceVersionBtn = document.getElementById('addPriceVersionBtn');
+if (addPriceVersionBtn){
+  addPriceVersionBtn.addEventListener('click', ()=>{
+    const input = document.getElementById('newPriceVersion');
+    const v = input.value.trim();
+    if (!v){ alert('请输入版本号'); return; }
+    if (!priceVersions.includes(v)) priceVersions.push(v);
+    renderPriceVersionOptions();
+    const sel = document.getElementById('priceVersion');
+    if (sel) sel.value = v;
+    syncBrandVer();
+    input.value = '';
   });
 }
 </script>

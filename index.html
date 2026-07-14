@@ -3008,9 +3008,9 @@ function injectAgentTiers(){
     // 删除 环比(QoQ)/出厂成本/单位盈亏/净利率 这4列（索引 8,9,10,11），从高到低删避免错位
     [11,10,9,8].forEach(idx=>{ if (row.children[idx]) row.removeChild(row.children[idx]); });
 
-    const tier1 = retail/1.23*(1-0.95);
-    const tier2 = retail/1.23*(1-0.85);
-    const tier3 = retail/1.23*(1-0.75);
+    const tier1 = retail/1.23*(1-0.05);
+    const tier2 = retail/1.23*(1-0.15);
+    const tier3 = retail/1.23*(1-0.25);
 
     const td1 = document.createElement('td'); td1.className='num-cell'; td1.textContent = fmtMoney(tier1);
     const td2 = document.createElement('td'); td2.className='num-cell'; td2.textContent = fmtMoney(tier2);

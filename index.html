@@ -228,6 +228,8 @@
   .inv-form-group .inv-field{width:100%;}
   .inv-modal-footer{display:flex;justify-content:flex-end;gap:10px;margin-top:20px;}
   @media (max-width:1100px){.inv-stat-grid{grid-template-columns:repeat(2,1fr);}}
+  .tier-cell{cursor:pointer;}
+  .tier-cell.masked{color:var(--text-faint);letter-spacing:2px;user-select:none;}
 </style>
 <div id="authGate">
   <div class="auth-card">
@@ -3576,9 +3578,9 @@ function injectAgentTiers(){
     const tier2 = retail/(1+effectiveVat)*(1-0.15);
     const tier3 = retail/(1+effectiveVat)*(1-0.25);
 
-    const td1 = document.createElement('td'); td1.className='num-cell'; td1.textContent = fmtMoney(tier1, symbol);
-    const td2 = document.createElement('td'); td2.className='num-cell'; td2.textContent = fmtMoney(tier2, symbol);
-    const td3 = document.createElement('td'); td3.className='num-cell'; td3.textContent = fmtMoney(tier3, symbol);
+    const td1 = document.createElement('td'); td1.className='num-cell tier-cell masked'; td1.dataset.value = fmtMoney(tier1, symbol); td1.textContent = '•••••';
+    const td2 = document.createElement('td'); td2.className='num-cell tier-cell masked'; td2.dataset.value = fmtMoney(tier2, symbol); td2.textContent = '•••••';
+    const td3 = document.createElement('td'); td3.className='num-cell tier-cell masked'; td3.dataset.value = fmtMoney(tier3, symbol); td3.textContent = '•••••';
 
     const tdProfit = document.createElement('td');
     tdProfit.className = 'num-cell';
@@ -3603,6 +3605,23 @@ const priceTableBodyForTiers = document.getElementById('priceTableBody');
 if (priceTableBodyForTiers){
   new MutationObserver(()=>{ injectAgentTiers(); }).observe(priceTableBodyForTiers, {childList:true});
   injectAgentTiers();
+  priceTableBodyForTiers.addEventListener('click', (e)=>{
+    if (e.target.closest('.del-btn') || e.target.closest('.desc-edit')) return;
+    const row = e.target.closest('tr');
+    if (!row) return;
+    const cells = row.querySelectorAll('.tier-cell');
+    if (!cells.length) return;
+    const reveal = cells[0].classList.contains('masked');
+    cells.forEach(td=>{
+      if (reveal){
+        td.textContent = td.dataset.value || '';
+        td.classList.remove('masked');
+      } else {
+        td.textContent = '•••••';
+        td.classList.add('masked');
+      }
+    });
+  });
 }
 </script>
   <script>

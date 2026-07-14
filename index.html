@@ -10,12 +10,12 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root{
-    --bg:#0F1C2E; --surface:#16283F; --surface-alt:#1E3350; --surface-raise:#24395A;
-    --border:#2C425F; --border-soft:#233A56;
-    --text:#EDEFF2; --text-dim:#8FA0B8; --text-faint:#5D7089;
-    --copper:#D08B4C; --copper-soft:#3A2E22;
-    --teal:#4FA9A8; --alert:#E0616B; --alert-soft:#3A2226;
-    --good:#6FBF8B; --good-soft:#1E332A; --radius:3px;
+    --bg:#F5F7FA; --surface:#FFFFFF; --surface-alt:#F0F3F7; --surface-raise:#E8ECF1;
+    --border:#DCE1E8; --border-soft:#E9EDF2;
+    --text:#1A2233; --text-dim:#5B6B80; --text-faint:#8B96A6;
+    --copper:#C1793A; --copper-soft:#FBEEE1;
+    --teal:#2E8B8A; --alert:#D14343; --alert-soft:#FBEAEA;
+    --good:#2F9E5C; --good-soft:#E6F5EC; --radius:3px;
   }
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;height:100%;}
@@ -70,8 +70,8 @@
   tbody tr:hover{background:var(--surface-alt);}
   .num-cell{font-family:'IBM Plex Mono';}
   .tag{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:500;}
-  .tag.type-direct{background:#22314A;color:#9FB4D4;}
-  .tag.type-agent{background:#2A3A2E;color:var(--good);}
+  .tag.type-direct{background:#E8F0FA;color:#2C6FBF;}
+  .tag.type-agent{background:var(--good-soft);color:var(--good);}
   .status{display:inline-flex;align-items:center;gap:6px;font-size:12px;}
   .status .sdot{width:6px;height:6px;border-radius:50%;}
   .status.plan .sdot{background:var(--text-faint);} .status.live .sdot{background:var(--good);} .status.done .sdot{background:var(--text-dim);}
@@ -101,22 +101,22 @@
   .cust-tab.active{background:var(--copper-soft);color:var(--copper);border-color:var(--copper);}
   .cust-tab .count{opacity:0.7;font-size:11px;margin-left:4px;}
   .lc-badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:500;white-space:nowrap;}
-  .lc-badge.lc-growth{background:#1E3350;color:#7FB3E8;}
+  .lc-badge.lc-growth{background:#E8F0FA;color:#2568B8;}
   .lc-badge.lc-mature{background:var(--good-soft);color:var(--good);}
   .lc-badge.lc-decline{background:var(--copper-soft);color:var(--copper);}
   .lc-badge.lc-eol{background:var(--alert-soft);color:var(--alert);}
   .lc-badge.lc-unknown{background:var(--surface-alt);color:var(--text-faint);}
   .cat-badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:500;white-space:nowrap;}
-  .cat-badge.cat-mesh{background:#2A2E45;color:#A7A6E8;}
-  .cat-badge.cat-usb{background:#22314A;color:#7FB3E8;}
-  .cat-badge.cat-cpe{background:#2A3A2E;color:var(--good);}
+  .cat-badge.cat-mesh{background:#EFEDFC;color:#5B52C9;}
+  .cat-badge.cat-usb{background:#E8F0FA;color:#2C6FBF;}
+  .cat-badge.cat-cpe{background:var(--good-soft);color:var(--good);}
   .cat-badge.cat-4g{background:var(--copper-soft);color:var(--copper);}
-  .cat-badge.cat-switch{background:#233A56;color:#9FB4D4;}
-  .cat-badge.cat-nvr{background:#3A2226;color:var(--alert);}
-  .cat-badge.cat-cam{background:#2E2233;color:#C79FE0;}
-  .cat-badge.cat-ap{background:#22403A;color:#6FBFA8;}
+  .cat-badge.cat-switch{background:#EAF0F6;color:#3D6690;}
+  .cat-badge.cat-nvr{background:var(--alert-soft);color:var(--alert);}
+  .cat-badge.cat-cam{background:#F7EDF9;color:#9A3FAE;}
+  .cat-badge.cat-ap{background:#E6F5F1;color:#237863;}
   .cat-badge.cat-acc{background:var(--surface-alt);color:var(--text-faint);}
-  .cat-badge.cat-router{background:#2A2E20;color:#B8C97F;}
+  .cat-badge.cat-router{background:#F3F6E6;color:#74883A;}
   .catalog-tabs{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
   .catalog-search{margin-bottom:14px;}
   .catalog-search input{width:100%;background:var(--surface-alt);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:var(--radius);font-size:13px;}
@@ -131,7 +131,7 @@
   @media print{.sidebar,.btn,.form-grid,.route-select-row{display:none !important;}body{background:#fff;color:#000;}.panel{border:1px solid #ccc;}}
 
   /* ===================== 登录门禁 ===================== */
-  #authGate{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 30% 20%,#152740 0%,var(--bg) 65%);z-index:1000;padding:20px;}
+  #authGate{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 30% 20%,#EAF0F8 0%,var(--bg) 65%);z-index:1000;padding:20px;}
   #authGate.hidden{display:none;}
   .app.hidden{display:none;}
   .auth-card{width:100%;max-width:380px;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:34px 32px 30px 32px;box-shadow:0 20px 60px rgba(0,0,0,0.35);}
@@ -170,8 +170,8 @@
   .inv-stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:20px;}
   .inv-stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px;}
   .inv-stat-label{font-size:12px;color:var(--text-dim);}
-  .inv-stat-value{font-size:24px;font-weight:700;color:#fff;margin-top:8px;}
-  .inv-stat-value.warn{color:#D9A94E;}
+  .inv-stat-value{font-size:24px;font-weight:700;color:var(--text);margin-top:8px;}
+  .inv-stat-value.warn{color:#B8863E;}
   .inv-stat-value.danger{color:var(--alert);}
   .inv-stat-delta{font-size:11.5px;margin-top:6px;color:var(--text-faint);}
   .inv-toolbar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:14px;}
@@ -189,21 +189,21 @@
   .inv-btn-ghost:hover{color:var(--text);border-color:var(--text-faint);}
   .inv-table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
   .inv-table-wrap table{width:100%;border-collapse:collapse;}
-  .inv-table-wrap thead th{text-align:left;font-size:12px;font-weight:600;color:var(--text-faint);text-transform:uppercase;letter-spacing:.03em;padding:12px 16px;border-bottom:1px solid var(--border);background:rgba(255,255,255,0.02);white-space:nowrap;}
+  .inv-table-wrap thead th{text-align:left;font-size:12px;font-weight:600;color:var(--text-faint);text-transform:uppercase;letter-spacing:.03em;padding:12px 16px;border-bottom:1px solid var(--border);background:rgba(0,0,0,0.025);white-space:nowrap;}
   .inv-table-wrap tbody td{padding:13px 16px;border-bottom:1px solid var(--border-soft);font-size:13.5px;color:var(--text);white-space:nowrap;}
   .inv-table-wrap tbody tr:last-child td{border-bottom:none;}
-  .inv-table-wrap tbody tr:hover{background:rgba(255,255,255,0.02);}
+  .inv-table-wrap tbody tr:hover{background:rgba(0,0,0,0.025);}
   .inv-sku{color:var(--text-dim);font-family:'IBM Plex Mono',monospace;font-size:12.5px;}
-  .inv-prod-name{font-weight:600;color:#fff;}
+  .inv-prod-name{font-weight:600;color:var(--text);}
   .inv-prod-cat{font-size:12px;color:var(--text-dim);margin-top:2px;}
-  .inv-qty{font-weight:700;color:#fff;}
+  .inv-qty{font-weight:700;color:var(--text);}
   .inv-unit{color:var(--text-faint);font-size:12px;margin-left:2px;}
   .inv-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:11.5px;font-weight:600;}
   .inv-badge .inv-bdot{width:6px;height:6px;border-radius:50%;}
   .inv-badge-ok{background:var(--good-soft);color:var(--good);}
   .inv-badge-ok .inv-bdot{background:var(--good);}
-  .inv-badge-low{background:rgba(217,169,78,0.14);color:#D9A94E;}
-  .inv-badge-low .inv-bdot{background:#D9A94E;}
+  .inv-badge-low{background:rgba(184,134,62,0.14);color:#96701F;}
+  .inv-badge-low .inv-bdot{background:#B8863E;}
   .inv-badge-out{background:var(--alert-soft);color:var(--alert);}
   .inv-badge-out .inv-bdot{background:var(--alert);}
   .inv-row-actions{display:flex;gap:14px;}
@@ -219,7 +219,7 @@
   .inv-overlay.open{display:flex;}
   .inv-modal{width:480px;max-width:92vw;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:22px 24px;max-height:88vh;overflow-y:auto;}
   .inv-modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
-  .inv-modal-title{font-size:16px;font-weight:700;color:#fff;}
+  .inv-modal-title{font-size:16px;font-weight:700;color:var(--text);}
   .inv-modal-close{cursor:pointer;color:var(--text-dim);font-size:18px;}
   .inv-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
   .inv-form-group{display:flex;flex-direction:column;gap:6px;}
@@ -233,7 +233,7 @@
   .dmp-cell{cursor:pointer;color:var(--text-faint);font-size:12.5px;text-decoration:underline dotted;text-underline-offset:2px;}
   .dmp-cell:hover{color:var(--text-dim);}
   .dmp-cell.open{color:var(--copper);text-decoration:none;font-weight:600;}
-  .dmp-detail-row td{background:rgba(255,255,255,0.015);padding:16px 20px;}
+  .dmp-detail-row td{background:rgba(0,0,0,0.02);padding:16px 20px;}
   .dmp-detail-title{font-size:12px;color:var(--text-dim);margin-bottom:10px;}
   .dmp-rank-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
   .dmp-rank-row:last-child{margin-bottom:0;}
@@ -241,7 +241,7 @@
   .dmp-rank-label{width:70px;flex-shrink:0;font-size:12.5px;color:var(--text-dim);}
   .dmp-bar-track{flex:1;height:10px;background:var(--border-soft);border-radius:5px;overflow:hidden;}
   .dmp-bar-fill{height:100%;background:var(--copper);border-radius:5px;}
-  .dmp-rank-value{width:90px;text-align:right;flex-shrink:0;font-size:13px;font-weight:600;color:#fff;}
+  .dmp-rank-value{width:90px;text-align:right;flex-shrink:0;font-size:13px;font-weight:600;color:var(--text);}
 </style>
 <div id="authGate">
   <div class="auth-card">
@@ -2874,9 +2874,9 @@ function renderCharts(){
   if(chartCustomerMargin) chartCustomerMargin.destroy();
   chartCustomerMargin = new Chart(ctx1, {
     type:'bar',
-    data:{labels:cLabels, datasets:[{data:cData, backgroundColor:'#D08B4C', borderRadius:2, barThickness:26}]},
+    data:{labels:cLabels, datasets:[{data:cData, backgroundColor:'#C1793A', borderRadius:2, barThickness:26}]},
     options:{indexAxis:'y', plugins:{legend:{display:false}},
-      scales:{x:{ticks:{color:'#8FA0B8',callback:v=>v+'%'},grid:{color:'#233A56'}}, y:{ticks:{color:'#EDEFF2',font:{size:11}},grid:{display:false}}}}
+      scales:{x:{ticks:{color:'#5B6B80',callback:v=>v+'%'},grid:{color:'#DCE1E8'}}, y:{ticks:{color:'#1A2233',font:{size:11}},grid:{display:false}}}}
   });
 
   const byProd = {};
@@ -2889,12 +2889,12 @@ function renderCharts(){
   chartProductMargin = new Chart(ctx2, {
     type:'bar',
     data:{labels:pLabels, datasets:[
-      {label:'最低净利率', data:pMin, backgroundColor:'#E0616B', borderRadius:2},
-      {label:'最高净利率', data:pMax, backgroundColor:'#6FBF8B', borderRadius:2}
+      {label:'最低净利率', data:pMin, backgroundColor:'#D14343', borderRadius:2},
+      {label:'最高净利率', data:pMax, backgroundColor:'#2F9E5C', borderRadius:2}
     ]},
-    options:{plugins:{legend:{position:'bottom',labels:{color:'#8FA0B8',font:{size:10},boxWidth:10}}},
-      scales:{x:{ticks:{color:'#8FA0B8',font:{size:9},maxRotation:60,minRotation:60},grid:{display:false}},
-              y:{ticks:{color:'#8FA0B8',callback:v=>v+'%'},grid:{color:'#233A56'}}}}
+    options:{plugins:{legend:{position:'bottom',labels:{color:'#5B6B80',font:{size:10},boxWidth:10}}},
+      scales:{x:{ticks:{color:'#5B6B80',font:{size:9},maxRotation:60,minRotation:60},grid:{display:false}},
+              y:{ticks:{color:'#5B6B80',callback:v=>v+'%'},grid:{color:'#DCE1E8'}}}}
   });
 }
 

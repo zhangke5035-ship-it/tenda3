@@ -2487,7 +2487,12 @@ function renderPromoTable(){
     </tr>`;
   }).join('');
 }
-function deletePromo(id){ promotions = promotions.filter(m=>m.id!==id); refreshAll(); }
+async function deletePromo(id){
+  const { error } = await sb.from('marketing_activities').delete().eq('id', id);
+  if (error){ alert('删除失败：' + error.message); return; }
+  promotions = promotions.filter(m=>m.id!==id);
+  refreshAll();
+}
 
 /* ================ 促销管理 ================ */
 let promoDeals = [];
@@ -2590,7 +2595,9 @@ function renderPromoDealTable(){
     </tr>`;
   }).join('');
 }
-function deletePromoDeal(id){
+async function deletePromoDeal(id){
+  const { error } = await sb.from('promo_deals').delete().eq('id', id);
+  if (error){ alert('删除促销失败：' + error.message); return; }
   promoDeals = promoDeals.filter(p=>p.id!==id);
   renderPromoDealAll();
 }
@@ -2685,18 +2692,18 @@ document.getElementById('addPriceBtn').addEventListener('click', ()=>{
   refreshAll();
 });
 
-document.getElementById('addPromoBtn').addEventListener('click', ()=>{
+document.getElementById('addPromoBtn').addEventListener('click', async ()=>{
   const name = document.getElementById('m_name').value.trim();
   if(!name){ alert('请填写活动名称'); return; }
-  promotions.push({
-    id: nextPromoId++, name,
-    cust: document.getElementById('m_customer').value,
-    type: document.getElementById('m_type').value,
-    month: document.getElementById('m_month').value || '-',
-    budget: parseFloat(document.getElementById('m_budget').value) || 0,
-    actual: parseFloat(document.getElementById('m_actual').value) || 0,
-    status: document.getElementById('m_status').value
-  });
+  const cust = document.getElementById('m_customer').value;
+  const type = document.getElementById('m_type').value;
+  const month = document.getElementById('m_month').value || '-';
+  const budget = parseFloat(document.getElementById('m_budget').value) || 0;
+  const actual = parseFloat(document.getElementById('m_actual').value) || 0;
+  const status = document.getElementById('m_status').value;
+  const { data, error } = await sb.from('marketing_activities').insert({ name, cust, type, month, budget, actual, status }).select().single();
+  if (error){ alert('保存活动失败：' + error.message); return; }
+  promotions.push({ id: data.id, name: data.name, cust: data.cust, type: data.type, month: data.month, budget: Number(data.budget)||0, actual: Number(data.actual)||0, status: data.status });
   ['m_name','m_month','m_budget','m_actual'].forEach(id=>document.getElementById(id).value='');
   refreshAll();
 });
@@ -2733,21 +2740,23 @@ if (pdProductEl){
   pdProductEl.addEventListener('change', updatePromoDealOriginalPrice);
 }
 
-document.getElementById('addPromoDealBtn').addEventListener('click', ()=>{
+document.getElementById('addPromoDealBtn').addEventListener('click', async ()=>{
   const name = document.getElementById('pd_name').value.trim();
   const product = document.getElementById('pd_product').value.trim();
   const original = parseFloat(document.getElementById('pd_original').value) || 0;
   const promo = parseFloat(document.getElementById('pd_promo').value) || 0;
   if(!name || !product || !original || !promo){ alert('请填写促销名称、产品型号、原价和促销价'); return; }
-  promoDeals.push({
-    id: nextPromoDealId++, name, product,
-    cust: document.getElementById('pd_customer').value,
-    type: document.getElementById('pd_type').value,
-    original, promo,
-    start: document.getElementById('pd_start').value,
-    end: document.getElementById('pd_end').value,
-    status: document.getElementById('pd_status').value
-  });
+  const cust = document.getElementById('pd_customer').value;
+  const type = document.getElementById('pd_type').value;
+  const start = document.getElementById('pd_start').value;
+  const end = document.getElementById('pd_end').value;
+  const status = document.getElementById('pd_status').value;
+  const { data, error } = await sb.from('promo_deals').insert({
+    name, cust, type, product, original, promo,
+    start_date: start || null, end_date: end || null, status
+  }).select().single();
+  if (error){ alert('保存促销失败：' + error.message); return; }
+  promoDeals.push({ id: data.id, name: data.name, cust: data.cust, type: data.type, product: data.product, original: Number(data.original)||0, promo: Number(data.promo)||0, start: data.start_date||'', end: data.end_date||'', status: data.status });
   ['pd_name','pd_product','pd_original','pd_promo'].forEach(id=>document.getElementById(id).value='');
   renderPromoDealAll();
 });
@@ -2766,7 +2775,9 @@ function renderHqPriceTable(){
     <td><button class="del-btn" onclick="deleteHqPrice(${h.id})" title="删除">✕</button></td>
   </tr>`).join('');
 }
-function deleteHqPrice(id){
+async function deleteHqPrice(id){
+  const { error } = await sb.from('hq_prices').delete().eq('id', id);
+  if (error){ alert('删除失败：' + error.message); return; }
   hqPrices = hqPrices.filter(h=>h.id!==id);
   renderHqPriceTable();
 }
@@ -2785,13 +2796,15 @@ if (pricingSubTabsEl){
 
 const addHqPriceBtn = document.getElementById('addHqPriceBtn');
 if (addHqPriceBtn){
-  addHqPriceBtn.addEventListener('click', ()=>{
+  addHqPriceBtn.addEventListener('click', async ()=>{
     const product = document.getElementById('hq_product').value.trim();
     const retail = parseFloat(document.getElementById('hq_retail').value) || 0;
     const settle = parseFloat(document.getElementById('hq_settle').value) || 0;
     const date = document.getElementById('hq_date').value;
     if(!product){ alert('请填写产品型号'); return; }
-    hqPrices.push({id: nextHqPriceId++, product, retail, settle, date});
+    const { data, error } = await sb.from('hq_prices').insert({ product, retail, settle, effective_date: date || null }).select().single();
+    if (error){ alert('保存总部报价失败：' + error.message); return; }
+    hqPrices.push({id: data.id, product: data.product, retail: Number(data.retail)||0, settle: Number(data.settle)||0, date: data.effective_date||''});
     document.getElementById('hq_product').value='';
     document.getElementById('hq_retail').value='';
     document.getElementById('hq_settle').value='';
@@ -2828,6 +2841,63 @@ function applyRoleRestrictions(session){
   }
 }
 
+async function loadPromoDeals(){
+  try{
+    const { data, error } = await sb.from('promo_deals').select('*').order('id', {ascending:true});
+    if (error){ console.error('loadPromoDeals', error); return; }
+    promoDeals = (data||[]).map(r=>({
+      id: r.id, name: r.name, cust: r.cust, type: r.type, product: r.product,
+      original: Number(r.original)||0, promo: Number(r.promo)||0,
+      start: r.start_date||'', end: r.end_date||'', status: r.status
+    }));
+    if (typeof renderPromoDealAll === 'function') renderPromoDealAll();
+  }catch(e){ console.error(e); }
+}
+
+async function loadMarketingActivities(){
+  try{
+    const { data, error } = await sb.from('marketing_activities').select('*').order('id', {ascending:true});
+    if (error){ console.error('loadMarketingActivities', error); return; }
+    promotions = (data||[]).map(r=>({
+      id: r.id, name: r.name, cust: r.cust, type: r.type, month: r.month,
+      budget: Number(r.budget)||0, actual: Number(r.actual)||0, status: r.status
+    }));
+    if (typeof renderPromoTable === 'function') renderPromoTable();
+  }catch(e){ console.error(e); }
+}
+
+async function loadOrdersData(){
+  try{
+    const [ordersRes, itemsRes] = await Promise.all([
+      sb.from('orders').select('*').order('id', {ascending:true}),
+      sb.from('order_items').select('*').order('id', {ascending:true})
+    ]);
+    if (ordersRes.error){ console.error('loadOrders', ordersRes.error); }
+    if (itemsRes.error){ console.error('loadOrderItems', itemsRes.error); }
+    orders = (ordersRes.data||[]).map(r=>({ id: r.id, no: r.order_no, cust: r.cust, date: r.order_date||'', status: r.status }));
+    orderItems = (itemsRes.data||[]).map(r=>({ id: r.id, orderId: r.order_id, product: r.product, qty: Number(r.qty)||0, price: Number(r.price)||0 }));
+    if (typeof renderOrders === 'function') renderOrders();
+  }catch(e){ console.error(e); }
+}
+
+async function loadHqPrices(){
+  try{
+    const { data, error } = await sb.from('hq_prices').select('*').order('id', {ascending:true});
+    if (error){ console.error('loadHqPrices', error); return; }
+    hqPrices = (data||[]).map(r=>({ id: r.id, product: r.product, retail: Number(r.retail)||0, settle: Number(r.settle)||0, date: r.effective_date||'' }));
+    if (typeof renderHqPriceTable === 'function') renderHqPriceTable();
+  }catch(e){ console.error(e); }
+}
+
+async function loadAllRemoteData(){
+  await Promise.all([
+    loadPromoDeals(),
+    loadMarketingActivities(),
+    loadOrdersData(),
+    loadHqPrices()
+  ]);
+}
+
 function showApp(session){
   authGateEl.classList.add('hidden');
   appRootEl.classList.remove('hidden');
@@ -2837,6 +2907,7 @@ function showApp(session){
     refreshAll();
     if(typeof renderCharts === 'function') setTimeout(renderCharts, 0);
   }
+  if (typeof loadAllRemoteData === 'function') loadAllRemoteData();
 }
 
 function showLogin(){
@@ -2983,9 +3054,11 @@ function renderOrderTable(){
     });
   });
   body.querySelectorAll('.del-btn').forEach(btn=>{
-    btn.addEventListener('click', (e)=>{
+    btn.addEventListener('click', async (e)=>{
       e.stopPropagation();
       const id = Number(btn.dataset.id);
+      const { error } = await sb.from('orders').delete().eq('id', id);
+      if (error){ alert('删除订单失败：' + error.message); return; }
       orders = orders.filter(o=>o.id!==id);
       orderItems = orderItems.filter(i=>i.orderId!==id);
       renderOrders();
@@ -3035,8 +3108,10 @@ function renderOrderItemTable(){
     </tr>`;
   }).join('');
   body.querySelectorAll('.del-btn').forEach(btn=>{
-    btn.addEventListener('click', ()=>{
+    btn.addEventListener('click', async ()=>{
       const id = Number(btn.dataset.id);
+      const { error } = await sb.from('order_items').delete().eq('id', id);
+      if (error){ alert('删除型号明细失败：' + error.message); return; }
       orderItems = orderItems.filter(i=>i.id!==id);
       renderOrderItemTable();
       renderOrders();
@@ -3046,13 +3121,15 @@ function renderOrderItemTable(){
 
 const addOrderBtn = document.getElementById('addOrderBtn');
 if (addOrderBtn){
-  addOrderBtn.addEventListener('click', ()=>{
+  addOrderBtn.addEventListener('click', async ()=>{
     const no = document.getElementById('o_no').value.trim();
     const cust = document.getElementById('o_customer').value;
     const date = document.getElementById('o_date').value;
     const status = document.getElementById('o_status').value;
     if (!no){ alert('请填写订单号'); return; }
-    orders.push({id: nextOrderId++, no, cust, date, status});
+    const { data, error } = await sb.from('orders').insert({ order_no: no, cust, order_date: date || null, status }).select().single();
+    if (error){ alert('保存订单失败：' + error.message); return; }
+    orders.push({id: data.id, no: data.order_no, cust: data.cust, date: data.order_date||'', status: data.status});
     renderOrders();
     document.getElementById('o_no').value = '';
   });
@@ -3060,13 +3137,15 @@ if (addOrderBtn){
 
 const addOrderItemBtn = document.getElementById('addOrderItemBtn');
 if (addOrderItemBtn){
-  addOrderItemBtn.addEventListener('click', ()=>{
+  addOrderItemBtn.addEventListener('click', async ()=>{
     if (selectedOrderId===null) return;
     const product = document.getElementById('oi_product').value.trim();
     const qty = parseFloat(document.getElementById('oi_qty').value) || 0;
     const price = parseFloat(document.getElementById('oi_price').value) || 0;
     if (!product || !qty || !price){ alert('请填写产品型号、数量和单价'); return; }
-    orderItems.push({id: nextOrderItemId++, orderId: selectedOrderId, product, qty, price});
+    const { data, error } = await sb.from('order_items').insert({ order_id: selectedOrderId, product, qty, price }).select().single();
+    if (error){ alert('保存型号明细失败：' + error.message); return; }
+    orderItems.push({id: data.id, orderId: data.order_id, product: data.product, qty: Number(data.qty)||0, price: Number(data.price)||0});
     renderOrderItemTable();
     renderOrders();
     document.getElementById('oi_product').value = '';

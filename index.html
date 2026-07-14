@@ -2903,10 +2903,12 @@ function showApp(session){
   appRootEl.classList.remove('hidden');
   if(userBadgeEl) userBadgeEl.textContent = (session && session.user && session.user.email) || '';
   applyRoleRestrictions(session);
-  if(typeof refreshAll === 'function'){
-    refreshAll();
-    if(typeof renderCharts === 'function') setTimeout(renderCharts, 0);
-  }
+  try{
+    if(typeof refreshAll === 'function'){
+      refreshAll();
+      if(typeof renderCharts === 'function') setTimeout(renderCharts, 0);
+    }
+  }catch(e){ console.error('refreshAll/renderCharts failed', e); }
   if (typeof loadAllRemoteData === 'function') loadAllRemoteData();
 }
 

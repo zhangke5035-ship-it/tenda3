@@ -3018,7 +3018,7 @@ function computeVat(countryText){
   return null; // 乌克兰等未指定国家，暂无对应税率
 }
 function computeFinalPurchasePrice(retail, profitPct, vat){
-  return (retail/(1+vat)) * (1 - profitPct/100);
+  return (retail/(1+vat)) * (1 - 0.25) * (1 - profitPct/100);
 }
 
 function injectAgentTiers(){
@@ -3032,6 +3032,9 @@ function injectAgentTiers(){
 
     const retail = parseMoneyText(cells[6].innerText);
     const countryText = cells[5].innerText;
+    const custText = cells[4].innerText;
+    const isEltrox = custText.indexOf('Eltrox') !== -1;
+    const defaultProfit = isEltrox ? 11 : 7;
     const vatRate = computeVat(countryText);
     const effectiveVat = vatRate !== null ? vatRate : 0.23; // 未指定国家兜底用23%
 
@@ -3054,7 +3057,7 @@ function injectAgentTiers(){
     const tdProfit = document.createElement('td');
     const profitInput = document.createElement('input');
     profitInput.type = 'number';
-    profitInput.value = '7';
+    profitInput.value = String(defaultProfit);
     profitInput.step = '0.1';
     Object.assign(profitInput.style, {
       width:'60px', background:'var(--surface-alt)', border:'1px solid var(--border)',

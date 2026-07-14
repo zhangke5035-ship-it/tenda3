@@ -2817,10 +2817,22 @@ const authErrorEl = document.getElementById('authError');
 const userBadgeEl = document.getElementById('userBadge');
 const logoutBtnEl = document.getElementById('logoutBtn');
 
+const RESTRICTED_HQ_PRICING_EMAILS = ['gajowski@tenda.cn'];
+function applyRoleRestrictions(session){
+  const userEmail = ((session && session.user && session.user.email) || '').toLowerCase();
+  if (RESTRICTED_HQ_PRICING_EMAILS.includes(userEmail)){
+    const hqNavItem = document.querySelector('.navitem[data-view="pricing-hq"]');
+    if (hqNavItem) hqNavItem.style.display = 'none';
+    const hqView = document.getElementById('view-pricing-hq');
+    if (hqView) hqView.remove();
+  }
+}
+
 function showApp(session){
   authGateEl.classList.add('hidden');
   appRootEl.classList.remove('hidden');
   if(userBadgeEl) userBadgeEl.textContent = (session && session.user && session.user.email) || '';
+  applyRoleRestrictions(session);
   if(typeof refreshAll === 'function'){
     refreshAll();
     if(typeof renderCharts === 'function') setTimeout(renderCharts, 0);

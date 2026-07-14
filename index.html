@@ -303,6 +303,7 @@
           </tr></thead>
           <tbody id="priceTableBody"></tbody>
         </table>
+        <div class="cust-tabs" id="priceTablePagination" style="justify-content:center;"></div>
       </div>
 
       <div class="panel">
@@ -2934,6 +2935,52 @@ if (exportCsvBtn){
 const exportPdfBtn = document.getElementById('exportPdfBtn');
 if (exportPdfBtn){
   exportPdfBtn.addEventListener('click', ()=>{ window.print(); });
+}
+</script>
+  <script>
+const PRICE_PAGE_SIZE = 50;
+let pricePage = 1;
+
+function applyPricePagination(){
+  const tbody = document.getElementById('priceTableBody');
+  if (!tbody) return;
+  const rows = Array.from(tbody.querySelectorAll('tr'));
+  const total = rows.length;
+  const totalPages = Math.max(1, Math.ceil(total / PRICE_PAGE_SIZE));
+  if (pricePage > totalPages) pricePage = totalPages;
+  if (pricePage < 1) pricePage = 1;
+  const start = (pricePage - 1) * PRICE_PAGE_SIZE;
+  const end = start + PRICE_PAGE_SIZE;
+  rows.forEach((row, i)=>{
+    row.style.display = (i >= start && i < end) ? '' : 'none';
+  });
+  renderPricePaginationControls(total, totalPages);
+}
+
+function renderPricePaginationControls(total, totalPages){
+  const box = document.getElementById('priceTablePagination');
+  if (!box) return;
+  const start = total === 0 ? 0 : (pricePage - 1) * PRICE_PAGE_SIZE + 1;
+  const end = Math.min(pricePage * PRICE_PAGE_SIZE, total);
+  box.innerHTML = `
+    <button type="button" class="btn ghost" id="pricePrevBtn" ${pricePage<=1?'disabled':''}>上一页</button>
+    <span class="mono" style="margin:0 12px;color:var(--text-dim);font-size:12.5px;">第 ${pricePage} / ${totalPages} 页（第 ${start}-${end} 条，共 ${total} 条）</span>
+    <button type="button" class="btn ghost" id="priceNextBtn" ${pricePage>=totalPages?'disabled':''}>下一页</button>
+  `;
+  const prevBtn = document.getElementById('pricePrevBtn');
+  const nextBtn = document.getElementById('priceNextBtn');
+  if (prevBtn) prevBtn.addEventListener('click', ()=>{ pricePage--; applyPricePagination(); });
+  if (nextBtn) nextBtn.addEventListener('click', ()=>{ pricePage++; applyPricePagination(); });
+}
+
+const priceTableBodyEl = document.getElementById('priceTableBody');
+if (priceTableBodyEl){
+  const priceObserver = new MutationObserver(()=>{
+    pricePage = 1;
+    applyPricePagination();
+  });
+  priceObserver.observe(priceTableBodyEl, {childList:true});
+  applyPricePagination();
 }
 </script>
 </body>

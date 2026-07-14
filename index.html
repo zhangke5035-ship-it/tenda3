@@ -34,6 +34,8 @@
   .navitem.active{background:var(--surface-raise);color:var(--text);border-left:2px solid var(--copper);}
   .navitem .dot{width:5px;height:5px;border-radius:50%;background:var(--text-faint);flex-shrink:0;}
   .navitem.active .dot{background:var(--copper);}
+  .navgroup-label{padding:10px 12px 0 12px;font-size:10.5px;color:var(--text-faint);letter-spacing:0.5px;margin-top:6px;text-transform:uppercase;}
+  .navitem.sub{padding-left:26px;font-size:12.5px;}
   .sidebar-foot{margin-top:auto;padding:16px 22px 0 22px;border-top:1px solid var(--border-soft);}
   .rate-box label{display:block;font-size:10.5px;color:var(--text-faint);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:6px;}
   .rate-input{display:flex;align-items:center;gap:6px;background:var(--surface-alt);border:1px solid var(--border);border-radius:var(--radius);padding:7px 9px;}
@@ -199,7 +201,9 @@
     </div>
     <nav id="nav">
       <div class="navitem active" data-view="overview"><span class="dot"></span>总览</div>
-      <div class="navitem" data-view="pricing"><span class="dot"></span>报价管理</div>
+      <div class="navgroup-label">报价管理</div>
+      <div class="navitem sub" data-view="pricing-customer"><span class="dot"></span>客户报价</div>
+      <div class="navitem sub" data-view="pricing-hq"><span class="dot"></span>总部报价</div>
       <div class="navitem" data-view="promo"><span class="dot"></span>营销费用</div>
       <div class="navitem" data-view="orders"><span class="dot"></span>销售订单</div>
       <div class="navitem" data-view="promodeals"><span class="dot"></span>促销管理</div>
@@ -271,15 +275,12 @@
     </section>
 
     <!-- ===================== 报价管理 ===================== -->
-    <section class="view" id="view-pricing">
+    <section class="view" id="view-pricing-customer">
       <div class="viewhead">
-        <div><h2>报价管理</h2><p>提取自总部《财务价26M71》波兰站"报价"工作表</p></div>
+        <div><h2>报价管理 · 客户报价</h2><p>提取自总部《财务价26M71》波兰站"报价"工作表</p></div>
       </div>
-      <div class="cust-tabs" id="pricingSubTabs">
-        <div class="cust-tab active" data-subview="customer">客户报价</div>
-        <div class="cust-tab" data-subview="hq">总部报价</div>
-      </div>
-      <div id="pricingSubview-customer">
+      
+      
       <div class="notebox">
         表中「未税净价」「单位盈亏」「净利率」均为报价表原始计算结果，已包含品牌预留、MDF 预留、风险与指标预留等费用，口径与总部一致。「生命周期」取自《报价型号生命周期_26年6月》清单；「EAN」取自《Q3_Price》价目表。报价明细覆盖了 <b>257 款型号 × 6 个客户</b>（Incom / Action / Eltrox / SGM / Intelek / DC-Link），并新增了<b>报价周期筛选</b>：Eltrox 同时有 Q2、Q3 两个季度的真实价目表，可以切换"Q3（当前）/ Q2（上一季度）/ 全部季度"查看价格随时间的变化，「环比(QoQ)」列会标出未税净价相对上一季度的涨跌幅。其余客户（Incom/Action/SGM 有10款、Intelek/DC-Link 全部）暂时只有 Q3 这一个快照，其中 10 款有 Incom、Action、SGM 的真实出厂成本和净利率数据（来自 26M71 报价表），剩余的客户 × 型号组合是<b>空报价</b>（显示"—"）。等你提供其他季度或其他客户的价格表，我可以继续补上。新增行为你手工补充的数据，需要自行核对口径。
       </div>
@@ -345,8 +346,12 @@
         <div class="catalog-count" id="catalogCount"></div>
         <div class="catalog-grid" id="catalogGrid"></div>
       </div>
-    </div>
-      <div id="pricingSubview-hq" style="display:none;">
+    </section>
+
+    <section class="view" id="view-pricing-hq">
+      <div class="viewhead">
+        <div><h2>报价管理 · 总部报价</h2><p>总部下发的产品结算价与指导零售价</p></div>
+      </div>
         <div class="notebox">
           总部报价子模块框架已搭建，具体字段与数据将在后续录入（如总部指导零售价、总部结算价、生效日期等）。
         </div>
@@ -367,7 +372,7 @@
             <tbody id="hqPriceTableBody"></tbody>
           </table>
         </div>
-      </div>
+      
       </section>
     <!-- ===================== 销售订单 ===================== -->
 <section class="view" id="view-orders">

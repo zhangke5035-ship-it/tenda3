@@ -3598,7 +3598,7 @@ function injectAgentTiers(){
     tdDmp.dataset.tier2 = tier2.toFixed(2);
     tdDmp.dataset.tier3 = tier3.toFixed(2);
     tdDmp.dataset.symbol = symbol;
-    tdDmp.textContent = '点击产品查看';
+    tdDmp.textContent = translateOne('点击产品查看');
 
     const tdProfit = document.createElement('td');
     tdProfit.className = 'num-cell';
@@ -3621,12 +3621,12 @@ function toggleDmpDetailRow(row, cell){
   const existing = row.nextElementSibling;
   if (existing && existing.classList.contains('dmp-detail-row')){
     existing.remove();
-    cell.textContent = '点击产品查看';
+    cell.textContent = translateOne('点击产品查看');
     cell.classList.remove('open');
     return;
   }
   document.querySelectorAll('.dmp-detail-row').forEach(r=>r.remove());
-  document.querySelectorAll('.dmp-cell.open').forEach(c=>{ c.textContent = '点击产品查看'; c.classList.remove('open'); });
+  document.querySelectorAll('.dmp-cell.open').forEach(c=>{ c.textContent = translateOne('点击产品查看'); c.classList.remove('open'); });
 
   const t1 = parseFloat(cell.dataset.tier1);
   const t2 = parseFloat(cell.dataset.tier2);
@@ -3634,9 +3634,9 @@ function toggleDmpDetailRow(row, cell){
   const symbol = cell.dataset.symbol;
   const maxVal = t1 || 1;
   const tiers = [
-    {label:'一级报价', value:t1},
-    {label:'二级报价', value:t2},
-    {label:'三级报价', value:t3}
+    {label:translateOne('一级报价'), value:t1},
+    {label:translateOne('二级报价'), value:t2},
+    {label:translateOne('三级报价'), value:t3}
   ];
   const barsHtml = tiers.map((t,i)=>{
     const pct = Math.max(4, Math.round((t.value/maxVal)*100));
@@ -3653,11 +3653,11 @@ function toggleDmpDetailRow(row, cell){
   detailRow.className = 'dmp-detail-row';
   const detailTd = document.createElement('td');
   detailTd.colSpan = colCount;
-  detailTd.innerHTML = '<div class="dmp-detail-title">DMP建议销售价排名</div>' + barsHtml;
+  detailTd.innerHTML = '<div class="dmp-detail-title">' + translateOne('DMP建议销售价排名') + '</div>' + barsHtml;
   detailRow.appendChild(detailTd);
   row.parentNode.insertBefore(detailRow, row.nextSibling);
 
-  cell.textContent = '收起 ▲';
+  cell.textContent = translateOne('收起 ▲');
   cell.classList.add('open');
 }
 
@@ -3786,6 +3786,12 @@ const I18N_DICT = [
   ['国家','Country','Kraj'],
   ['含税零售价','Retail Price (incl. VAT)','Cena detaliczna (z VAT)'],
   ['DMP建议销售价','DMP Suggested Price','Sugerowana cena DMP'],
+  ['点击产品查看','Click to view','Kliknij, aby zobaczyć'],
+  ['收起 ▲','Collapse ▲','Zwiń ▲'],
+  ['DMP建议销售价排名','DMP Suggested Price Ranking','Ranking sugerowanych cen DMP'],
+  ['一级报价','Tier 1 Price','Cena poziom 1'],
+  ['二级报价','Tier 2 Price','Cena poziom 2'],
+  ['三级报价','Tier 3 Price','Cena poziom 3'],
   ['一级客户报价','Tier-1 Customer Price','Cena klienta 1. poziomu'],
   ['二级客户报价','Tier-2 Customer Price','Cena klienta 2. poziomu'],
   ['三级客户报价','Tier-3 Customer Price','Cena klienta 3. poziomu'],

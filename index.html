@@ -3558,6 +3558,16 @@ function getPriceHeaderIndex(prefix){
 function injectAgentTiers(){
   const tbody = document.getElementById('priceTableBody');
   if (!tbody) return;
+  if (!tbody.dataset.dmpClickBound){
+    tbody.dataset.dmpClickBound = '1';
+    tbody.addEventListener('click', (e)=>{
+      const cell = e.target.closest('.dmp-cell');
+      if (!cell) return;
+      const row = cell.closest('tr');
+      if (!row) return;
+      toggleDmpDetailRow(row, cell);
+    });
+  }
   const idxRetail = getPriceHeaderIndex('retail');
   const idxCountry = getPriceHeaderIndex('country');
   const idxCust = getPriceHeaderIndex('customer');

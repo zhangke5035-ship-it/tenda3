@@ -2955,6 +2955,38 @@ document.getElementById('addPromoBtn').addEventListener('click', ()=>{
   refreshAll();
 });
 
+function findCustomerQuote(cust, product){
+  return priceList.find(p => p.cust === cust && p.product === product && p.quarter === 'Q3')
+      || priceList.find(p => p.cust === cust && p.product === product);
+}
+
+function computePurchasePriceFor(cust, product){
+  const entry = findCustomerQuote(cust, product);
+  if (!entry || !entry.retailPLN) return null;
+  const vat = computeVat(custCountry(cust));
+  const effectiveVat = vat !== null ? vat : 0.23;
+  const fixedProfit = cust === 'ELTROX' ? 11 : 7;
+  return computeFinalPurchasePrice(entry.retailPLN, fixedProfit, effectiveVat);
+}
+
+function updatePromoDealOriginalPrice(){
+  const cust = document.getElementById('pd_customer').value;
+  const product = document.getElementById('pd_product').value.trim();
+  if (!cust || !product) return;
+  const price = computePurchasePriceFor(cust, product);
+  if (price !== null){
+    document.getElementById('pd_original').value = price.toFixed(2);
+  }
+}
+
+const pdCustomerEl = document.getElementById('pd_customer');
+const pdProductEl = document.getElementById('pd_product');
+if (pdCustomerEl) pdCustomerEl.addEventListener('change', updatePromoDealOriginalPrice);
+if (pdProductEl){
+  pdProductEl.addEventListener('input', updatePromoDealOriginalPrice);
+  pdProductEl.addEventListener('change', updatePromoDealOriginalPrice);
+}
+
 document.getElementById('addPromoDealBtn').addEventListener('click', ()=>{
   const name = document.getElementById('pd_name').value.trim();
   const product = document.getElementById('pd_product').value.trim();

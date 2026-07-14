@@ -2719,3 +2719,18 @@ sb.auth.onAuthStateChange((event, session)=>{
 </script>
 </body>
 </html>
+<script>
+document.getElementById('logoutBtn').addEventListener('click', async function(){
+  try{
+    if (typeof supabase !== 'undefined' && supabase.auth && supabase.auth.signOut){
+      await supabase.auth.signOut();
+    }
+  }catch(e){}
+  document.getElementById('appRoot').classList.add('hidden');
+  document.getElementById('authGate').classList.remove('hidden');
+  var loginForm = document.getElementById('loginForm');
+  if (loginForm) loginForm.reset();
+  var authError = document.getElementById('authError');
+  if (authError){ authError.classList.remove('show'); authError.textContent=''; }
+});
+</script>

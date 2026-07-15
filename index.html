@@ -25,6 +25,8 @@
   .app{display:flex;min-height:100vh;}
   .sidebar{width:240px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:22px 0;}
   .brand{padding:0 22px 20px 22px;border-bottom:1px solid var(--border-soft);margin-bottom:10px;}
+  .brand-logo-row{display:flex;align-items:center;gap:9px;}
+  .brand-logo{height:26px;width:auto;display:block;flex-shrink:0;}
   .brand-mark{font-family:'Space Grotesk';font-weight:700;font-size:15px;letter-spacing:0.5px;}
   .brand-sub{font-size:11px;color:var(--text-faint);margin-top:3px;letter-spacing:0.4px;}
   .brand-ver{display:inline-block;margin-top:8px;font-size:10px;color:var(--copper);background:var(--copper-soft);padding:2px 7px;border-radius:20px;font-family:'IBM Plex Mono';}
@@ -351,7 +353,10 @@
 <div id="authGate">
   <div class="auth-card">
     <div class="auth-brand">
-      <div class="brand-mark">Tenda 波兰控制台</div>
+      <div class="brand-logo-row">
+        <img class="brand-logo" src="https://static.tenda.com.cn/public/logo.png" alt="Tenda logo" onerror="this.style.display='none'">
+        <div class="brand-mark">Tenda 波兰控制台</div>
+      </div>
       <div class="brand-sub">中国总部 · 波兰站点</div>
  <div class="brand-ver" id="brandVer">数据版本 26M71</div>
     </div>
@@ -376,7 +381,10 @@
 <div class="app hidden" id="appRoot">
   <aside class="sidebar">
     <div class="brand">
-      <div class="brand-mark">Tenda 波兰控制台</div>
+      <div class="brand-logo-row">
+        <img class="brand-logo" src="https://static.tenda.com.cn/public/logo.png" alt="Tenda logo" onerror="this.style.display='none'">
+        <div class="brand-mark">Tenda 波兰控制台</div>
+      </div>
       <div class="brand-sub">中国总部 · 波兰站点</div>
       <div class="brand-ver">数据版本 26M71</div>
     </div>

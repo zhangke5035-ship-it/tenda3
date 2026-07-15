@@ -456,8 +456,8 @@
 <div class="panel">
         <div class="panel-head"><h3>报价明细</h3><div class="desc" id="priceCount"></div></div>
         <div class="filter-bar">
-          <div class="filter-tabs" id="quarterTabs"></div>
-          <div class="filter-ops">
+          <div class="filter-ops" style="flex:1;">
+            <select id="quarterSelect" title="报价周期"></select>
             <div class="filter-search"><input id="priceSearch" placeholder="搜索型号/SKU，例如 TE6L、W15-Pro..."></div>
             <select id="filterCountrySelect" title="国家"></select>
             <select id="filterCustSelect" title="客户"></select>
@@ -2863,17 +2863,17 @@ function renderQuarterTabs(){
   const quarters = ['Q4','Q3','Q2','ALL'];
   const labelMap = {Q4:'Q4（待录入）', Q3:'Q3（当前）', Q2:'Q2（上一季度）', ALL:'全部季度'};
   const countFor = q => q==='ALL' ? priceList.length : priceList.filter(r=>(r.quarter||'Q3')===q).length;
-  const el = document.getElementById('quarterTabs');
+  const el = document.getElementById('quarterSelect');
+  if (!el) return;
   el.innerHTML = quarters.map(q=>
-    `<div class="filter-tab ${activeQuarterFilter===q?'active':''}" data-quarter="${q}">${labelMap[q]}<span class="count">${countFor(q)}</span></div>`
+    `<option value="${q}">${labelMap[q]} (${countFor(q)})</option>`
   ).join('');
-  el.querySelectorAll('.filter-tab').forEach(t=>{
-    t.addEventListener('click', ()=>{
-      activeQuarterFilter = t.dataset.quarter;
-      activeCountryFilter = 'ALL'; activeCustFilter = 'ALL';
-      renderQuarterTabs(); renderCountryTabs(); renderCustTabs(); renderCategoryTabs(); renderBrandTabs(); renderPriceTable(); renderKPI(); renderCharts();
-    });
-  });
+  el.value = activeQuarterFilter;
+  el.onchange = ()=>{
+    activeQuarterFilter = el.value;
+    activeCountryFilter = 'ALL'; activeCustFilter = 'ALL';
+    renderQuarterTabs(); renderCountryTabs(); renderCustTabs(); renderCategoryTabs(); renderBrandTabs(); renderPriceTable(); renderKPI(); renderCharts();
+  };
 }
 
 function renderCountryTabs(){

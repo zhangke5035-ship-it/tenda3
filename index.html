@@ -141,6 +141,24 @@
   .pd-margin-item + .pd-margin-item{border-left:1px solid var(--border);}
   .pd-margin-label{font-size:10.5px;color:var(--text-faint);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:4px;}
   .pd-margin-value{font-size:16px;font-weight:700;color:var(--text);}
+  .modal-overlay{position:fixed;inset:0;background:rgba(20,24,32,0.4);display:none;align-items:center;justify-content:center;z-index:220;}
+  .modal-overlay.open{display:flex;}
+  .modal-panel{width:480px;max-width:92vw;max-height:88vh;overflow-y:auto;background:var(--surface);border-radius:8px;box-shadow:0 12px 40px rgba(0,0,0,0.22);}
+  .modal-header{display:flex;align-items:center;justify-content:space-between;padding:18px 20px;border-bottom:1px solid var(--border);}
+  .modal-title{font-weight:700;font-size:15px;color:var(--text);}
+  .modal-close{cursor:pointer;color:var(--text-faint);font-size:16px;}
+  .modal-body{padding:20px;display:flex;flex-direction:column;gap:18px;}
+  .modal-footer{display:flex;justify-content:flex-end;gap:10px;padding:16px 20px;border-top:1px solid var(--border);}
+  .pe-section-title{font-weight:600;font-size:12.5px;color:var(--text);margin-bottom:8px;}
+  .pe-radio-card{display:flex;align-items:flex-start;gap:10px;padding:12px 14px;border:1px solid var(--border);border-radius:6px;margin-bottom:8px;cursor:pointer;background:var(--surface-alt);transition:border-color .12s ease;}
+  .pe-radio-card:hover{border-color:var(--copper);}
+  .pe-radio-card.selected{border-color:var(--copper);background:#FBF3EC;}
+  .pe-radio-card input[type="radio"]{margin-top:3px;}
+  .pe-radio-title{font-weight:600;font-size:13px;color:var(--text);}
+  .pe-radio-desc{font-size:11.5px;color:var(--text-dim);margin-top:3px;}
+  .pe-chip{display:inline-block;padding:1px 7px;border-radius:10px;background:var(--surface-raise);color:var(--text-dim);font-size:10.5px;margin-left:4px;}
+  .pe-chip.warn{background:#FFF3D6;color:#B27B00;}
+  .pe-format-btn.active{border-color:var(--copper);color:var(--copper);background:#FBF3EC;}
   .field label{display:block;font-size:11px;color:var(--text-faint);margin-bottom:5px;text-transform:uppercase;letter-spacing:0.4px;}
   .field input,.field select{width:100%;background:var(--surface-alt);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:var(--radius);font-size:13px;outline:none;}
   .field input:focus,.field select:focus{border-color:var(--copper);}
@@ -497,11 +515,54 @@
         </div>
         <div class="price-export-row" style="display:flex;justify-content:flex-end;gap:10px;margin:0 0 12px 0;">
           <button type="button" class="btn ghost" id="exportCsvBtn">导出当前表格 CSV</button>
-          <button type="button" class="btn ghost" id="exportPdfBtn">打印 / 导出 PDF</button>
+        </div>
+
+        <div class="modal-overlay" id="priceExportModalOverlay">
+          <div class="modal-panel">
+            <div class="modal-header">
+              <div class="modal-title">导出报价单</div>
+              <div class="modal-close" id="priceExportModalClose">✕</div>
+            </div>
+            <div class="modal-body">
+              <div class="pe-section">
+                <div class="pe-section-title">1. 导出范围</div>
+                <div id="peScopeTag"></div>
+              </div>
+              <div class="pe-section">
+                <div class="pe-section-title">2. 使用场景（关键）</div>
+                <label class="pe-radio-card selected" data-mode="customer">
+                  <input type="radio" name="peMode" value="customer" checked>
+                  <div>
+                    <div class="pe-radio-title">📤 发送给客户</div>
+                    <div class="pe-radio-desc">自动隐藏<span class="pe-chip">代理商利润点位</span>等内部字段</div>
+                  </div>
+                </label>
+                <label class="pe-radio-card" data-mode="internal">
+                  <input type="radio" name="peMode" value="internal">
+                  <div>
+                    <div class="pe-radio-title">🔐 内部存档 / 分析<span class="pe-chip warn">含敏感数据</span></div>
+                    <div class="pe-radio-desc">保留完整字段，包含代理商利润点位</div>
+                  </div>
+                </label>
+              </div>
+              <div class="pe-section">
+                <div class="pe-section-title">3. 文件格式</div>
+                <div style="display:flex;gap:10px;">
+                  <button type="button" class="btn ghost pe-format-btn active" data-format="csv">Excel 表格 (CSV)</button>
+                  <button type="button" class="btn ghost pe-format-btn" data-format="pdf">PDF 正式文档</button>
+                </div>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button class="btn ghost" id="priceExportModalCancel">取消</button>
+              <button class="btn" id="priceExportConfirmBtn">确认导出</button>
+            </div>
+          </div>
         </div>
         <div class="price-table-scroll" style="overflow-x:auto;">
         <table id="priceDetailTable">
          <thead><tr>
+  <th><input type="checkbox" id="priceSelectAllCheck" title="全选/取消全选当前筛选结果"></th>
   <th>类目</th><th>品牌</th><th>产品型号</th><th>产品信息描述</th><th>EAN</th><th>生命周期</th><th data-key="customer">客户</th><th data-key="country">国家</th><th>币种</th><th data-key="retail">含税零售价</th><th data-key="net">未税净价</th>
   <th>DMP建议销售价</th><th>代理商利润点位</th><th>最终采购价</th><th></th>
 </tr></thead>
@@ -2364,6 +2425,7 @@ let activeQuarterFilter = 'Q3';
 let activeCategoryFilter = 'ALL';
 let activeBrandFilter = 'ALL';
 let priceSearchTerm = '';
+let priceSelectedIds = new Set();
 let activeLifecycleFilter = 'ALL';
 let catalogSearchTerm = '';
 
@@ -2730,14 +2792,19 @@ function renderBrandTabs(){
   el.value = activeBrandFilter;
   el.onchange = ()=>{ activeBrandFilter = el.value; renderBrandTabs(); renderPriceTable(); };
 }
-function renderPriceTable(){
-  const tbody = document.getElementById('priceTableBody');
+function getFilteredPriceRows(){
   let rows = visibleRows();
   if(activeCountryFilter!=='ALL') rows = rows.filter(p=>custCountry(p.cust)===activeCountryFilter);
   if(activeCustFilter!=='ALL') rows = rows.filter(p=>p.cust===activeCustFilter);
   if(activeCategoryFilter!=='ALL') rows = rows.filter(p=>productType(p.product)===activeCategoryFilter);
   if(activeBrandFilter!=='ALL') rows = rows.filter(p=>productBrand(p.product)===activeBrandFilter);
   if(priceSearchTerm) rows = rows.filter(p=>p.product.toLowerCase().includes(priceSearchTerm.toLowerCase()));
+  return rows;
+}
+
+function renderPriceTable(){
+  const tbody = document.getElementById('priceTableBody');
+  let rows = getFilteredPriceRows();
   const dash = '<span style="color:var(--text-faint)">—</span>';
   tbody.innerHTML = rows.map(p=>{
     const hasCost = typeof p.costUSD === 'number';
@@ -2745,7 +2812,8 @@ function renderPriceTable(){
     const delta = (p.quarter!=='Q2') ? qoqDelta(p.product, p.cust) : null;
     const deltaCell = delta===null ? dash : `<span style="color:${delta>=0?'var(--alert)':'var(--good)'}">${delta>=0?'▲':'▼'}${fmt(Math.abs(delta))}%</span>`;
     return `
-    <tr>
+    <tr data-price-id="${p.id}">
+      <td class="num-cell"><input type="checkbox" class="price-row-check" data-id="${p.id}" ${priceSelectedIds.has(p.id)?'checked':''}></td>
       <td><span class="cat-badge ${categoryClass(productType(p.product))}">${productType(p.product)}</span></td>
       <td>${productBrand(p.product)}</td>
       <td title="${productDescription(p.product)}">${p.product}${p.category?` <span style="color:var(--text-faint);font-size:11px;">(${p.category})</span>`:''}</td>
@@ -2772,8 +2840,19 @@ function renderPriceTable(){
     const marginRows = rows.filter(p=>typeof p.marginPct === 'number');
     const avgMargin = marginRows.length ? (marginRows.reduce((s,p)=>s+p.marginPct,0) / marginRows.length) : null;
     const avgText = avgMargin===null ? '暂无净利率数据' : `平均净利率 ${fmt(avgMargin)}%`;
-    footRow.innerHTML = `<td>总计 (Total)</td><td colspan="13" style="text-align:left;">本页包含 ${rows.length} 条报价，${avgText}</td><td></td>`;
+    footRow.innerHTML = `<td></td><td>总计 (Total)</td><td colspan="13" style="text-align:left;">本页包含 ${rows.length} 条报价，${avgText}</td><td></td>`;
   }
+  updateSelectAllCheckboxState(rows);
+  if (typeof updatePriceExportBtnLabel === 'function') updatePriceExportBtnLabel();
+}
+
+function updateSelectAllCheckboxState(rows){
+  const cb = document.getElementById('priceSelectAllCheck');
+  if (!cb) return;
+  const total = rows.length;
+  const selectedInView = rows.filter(p=>priceSelectedIds.has(p.id)).length;
+  cb.checked = total>0 && selectedInView===total;
+  cb.indeterminate = selectedInView>0 && selectedInView<total;
 }
 function deletePrice(id){ priceList = priceList.filter(p=>p.id!==id); refreshAll(); }
 
@@ -3928,8 +4007,11 @@ const exportCsvBtn = document.getElementById('exportCsvBtn');
 if (exportCsvBtn){
   exportCsvBtn.addEventListener('click', ()=>{
     const viewId = getActiveViewId();
+    if (viewId === 'view-pricing-customer'){
+      openPriceExportModal();
+      return;
+    }
     const map = {
-      'view-pricing': {sel:'#priceTableBody', file:'Tenda波兰报价明细.csv'},
       'view-promo':   {sel:'#promoTableBody', file:'Tenda波兰营销费用.csv'},
       'view-orders':  {sel:'#orderTableBody', file:'Tenda波兰销售订单.csv'}
     };
@@ -3943,9 +4025,140 @@ if (exportCsvBtn){
   });
 }
 
-const exportPdfBtn = document.getElementById('exportPdfBtn');
-if (exportPdfBtn){
-  exportPdfBtn.addEventListener('click', ()=>{ window.print(); });
+/* ============ 客户报价 · 导出弹窗（范围确认 + 对内/对外脱敏） ============ */
+let peMode = 'customer';
+let peFormat = 'csv';
+
+function openPriceExportModal(){
+  const overlay = document.getElementById('priceExportModalOverlay');
+  if (!overlay) return;
+  const n = priceSelectedIds.size;
+  const scopeTag = document.getElementById('peScopeTag');
+  if (scopeTag){
+    scopeTag.innerHTML = n>0
+      ? `<span class="promo-status-tag" style="background:#E8F1FC;color:#2F6FB3;">已选中 ${n} 条</span>`
+      : `<span class="promo-status-tag" style="background:#FFF3D6;color:#B27B00;">未勾选，将导出当前筛选下全部数据</span>`;
+  }
+  overlay.classList.add('open');
+}
+function closePriceExportModal(){
+  const overlay = document.getElementById('priceExportModalOverlay');
+  if (overlay) overlay.classList.remove('open');
+}
+document.querySelectorAll('.pe-radio-card').forEach(card=>{
+  card.addEventListener('click', ()=>{
+    peMode = card.dataset.mode;
+    document.querySelectorAll('.pe-radio-card').forEach(c=>c.classList.toggle('selected', c===card));
+    const radio = card.querySelector('input[type="radio"]');
+    if (radio) radio.checked = true;
+  });
+});
+document.querySelectorAll('.pe-format-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    peFormat = btn.dataset.format;
+    document.querySelectorAll('.pe-format-btn').forEach(b=>b.classList.toggle('active', b===btn));
+  });
+});
+const priceExportModalCloseEl = document.getElementById('priceExportModalClose');
+if (priceExportModalCloseEl) priceExportModalCloseEl.addEventListener('click', closePriceExportModal);
+const priceExportModalCancelEl = document.getElementById('priceExportModalCancel');
+if (priceExportModalCancelEl) priceExportModalCancelEl.addEventListener('click', closePriceExportModal);
+const priceExportModalOverlayEl = document.getElementById('priceExportModalOverlay');
+if (priceExportModalOverlayEl) priceExportModalOverlayEl.addEventListener('click', function(e){ if (e.target === priceExportModalOverlayEl) closePriceExportModal(); });
+
+function sanitizePriceTableClone(){
+  const table = document.getElementById('priceDetailTable');
+  if (!table) return null;
+  const clone = table.cloneNode(true);
+  // 去掉勾选框列（始终是第一列）
+  clone.querySelectorAll('tr').forEach(tr=>{ if (tr.children[0]) tr.children[0].remove(); });
+  // 若有选中的行，仅保留选中行
+  if (priceSelectedIds.size > 0){
+    Array.from(clone.querySelectorAll('tbody tr')).forEach(tr=>{
+      const id = Number(tr.dataset.priceId);
+      if (!priceSelectedIds.has(id)) tr.remove();
+    });
+  }
+  // 对外模式：隐去代理商利润点位这一敏感列
+  if (peMode === 'customer'){
+    const headerRow = clone.querySelector('thead tr');
+    const ths = headerRow ? Array.from(headerRow.children) : [];
+    const profitIdx = ths.findIndex(th=>th.textContent.trim().indexOf('代理商利润点位')===0);
+    if (profitIdx > -1){
+      clone.querySelectorAll('tr').forEach(tr=>{ if (tr.children[profitIdx]) tr.children[profitIdx].remove(); });
+    }
+  }
+  // 去掉操作列（删除按钮）
+  clone.querySelectorAll('tbody tr').forEach(tr=>{
+    const last = tr.lastElementChild;
+    if (last && last.querySelector && last.querySelector('.del-btn')) last.remove();
+  });
+  const headRow = clone.querySelector('thead tr');
+  if (headRow && headRow.lastElementChild && !headRow.lastElementChild.textContent.trim()) headRow.lastElementChild.remove();
+  const tfoot = clone.querySelector('tfoot');
+  if (tfoot) tfoot.remove();
+  return clone;
+}
+
+function printSanitizedPriceTable(clone){
+  const title = peMode==='customer' ? 'Tenda波兰客户报价单' : 'Tenda波兰报价明细（内部）';
+  const w = window.open('', '_blank');
+  if (!w){ alert('弹出窗口被浏览器拦截，请允许弹窗后重试'); return; }
+  w.document.write(
+    '<!DOCTYPE html><html><head><meta charset="utf-8"><title>' + title + '</title>' +
+    '<style>body{font-family:Arial,sans-serif;padding:20px;color:#1A2233;}' +
+    'h2{margin-bottom:12px;}table{border-collapse:collapse;width:100%;font-size:12px;}' +
+    'th,td{border:1px solid #ccc;padding:6px 8px;text-align:left;}th{background:#f0f3f7;}</style>' +
+    '</head><body><h2>' + title + '</h2>' + clone.outerHTML + '</body></html>'
+  );
+  w.document.close();
+  w.focus();
+  setTimeout(()=>{ w.print(); }, 300);
+}
+
+const priceExportConfirmBtnEl = document.getElementById('priceExportConfirmBtn');
+if (priceExportConfirmBtnEl){
+  priceExportConfirmBtnEl.addEventListener('click', ()=>{
+    const clone = sanitizePriceTableClone();
+    if (!clone){ closePriceExportModal(); return; }
+    if (peFormat === 'csv'){
+      const filename = (peMode==='customer' ? 'Tenda波兰客户报价单_对外' : 'Tenda波兰报价明细_内部') + '_' + new Date().toISOString().slice(0,10) + '.csv';
+      exportTableToCSV(clone, filename);
+    } else {
+      printSanitizedPriceTable(clone);
+    }
+    closePriceExportModal();
+  });
+}
+
+const priceSelectAllCheckEl = document.getElementById('priceSelectAllCheck');
+if (priceSelectAllCheckEl){
+  priceSelectAllCheckEl.addEventListener('change', ()=>{
+    const rows = getFilteredPriceRows();
+    if (priceSelectAllCheckEl.checked) rows.forEach(p=>priceSelectedIds.add(p.id));
+    else rows.forEach(p=>priceSelectedIds.delete(p.id));
+    renderPriceTable();
+  });
+}
+const priceTableBodyForCheckEl = document.getElementById('priceTableBody');
+if (priceTableBodyForCheckEl && !priceTableBodyForCheckEl.dataset.checkboxBound){
+  priceTableBodyForCheckEl.dataset.checkboxBound = '1';
+  priceTableBodyForCheckEl.addEventListener('change', (e)=>{
+    const cb = e.target.closest('.price-row-check');
+    if (!cb) return;
+    const id = Number(cb.dataset.id);
+    if (cb.checked) priceSelectedIds.add(id); else priceSelectedIds.delete(id);
+    updateSelectAllCheckboxState(getFilteredPriceRows());
+    updatePriceExportBtnLabel();
+  });
+}
+
+function updatePriceExportBtnLabel(){
+  const btn = document.getElementById('exportCsvBtn');
+  if (!btn) return;
+  if (getActiveViewId() !== 'view-pricing-customer'){ btn.textContent = '导出当前表格 CSV'; return; }
+  const n = priceSelectedIds.size;
+  btn.textContent = n>0 ? ('导出已选产品 (' + n + ')') : '导出当前表格 CSV';
 }
 </script>
   <script>
@@ -4360,6 +4573,22 @@ const I18N_DICT = [
   ['无成本数据','No Cost Data','Brak danych kosztowych'],
   ['上一步','Back','Wstecz'],
   ['确认创建','Confirm Create','Potwierdź utworzenie'],
+  ['导出报价单','Export Quotation','Eksportuj ofertę'],
+  ['导出已选产品','Export Selected','Eksportuj wybrane'],
+  ['导出范围','Export Scope','Zakres eksportu'],
+  ['已选中','Selected','Wybrano'],
+  ['未勾选，将导出当前筛选下全部数据','Nothing checked — will export all data under the current filters','Nic nie zaznaczono — eksport obejmie wszystkie dane wg bieżących filtrów'],
+  ['使用场景（关键）','Usage Scenario (Important)','Scenariusz użycia (ważne)'],
+  ['发送给客户','Send to Customer','Wyślij do klienta'],
+  ['自动隐藏','Automatically hides','Automatycznie ukrywa'],
+  ['等内部字段','and other internal fields','i inne pola wewnętrzne'],
+  ['内部存档 / 分析','Internal Archive / Analysis','Archiwum wewnętrzne / analiza'],
+  ['含敏感数据','Contains sensitive data','Zawiera dane wrażliwe'],
+  ['保留完整字段，包含代理商利润点位','Keeps all fields, including agent margin %','Zachowuje wszystkie pola, w tym marżę agenta %'],
+  ['文件格式','File Format','Format pliku'],
+  ['Excel 表格','Excel Table','Tabela Excel'],
+  ['正式文档','Formal Document','Dokument formalny'],
+  ['确认导出','Confirm Export','Potwierdź eksport'],
   ['DDP-满减促销(一级客户)','DDP Threshold Promotion (Tier-1 Customer)','Promocja progowa DDP (Klient 1. poziomu)'],
   ['DMP促销(二级客户)','DMP Promotion (Tier-2 Customer)','Promocja DMP (Klient 2. poziomu)'],
   ['Sell-in价格促销','Sell-in Price Promotion','Promocja cenowa Sell-in'],

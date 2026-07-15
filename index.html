@@ -59,6 +59,7 @@
   .kpi .value{font-family:'Space Grotesk';font-size:26px;font-weight:600;margin-top:8px;}
   .kpi .sub{font-size:11.5px;color:var(--text-dim);margin-top:4px;}
   .kpi .value.copper{color:var(--copper);} .kpi .value.alert{color:var(--alert);} .kpi .value.good{color:var(--good);}
+  .kpi .label.alert{color:var(--alert);}
   .panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px 22px;margin-bottom:22px;}
   .panel-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
   .panel-head h3{font-size:14.5px;font-weight:600;}
@@ -392,6 +393,7 @@
       <div class="navitem sub" data-view="pricing-customer"><span class="dot"></span>客户报价</div>
       <div class="navitem sub" data-view="pricing-hq"><span class="dot"></span>总部报价</div>
       <div class="navitem sub" data-view="pricing-hq-sim"><span class="dot"></span>总部报价模拟测算</div>
+      <div class="navitem" data-view="gtm"><span class="dot"></span>新产品GTM</div>
       <div class="navgroup-label">营销活动</div>
       <div class="navitem sub" data-view="promo"><span class="dot"></span>营销费用</div>
       <div class="navitem sub" data-view="promodeals"><span class="dot"></span>促销管理</div>
@@ -698,6 +700,66 @@
         </div>
       </div>
     </section>
+    <!-- ===================== 新产品GTM ===================== -->
+<section class="view" id="view-gtm">
+  <div class="viewhead">
+    <div><h2>新产品GTM</h2><p>新品上市时间表与阶段状态跟进</p></div>
+  </div>
+
+  <div class="kpi-row" id="gtmKpiRow"></div>
+
+  <div class="panel">
+    <div class="inv-toolbar" style="margin-bottom:14px;">
+      <div class="inv-filters" style="flex:1;">
+        <div class="inv-search" style="flex:1;max-width:360px;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" id="gtmSearchInput" placeholder="搜索产品型号或名称...">
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button class="inv-btn inv-btn-primary" id="gtmAddBtn">＋ 新增新品</button>
+      </div>
+    </div>
+    <div class="cust-tabs" id="gtmStageTabs"></div>
+    <table>
+      <thead><tr><th>产品型号 / 名称</th><th>目标市场</th><th>负责人</th><th>计划上市日期</th><th>当前阶段</th><th>备注</th><th>操作</th></tr></thead>
+      <tbody id="gtmTableBody"></tbody>
+    </table>
+  </div>
+</section>
+
+<div class="drawer-overlay" id="gtmDrawerOverlay">
+  <div class="drawer-panel">
+    <div class="drawer-header">
+      <div class="drawer-title">✨ 新增新品</div>
+      <div class="drawer-close" id="gtmDrawerClose">✕</div>
+    </div>
+    <div class="drawer-body">
+      <div class="field"><label>产品型号</label><input id="gtm_product" list="modelDatalist" placeholder="例如 W15-Pro"></div>
+      <div class="field"><label>产品名称</label><input id="gtm_name" placeholder="例如 Wi-Fi 6 Giga 路由器"></div>
+      <div class="field"><label>目标市场</label><select id="gtm_market">
+          <option>波兰</option><option>捷克</option><option>斯洛伐克</option><option>乌克兰</option><option>罗马尼亚</option><option>全渠道</option>
+        </select></div>
+      <div class="field"><label>负责人</label><input id="gtm_owner" placeholder="例如 张三"></div>
+      <div class="field"><label>计划上市日期</label><input id="gtm_launch_date" type="date"></div>
+      <div class="field"><label>当前阶段</label>
+        <select id="gtm_stage">
+          <option>筹备中</option>
+          <option>样品测试</option>
+          <option>定价确认</option>
+          <option>渠道备货</option>
+          <option>已上市</option>
+          <option>已取消</option>
+        </select>
+      </div>
+      <div class="field"><label>备注</label><input id="gtm_note" placeholder="选填"></div>
+    </div>
+    <div class="drawer-footer">
+      <button class="btn ghost" id="gtmDrawerCancel">取消</button>
+      <button class="btn" id="gtmSubmitBtn">提交</button>
+    </div>
+  </div>
+</div>
     <!-- ===================== 销售订单 ===================== -->
 <section class="view" id="view-orders">
   <div class="viewhead">
@@ -3122,6 +3184,195 @@ function renderPromoDealAll(){
   renderPromoDealTable();
 }
 
+/* ================ 新产品GTM ================ */
+let gtmProducts = [];
+let gtmStageFilter = '全部';
+let gtmSearchTerm = '';
+let gtmEditId = null;
+const GTM_STAGES = ['筹备中','样品测试','定价确认','渠道备货','已上市','已取消'];
+
+function gtmIsOverdue(p){
+  if (!p.launch_date) return false;
+  if (p.stage === '已上市' || p.stage === '已取消') return false;
+  const today = new Date().toISOString().slice(0,10);
+  return p.launch_date < today;
+}
+
+function gtmStageTagHtml(p){
+  const map = {
+    '筹备中': {bg:'var(--surface-alt)', color:'var(--text-dim)'},
+    '样品测试': {bg:'#E8F1FC', color:'#2F6FB3'},
+    '定价确认': {bg:'#FFF3D6', color:'#B27B00'},
+    '渠道备货': {bg:'#EFE6FB', color:'#7B4FC9'},
+    '已上市': {bg:'var(--good-soft)', color:'var(--good)'},
+    '已取消': {bg:'var(--alert-soft)', color:'var(--alert)'}
+  };
+  const c = map[p.stage] || map['筹备中'];
+  let html = '<span class="promo-status-tag" style="background:' + c.bg + ';color:' + c.color + ';">' + (p.stage||'—') + '</span>';
+  if (gtmIsOverdue(p)){
+    html += ' <span class="promo-status-tag" style="background:var(--alert-soft);color:var(--alert);margin-left:4px;">延期预警</span>';
+  }
+  return html;
+}
+
+function gtmFilteredRows(){
+  let rows = gtmProducts;
+  if (gtmStageFilter !== '全部') rows = rows.filter(p=>p.stage===gtmStageFilter);
+  const q = gtmSearchTerm.trim().toLowerCase();
+  if (q) rows = rows.filter(p=>(p.product||'').toLowerCase().includes(q) || (p.name||'').toLowerCase().includes(q));
+  return rows;
+}
+
+function renderGtmKpi(){
+  const box = document.getElementById('gtmKpiRow');
+  if (!box) return;
+  const total = gtmProducts.length;
+  const launched = gtmProducts.filter(p=>p.stage==='已上市').length;
+  const inProgress = gtmProducts.filter(p=>p.stage!=='已上市' && p.stage!=='已取消').length;
+  const overdue = gtmProducts.filter(gtmIsOverdue).length;
+  box.innerHTML = `
+    <div class="kpi">
+      <div class="label">新品总数</div>
+      <div class="value">${total}</div>
+      <div class="sub">${total?('累计登记 '+total+' 款新品'):'暂无新品记录'}</div>
+    </div>
+    <div class="kpi">
+      <div class="label">已上市</div>
+      <div class="value">${launched}</div>
+      <div class="sub">阶段为"已上市"的新品数</div>
+    </div>
+    <div class="kpi">
+      <div class="label">进行中</div>
+      <div class="value">${inProgress}</div>
+      <div class="sub">尚未上市或取消的新品数</div>
+    </div>
+    <div class="kpi">
+      <div class="label${overdue?' alert':''}">延期预警</div>
+      <div class="value${overdue?' alert':''}">${overdue}</div>
+      <div class="sub">计划上市日期已过但尚未上市</div>
+    </div>
+  `;
+}
+
+function renderGtmStageTabs(){
+  const box = document.getElementById('gtmStageTabs');
+  if (!box) return;
+  const keys = ['全部', ...GTM_STAGES];
+  box.innerHTML = keys.map(k=>{
+    const count = k==='全部' ? gtmProducts.length : gtmProducts.filter(p=>p.stage===k).length;
+    return `<div class="cust-tab ${gtmStageFilter===k?'active':''}" data-stage="${k}">${k}<span class="count">${count}</span></div>`;
+  }).join('');
+  box.querySelectorAll('.cust-tab').forEach(tab=>{
+    tab.addEventListener('click', ()=>{ gtmStageFilter = tab.dataset.stage; renderGtmAll(); });
+  });
+}
+
+function renderGtmTable(){
+  const tbody = document.getElementById('gtmTableBody');
+  if (!tbody) return;
+  const rows = gtmFilteredRows();
+  const dash = '<span style="color:var(--text-faint)">—</span>';
+  tbody.innerHTML = rows.map(p=>`
+    <tr>
+      <td>
+        <div class="promo-name-main">${p.product||dash}</div>
+        <div class="promo-name-sub">${p.name||''}</div>
+      </td>
+      <td><span class="promo-client-tag">${p.market||'—'}</span></td>
+      <td>${p.owner||dash}</td>
+      <td>${p.launch_date||dash}</td>
+      <td>${gtmStageTagHtml(p)}</td>
+      <td class="desc" style="max-width:220px;">${p.note||dash}</td>
+      <td>
+        <div class="inv-row-actions">
+          <a onclick="editGtmProduct(${p.id})">编辑</a>
+          <a style="color:var(--alert);" onclick="deleteGtmProduct(${p.id})">删除</a>
+        </div>
+      </td>
+    </tr>`).join('');
+}
+
+function renderGtmAll(){
+  renderGtmKpi();
+  renderGtmStageTabs();
+  renderGtmTable();
+}
+
+function openGtmDrawer(){
+  gtmEditId = null;
+  document.querySelector('#gtmDrawerOverlay .drawer-title').textContent = '✨ 新增新品';
+  ['gtm_product','gtm_name','gtm_owner','gtm_launch_date','gtm_note'].forEach(id=>{
+    const el = document.getElementById(id); if (el) el.value='';
+  });
+  document.getElementById('gtm_market').value = '波兰';
+  document.getElementById('gtm_stage').value = '筹备中';
+  const overlay = document.getElementById('gtmDrawerOverlay');
+  if (overlay) overlay.classList.add('open');
+}
+function closeGtmDrawer(){
+  const overlay = document.getElementById('gtmDrawerOverlay');
+  if (overlay) overlay.classList.remove('open');
+}
+function editGtmProduct(id){
+  const p = gtmProducts.find(x=>x.id===id);
+  if (!p) return;
+  gtmEditId = id;
+  document.querySelector('#gtmDrawerOverlay .drawer-title').textContent = '✎ 编辑新品';
+  document.getElementById('gtm_product').value = p.product || '';
+  document.getElementById('gtm_name').value = p.name || '';
+  document.getElementById('gtm_market').value = p.market || '波兰';
+  document.getElementById('gtm_owner').value = p.owner || '';
+  document.getElementById('gtm_launch_date').value = p.launch_date || '';
+  document.getElementById('gtm_stage').value = p.stage || '筹备中';
+  document.getElementById('gtm_note').value = p.note || '';
+  const overlay = document.getElementById('gtmDrawerOverlay');
+  if (overlay) overlay.classList.add('open');
+}
+async function deleteGtmProduct(id){
+  if (!confirm('确定要删除该新品记录吗？')) return;
+  const { error } = await sb.from('gtm_products').delete().eq('id', id);
+  if (error){ alert('删除失败：' + error.message); return; }
+  gtmProducts = gtmProducts.filter(p=>p.id!==id);
+  renderGtmAll();
+}
+async function submitGtmProduct(){
+  const product = document.getElementById('gtm_product').value.trim();
+  if (!product){ alert('请填写产品型号'); return; }
+  const payload = {
+    product,
+    name: document.getElementById('gtm_name').value.trim(),
+    market: document.getElementById('gtm_market').value,
+    owner: document.getElementById('gtm_owner').value.trim(),
+    launch_date: document.getElementById('gtm_launch_date').value || null,
+    stage: document.getElementById('gtm_stage').value,
+    note: document.getElementById('gtm_note').value.trim()
+  };
+  if (gtmEditId){
+    const { data, error } = await sb.from('gtm_products').update(payload).eq('id', gtmEditId).select().single();
+    if (error){ alert('更新失败：' + error.message); return; }
+    const idx = gtmProducts.findIndex(p=>p.id===gtmEditId);
+    if (idx>=0) gtmProducts[idx] = data;
+  } else {
+    const { data, error } = await sb.from('gtm_products').insert(payload).select().single();
+    if (error){ alert('保存失败：' + error.message); return; }
+    gtmProducts.push(data);
+  }
+  renderGtmAll();
+  closeGtmDrawer();
+}
+const gtmAddBtnEl = document.getElementById('gtmAddBtn');
+if (gtmAddBtnEl) gtmAddBtnEl.addEventListener('click', openGtmDrawer);
+const gtmDrawerCloseEl = document.getElementById('gtmDrawerClose');
+if (gtmDrawerCloseEl) gtmDrawerCloseEl.addEventListener('click', closeGtmDrawer);
+const gtmDrawerCancelEl = document.getElementById('gtmDrawerCancel');
+if (gtmDrawerCancelEl) gtmDrawerCancelEl.addEventListener('click', closeGtmDrawer);
+const gtmDrawerOverlayEl = document.getElementById('gtmDrawerOverlay');
+if (gtmDrawerOverlayEl) gtmDrawerOverlayEl.addEventListener('click', function(e){ if (e.target === gtmDrawerOverlayEl) closeGtmDrawer(); });
+const gtmSubmitBtnEl = document.getElementById('gtmSubmitBtn');
+if (gtmSubmitBtnEl) gtmSubmitBtnEl.addEventListener('click', submitGtmProduct);
+const gtmSearchInputEl = document.getElementById('gtmSearchInput');
+if (gtmSearchInputEl) gtmSearchInputEl.addEventListener('input', function(){ gtmSearchTerm = this.value; renderGtmTable(); });
+
 /* ============ 利润监控表 ============ */
 /* ============ 图表 ============ */
 let chartCustomerMargin, chartProductMargin;
@@ -3166,6 +3417,7 @@ function renderCharts(){
 function refreshAll(){
   renderQuarterTabs(); populateRouteSelect(); populatePromoSelects(); populatePromoDealSelects(); renderCountryTabs(); renderCustTabs(); renderCategoryTabs(); renderBrandTabs(); populateModelDatalist(); populateHqModelDatalist(); renderCatalog();
   renderKPI(); renderRoute(); renderPriceTable(); renderPromoTable(); renderPromoDealAll(); renderCharts(); renderQoQTable(); renderHqPriceTable(); renderSimTable();
+  if (typeof renderGtmAll === 'function') renderGtmAll();
 }
 
 /* ============ 事件绑定 ============ */
@@ -3699,6 +3951,15 @@ async function loadSimRows(){
   }catch(e){ console.error(e); }
 }
 
+async function loadGtmProducts(){
+  try{
+    const { data, error } = await sb.from('gtm_products').select('*').order('id', {ascending:true});
+    if (error){ console.error('loadGtmProducts', error); return; }
+    gtmProducts = data||[];
+    if (typeof renderGtmAll === 'function') renderGtmAll();
+  }catch(e){ console.error(e); }
+}
+
 async function loadAllRemoteData(){
   await Promise.all([
     loadPromoDeals(),
@@ -3706,7 +3967,8 @@ async function loadAllRemoteData(){
     loadOrdersData(),
     loadHqPrices(),
     loadSimRows(),
-    loadProductDescriptions()
+    loadProductDescriptions(),
+    loadGtmProducts()
   ]);
 }
 
@@ -4593,6 +4855,30 @@ const I18N_DICT = [
   ['保留完整字段，包含代理商利润点位','Keeps all fields, including agent margin %','Zachowuje wszystkie pola, w tym marżę agenta %'],
   ['文件格式','File Format','Format pliku'],
   ['Excel 表格','Excel Table','Tabela Excel'],
+  ['新产品GTM','New Product GTM','GTM nowego produktu'],
+  ['新品上市时间表与阶段状态跟进','New product launch timeline and stage tracking','Harmonogram premier nowych produktów i śledzenie etapów'],
+  ['新增新品','Add New Product','Dodaj nowy produkt'],
+  ['编辑新品','Edit Product','Edytuj produkt'],
+  ['搜索产品型号或名称...','Search product model or name...','Szukaj modelu lub nazwy produktu...'],
+  ['目标市场','Target Market','Rynek docelowy'],
+  ['负责人','Owner','Odpowiedzialny'],
+  ['计划上市日期','Planned Launch Date','Planowana data premiery'],
+  ['当前阶段','Current Stage','Bieżący etap'],
+  ['全渠道','All Channels','Wszystkie kanały'],
+  ['筹备中','Preparing','W przygotowaniu'],
+  ['样品测试','Sample Testing','Testowanie próbek'],
+  ['定价确认','Pricing Confirmation','Potwierdzenie ceny'],
+  ['渠道备货','Channel Stocking','Zaopatrzenie kanału'],
+  ['已上市','Launched','Wprowadzono na rynek'],
+  ['延期预警','Delay Alert','Alarm opóźnienia'],
+  ['新品总数','Total New Products','Łączna liczba nowych produktów'],
+  ['暂无新品记录','No new product records yet','Brak jeszcze rekordów nowych produktów'],
+  ['累计登记','Total registered','Łącznie zarejestrowano'],
+  ['款新品','new products','nowych produktów'],
+  ['阶段为"已上市"的新品数','Number of products in "Launched" stage','Liczba produktów na etapie "Wprowadzono na rynek"'],
+  ['尚未上市或取消的新品数','Products not yet launched or cancelled','Produkty jeszcze niewprowadzone lub anulowane'],
+  ['计划上市日期已过但尚未上市','Planned launch date has passed but not yet launched','Planowana data premiery minęła, a produkt nie został jeszcze wprowadzony'],
+  ['确定要删除该新品记录吗？','Are you sure you want to delete this product record?','Czy na pewno chcesz usunąć ten rekord produktu?'],
   ['正式文档','Formal Document','Dokument formalny'],
   ['确认导出','Confirm Export','Potwierdź eksport'],
   ['DDP-满减促销(一级客户)','DDP Threshold Promotion (Tier-1 Customer)','Promocja progowa DDP (Klient 1. poziomu)'],

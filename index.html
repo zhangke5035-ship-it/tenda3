@@ -81,6 +81,8 @@
   .progress-bar{height:100%;background:var(--copper);} .progress-bar.over{background:var(--alert);}
   .del-btn{color:var(--text-faint);background:none;border:none;cursor:pointer;font-size:15px;}
   .del-btn:hover{color:var(--alert);}
+  .edit-btn{color:var(--text-faint);background:none;border:none;cursor:pointer;font-size:14px;margin-right:8px;}
+  .edit-btn:hover{color:var(--copper);}
   .form-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px;}
   .field label{display:block;font-size:11px;color:var(--text-faint);margin-bottom:5px;text-transform:uppercase;letter-spacing:0.4px;}
   .field input,.field select{width:100%;background:var(--surface-alt);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:var(--radius);font-size:13px;outline:none;}
@@ -2963,14 +2965,51 @@ function renderPromoDealTable(){
       <td>${p.start||'—'}</td>
       <td>${p.end||'—'}</td>
       <td><span class="status ${statusClass(p.status)}"><span class="sdot"></span>${p.status}</span></td>
-      <td><button class="del-btn" onclick="deletePromoDeal(${p.id})" title="删除">✕</button></td>
+      <td><button class="edit-btn" onclick="editPromoDeal(${p.id})" title="编辑">✎</button><button class="del-btn" onclick="deletePromoDeal(${p.id})" title="删除">✕</button></td>
     </tr>`;
   }).join('');
+}
+let editingPromoDealId = null;
+function editPromoDeal(id){
+  const p = promoDeals.find(x=>x.id===id);
+  if(!p) return;
+  editingPromoDealId = id;
+  document.getElementById('pd_name').value = p.name || '';
+  document.getElementById('pd_customer').value = p.cust || '';
+  document.getElementById('pd_product').value = p.product || '';
+  document.getElementById('pd_original').value = p.original || '';
+  document.getElementById('pd_promo').value = p.promo || '';
+  document.getElementById('pd_type').value = p.type || 'Sell-in价格促销';
+  document.getElementById('pd_start').value = p.start || '';
+  document.getElementById('pd_end').value = p.end || '';
+  document.getElementById('pd_status').value = p.status || '未开始';
+  const btn = document.getElementById('addPromoDealBtn');
+  btn.textContent = '保存修改';
+  let cancelBtn = document.getElementById('cancelPromoDealEditBtn');
+  if(!cancelBtn){
+    cancelBtn = document.createElement('button');
+    cancelBtn.className = 'btn';
+    cancelBtn.id = 'cancelPromoDealEditBtn';
+    cancelBtn.type = 'button';
+    cancelBtn.style.cssText = 'margin-left:8px;background:transparent;border:1px solid var(--border);color:var(--text-dim);';
+    cancelBtn.textContent = '取消编辑';
+    cancelBtn.onclick = cancelPromoDealEdit;
+    btn.parentNode.insertBefore(cancelBtn, btn.nextSibling);
+  }
+  btn.scrollIntoView({behavior:'smooth', block:'center'});
+}
+function cancelPromoDealEdit(){
+  editingPromoDealId = null;
+  ['pd_name','pd_product','pd_original','pd_promo'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('addPromoDealBtn').textContent = '新增促销';
+  const cancelBtn = document.getElementById('cancelPromoDealEditBtn');
+  if(cancelBtn) cancelBtn.remove();
 }
 async function deletePromoDeal(id){
   const { error } = await sb.from('promo_deals').delete().eq('id', id);
   if (error){ alert('删除促销失败：' + error.message); return; }
   promoDeals = promoDeals.filter(p=>p.id!==id);
+  if (editingPromoDealId === id) cancelPromoDealEdit();
   renderPromoDealAll();
 }
 
@@ -3123,6 +3162,19 @@ document.getElementById('addPromoDealBtn').addEventListener('click', async ()=>{
   const start = document.getElementById('pd_start').value;
   const end = document.getElementById('pd_end').value;
   const status = document.getElementById('pd_status').value;
+  if (editingPromoDealId){
+    const { data, error } = await sb.from('promo_deals').update({
+      name, cust, type, product, original, promo,
+      start_date: start || null, end_date: end || null, status
+    }).eq('id', editingPromoDealId).select().single();
+    if (error){ alert('更新促销失败：' + error.message); return; }
+    const idx = promoDeals.findIndex(p=>p.id===editingPromoDealId);
+    const updated = { id: data.id, name: data.name, cust: data.cust, type: data.type, product: data.product, original: Number(data.original)||0, promo: Number(data.promo)||0, start: data.start_date||'', end: data.end_date||'', status: data.status };
+    if (idx>=0) promoDeals[idx] = updated; else promoDeals.push(updated);
+    cancelPromoDealEdit();
+    renderPromoDealAll();
+    return;
+  }
   const { data, error } = await sb.from('promo_deals').insert({
     name, cust, type, product, original, promo,
     start_date: start || null, end_date: end || null, status
@@ -4295,7 +4347,26 @@ const I18N_DICT = [
   ['英文可配BOM','English Configurable BOM','Konfigurowalny BOM (wersja angielska)'],
   ['罗马尼亚','Romania','Rumunia'],
   ['超清','Ultra HD','Ultra HD'],
-  ['覆盖','Coverage','Zasięg']
+  ['覆盖','Coverage','Zasięg'],
+  ['全部','All','Wszystkie'],
+  ['未开始','Not Started','Nierozpoczęta'],
+  ['登记各客户/型号的限时促销价格，跟踪促销周期与折扣力度','Register time-limited promo prices per customer/model and track promotion periods and discount levels','Rejestruj ograniczone czasowo ceny promocyjne dla klientów/modeli i śledź okresy oraz poziomy rabatów'],
+  ['按(原价-促销价)/原价计算','Calculated as (Original − Promo) / Original','Obliczane jako (cena pierwotna − cena promocyjna) / cena pierwotna'],
+  ['当前状态为"进行中"的促销数','Number of promotions currently "Active"','Liczba promocji ze statusem "W toku"'],
+  ['促销活动总数','Total Promotions','Łączna liczba promocji'],
+  ['进行中促销','Active Promotions','Aktywne promocje'],
+  ['平均折扣力度','Average Discount','Średni poziom rabatu'],
+  ['暂无促销活动','No promotions yet','Brak promocji'],
+  ['促销名称','Promotion Name','Nazwa promocji'],
+  ['促销类型','Promotion Type','Typ promocji'],
+  ['促销列表','Promotion List','Lista promocji'],
+  ['促销价','Promo Price','Cena promocyjna'],
+  ['累计登记','Total registered','Łącznie zarejestrowano'],
+  ['个促销','promotions','promocji'],
+  ['原价','Original Price','Cena pierwotna'],
+  ['折扣','Discount','Rabat'],
+  ['开始日期','Start Date','Data rozpoczęcia'],
+  ['结束日期','End Date','Data zakończenia']
 ];
 I18N_DICT.sort((a,b)=>b[0].length-a[0].length);
 

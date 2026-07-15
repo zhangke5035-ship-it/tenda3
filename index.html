@@ -3551,7 +3551,7 @@ const authErrorEl = document.getElementById('authError');
 const userBadgeEl = document.getElementById('userBadge');
 const logoutBtnEl = document.getElementById('logoutBtn');
 
-const RESTRICTED_HQ_PRICING_EMAILS = ['gajowski@tenda.cn', 'piotr.kowalski@tenda.cn'];
+const RESTRICTED_HQ_PRICING_EMAILS = ['gajowski@tenda.cn', 'piotr.kowalski@tenda.cn', 'roman.danko@tenda.cn'];
 function applyRoleRestrictions(session){
   const userEmail = ((session && session.user && session.user.email) || '').toLowerCase();
   if (RESTRICTED_HQ_PRICING_EMAILS.includes(userEmail)){
@@ -3566,7 +3566,7 @@ function applyRoleRestrictions(session){
   }
 }
 
-const POLISH_DEFAULT_EMAILS = ['piotr.kowalski@tenda.cn', 'gajowski@tenda.cn'];
+const POLISH_DEFAULT_EMAILS = ['piotr.kowalski@tenda.cn', 'gajowski@tenda.cn', 'roman.danko@tenda.cn'];
 function applyDefaultLanguageForUser(session){
   const userEmail = ((session && session.user && session.user.email) || '').toLowerCase();
   if (POLISH_DEFAULT_EMAILS.includes(userEmail) && typeof applyLanguage === 'function'){

@@ -38,6 +38,17 @@
   .navitem.active .dot{background:var(--copper);}
   .navgroup-label{padding:10px 12px 0 12px;font-size:10.5px;color:var(--text-faint);letter-spacing:0.5px;margin-top:6px;text-transform:uppercase;}
   .navitem.sub{padding-left:26px;font-size:12.5px;}
+  .navgroup{margin-top:2px;}
+  .navgroup-head{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--radius);color:var(--text-dim);cursor:pointer;font-size:13.5px;user-select:none;transition:background .12s ease,color .12s ease;}
+  .navgroup-head:hover{background:var(--surface-alt);color:var(--text);}
+  .navgroup.open .navgroup-head{color:var(--text);}
+  .navgroup-head .chevron{margin-left:auto;font-size:9px;color:var(--text-faint);transition:transform .15s ease;}
+  .navgroup.open .navgroup-head .chevron{transform:rotate(180deg);}
+  .navgroup-body{max-height:0;overflow:hidden;transition:max-height .2s ease;}
+  .navgroup.open .navgroup-body{max-height:260px;}
+  .navitem .nav-icon,.navgroup-head .nav-icon{width:15px;height:15px;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--text-faint);}
+  .navitem .nav-icon svg,.navgroup-head .nav-icon svg{width:15px;height:15px;}
+  .navitem.active .nav-icon{color:var(--copper);}
   .sidebar-foot{margin-top:auto;padding:16px 22px 0 22px;border-top:1px solid var(--border-soft);}
   .rate-box label{display:block;font-size:10.5px;color:var(--text-faint);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:6px;}
   .rate-input{display:flex;align-items:center;gap:6px;background:var(--surface-alt);border:1px solid var(--border);border-radius:var(--radius);padding:7px 9px;}
@@ -388,17 +399,29 @@
       <div class="brand-ver">数据版本 26M71</div>
     </div>
     <nav id="nav">
-      <div class="navitem active" data-view="overview"><span class="dot"></span>总览</div>
-      <div class="navgroup-label">报价管理</div>
-      <div class="navitem sub" data-view="pricing-customer"><span class="dot"></span>客户报价</div>
-      <div class="navitem sub" data-view="pricing-hq"><span class="dot"></span>总部报价</div>
-      <div class="navitem sub" data-view="pricing-hq-sim"><span class="dot"></span>总部报价模拟测算</div>
-      <div class="navitem" data-view="gtm"><span class="dot"></span>新产品GTM</div>
-      <div class="navgroup-label">营销活动</div>
-      <div class="navitem sub" data-view="promo"><span class="dot"></span>营销费用</div>
-      <div class="navitem sub" data-view="promodeals"><span class="dot"></span>促销管理</div>
-      <div class="navitem" data-view="orders"><span class="dot"></span>销售订单</div>
-      <div class="navitem" data-view="inventory"><span class="dot"></span>库存管理</div>
+      <div class="navitem active" data-view="overview"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg></span>总览</div>
+
+      <div class="navgroup open" data-group="quotation">
+        <div class="navgroup-head"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg></span>报价管理<span class="chevron">▾</span></div>
+        <div class="navgroup-body">
+          <div class="navitem sub" data-view="pricing-customer"><span class="dot"></span>客户报价</div>
+          <div class="navitem sub" data-view="pricing-hq"><span class="dot"></span>总部报价</div>
+          <div class="navitem sub" data-view="pricing-hq-sim"><span class="dot"></span>总部报价模拟测算</div>
+        </div>
+      </div>
+
+      <div class="navitem" data-view="gtm"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg></span>新产品GTM</div>
+
+      <div class="navgroup open" data-group="marketing">
+        <div class="navgroup-head"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg></span>营销活动<span class="chevron">▾</span></div>
+        <div class="navgroup-body">
+          <div class="navitem sub" data-view="promo"><span class="dot"></span>营销费用</div>
+          <div class="navitem sub" data-view="promodeals"><span class="dot"></span>促销管理</div>
+        </div>
+      </div>
+
+      <div class="navitem" data-view="orders"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg></span>销售订单</div>
+      <div class="navitem" data-view="inventory"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path></svg></span>库存管理</div>
     </nav>
     <div class="sidebar-foot">
       <div class="rate-box">
@@ -3151,7 +3174,11 @@ function showView(name, navName){
   const view = document.getElementById('view-'+name);
   if (view) view.classList.add('active');
   const nav = document.querySelector('.navitem[data-view="'+(navName||name)+'"]');
-  if (nav) nav.classList.add('active');
+  if (nav){
+    nav.classList.add('active');
+    const grp = nav.closest('.navgroup');
+    if (grp) grp.classList.add('open');
+  }
   window.scrollTo({top:0, behavior:'smooth'});
 }
 function openPromoDealDetail(id){
@@ -3422,11 +3449,19 @@ function refreshAll(){
 
 /* ============ 事件绑定 ============ */
 document.getElementById('nav').addEventListener('click', e=>{
+  const head = e.target.closest('.navgroup-head');
+  if (head){
+    const grp = head.closest('.navgroup');
+    if (grp) grp.classList.toggle('open');
+    return;
+  }
   const item = e.target.closest('.navitem'); if(!item) return;
   document.querySelectorAll('.navitem').forEach(n=>n.classList.remove('active'));
   item.classList.add('active');
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   document.getElementById('view-'+item.dataset.view).classList.add('active');
+  const grp = item.closest('.navgroup');
+  if (grp) grp.classList.add('open');
 });
 document.getElementById('fxRate').addEventListener('input', refreshAll);
 document.getElementById('routeSelect').addEventListener('change', renderRoute);

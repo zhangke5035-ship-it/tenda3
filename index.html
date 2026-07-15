@@ -280,6 +280,7 @@
       <div class="navgroup-label">报价管理</div>
       <div class="navitem sub" data-view="pricing-customer"><span class="dot"></span>客户报价</div>
       <div class="navitem sub" data-view="pricing-hq"><span class="dot"></span>总部报价</div>
+      <div class="navitem sub" data-view="pricing-hq-sim"><span class="dot"></span>总部报价模拟测算</div>
       <div class="navgroup-label">营销活动</div>
       <div class="navitem sub" data-view="promo"><span class="dot"></span>营销费用</div>
       <div class="navitem sub" data-view="promodeals"><span class="dot"></span>促销管理</div>
@@ -455,8 +456,18 @@
             <tbody id="hqPriceTableBody"></tbody>
           </table>
         </div>
-      
+
       </section>
+
+    <!-- ===================== 总部报价模拟测算 ===================== -->
+    <section class="view" id="view-pricing-hq-sim">
+      <div class="viewhead">
+        <div><h2>报价管理 · 总部报价模拟测算</h2><p>基于总部报价与盈亏平衡价，模拟不同结算价/汇率下的利润表现</p></div>
+      </div>
+      <div class="notebox">
+        模块框架已搭建，具体字段与测算逻辑将在后续录入。
+      </div>
+    </section>
     <!-- ===================== 销售订单 ===================== -->
 <section class="view" id="view-orders">
   <div class="viewhead">
@@ -3141,6 +3152,10 @@ function applyRoleRestrictions(session){
     if (hqNavItem) hqNavItem.style.display = 'none';
     const hqView = document.getElementById('view-pricing-hq');
     if (hqView) hqView.remove();
+    const hqSimNavItem = document.querySelector('.navitem[data-view="pricing-hq-sim"]');
+    if (hqSimNavItem) hqSimNavItem.style.display = 'none';
+    const hqSimView = document.getElementById('view-pricing-hq-sim');
+    if (hqSimView) hqSimView.remove();
   }
 }
 

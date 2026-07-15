@@ -3411,6 +3411,14 @@ function applyRoleRestrictions(session){
   }
 }
 
+const POLISH_DEFAULT_EMAILS = ['piotr.kowalski@tenda.cn', 'gajowski@tenda.cn'];
+function applyDefaultLanguageForUser(session){
+  const userEmail = ((session && session.user && session.user.email) || '').toLowerCase();
+  if (POLISH_DEFAULT_EMAILS.includes(userEmail) && typeof applyLanguage === 'function'){
+    applyLanguage('pl');
+  }
+}
+
 async function loadPromoDeals(){
   try{
     const { data, error } = await sb.from('promo_deals').select('*').order('id', {ascending:true});
@@ -3486,6 +3494,7 @@ function showApp(session){
   appRootEl.classList.remove('hidden');
   if(userBadgeEl) userBadgeEl.textContent = (session && session.user && session.user.email) || '';
   applyRoleRestrictions(session);
+  applyDefaultLanguageForUser(session);
   try{
     if(typeof refreshAll === 'function'){
       refreshAll();

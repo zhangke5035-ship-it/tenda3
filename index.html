@@ -644,6 +644,36 @@
     </table>
   </div>
 </section>
+    <!-- ================ 促销详情/编辑 ================ -->
+<section class="view" id="view-promodeal-detail">
+  <div class="viewhead">
+    <div><h2>促销详情</h2><p>查看并编辑该促销的完整信息</p></div>
+    <button class="btn ghost" id="promoDealDetailBackBtn">← 返回促销列表</button>
+  </div>
+  <div class="panel">
+    <div class="panel-head"><h3>编辑促销</h3></div>
+    <div class="form-grid">
+      <div class="field"><label>促销名称</label><input id="pdd_name" placeholder="例如 W15-Pro 夏季促销"></div>
+      <div class="field"><label>客户</label><select id="pdd_customer"></select></div>
+      <div class="field"><label>产品型号</label><input id="pdd_product" list="modelDatalist" placeholder="例如 W15-Pro"></div>
+      <div class="field"><label>原价 (PLN)</label><input id="pdd_original" type="number" placeholder="199"></div>
+      <div class="field"><label>促销价 (PLN)</label><input id="pdd_promo" type="number" placeholder="169"></div>
+      <div class="field"><label>促销类型</label><select id="pdd_type"><option>DDP-满减促销(一级客户)</option><option>DMP促销(二级客户)</option><option>Sell-in价格促销</option></select></div>
+      <div class="field"><label>开始日期</label><input id="pdd_start" type="date"></div>
+      <div class="field"><label>结束日期</label><input id="pdd_end" type="date"></div>
+      <div class="field"><label>状态</label>
+        <select id="pdd_status">
+          <option>未开始</option>
+          <option>进行中</option>
+          <option>已结束</option>
+          <option>已取消</option>
+        </select>
+      </div>
+    </div>
+    <button class="btn" id="promoDealDetailSaveBtn">保存修改</button>
+    <button class="btn ghost" id="promoDealDetailDeleteBtn" style="margin-left:8px;color:var(--alert);">删除该促销</button>
+  </div>
+</section>
     <!-- ================ 库存管理 ================ -->
 <section class="view" id="view-inventory">
   <div class="viewhead">
@@ -2877,9 +2907,11 @@ let promoDealTypeFilter = '全部';
 const PROMO_TYPE_LIST = ['DDP-满减促销(一级客户)','DMP促销(二级客户)','Sell-in价格促销'];
 
 function populatePromoDealSelects(){
+  const opts = uniqueCustomers().map(c=>`<option value="${c}">${custName(c)}</option>`).join('');
   const sel = document.getElementById('pd_customer');
-  if (!sel) return;
-  sel.innerHTML = uniqueCustomers().map(c=>`<option value="${c}">${custName(c)}</option>`).join('');
+  if (sel) sel.innerHTML = opts;
+  const sel2 = document.getElementById('pdd_customer');
+  if (sel2) sel2.innerHTML = opts;
 }
 
 function promoDealDiscountPct(p){
@@ -2954,7 +2986,7 @@ function renderPromoDealTable(){
   if (promoDealTypeFilter !== '全部') rows = rows.filter(p=>p.type===promoDealTypeFilter);
   tbody.innerHTML = rows.map(p=>{
     const discount = p.original>0 ? promoDealDiscountPct(p).toFixed(1)+'%' : '—';
-    return `<tr>
+    return `<tr data-id="${p.id}" style="cursor:pointer;">
       <td>${p.name}</td>
       <td>${p.type||'—'}</td>
       <td>${custName(p.cust)}</td>
@@ -2965,51 +2997,50 @@ function renderPromoDealTable(){
       <td>${p.start||'—'}</td>
       <td>${p.end||'—'}</td>
       <td><span class="status ${statusClass(p.status)}"><span class="sdot"></span>${p.status}</span></td>
-      <td><button class="edit-btn" onclick="editPromoDeal(${p.id})" title="编辑">✎</button><button class="del-btn" onclick="deletePromoDeal(${p.id})" title="删除">✕</button></td>
+      <td><button class="edit-btn" onclick="event.stopPropagation();editPromoDeal(${p.id})" title="编辑">✎</button><button class="del-btn" onclick="event.stopPropagation();deletePromoDeal(${p.id})" title="删除">✕</button></td>
     </tr>`;
   }).join('');
 }
-let editingPromoDealId = null;
-function editPromoDeal(id){
+if (!document.getElementById('promoDealTableBody').dataset.rowClickBound){
+  document.getElementById('promoDealTableBody').dataset.rowClickBound = '1';
+  document.getElementById('promoDealTableBody').addEventListener('click', function(e){
+    if (e.target.closest('button')) return;
+    const tr = e.target.closest('tr[data-id]');
+    if (!tr) return;
+    openPromoDealDetail(Number(tr.dataset.id));
+  });
+}
+let promoDealDetailId = null;
+function showView(name, navName){
+  document.querySelectorAll('.navitem').forEach(n=>n.classList.remove('active'));
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  const view = document.getElementById('view-'+name);
+  if (view) view.classList.add('active');
+  const nav = document.querySelector('.navitem[data-view="'+(navName||name)+'"]');
+  if (nav) nav.classList.add('active');
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+function openPromoDealDetail(id){
   const p = promoDeals.find(x=>x.id===id);
   if(!p) return;
-  editingPromoDealId = id;
-  document.getElementById('pd_name').value = p.name || '';
-  document.getElementById('pd_customer').value = p.cust || '';
-  document.getElementById('pd_product').value = p.product || '';
-  document.getElementById('pd_original').value = p.original || '';
-  document.getElementById('pd_promo').value = p.promo || '';
-  document.getElementById('pd_type').value = p.type || 'Sell-in价格促销';
-  document.getElementById('pd_start').value = p.start || '';
-  document.getElementById('pd_end').value = p.end || '';
-  document.getElementById('pd_status').value = p.status || '未开始';
-  const btn = document.getElementById('addPromoDealBtn');
-  btn.textContent = '保存修改';
-  let cancelBtn = document.getElementById('cancelPromoDealEditBtn');
-  if(!cancelBtn){
-    cancelBtn = document.createElement('button');
-    cancelBtn.className = 'btn';
-    cancelBtn.id = 'cancelPromoDealEditBtn';
-    cancelBtn.type = 'button';
-    cancelBtn.style.cssText = 'margin-left:8px;background:transparent;border:1px solid var(--border);color:var(--text-dim);';
-    cancelBtn.textContent = '取消编辑';
-    cancelBtn.onclick = cancelPromoDealEdit;
-    btn.parentNode.insertBefore(cancelBtn, btn.nextSibling);
-  }
-  btn.scrollIntoView({behavior:'smooth', block:'center'});
+  promoDealDetailId = id;
+  document.getElementById('pdd_name').value = p.name || '';
+  document.getElementById('pdd_customer').value = p.cust || '';
+  document.getElementById('pdd_product').value = p.product || '';
+  document.getElementById('pdd_original').value = p.original || '';
+  document.getElementById('pdd_promo').value = p.promo || '';
+  document.getElementById('pdd_type').value = p.type || 'Sell-in价格促销';
+  document.getElementById('pdd_start').value = p.start || '';
+  document.getElementById('pdd_end').value = p.end || '';
+  document.getElementById('pdd_status').value = p.status || '未开始';
+  showView('promodeal-detail', 'promodeals');
 }
-function cancelPromoDealEdit(){
-  editingPromoDealId = null;
-  ['pd_name','pd_product','pd_original','pd_promo'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('addPromoDealBtn').textContent = '新增促销';
-  const cancelBtn = document.getElementById('cancelPromoDealEditBtn');
-  if(cancelBtn) cancelBtn.remove();
-}
+function editPromoDeal(id){ openPromoDealDetail(id); }
 async function deletePromoDeal(id){
   const { error } = await sb.from('promo_deals').delete().eq('id', id);
   if (error){ alert('删除促销失败：' + error.message); return; }
   promoDeals = promoDeals.filter(p=>p.id!==id);
-  if (editingPromoDealId === id) cancelPromoDealEdit();
+  if (promoDealDetailId === id) promoDealDetailId = null;
   renderPromoDealAll();
 }
 
@@ -3162,19 +3193,6 @@ document.getElementById('addPromoDealBtn').addEventListener('click', async ()=>{
   const start = document.getElementById('pd_start').value;
   const end = document.getElementById('pd_end').value;
   const status = document.getElementById('pd_status').value;
-  if (editingPromoDealId){
-    const { data, error } = await sb.from('promo_deals').update({
-      name, cust, type, product, original, promo,
-      start_date: start || null, end_date: end || null, status
-    }).eq('id', editingPromoDealId).select().single();
-    if (error){ alert('更新促销失败：' + error.message); return; }
-    const idx = promoDeals.findIndex(p=>p.id===editingPromoDealId);
-    const updated = { id: data.id, name: data.name, cust: data.cust, type: data.type, product: data.product, original: Number(data.original)||0, promo: Number(data.promo)||0, start: data.start_date||'', end: data.end_date||'', status: data.status };
-    if (idx>=0) promoDeals[idx] = updated; else promoDeals.push(updated);
-    cancelPromoDealEdit();
-    renderPromoDealAll();
-    return;
-  }
   const { data, error } = await sb.from('promo_deals').insert({
     name, cust, type, product, original, promo,
     start_date: start || null, end_date: end || null, status
@@ -3183,6 +3201,37 @@ document.getElementById('addPromoDealBtn').addEventListener('click', async ()=>{
   promoDeals.push({ id: data.id, name: data.name, cust: data.cust, type: data.type, product: data.product, original: Number(data.original)||0, promo: Number(data.promo)||0, start: data.start_date||'', end: data.end_date||'', status: data.status });
   ['pd_name','pd_product','pd_original','pd_promo'].forEach(id=>document.getElementById(id).value='');
   renderPromoDealAll();
+});
+
+document.getElementById('promoDealDetailBackBtn').addEventListener('click', ()=>{ showView('promodeals'); });
+document.getElementById('promoDealDetailSaveBtn').addEventListener('click', async ()=>{
+  if (!promoDealDetailId) return;
+  const name = document.getElementById('pdd_name').value.trim();
+  const product = document.getElementById('pdd_product').value.trim();
+  const original = parseFloat(document.getElementById('pdd_original').value) || 0;
+  const promo = parseFloat(document.getElementById('pdd_promo').value) || 0;
+  if(!name || !product || !original || !promo){ alert('请填写促销名称、产品型号、原价和促销价'); return; }
+  const cust = document.getElementById('pdd_customer').value;
+  const type = document.getElementById('pdd_type').value;
+  const start = document.getElementById('pdd_start').value;
+  const end = document.getElementById('pdd_end').value;
+  const status = document.getElementById('pdd_status').value;
+  const { data, error } = await sb.from('promo_deals').update({
+    name, cust, type, product, original, promo,
+    start_date: start || null, end_date: end || null, status
+  }).eq('id', promoDealDetailId).select().single();
+  if (error){ alert('更新促销失败：' + error.message); return; }
+  const idx = promoDeals.findIndex(p=>p.id===promoDealDetailId);
+  const updated = { id: data.id, name: data.name, cust: data.cust, type: data.type, product: data.product, original: Number(data.original)||0, promo: Number(data.promo)||0, start: data.start_date||'', end: data.end_date||'', status: data.status };
+  if (idx>=0) promoDeals[idx] = updated;
+  renderPromoDealAll();
+  showView('promodeals');
+});
+document.getElementById('promoDealDetailDeleteBtn').addEventListener('click', async ()=>{
+  if (!promoDealDetailId) return;
+  if (!confirm('确定要删除该促销吗？')) return;
+  await deletePromoDeal(promoDealDetailId);
+  showView('promodeals');
 });
 
 let hqPrices = [];

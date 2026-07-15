@@ -113,6 +113,34 @@
   .promo-status-tag{display:inline-flex;align-items:center;padding:3px 12px;border-radius:20px;font-size:11.5px;font-weight:600;}
   .promo-end-link:hover{color:var(--alert) !important;}
   .form-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px;}
+  .form-grid.cols-2{grid-template-columns:repeat(2,1fr);}
+  .form-grid.cols-3{grid-template-columns:repeat(3,1fr);}
+  .pd-steps{display:flex;gap:0;margin-bottom:6px;}
+  .pd-step{flex:1;text-align:center;font-size:11.5px;color:var(--text-faint);padding-bottom:10px;border-bottom:2px solid var(--border);display:flex;align-items:center;justify-content:center;gap:6px;}
+  .pd-step.active{color:var(--copper);border-bottom-color:var(--copper);font-weight:600;}
+  .pd-step-num{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;background:var(--surface-alt);color:var(--text-faint);font-size:10px;}
+  .pd-step.active .pd-step-num{background:var(--copper);color:#fff;}
+  .pd-strategy-card{display:flex;align-items:center;gap:14px;padding:16px;border:1px solid var(--border);border-radius:6px;margin-bottom:12px;cursor:pointer;transition:border-color .12s ease;background:var(--surface-alt);}
+  .pd-strategy-card:hover{border-color:var(--copper);}
+  .pd-strategy-icon{font-size:24px;flex-shrink:0;width:32px;text-align:center;}
+  .pd-strategy-body{flex:1;}
+  .pd-strategy-title{font-weight:700;font-size:14px;color:var(--text);display:flex;align-items:center;gap:8px;}
+  .pd-strategy-tag{display:inline-block;padding:2px 8px;border-radius:12px;background:#E8F0FA;color:#2C6FBF;font-size:10.5px;font-weight:500;}
+  .pd-strategy-desc{margin-top:4px;font-size:12px;color:var(--text-dim);}
+  .pd-strategy-alert{padding:9px 12px;border-radius:var(--radius);font-size:12px;margin-bottom:2px;}
+  .pd-strategy-alert.info{background:#E8F1FC;color:#2F6FB3;}
+  .pd-strategy-alert.good{background:var(--good-soft);color:var(--good);}
+  .pd-strategy-alert.warn{background:#FFF3D6;color:#B27B00;}
+  .pd-tier-table{width:100%;border-collapse:collapse;margin-bottom:4px;}
+  .pd-tier-table th{text-align:left;color:var(--text-faint);font-weight:500;font-size:10.5px;text-transform:uppercase;letter-spacing:0.4px;padding:6px 8px;border-bottom:1px solid var(--border);}
+  .pd-tier-table td{padding:6px 8px;border-bottom:1px solid var(--border);font-size:12.5px;}
+  .pd-tier-table input{width:100%;background:var(--surface-alt);border:1px solid var(--border);color:var(--text);padding:6px 8px;border-radius:var(--radius);font-size:12.5px;font-family:'IBM Plex Mono';outline:none;}
+  .pd-tier-table input:focus{border-color:var(--copper);}
+  .pd-margin-panel{display:flex;padding:12px 14px;border:1px dashed var(--border);border-radius:6px;margin:4px 0 2px;}
+  .pd-margin-item{flex:1;text-align:center;}
+  .pd-margin-item + .pd-margin-item{border-left:1px solid var(--border);}
+  .pd-margin-label{font-size:10.5px;color:var(--text-faint);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:4px;}
+  .pd-margin-value{font-size:16px;font-weight:700;color:var(--text);}
   .field label{display:block;font-size:11px;color:var(--text-faint);margin-bottom:5px;text-transform:uppercase;letter-spacing:0.4px;}
   .field input,.field select{width:100%;background:var(--surface-alt);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:var(--radius);font-size:13px;outline:none;}
   .field input:focus,.field select:focus{border-color:var(--copper);}
@@ -704,26 +732,107 @@
       <div class="drawer-close" id="promoDealDrawerClose">✕</div>
     </div>
     <div class="drawer-body">
-      <div class="field"><label>促销名称</label><input id="pd_name" placeholder="例如 W15-Pro 夏季促销"></div>
-      <div class="field"><label>客户</label><select id="pd_customer"></select></div>
-      <div class="field"><label>产品型号</label><input id="pd_product" list="modelDatalist" placeholder="例如 W15-Pro"></div>
-      <div class="field"><label>DDP原价 (PLN)</label><input id="pd_original" type="number" placeholder="199"></div>
-      <div class="field"><label>DDP促销价 (PLN)</label><input id="pd_promo" type="number" placeholder="169"></div>
-      <div class="field"><label>促销类型</label><select id="pd_type"><option>DDP-满减促销(一级客户)</option><option>DMP促销(二级客户)</option><option>Sell-in价格促销</option></select></div>
-      <div class="field"><label>开始日期</label><input id="pd_start" type="date"></div>
-      <div class="field"><label>结束日期</label><input id="pd_end" type="date"></div>
-      <div class="field"><label>状态</label>
-        <select id="pd_status">
-          <option>未开始</option>
-          <option>进行中</option>
-          <option>已结束</option>
-          <option>已取消</option>
-        </select>
+      <div class="pd-steps">
+        <div class="pd-step active" id="pdStepIndicator1"><span class="pd-step-num">1</span>选择定价模式</div>
+        <div class="pd-step" id="pdStepIndicator2"><span class="pd-step-num">2</span>配置价格参数</div>
+      </div>
+
+      <!-- STEP 1: 定价策略选择 -->
+      <div id="pdWizardStep1">
+        <div class="pd-strategy-card" data-strategy="standard">
+          <div class="pd-strategy-icon" style="color:#1890ff;">🛒</div>
+          <div class="pd-strategy-body">
+            <div class="pd-strategy-title">单品特价<span class="pd-strategy-tag">日常促销</span></div>
+            <div class="pd-strategy-desc">针对特定 SKU 设定统一的促销供货价。</div>
+          </div>
+          <button type="button" class="btn ghost">选择</button>
+        </div>
+        <div class="pd-strategy-card" data-strategy="tiered">
+          <div class="pd-strategy-icon" style="color:#52c41a;">📈</div>
+          <div class="pd-strategy-body">
+            <div class="pd-strategy-title">阶梯定价<span class="pd-strategy-tag">大单激励</span></div>
+            <div class="pd-strategy-desc">根据单笔订单数量自动匹配不同单价。</div>
+          </div>
+          <button type="button" class="btn ghost">选择</button>
+        </div>
+        <div class="pd-strategy-card" data-strategy="clearance">
+          <div class="pd-strategy-icon" style="color:#f5222d;">🧹</div>
+          <div class="pd-strategy-body">
+            <div class="pd-strategy-title">清仓甩卖<span class="pd-strategy-tag">库存出清</span></div>
+            <div class="pd-strategy-desc">以极低价格清理呆滞库存，卖完即止。</div>
+          </div>
+          <button type="button" class="btn ghost">选择</button>
+        </div>
+      </div>
+
+      <!-- STEP 2: 参数配置 -->
+      <div id="pdWizardStep2" style="display:none;">
+        <div class="pd-strategy-alert" id="pdStrategyAlert"></div>
+        <div class="field"><label>促销名称</label><input id="pd_name" placeholder="例如 W15-Pro 夏季促销"></div>
+        <div class="form-grid cols-2">
+          <div class="field"><label>客户</label><select id="pd_customer"></select></div>
+          <div class="field"><label>产品型号</label><input id="pd_product" list="modelDatalist" placeholder="例如 W15-Pro"></div>
+        </div>
+
+        <div class="field mono" id="pdOriginalField">
+          <label id="pdOriginalLabel">标准分销价</label>
+          <input id="pd_original" type="number" readonly placeholder="根据客户+型号自动带出">
+        </div>
+
+        <div class="form-grid cols-2" id="pdPriceRow">
+          <div class="field mono"><label id="pdPromoLabel">本次特价</label><input id="pd_promo" type="number" placeholder="169"></div>
+          <div class="field mono"><label id="pdExtraLabel">系统限购</label><input id="pd_extra" type="number" placeholder="不填则不限量"></div>
+        </div>
+
+        <div id="pdFormTiered" style="display:none;">
+          <table class="pd-tier-table">
+            <thead><tr><th>层级</th><th>订单数量范围</th><th>执行单价 (PLN)</th></tr></thead>
+            <tbody>
+              <tr><td>Tier 1（门槛）</td><td>1 起</td><td><span style="color:var(--text-faint);font-size:12px;">= 标准分销价</span></td></tr>
+              <tr><td>Tier 2（批发）</td><td><input id="pd_tier2_qty" type="number" value="1000"></td><td><input id="pd_tier2_price" type="number" placeholder="特价 A"></td></tr>
+              <tr><td>Tier 3（大单）</td><td><input id="pd_tier3_qty" type="number" value="5000"></td><td><input id="pd_tier3_price" type="number" placeholder="特价 B"></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="field" id="pdBatchField" style="display:none;">
+          <label>指定批次号（选填，逗号分隔）</label>
+          <input id="pd_batch" placeholder="例如 LOT2024A, LOT2024B">
+        </div>
+
+        <div class="pd-margin-panel" id="pdMarginPanel" style="display:none;">
+          <div class="pd-margin-item">
+            <div class="pd-margin-label">折扣力度</div>
+            <div class="pd-margin-value" id="pdDiscountVal">—</div>
+          </div>
+          <div class="pd-margin-item">
+            <div class="pd-margin-label">预估毛利率</div>
+            <div class="pd-margin-value" id="pdMarginVal">—</div>
+          </div>
+          <div class="pd-margin-item">
+            <div class="pd-margin-label">数据健康度</div>
+            <div id="pdRiskTag">—</div>
+          </div>
+        </div>
+
+        <div class="form-grid cols-3">
+          <div class="field"><label>开始日期</label><input id="pd_start" type="date"></div>
+          <div class="field"><label>结束日期</label><input id="pd_end" type="date"></div>
+          <div class="field"><label>状态</label>
+            <select id="pd_status">
+              <option>未开始</option>
+              <option>进行中</option>
+              <option>已结束</option>
+              <option>已取消</option>
+            </select>
+          </div>
+        </div>
       </div>
     </div>
     <div class="drawer-footer">
+      <button class="btn ghost" id="pdWizardBackBtn" style="display:none;margin-right:auto;">上一步</button>
       <button class="btn ghost" id="promoDealDrawerCancel">取消</button>
-      <button class="btn" id="addPromoDealBtn">提交</button>
+      <button class="btn" id="addPromoDealBtn" style="display:none;">确认创建</button>
     </div>
   </div>
 </div>
@@ -741,7 +850,10 @@
       <div class="field"><label>产品型号</label><input id="pdd_product" list="modelDatalist" placeholder="例如 W15-Pro"></div>
       <div class="field"><label>原价 (PLN)</label><input id="pdd_original" type="number" placeholder="199"></div>
       <div class="field"><label>促销价 (PLN)</label><input id="pdd_promo" type="number" placeholder="169"></div>
-      <div class="field"><label>促销类型</label><select id="pdd_type"><option>DDP-满减促销(一级客户)</option><option>DMP促销(二级客户)</option><option>Sell-in价格促销</option></select></div>
+      <div class="field"><label>促销类型</label><select id="pdd_type">
+          <option>单品特价</option><option>阶梯定价</option><option>清仓甩卖</option>
+          <option>DDP-满减促销(一级客户)</option><option>DMP促销(二级客户)</option><option>Sell-in价格促销</option>
+        </select></div>
       <div class="field"><label>开始日期</label><input id="pdd_start" type="date"></div>
       <div class="field"><label>结束日期</label><input id="pdd_end" type="date"></div>
       <div class="field"><label>状态</label>
@@ -2762,7 +2874,7 @@ function renderPromoDealTabs(){
     return `<div class="cust-tab ${promoDealCustFilter===k?'active':''}" data-cust="${k}">${label}<span class="count">${count}</span></div>`;
   }).join('');
   if (typeBox){
-    const typeKeys = ['全部', ...PROMO_TYPE_LIST];
+    const typeKeys = ['全部', ...new Set(promoDeals.map(p=>p.type).filter(Boolean))];
     typeBox.innerHTML = typeKeys.map(t=>{
       const count = t==='全部' ? promoDeals.length : promoDeals.filter(p=>p.type===t).length;
       return `<div class="cust-tab ${promoDealTypeFilter===t?'active':''}" data-type="${t}">${t}<span class="count">${count}</span></div>`;
@@ -2805,10 +2917,22 @@ function renderPromoDealTable(){
   tbody.innerHTML = rows.map(p=>{
     const discount = p.original>0 ? promoDealDiscountPct(p).toFixed(1)+'%' : '—';
     const discountAmount = (p.original>0 || p.promo>0) ? (p.original - p.promo).toFixed(2) : '—';
+    const cfg = p.config || null;
+    let extraLine = '';
+    if (cfg && Array.isArray(cfg.tiers) && cfg.tiers.length){
+      extraLine = cfg.tiers.map(t=>`${t.qty}+件: ${Number(t.price).toFixed(2)}`).join(' · ');
+    } else if (cfg && (cfg.stock || (cfg.batch && cfg.batch.length))){
+      const parts = [];
+      if (cfg.stock) parts.push('锁定库存 ' + cfg.stock + ' 台');
+      if (cfg.batch && cfg.batch.length) parts.push('批次 ' + cfg.batch.join('/'));
+      extraLine = parts.join(' · ');
+    } else if (cfg && cfg.qtyCap){
+      extraLine = '限购 ' + cfg.qtyCap + ' 台';
+    }
     return `<tr data-id="${p.id}" style="cursor:pointer;">
       <td>
         <div class="promo-name-main">${p.name}</div>
-        <div class="promo-name-sub">型号: ${p.product}</div>
+        <div class="promo-name-sub">型号: ${p.product}${p.type ? (' · ' + p.type) : ''}</div>
       </td>
       <td><span class="promo-client-tag">${custName(p.cust)}</span></td>
       <td>
@@ -2816,6 +2940,7 @@ function renderPromoDealTable(){
           <div class="promo-price-original">原价: ${p.original.toFixed(2)}</div>
           <div class="promo-price-promo">现价: ${p.promo.toFixed(2)}</div>
           <div class="promo-price-discount">${discount!=='—' ? ('省 ' + discountAmount + ' PLN · ' + discount) : ''}</div>
+          ${extraLine ? `<div class="promo-price-discount">${extraLine}</div>` : ''}
         </div>
       </td>
       <td>
@@ -3048,7 +3173,84 @@ function updatePromoDealOriginalPrice(){
   if (price !== null){
     document.getElementById('pd_original').value = price.toFixed(2);
   }
+  pdRecalcMargin();
 }
+
+/* ============ 促销创建向导 (单品特价 / 阶梯定价 / 清仓甩卖) ============ */
+let pdWizardStrategy = 'standard';
+const PD_STRATEGY_ALERTS = {
+  standard: {msg:'系统将直接修改 ERP 开单价，下单即生效', cls:'info'},
+  tiered: {msg:'ERP 将自动根据 PO 数量匹配对应档位价格', cls:'good'},
+  clearance: {msg:'注意：清仓单据默认不可退换货', cls:'warn'}
+};
+function pdLookupCostPLN(product){
+  if (!product) return null;
+  const entry = priceList.find(p=>p.product===product && typeof p.costUSD === 'number');
+  if (!entry) return null;
+  return entry.costUSD * rate();
+}
+function pdRiskTagHtml(margin){
+  if (margin < 0) return '<span class="promo-status-tag" style="background:var(--alert-soft);color:var(--alert);">亏损预警</span>';
+  if (margin < 15) return '<span class="promo-status-tag" style="background:#FFF3D6;color:#B27B00;">低毛利</span>';
+  return '<span class="promo-status-tag" style="background:var(--good-soft);color:var(--good);">利润健康</span>';
+}
+function pdRecalcMargin(){
+  const panel = document.getElementById('pdMarginPanel');
+  if (!panel) return;
+  if (pdWizardStrategy === 'tiered'){ panel.style.display = 'none'; return; }
+  const promo = parseFloat(document.getElementById('pd_promo').value) || 0;
+  if (!promo){ panel.style.display = 'none'; return; }
+  panel.style.display = 'flex';
+  const original = parseFloat(document.getElementById('pd_original').value) || 0;
+  const discount = original>0 ? (1 - promo/original) * 100 : null;
+  document.getElementById('pdDiscountVal').textContent = discount!==null ? discount.toFixed(1)+'%' : '—';
+  const product = document.getElementById('pd_product').value.trim();
+  const costPLN = pdLookupCostPLN(product);
+  const marginEl = document.getElementById('pdMarginVal');
+  const riskEl = document.getElementById('pdRiskTag');
+  if (costPLN === null){
+    marginEl.textContent = '—';
+    marginEl.style.color = '';
+    riskEl.innerHTML = '<span class="promo-status-tag" style="background:var(--surface-alt);color:var(--text-dim);">无成本数据</span>';
+  } else {
+    const margin = (promo - costPLN) / promo * 100;
+    marginEl.textContent = margin.toFixed(1)+'%';
+    marginEl.style.color = margin<15 ? '#faad14' : '#3f8600';
+    riskEl.innerHTML = pdRiskTagHtml(margin);
+  }
+}
+function pdApplyStrategyUI(){
+  const std = pdWizardStrategy==='standard', tier = pdWizardStrategy==='tiered', clr = pdWizardStrategy==='clearance';
+  document.getElementById('pdOriginalLabel').textContent = std ? '标准分销价' : (tier ? '门槛价（自动带出）' : '参考DDP原价（自动带出）');
+  document.getElementById('pdPriceRow').style.display = tier ? 'none' : '';
+  document.getElementById('pdPromoLabel').textContent = std ? '本次特价' : '清仓一口价';
+  document.getElementById('pdExtraLabel').textContent = std ? '系统限购' : '锁定库存量';
+  document.getElementById('pd_extra').placeholder = std ? '不填则不限量' : '台';
+  document.getElementById('pdFormTiered').style.display = tier ? '' : 'none';
+  document.getElementById('pdBatchField').style.display = clr ? '' : 'none';
+  const alertBox = document.getElementById('pdStrategyAlert');
+  const a = PD_STRATEGY_ALERTS[pdWizardStrategy];
+  alertBox.className = 'pd-strategy-alert ' + a.cls;
+  alertBox.textContent = a.msg;
+  pdRecalcMargin();
+}
+function pdShowStep(n){
+  document.getElementById('pdWizardStep1').style.display = n===1 ? '' : 'none';
+  document.getElementById('pdWizardStep2').style.display = n===2 ? '' : 'none';
+  document.getElementById('pdStepIndicator1').classList.toggle('active', n===1);
+  document.getElementById('pdStepIndicator2').classList.toggle('active', n===2);
+  document.getElementById('pdWizardBackBtn').style.display = n===2 ? '' : 'none';
+  document.getElementById('addPromoDealBtn').style.display = n===2 ? '' : 'none';
+}
+document.querySelectorAll('.pd-strategy-card').forEach(card=>{
+  card.addEventListener('click', ()=>{
+    pdWizardStrategy = card.dataset.strategy;
+    pdApplyStrategyUI();
+    pdShowStep(2);
+  });
+});
+const pdWizardBackBtnEl = document.getElementById('pdWizardBackBtn');
+if (pdWizardBackBtnEl) pdWizardBackBtnEl.addEventListener('click', ()=> pdShowStep(1));
 
 const pdCustomerEl = document.getElementById('pd_customer');
 const pdProductEl = document.getElementById('pd_product');
@@ -3057,30 +3259,65 @@ if (pdProductEl){
   pdProductEl.addEventListener('input', updatePromoDealOriginalPrice);
   pdProductEl.addEventListener('change', updatePromoDealOriginalPrice);
 }
+const pdPromoInputEl = document.getElementById('pd_promo');
+if (pdPromoInputEl) pdPromoInputEl.addEventListener('input', pdRecalcMargin);
 
 document.getElementById('addPromoDealBtn').addEventListener('click', async ()=>{
   const name = document.getElementById('pd_name').value.trim();
   const product = document.getElementById('pd_product').value.trim();
-  const original = parseFloat(document.getElementById('pd_original').value) || 0;
-  const promo = parseFloat(document.getElementById('pd_promo').value) || 0;
-  if(!name || !product || !original || !promo){ alert('请填写促销名称、产品型号、DDP原价和DDP促销价'); return; }
   const cust = document.getElementById('pd_customer').value;
-  const type = document.getElementById('pd_type').value;
   const start = document.getElementById('pd_start').value;
   const end = document.getElementById('pd_end').value;
   const status = document.getElementById('pd_status').value;
+  if(!name || !product || !cust){ alert('请填写促销名称、产品型号和客户'); return; }
+
+  let type, original, promo, config;
+  if (pdWizardStrategy === 'standard'){
+    type = '单品特价';
+    original = parseFloat(document.getElementById('pd_original').value) || 0;
+    promo = parseFloat(document.getElementById('pd_promo').value) || 0;
+    if (!promo){ alert('请填写本次特价'); return; }
+    const cap = parseFloat(document.getElementById('pd_extra').value);
+    config = { qtyCap: isNaN(cap) ? null : cap };
+  } else if (pdWizardStrategy === 'tiered'){
+    type = '阶梯定价';
+    original = parseFloat(document.getElementById('pd_original').value) || 0;
+    const t2qty = parseFloat(document.getElementById('pd_tier2_qty').value) || 0;
+    const t2price = parseFloat(document.getElementById('pd_tier2_price').value) || 0;
+    const t3qty = parseFloat(document.getElementById('pd_tier3_qty').value) || 0;
+    const t3price = parseFloat(document.getElementById('pd_tier3_price').value) || 0;
+    if (!t2price || !t3price){ alert('请填写各档位执行单价'); return; }
+    promo = t3price;
+    config = { tiers: [ {qty:1, price:original}, {qty:t2qty, price:t2price}, {qty:t3qty, price:t3price} ] };
+  } else {
+    type = '清仓甩卖';
+    original = parseFloat(document.getElementById('pd_original').value) || 0;
+    promo = parseFloat(document.getElementById('pd_promo').value) || 0;
+    if (!promo){ alert('请填写清仓一口价'); return; }
+    const stock = parseFloat(document.getElementById('pd_extra').value) || 0;
+    const batch = document.getElementById('pd_batch').value.split(',').map(s=>s.trim()).filter(Boolean);
+    config = { stock, batch };
+  }
+
   const { data, error } = await sb.from('promo_deals').insert({
     name, cust, type, product, original, promo,
-    start_date: start || null, end_date: end || null, status
+    start_date: start || null, end_date: end || null, status, config
   }).select().single();
   if (error){ alert('保存促销失败：' + error.message); return; }
-  promoDeals.push({ id: data.id, name: data.name, cust: data.cust, type: data.type, product: data.product, original: Number(data.original)||0, promo: Number(data.promo)||0, start: data.start_date||'', end: data.end_date||'', status: data.status });
-  ['pd_name','pd_product','pd_original','pd_promo'].forEach(id=>document.getElementById(id).value='');
+  promoDeals.push({ id: data.id, name: data.name, cust: data.cust, type: data.type, product: data.product, original: Number(data.original)||0, promo: Number(data.promo)||0, start: data.start_date||'', end: data.end_date||'', status: data.status, config: data.config||null });
   renderPromoDealAll();
   closePromoDealDrawer();
 });
 
 function openPromoDealDrawer(){
+  ['pd_name','pd_product','pd_original','pd_promo','pd_extra','pd_batch','pd_tier2_price','pd_tier3_price','pd_start','pd_end'].forEach(id=>{
+    const el = document.getElementById(id); if (el) el.value='';
+  });
+  document.getElementById('pd_tier2_qty').value = 1000;
+  document.getElementById('pd_tier3_qty').value = 5000;
+  document.getElementById('pd_status').value = '未开始';
+  pdWizardStrategy = 'standard';
+  pdShowStep(1);
   const overlay = document.getElementById('promoDealDrawerOverlay');
   if (overlay) overlay.classList.add('open');
 }
@@ -3120,7 +3357,7 @@ document.getElementById('promoDealDetailSaveBtn').addEventListener('click', asyn
   }).eq('id', promoDealDetailId).select().single();
   if (error){ alert('更新促销失败：' + error.message); return; }
   const idx = promoDeals.findIndex(p=>p.id===promoDealDetailId);
-  const updated = { id: data.id, name: data.name, cust: data.cust, type: data.type, product: data.product, original: Number(data.original)||0, promo: Number(data.promo)||0, start: data.start_date||'', end: data.end_date||'', status: data.status };
+  const updated = { id: data.id, name: data.name, cust: data.cust, type: data.type, product: data.product, original: Number(data.original)||0, promo: Number(data.promo)||0, start: data.start_date||'', end: data.end_date||'', status: data.status, config: data.config||null };
   if (idx>=0) promoDeals[idx] = updated;
   renderPromoDealAll();
   showView('promodeals');
@@ -3324,7 +3561,8 @@ async function loadPromoDeals(){
     promoDeals = (data||[]).map(r=>({
       id: r.id, name: r.name, cust: r.cust, type: r.type, product: r.product,
       original: Number(r.original)||0, promo: Number(r.promo)||0,
-      start: r.start_date||'', end: r.end_date||'', status: r.status
+      start: r.start_date||'', end: r.end_date||'', status: r.status,
+      config: r.config || null
     }));
     if (typeof renderPromoDealAll === 'function') renderPromoDealAll();
   }catch(e){ console.error(e); }
@@ -4082,6 +4320,46 @@ const I18N_DICT = [
   ['媒体软文','Media Article','Artykuł sponsorowany'],
   ['社群媒体','Social Media','Media społecznościowe'],
   ['待开发客户','Prospect Customer','Klient potencjalny'],
+  ['选择定价模式','Select Pricing Mode','Wybierz tryb cenowy'],
+  ['配置价格参数','Configure Price Parameters','Skonfiguruj parametry ceny'],
+  ['针对特定 SKU 设定统一的促销供货价。','Set a uniform promotional supply price for a specific SKU.','Ustal jednolitą promocyjną cenę zaopatrzenia dla konkretnego SKU.'],
+  ['根据单笔订单数量自动匹配不同单价。','Automatically match different unit prices based on order quantity.','Automatyczne dopasowanie ceny jednostkowej do ilości w zamówieniu.'],
+  ['以极低价格清理呆滞库存，卖完即止。','Clear slow-moving stock at very low prices, while supplies last.','Wyczyść zalegające zapasy w bardzo niskich cenach, do wyczerpania zapasów.'],
+  ['系统将直接修改 ERP 开单价，下单即生效','The system updates the ERP order price directly — effective immediately upon order.','System natychmiast aktualizuje cenę zamówienia w ERP — obowiązuje od razu.'],
+  ['ERP 将自动根据 PO 数量匹配对应档位价格','ERP will automatically match the tier price based on PO quantity.','ERP automatycznie dopasuje cenę poziomu na podstawie ilości w PO.'],
+  ['注意：清仓单据默认不可退换货','Note: clearance orders are non-returnable by default','Uwaga: zamówienia wyprzedażowe domyślnie nie podlegają zwrotowi'],
+  ['单品特价','Flat Rate','Cena stała'],
+  ['阶梯定价','Volume Tier','Cennik wolumenowy'],
+  ['清仓甩卖','Clearance','Wyprzedaż'],
+  ['日常促销','Everyday Promo','Promocja codzienna'],
+  ['大单激励','Bulk Order Incentive','Zachęta za duże zamówienia'],
+  ['库存出清','Stock Clearance','Wyprzedaż zapasów'],
+  ['标准分销价','Standard Distribution Price','Standardowa cena dystrybucyjna'],
+  ['本次特价','This Special Price','Aktualna cena specjalna'],
+  ['系统限购','Purchase Limit','Limit zakupu'],
+  ['不填则不限量','Leave blank for unlimited','Pozostaw puste dla braku limitu'],
+  ['门槛价（自动带出）','Threshold Price (auto-filled)','Cena progowa (auto.)'],
+  ['参考DDP原价（自动带出）','Reference DDP Price (auto-filled)','Referencyjna cena DDP (auto.)'],
+  ['根据客户+型号自动带出','Auto-filled from customer + model','Automatycznie uzupełniane wg klienta i modelu'],
+  ['层级','Tier','Poziom'],
+  ['订单数量范围','Order Qty Range','Zakres ilości zamówienia'],
+  ['执行单价','Unit Price','Cena jednostkowa'],
+  ['门槛','Threshold','Próg'],
+  ['批发','Wholesale','Hurt'],
+  ['大单','Bulk','Duże zam.'],
+  ['选择','Select','Wybierz'],
+  ['清仓一口价','Clearance Flat Price','Cena wyprzedażowa'],
+  ['锁定库存量','Reserved Stock Qty','Zarezerwowana ilość zapasów'],
+  ['指定批次号','Specify Batch/Lot No.','Podaj numer partii'],
+  ['折扣力度','Discount Depth','Głębokość rabatu'],
+  ['预估毛利率','Estimated Gross Margin','Szacowana marża brutto'],
+  ['数据健康度','Data Health','Kondycja danych'],
+  ['亏损预警','Loss Alert','Alarm straty'],
+  ['低毛利','Low Margin','Niska marża'],
+  ['利润健康','Healthy Margin','Zdrowa marża'],
+  ['无成本数据','No Cost Data','Brak danych kosztowych'],
+  ['上一步','Back','Wstecz'],
+  ['确认创建','Confirm Create','Potwierdź utworzenie'],
   ['DDP-满减促销(一级客户)','DDP Threshold Promotion (Tier-1 Customer)','Promocja progowa DDP (Klient 1. poziomu)'],
   ['DMP促销(二级客户)','DMP Promotion (Tier-2 Customer)','Promocja DMP (Klient 2. poziomu)'],
   ['Sell-in价格促销','Sell-in Price Promotion','Promocja cenowa Sell-in'],

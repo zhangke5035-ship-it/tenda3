@@ -616,8 +616,8 @@
       <div class="field"><label>促销名称</label><input id="pd_name" placeholder="例如 W15-Pro 夏季促销"></div>
       <div class="field"><label>客户</label><select id="pd_customer"></select></div>
       <div class="field"><label>产品型号</label><input id="pd_product" list="modelDatalist" placeholder="例如 W15-Pro"></div>
-      <div class="field"><label>原价 (PLN)</label><input id="pd_original" type="number" placeholder="199"></div>
-      <div class="field"><label>促销价 (PLN)</label><input id="pd_promo" type="number" placeholder="169"></div>
+      <div class="field"><label>DDP原价 (PLN)</label><input id="pd_original" type="number" placeholder="199"></div>
+      <div class="field"><label>DDP促销价 (PLN)</label><input id="pd_promo" type="number" placeholder="169"></div>
       <div class="field"><label>促销类型</label><select id="pd_type"><option>DDP-满减促销(一级客户)</option><option>DMP促销(二级客户)</option><option>Sell-in价格促销</option></select></div>
       <div class="field"><label>开始日期</label><input id="pd_start" type="date"></div>
       <div class="field"><label>结束日期</label><input id="pd_end" type="date"></div>
@@ -639,7 +639,7 @@
     <div class="cust-tabs" id="promoDealCustTabs"></div>
     <div class="cust-tabs" id="promoDealTypeTabs"></div>
     <table>
-      <thead><tr><th>促销名称</th><th>促销类型</th><th>客户</th><th>产品型号</th><th>原价(PLN)</th><th>促销价(PLN)</th><th>折扣</th><th>开始日期</th><th>结束日期</th><th>状态</th><th></th></tr></thead>
+      <thead><tr><th>促销名称</th><th>促销类型</th><th>客户</th><th>产品型号</th><th>DDP原价(PLN)</th><th>DDP促销价(PLN)</th><th>折扣</th><th>开始日期</th><th>结束日期</th><th>状态</th><th></th></tr></thead>
       <tbody id="promoDealTableBody"></tbody>
     </table>
   </div>
@@ -2939,7 +2939,7 @@ function renderPromoDealKpi(){
     <div class="kpi">
       <div class="label">平均折扣力度</div>
       <div class="value">${avgDiscount.toFixed(1)}%</div>
-      <div class="sub">按(原价-促销价)/原价计算</div>
+      <div class="sub">按(DDP原价-DDP促销价)/DDP原价计算</div>
     </div>
   `;
 }
@@ -3187,7 +3187,7 @@ document.getElementById('addPromoDealBtn').addEventListener('click', async ()=>{
   const product = document.getElementById('pd_product').value.trim();
   const original = parseFloat(document.getElementById('pd_original').value) || 0;
   const promo = parseFloat(document.getElementById('pd_promo').value) || 0;
-  if(!name || !product || !original || !promo){ alert('请填写促销名称、产品型号、原价和促销价'); return; }
+  if(!name || !product || !original || !promo){ alert('请填写促销名称、产品型号、DDP原价和DDP促销价'); return; }
   const cust = document.getElementById('pd_customer').value;
   const type = document.getElementById('pd_type').value;
   const start = document.getElementById('pd_start').value;
@@ -3210,7 +3210,7 @@ document.getElementById('promoDealDetailSaveBtn').addEventListener('click', asyn
   const product = document.getElementById('pdd_product').value.trim();
   const original = parseFloat(document.getElementById('pdd_original').value) || 0;
   const promo = parseFloat(document.getElementById('pdd_promo').value) || 0;
-  if(!name || !product || !original || !promo){ alert('请填写促销名称、产品型号、原价和促销价'); return; }
+  if(!name || !product || !original || !promo){ alert('请填写促销名称、产品型号、DDP原价和DDP促销价'); return; }
   const cust = document.getElementById('pdd_customer').value;
   const type = document.getElementById('pdd_type').value;
   const start = document.getElementById('pdd_start').value;
@@ -4409,7 +4409,7 @@ const I18N_DICT = [
   ['全部','All','Wszystkie'],
   ['未开始','Not Started','Nierozpoczęta'],
   ['登记各客户/型号的限时促销价格，跟踪促销周期与折扣力度','Register time-limited promo prices per customer/model and track promotion periods and discount levels','Rejestruj ograniczone czasowo ceny promocyjne dla klientów/modeli i śledź okresy oraz poziomy rabatów'],
-  ['按(原价-促销价)/原价计算','Calculated as (Original − Promo) / Original','Obliczane jako (cena pierwotna − cena promocyjna) / cena pierwotna'],
+  ['按(DDP原价-DDP促销价)/DDP原价计算','Calculated as (DDP Original − DDP Promo) / DDP Original','Obliczane jako (DDP cena pierwotna − DDP cena promocyjna) / DDP cena pierwotna'],
   ['当前状态为"进行中"的促销数','Number of promotions currently "Active"','Liczba promocji ze statusem "W toku"'],
   ['促销活动总数','Total Promotions','Łączna liczba promocji'],
   ['进行中促销','Active Promotions','Aktywne promocje'],

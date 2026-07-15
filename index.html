@@ -465,7 +465,78 @@
         <div><h2>报价管理 · 总部报价模拟测算</h2><p>基于总部报价与盈亏平衡价，模拟不同结算价/汇率下的利润表现</p></div>
       </div>
       <div class="notebox">
-        模块框架已搭建，具体字段与测算逻辑将在后续录入。
+        已按你提供的截图新增字段，目前均为普通可编辑输入框（暂无自动公式），数据保存在 hq_pricing_sim 表。如果发现字段名称与你原表不完全对应，告诉我具体哪一列，我再改。
+      </div>
+
+      <div class="panel">
+        <div class="panel-head"><h3>测算参数</h3><div class="desc">当前测算的默认口径（暂不入库，仅供参考填写下方字段时对照）</div></div>
+        <div class="form-grid">
+          <div class="field"><label>面向站点</label><input id="sim_site" placeholder="例如 TDE"></div>
+          <div class="field"><label>贸易术语</label><input id="sim_incoterm" placeholder="例如 非FOB"></div>
+          <div class="field"><label>MU</label><input id="sim_mu" placeholder="例如 全MU"></div>
+          <div class="field"><label>清关国家</label><input id="sim_clearance_country" placeholder="例如 波兰"></div>
+          <div class="field"><label>模拟</label>
+            <select id="sim_is_sim">
+              <option value="是">是</option>
+              <option value="否">否</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head"><h3>新增模拟测算</h3></div>
+        <div class="form-grid">
+          <div class="field"><label>产品型号(报价)</label><input id="sim_product" list="hqModelDatalist" placeholder="例如 K4P-4CR"></div>
+          <div class="field"><label>客户简称</label><input id="sim_customer" placeholder="例如 ELTROX"></div>
+          <div class="field mono"><label>含税净价(人民币)</label><input id="sim_gross_cny" type="number" step="0.01"></div>
+          <div class="field mono"><label>未税净价(人民币)</label><input id="sim_net_cny" type="number" step="0.01"></div>
+          <div class="field mono"><label>含税净价(欧元)</label><input id="sim_gross_eur" type="number" step="0.01"></div>
+          <div class="field mono"><label>未税净价(欧元)</label><input id="sim_net_eur" type="number" step="0.01"></div>
+          <div class="field mono"><label>含税零售价(当地币种)</label><input id="sim_retail_local" type="number" step="0.01"></div>
+          <div class="field mono"><label>VAT (%)</label><input id="sim_vat" type="number" step="0.01" placeholder="23"></div>
+          <div class="field mono"><label>二级客户利润空间 (%)</label><input id="sim_l2_margin" type="number" step="0.01" placeholder="25"></div>
+          <div class="field mono"><label>一级客户利润空间 (%)</label><input id="sim_l1_margin" type="number" step="0.01" placeholder="11"></div>
+          <div class="field mono"><label>PO协议互兑利率</label><input id="sim_po_fx_rate" type="number" step="0.01" placeholder="1"></div>
+          <div class="field mono"><label>返点点数</label><input id="sim_rebate_points" type="number" step="0.01"></div>
+          <div class="field mono"><label>展延返点费用(当地MDR)</label><input id="sim_mdr_fee" type="number" step="0.01"></div>
+          <div class="field mono"><label>N+1数量</label><input id="sim_n1_qty" type="number" step="0.01"></div>
+          <div class="field mono"><label>N+2数量</label><input id="sim_n2_qty" type="number" step="0.01"></div>
+          <div class="field mono"><label>N+3数量</label><input id="sim_n3_qty" type="number" step="0.01"></div>
+          <div class="field"><label>当地币种</label><input id="sim_currency" placeholder="例如 PLN"></div>
+          <div class="field mono"><label>未含PO价格(当地币种)</label><input id="sim_po_price_local" type="number" step="0.01"></div>
+          <div class="field"><label>生命周期</label><input id="sim_lifecycle_month" placeholder="例如 6月"></div>
+          <div class="field"><label>清关版本</label><input id="sim_clearance_version" placeholder="例如 全版本"></div>
+          <div class="field mono"><label>未含净价(欧元)</label><input id="sim_net_price_eur" type="number" step="0.01"></div>
+          <div class="field mono"><label>未含净价(美元)</label><input id="sim_net_price_usd" type="number" step="0.01"></div>
+          <div class="field mono"><label>去化销售与预留平均价</label><input id="sim_sales_reserve_avg" type="number" step="0.01"></div>
+          <div class="field"><label>PO</label><input id="sim_po" placeholder="PO编号"></div>
+          <div class="field"><label>兼体表格</label><input id="sim_compat_table" placeholder="选填"></div>
+          <div class="field mono"><label>品牌预算</label><input id="sim_brand_budget" type="number" step="0.01"></div>
+          <div class="field mono"><label>MDF预算</label><input id="sim_mdf_budget" type="number" step="0.01"></div>
+          <div class="field mono"><label>风险与维标预算</label><input id="sim_risk_budget" type="number" step="0.01"></div>
+          <div class="field mono"><label>单位重量</label><input id="sim_unit_weight" type="number" step="0.01"></div>
+          <div class="field mono"><label>盈亏占比 (%)</label><input id="sim_profit_ratio" type="number" step="0.01"></div>
+          <div class="field mono"><label>盈利</label><input id="sim_profit" type="number" step="0.01"></div>
+          <div class="field mono"><label>VC专属PO价</label><input id="sim_vc_po_price" type="number" step="0.01"></div>
+        </div>
+        <button class="btn" id="addSimBtn">新增测算行</button>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head"><h3>模拟测算列表</h3><div class="desc" id="simCount"></div></div>
+        <div class="inv-table-wrap" style="overflow-x:auto;">
+        <table>
+          <thead><tr>
+            <th>产品型号</th><th>客户简称</th><th>含税净价(CNY)</th><th>未税净价(CNY)</th><th>含税净价(EUR)</th><th>未税净价(EUR)</th>
+            <th>含税零售价(当地)</th><th>VAT</th><th>二级客户利润空间</th><th>一级客户利润空间</th><th>PO协议互兑利率</th><th>返点点数</th>
+            <th>展延返点费用(MDR)</th><th>N+1</th><th>N+2</th><th>N+3</th><th>当地币种</th><th>未含PO价格(当地)</th>
+            <th>生命周期</th><th>清关版本</th><th>未含净价(EUR)</th><th>未含净价(USD)</th><th>去化销售与预留平均价</th><th>PO</th>
+            <th>兼体表格</th><th>品牌预算</th><th>MDF预算</th><th>风险与维标预算</th><th>单位重量</th><th>盈亏占比</th><th>盈利</th><th>VC专属PO价</th><th></th>
+          </tr></thead>
+          <tbody id="simTableBody"></tbody>
+        </table>
+        </div>
       </div>
     </section>
     <!-- ===================== 销售订单 ===================== -->
@@ -2962,7 +3033,7 @@ function renderCharts(){
 /* ============ 汇总刷新 ============ */
 function refreshAll(){
   renderQuarterTabs(); populateRouteSelect(); populatePromoSelects(); populatePromoDealSelects(); renderCountryTabs(); renderCustTabs(); renderCategoryTabs(); populateModelDatalist(); populateHqModelDatalist(); renderCatalog();
-  renderKPI(); renderRoute(); renderPriceTable(); renderPromoTable(); renderPromoDealAll(); renderCharts(); renderQoQTable(); renderHqPriceTable();
+  renderKPI(); renderRoute(); renderPriceTable(); renderPromoTable(); renderPromoDealAll(); renderCharts(); renderQoQTable(); renderHqPriceTable(); renderSimTable();
 }
 
 /* ============ 事件绑定 ============ */
@@ -3126,6 +3197,84 @@ if (addHqPriceBtn){
   });
 }
 
+/* ===================== 总部报价模拟测算 ===================== */
+let simRows = [];
+const SIM_TEXT_FIELDS = ['product','customer','currency','lifecycle_month','clearance_version','po','compat_table'];
+const SIM_NUM_FIELDS = ['gross_cny','net_cny','gross_eur','net_eur','retail_local','vat','l2_margin','l1_margin','po_fx_rate','rebate_points','mdr_fee','n1_qty','n2_qty','n3_qty','po_price_local','net_price_eur','net_price_usd','sales_reserve_avg','brand_budget','mdf_budget','risk_budget','unit_weight','profit_ratio','profit','vc_po_price'];
+const SIM_ALL_FIELDS = ['product','customer','gross_cny','net_cny','gross_eur','net_eur','retail_local','vat','l2_margin','l1_margin','po_fx_rate','rebate_points','mdr_fee','n1_qty','n2_qty','n3_qty','currency','po_price_local','lifecycle_month','clearance_version','net_price_eur','net_price_usd','sales_reserve_avg','po','compat_table','brand_budget','mdf_budget','risk_budget','unit_weight','profit_ratio','profit','vc_po_price'];
+
+function simNumCell(v){ return (v===null || v===undefined || v==='') ? '—' : Number(v).toFixed(2); }
+function renderSimTable(){
+  const tbody = document.getElementById('simTableBody');
+  if (!tbody) return;
+  document.getElementById('simCount').textContent = '共 ' + simRows.length + ' 条';
+  tbody.innerHTML = simRows.map(r=>`<tr>
+    <td class="mono">${r.product||'—'}</td>
+    <td>${r.customer||'—'}</td>
+    <td class="num-cell">${simNumCell(r.gross_cny)}</td>
+    <td class="num-cell">${simNumCell(r.net_cny)}</td>
+    <td class="num-cell">${simNumCell(r.gross_eur)}</td>
+    <td class="num-cell">${simNumCell(r.net_eur)}</td>
+    <td class="num-cell">${simNumCell(r.retail_local)}</td>
+    <td class="num-cell">${simNumCell(r.vat)}</td>
+    <td class="num-cell">${simNumCell(r.l2_margin)}</td>
+    <td class="num-cell">${simNumCell(r.l1_margin)}</td>
+    <td class="num-cell">${simNumCell(r.po_fx_rate)}</td>
+    <td class="num-cell">${simNumCell(r.rebate_points)}</td>
+    <td class="num-cell">${simNumCell(r.mdr_fee)}</td>
+    <td class="num-cell">${simNumCell(r.n1_qty)}</td>
+    <td class="num-cell">${simNumCell(r.n2_qty)}</td>
+    <td class="num-cell">${simNumCell(r.n3_qty)}</td>
+    <td>${r.currency||'—'}</td>
+    <td class="num-cell">${simNumCell(r.po_price_local)}</td>
+    <td>${r.lifecycle_month||'—'}</td>
+    <td>${r.clearance_version||'—'}</td>
+    <td class="num-cell">${simNumCell(r.net_price_eur)}</td>
+    <td class="num-cell">${simNumCell(r.net_price_usd)}</td>
+    <td class="num-cell">${simNumCell(r.sales_reserve_avg)}</td>
+    <td>${r.po||'—'}</td>
+    <td>${r.compat_table||'—'}</td>
+    <td class="num-cell">${simNumCell(r.brand_budget)}</td>
+    <td class="num-cell">${simNumCell(r.mdf_budget)}</td>
+    <td class="num-cell">${simNumCell(r.risk_budget)}</td>
+    <td class="num-cell">${simNumCell(r.unit_weight)}</td>
+    <td class="num-cell">${simNumCell(r.profit_ratio)}</td>
+    <td class="num-cell">${simNumCell(r.profit)}</td>
+    <td class="num-cell">${simNumCell(r.vc_po_price)}</td>
+    <td><button class="del-btn" onclick="deleteSimRow(${r.id})" title="删除">✕</button></td>
+  </tr>`).join('');
+}
+async function deleteSimRow(id){
+  const { error } = await sb.from('hq_pricing_sim').delete().eq('id', id);
+  if (error){ alert('删除失败：' + error.message); return; }
+  simRows = simRows.filter(r=>r.id!==id);
+  renderSimTable();
+}
+const addSimBtn = document.getElementById('addSimBtn');
+if (addSimBtn){
+  addSimBtn.addEventListener('click', async ()=>{
+    const payload = {};
+    SIM_TEXT_FIELDS.forEach(f=>{
+      const el = document.getElementById('sim_'+f);
+      payload[f] = el ? el.value.trim() : '';
+    });
+    SIM_NUM_FIELDS.forEach(f=>{
+      const el = document.getElementById('sim_'+f);
+      const v = el ? el.value.trim() : '';
+      payload[f] = v === '' ? null : (parseFloat(v) || 0);
+    });
+    if (!payload.product){ alert('请填写产品型号(报价)'); return; }
+    const { data, error } = await sb.from('hq_pricing_sim').insert(payload).select().single();
+    if (error){ alert('保存模拟测算失败：' + error.message); return; }
+    simRows.push(data);
+    SIM_ALL_FIELDS.forEach(f=>{
+      const el = document.getElementById('sim_'+f);
+      if (el) el.value = '';
+    });
+    renderSimTable();
+  });
+}
+
 /* ============ 初始化 ============ */
 refreshAll();
 </script>
@@ -3207,12 +3356,22 @@ async function loadHqPrices(){
   }catch(e){ console.error(e); }
 }
 
+async function loadSimRows(){
+  try{
+    const { data, error } = await sb.from('hq_pricing_sim').select('*').order('id', {ascending:true});
+    if (error){ console.error('loadSimRows', error); return; }
+    simRows = data||[];
+    if (typeof renderSimTable === 'function') renderSimTable();
+  }catch(e){ console.error(e); }
+}
+
 async function loadAllRemoteData(){
   await Promise.all([
     loadPromoDeals(),
     loadMarketingActivities(),
     loadOrdersData(),
     loadHqPrices(),
+    loadSimRows(),
     loadProductDescriptions()
   ]);
 }

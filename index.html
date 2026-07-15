@@ -488,6 +488,7 @@
         <div class="panel-head"><h3>新增模拟测算</h3></div>
         <div class="form-grid">
           <div class="field"><label>产品型号(报价)</label><input id="sim_product" list="hqModelDatalist" placeholder="例如 K4P-4CR"></div>
+          <div class="field mono"><label>盈亏平衡价 (USD，自动带出)</label><input id="sim_breakeven" type="number" step="0.01" readonly placeholder="按产品型号自动匹配"></div>
           <div class="field"><label>客户简称</label><input id="sim_customer" placeholder="例如 ELTROX"></div>
           <div class="field mono"><label>含税净价(欧元)</label><input id="sim_gross_eur" type="number" step="0.01"></div>
           <div class="field mono"><label>未税净价(欧元)</label><input id="sim_net_eur" type="number" step="0.01"></div>
@@ -524,7 +525,7 @@
         <div class="inv-table-wrap" style="overflow-x:auto;">
         <table>
           <thead><tr>
-            <th>产品型号</th><th>客户简称</th><th>含税净价(EUR)</th><th>未税净价(EUR)</th>
+            <th>产品型号</th><th>盈亏平衡价(USD)</th><th>客户简称</th><th>含税净价(EUR)</th><th>未税净价(EUR)</th>
             <th>含税零售价(当地)</th><th>VAT</th><th>二级客户利润空间</th><th>一级客户利润空间</th><th>PO协议互兑利率</th><th>返点点数</th>
             <th>展延返点费用(MDR)</th><th>N+1</th><th>当地币种</th><th>未含PO价格(当地)</th>
             <th>生命周期</th><th>清关版本</th><th>未含净价(EUR)</th><th>未含净价(USD)</th><th>去化销售与预留平均价</th><th>PO</th>
@@ -3203,12 +3204,18 @@ const SIM_NUM_FIELDS = ['gross_eur','net_eur','retail_local','vat','l2_margin','
 const SIM_ALL_FIELDS = ['product','customer','gross_eur','net_eur','retail_local','vat','l2_margin','l1_margin','po_fx_rate','rebate_points','mdr_fee','n1_qty','currency','po_price_local','lifecycle_month','clearance_version','net_price_eur','net_price_usd','sales_reserve_avg','po','compat_table','brand_budget','mdf_budget','risk_budget','unit_weight','profit_ratio','profit','vc_po_price'];
 
 function simNumCell(v){ return (v===null || v===undefined || v==='') ? '—' : Number(v).toFixed(2); }
+function simBreakevenFor(product){
+  if (!product || typeof hqPrices === 'undefined') return null;
+  const match = hqPrices.find(h => (h.product||'').trim().toLowerCase() === product.trim().toLowerCase());
+  return match ? match.breakeven : null;
+}
 function renderSimTable(){
   const tbody = document.getElementById('simTableBody');
   if (!tbody) return;
   document.getElementById('simCount').textContent = '共 ' + simRows.length + ' 条';
   tbody.innerHTML = simRows.map(r=>`<tr>
     <td class="mono">${r.product||'—'}</td>
+    <td class="num-cell">${simNumCell(simBreakevenFor(r.product))}</td>
     <td>${r.customer||'—'}</td>
     <td class="num-cell">${simNumCell(r.gross_eur)}</td>
     <td class="num-cell">${simNumCell(r.net_eur)}</td>
@@ -3266,8 +3273,18 @@ if (addSimBtn){
       const el = document.getElementById('sim_'+f);
       if (el) el.value = '';
     });
+    document.getElementById('sim_breakeven').value = '';
     renderSimTable();
   });
+}
+const simProductInput = document.getElementById('sim_product');
+if (simProductInput){
+  const syncSimBreakeven = ()=>{
+    const b = simBreakevenFor(simProductInput.value);
+    document.getElementById('sim_breakeven').value = (b===null || b===undefined) ? '' : Number(b).toFixed(2);
+  };
+  simProductInput.addEventListener('input', syncSimBreakeven);
+  simProductInput.addEventListener('change', syncSimBreakeven);
 }
 
 /* ============ 初始化 ============ */
@@ -3348,6 +3365,8 @@ async function loadHqPrices(){
     if (error){ console.error('loadHqPrices', error); return; }
     hqPrices = (data||[]).map(r=>({ id: r.id, product: r.product, retail: Number(r.retail)||0, settle: Number(r.settle)||0, breakeven: Number(r.breakeven)||0, date: r.effective_date||'' }));
     if (typeof renderHqPriceTable === 'function') renderHqPriceTable();
+    if (typeof populateHqModelDatalist === 'function') populateHqModelDatalist();
+    if (typeof renderSimTable === 'function') renderSimTable();
   }catch(e){ console.error(e); }
 }
 

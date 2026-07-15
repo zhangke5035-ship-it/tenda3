@@ -442,6 +442,7 @@
             <div class="field"><label>产品型号</label><input id="hq_product" list="modelDatalist" placeholder="例如 W15-Pro"></div>
             <div class="field"><label>总部指导零售价 (PLN)</label><input id="hq_retail" type="number" placeholder="199"></div>
             <div class="field"><label>总部结算价 (PLN)</label><input id="hq_settle" type="number" placeholder="120"></div>
+            <div class="field"><label>盈亏平衡价 (PLN)</label><input id="hq_breakeven" type="number" placeholder="105"></div>
             <div class="field"><label>生效日期</label><input id="hq_date" type="date"></div>
           </div>
           <button class="btn" id="addHqPriceBtn">新增</button>
@@ -449,7 +450,7 @@
         <div class="panel">
           <div class="panel-head"><h3>总部报价列表</h3></div>
           <table>
-            <thead><tr><th>产品型号</th><th>总部指导零售价(PLN)</th><th>总部结算价(PLN)</th><th>生效日期</th><th></th></tr></thead>
+            <thead><tr><th>产品型号</th><th>总部指导零售价(PLN)</th><th>总部结算价(PLN)</th><th>盈亏平衡价(PLN)</th><th>生效日期</th><th></th></tr></thead>
             <tbody id="hqPriceTableBody"></tbody>
           </table>
         </div>
@@ -3061,6 +3062,7 @@ function renderHqPriceTable(){
     <td class="mono">${h.product}</td>
     <td class="num-cell">${h.retail.toFixed(2)}</td>
     <td class="num-cell">${h.settle.toFixed(2)}</td>
+    <td class="num-cell">${h.breakeven.toFixed(2)}</td>
     <td>${h.date||'—'}</td>
     <td><button class="del-btn" onclick="deleteHqPrice(${h.id})" title="删除">✕</button></td>
   </tr>`).join('');
@@ -3090,14 +3092,16 @@ if (addHqPriceBtn){
     const product = document.getElementById('hq_product').value.trim();
     const retail = parseFloat(document.getElementById('hq_retail').value) || 0;
     const settle = parseFloat(document.getElementById('hq_settle').value) || 0;
+    const breakeven = parseFloat(document.getElementById('hq_breakeven').value) || 0;
     const date = document.getElementById('hq_date').value;
     if(!product){ alert('请填写产品型号'); return; }
-    const { data, error } = await sb.from('hq_prices').insert({ product, retail, settle, effective_date: date || null }).select().single();
+    const { data, error } = await sb.from('hq_prices').insert({ product, retail, settle, breakeven, effective_date: date || null }).select().single();
     if (error){ alert('保存总部报价失败：' + error.message); return; }
-    hqPrices.push({id: data.id, product: data.product, retail: Number(data.retail)||0, settle: Number(data.settle)||0, date: data.effective_date||''});
+    hqPrices.push({id: data.id, product: data.product, retail: Number(data.retail)||0, settle: Number(data.settle)||0, breakeven: Number(data.breakeven)||0, date: data.effective_date||''});
     document.getElementById('hq_product').value='';
     document.getElementById('hq_retail').value='';
     document.getElementById('hq_settle').value='';
+    document.getElementById('hq_breakeven').value='';
     renderHqPriceTable();
   });
 }
@@ -3174,7 +3178,7 @@ async function loadHqPrices(){
   try{
     const { data, error } = await sb.from('hq_prices').select('*').order('id', {ascending:true});
     if (error){ console.error('loadHqPrices', error); return; }
-    hqPrices = (data||[]).map(r=>({ id: r.id, product: r.product, retail: Number(r.retail)||0, settle: Number(r.settle)||0, date: r.effective_date||'' }));
+    hqPrices = (data||[]).map(r=>({ id: r.id, product: r.product, retail: Number(r.retail)||0, settle: Number(r.settle)||0, breakeven: Number(r.breakeven)||0, date: r.effective_date||'' }));
     if (typeof renderHqPriceTable === 'function') renderHqPriceTable();
   }catch(e){ console.error(e); }
 }

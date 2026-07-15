@@ -69,6 +69,13 @@
   tbody td{padding:8px 10px;border-bottom:1px solid var(--border-soft);color:var(--text);}
   tbody tr:hover{background:var(--surface-alt);}
   .num-cell{font-family:'IBM Plex Mono';}
+  .price-table-scroll table th:nth-child(3),
+  .price-table-scroll table td:nth-child(3){position:sticky;left:0;background:var(--surface);z-index:2;box-shadow:2px 0 4px rgba(0,0,0,0.05);}
+  .price-table-scroll table thead th:nth-child(3){z-index:3;}
+  .price-table-scroll table tbody tr:hover td:nth-child(3){background:var(--surface-alt);}
+  .price-table-scroll table thead th:nth-child(n+10):nth-child(-n+14){text-align:right;}
+  .price-table-scroll table td.num-cell{text-align:right;}
+  .price-table-scroll table tfoot td{padding:12px 10px;font-weight:600;background:rgba(0,0,0,0.02);border-top:2px solid var(--border);color:var(--text);}
   .tag{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:500;}
   .tag.type-direct{background:#E8F0FA;color:#2C6FBF;}
   .tag.type-agent{background:var(--good-soft);color:var(--good);}
@@ -444,13 +451,16 @@
           <button type="button" class="btn ghost" id="exportCsvBtn">导出当前表格 CSV</button>
           <button type="button" class="btn ghost" id="exportPdfBtn">打印 / 导出 PDF</button>
         </div>
-        <table>
+        <div class="price-table-scroll" style="overflow-x:auto;">
+        <table id="priceDetailTable">
          <thead><tr>
   <th>类目</th><th>品牌</th><th>产品型号</th><th>产品信息描述</th><th>EAN</th><th>生命周期</th><th data-key="customer">客户</th><th data-key="country">国家</th><th>币种</th><th data-key="retail">含税零售价</th><th data-key="net">未税净价</th>
   <th>DMP建议销售价</th><th>代理商利润点位</th><th>最终采购价</th><th></th>
 </tr></thead>
           <tbody id="priceTableBody"></tbody>
+          <tfoot><tr id="priceTableFootRow"></tr></tfoot>
         </table>
+        </div>
         <div class="cust-tabs" id="priceTablePagination" style="justify-content:center;"></div>
       </div>
 
@@ -2916,6 +2926,13 @@ function renderPriceTable(){
   const custLabel = activeCustFilter==='ALL' ? '全部客户' : custName(activeCustFilter);
   const countryLabel = activeCountryFilter==='ALL' ? '全部国家' : activeCountryFilter;
   document.getElementById('priceCount').textContent = `共 ${rows.length} 条报价 · ${countryLabel} · ${custLabel}`;
+  const footRow = document.getElementById('priceTableFootRow');
+  if (footRow){
+    const marginRows = rows.filter(p=>typeof p.marginPct === 'number');
+    const avgMargin = marginRows.length ? (marginRows.reduce((s,p)=>s+p.marginPct,0) / marginRows.length) : null;
+    const avgText = avgMargin===null ? '暂无净利率数据' : `平均净利率 ${fmt(avgMargin)}%`;
+    footRow.innerHTML = `<td>总计 (Total)</td><td colspan="13" style="text-align:left;">本页包含 ${rows.length} 条报价，${avgText}</td><td></td>`;
+  }
 }
 function deletePrice(id){ priceList = priceList.filter(p=>p.id!==id); refreshAll(); }
 

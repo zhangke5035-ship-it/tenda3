@@ -3305,7 +3305,7 @@ const authErrorEl = document.getElementById('authError');
 const userBadgeEl = document.getElementById('userBadge');
 const logoutBtnEl = document.getElementById('logoutBtn');
 
-const RESTRICTED_HQ_PRICING_EMAILS = ['gajowski@tenda.cn'];
+const RESTRICTED_HQ_PRICING_EMAILS = ['gajowski@tenda.cn', 'piotr.kowalski@tenda.cn'];
 function applyRoleRestrictions(session){
   const userEmail = ((session && session.user && session.user.email) || '').toLowerCase();
   if (RESTRICTED_HQ_PRICING_EMAILS.includes(userEmail)){

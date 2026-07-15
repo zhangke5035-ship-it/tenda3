@@ -130,6 +130,20 @@
   .cust-tab:hover{color:var(--text);border-color:var(--text-faint);}
   .cust-tab.active{background:var(--copper-soft);color:var(--copper);border-color:var(--copper);}
   .cust-tab .count{opacity:0.7;font-size:11px;margin-left:4px;}
+  .filter-bar{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;border-bottom:1px solid var(--border);margin-bottom:16px;}
+  .filter-tabs{display:flex;gap:0;flex-wrap:wrap;}
+  .filter-tab{padding:9px 4px;margin-right:22px;font-size:13px;font-weight:500;color:var(--text-dim);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:color .12s ease,border-color .12s ease;}
+  .filter-tab:hover{color:var(--text);}
+  .filter-tab.active{color:var(--copper);border-bottom-color:var(--copper);}
+  .filter-tab .count{opacity:0.7;font-size:11px;margin-left:4px;}
+  .filter-ops{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding-bottom:9px;}
+  .filter-ops select{background:transparent;border:1px solid var(--border);border-radius:var(--radius);padding:6px 8px;font-size:12px;color:var(--text-dim);cursor:pointer;max-width:150px;}
+  .filter-ops select:hover{border-color:var(--text-faint);color:var(--text);}
+  .filter-search{position:relative;}
+  .filter-search input{width:190px;padding:6px 10px 6px 26px;border:1px solid var(--border);border-radius:var(--radius);font-size:12.5px;background:var(--surface);color:var(--text);}
+  .filter-search::before{content:'⌕';position:absolute;left:9px;top:50%;transform:translateY(-50%);font-size:12px;color:var(--text-faint);pointer-events:none;}
+  .filter-reset-btn{background:transparent;border:none;color:var(--text-dim);font-size:12px;cursor:pointer;padding:6px 6px;display:flex;align-items:center;gap:3px;white-space:nowrap;}
+  .filter-reset-btn:hover{color:var(--copper);}
   .lc-badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:500;white-space:nowrap;}
   .lc-badge.lc-growth{background:#E8F0FA;color:#2568B8;}
   .lc-badge.lc-mature{background:var(--good-soft);color:var(--good);}
@@ -441,12 +455,17 @@
 
 <div class="panel">
         <div class="panel-head"><h3>报价明细</h3><div class="desc" id="priceCount"></div></div>
-        <div class="catalog-search"><input id="priceSearch" placeholder="搜索产品型号，例如 TE6L、W15-Pro..."></div>
-        <div class="cust-tabs" id="quarterTabs"></div>
-        <div class="cust-tabs" id="countryTabs"></div>
-        <div class="cust-tabs" id="custTabs"></div>
-        <div class="cust-tabs" id="categoryTabs"></div>
-        <div class="cust-tabs" id="brandTabs"></div>
+        <div class="filter-bar">
+          <div class="filter-tabs" id="quarterTabs"></div>
+          <div class="filter-ops">
+            <div class="filter-search"><input id="priceSearch" placeholder="搜索型号/SKU，例如 TE6L、W15-Pro..."></div>
+            <select id="filterCountrySelect" title="国家"></select>
+            <select id="filterCustSelect" title="客户"></select>
+            <select id="filterCategorySelect" title="类目"></select>
+            <select id="filterBrandSelect" title="品牌"></select>
+            <button type="button" class="filter-reset-btn" id="filterResetBtn">↺ 重置</button>
+          </div>
+        </div>
         <div class="price-export-row" style="display:flex;justify-content:flex-end;gap:10px;margin:0 0 12px 0;">
           <button type="button" class="btn ghost" id="exportCsvBtn">导出当前表格 CSV</button>
           <button type="button" class="btn ghost" id="exportPdfBtn">打印 / 导出 PDF</button>
@@ -2809,9 +2828,9 @@ function renderQuarterTabs(){
   const countFor = q => q==='ALL' ? priceList.length : priceList.filter(r=>(r.quarter||'Q3')===q).length;
   const el = document.getElementById('quarterTabs');
   el.innerHTML = quarters.map(q=>
-    `<div class="cust-tab ${activeQuarterFilter===q?'active':''}" data-quarter="${q}">${labelMap[q]}<span class="count">${countFor(q)}</span></div>`
+    `<div class="filter-tab ${activeQuarterFilter===q?'active':''}" data-quarter="${q}">${labelMap[q]}<span class="count">${countFor(q)}</span></div>`
   ).join('');
-  el.querySelectorAll('.cust-tab').forEach(t=>{
+  el.querySelectorAll('.filter-tab').forEach(t=>{
     t.addEventListener('click', ()=>{
       activeQuarterFilter = t.dataset.quarter;
       activeCountryFilter = 'ALL'; activeCustFilter = 'ALL';
@@ -2826,18 +2845,17 @@ function renderCountryTabs(){
   if(!countries.includes(activeCountryFilter) && activeCountryFilter!=='ALL') activeCountryFilter='ALL';
   const tabs = ['ALL', ...countries];
   const countFor = c => c==='ALL' ? visibleRows().length : visibleRows().filter(p=>custCountry(p.cust)===c).length;
-  const el = document.getElementById('countryTabs');
+  const el = document.getElementById('filterCountrySelect');
   el.innerHTML = tabs.map(c=>{
     const label = c==='ALL' ? '全部国家' : c;
-    return `<div class="cust-tab ${activeCountryFilter===c?'active':''}" data-country="${c}">${label}<span class="count">${countFor(c)}</span></div>`;
+    return `<option value="${c}">${label} (${countFor(c)})</option>`;
   }).join('');
-  el.querySelectorAll('.cust-tab').forEach(t=>{
-    t.addEventListener('click', ()=>{
-      activeCountryFilter = t.dataset.country;
-      activeCustFilter = 'ALL';
-      renderCountryTabs(); renderCustTabs(); renderCategoryTabs(); renderPriceTable();
-    });
-  });
+  el.value = activeCountryFilter;
+  el.onchange = ()=>{
+    activeCountryFilter = el.value;
+    activeCustFilter = 'ALL';
+    renderCountryTabs(); renderCustTabs(); renderCategoryTabs(); renderPriceTable();
+  };
 }
 
 function renderCustTabs(){
@@ -2845,15 +2863,14 @@ function renderCustTabs(){
   if(!codesInCountry.includes(activeCustFilter) && activeCustFilter!=='ALL') activeCustFilter='ALL';
   const counts = code => visibleRows().filter(p=>p.cust===code).length;
   const tabs = ['ALL', ...codesInCountry];
-  const el = document.getElementById('custTabs');
+  const el = document.getElementById('filterCustSelect');
   el.innerHTML = tabs.map(code=>{
     const label = code==='ALL' ? '全部客户' : custName(code);
     const count = code==='ALL' ? codesInCountry.reduce((s,c)=>s+counts(c),0) : counts(code);
-    return `<div class="cust-tab ${activeCustFilter===code?'active':''}" data-cust="${code}">${label}<span class="count">${count}</span></div>`;
+    return `<option value="${code}">${label} (${count})</option>`;
   }).join('');
-  el.querySelectorAll('.cust-tab').forEach(t=>{
-    t.addEventListener('click', ()=>{ activeCustFilter = t.dataset.cust; renderCustTabs(); renderPriceTable(); });
-  });
+  el.value = activeCustFilter;
+  el.onchange = ()=>{ activeCustFilter = el.value; renderCustTabs(); renderPriceTable(); };
 }
 
 function renderCategoryTabs(){
@@ -2862,15 +2879,14 @@ function renderCategoryTabs(){
   if(!orderedCats.includes(activeCategoryFilter) && activeCategoryFilter!=='ALL') activeCategoryFilter='ALL';
   const counts = cat => visibleRows().filter(p=>productType(p.product)===cat).length;
   const tabs = ['ALL', ...orderedCats];
-  const el = document.getElementById('categoryTabs');
+  const el = document.getElementById('filterCategorySelect');
   el.innerHTML = tabs.map(cat=>{
     const label = cat==='ALL' ? '全部类目' : cat;
     const count = cat==='ALL' ? visibleRows().length : counts(cat);
-    return `<div class="cust-tab ${activeCategoryFilter===cat?'active':''}" data-cat="${cat}">${label}<span class="count">${count}</span></div>`;
+    return `<option value="${cat}">${label} (${count})</option>`;
   }).join('');
-  el.querySelectorAll('.cust-tab').forEach(t=>{
-    t.addEventListener('click', ()=>{ activeCategoryFilter = t.dataset.cat; renderCategoryTabs(); renderPriceTable(); });
-  });
+  el.value = activeCategoryFilter;
+  el.onchange = ()=>{ activeCategoryFilter = el.value; renderCategoryTabs(); renderPriceTable(); };
 }
 
 function renderBrandTabs(){
@@ -2879,15 +2895,14 @@ function renderBrandTabs(){
   if(!orderedBrands.includes(activeBrandFilter) && activeBrandFilter!=='ALL') activeBrandFilter='ALL';
   const counts = b => visibleRows().filter(p=>productBrand(p.product)===b).length;
   const tabs = ['ALL', ...orderedBrands];
-  const el = document.getElementById('brandTabs');
+  const el = document.getElementById('filterBrandSelect');
   el.innerHTML = tabs.map(b=>{
     const label = b==='ALL' ? '全部品牌' : b;
     const count = b==='ALL' ? visibleRows().length : counts(b);
-    return `<div class="cust-tab ${activeBrandFilter===b?'active':''}" data-brand="${b}">${label}<span class="count">${count}</span></div>`;
+    return `<option value="${b}">${label} (${count})</option>`;
   }).join('');
-  el.querySelectorAll('.cust-tab').forEach(t=>{
-    t.addEventListener('click', ()=>{ activeBrandFilter = t.dataset.brand; renderBrandTabs(); renderPriceTable(); });
-  });
+  el.value = activeBrandFilter;
+  el.onchange = ()=>{ activeBrandFilter = el.value; renderBrandTabs(); renderPriceTable(); };
 }
 function renderPriceTable(){
   const tbody = document.getElementById('priceTableBody');
@@ -3225,7 +3240,7 @@ function renderCharts(){
 
 /* ============ 汇总刷新 ============ */
 function refreshAll(){
-  renderQuarterTabs(); populateRouteSelect(); populatePromoSelects(); populatePromoDealSelects(); renderCountryTabs(); renderCustTabs(); renderCategoryTabs(); populateModelDatalist(); populateHqModelDatalist(); renderCatalog();
+  renderQuarterTabs(); populateRouteSelect(); populatePromoSelects(); populatePromoDealSelects(); renderCountryTabs(); renderCustTabs(); renderCategoryTabs(); renderBrandTabs(); populateModelDatalist(); populateHqModelDatalist(); renderCatalog();
   renderKPI(); renderRoute(); renderPriceTable(); renderPromoTable(); renderPromoDealAll(); renderCharts(); renderQoQTable(); renderHqPriceTable(); renderSimTable();
 }
 
@@ -3246,6 +3261,20 @@ document.getElementById('catalogSearch').addEventListener('input', e=>{
 document.getElementById('priceSearch').addEventListener('input', e=>{
   priceSearchTerm = e.target.value; renderPriceTable();
 });
+
+const filterResetBtnEl = document.getElementById('filterResetBtn');
+if (filterResetBtnEl){
+  filterResetBtnEl.addEventListener('click', ()=>{
+    activeCountryFilter = 'ALL';
+    activeCustFilter = 'ALL';
+    activeCategoryFilter = 'ALL';
+    activeBrandFilter = 'ALL';
+    priceSearchTerm = '';
+    const searchInput = document.getElementById('priceSearch');
+    if (searchInput) searchInput.value = '';
+    renderCountryTabs(); renderCustTabs(); renderCategoryTabs(); renderBrandTabs(); renderPriceTable();
+  });
+}
 
 document.getElementById('addPriceBtn').addEventListener('click', ()=>{
   const product = document.getElementById('p_product').value.trim();
@@ -4600,7 +4629,9 @@ const I18N_DICT = [
   ['型号:','Model:','Model:'],
   ['省','Save','Oszczędź'],
   ['现价','Now','Teraz'],
-  ['至','to','do']
+  ['至','to','do'],
+  ['重置','Reset','Resetuj'],
+  ['搜索型号/SKU，例如','Search model/SKU, e.g.','Szukaj modelu/SKU, np.']
 ];
 I18N_DICT.sort((a,b)=>b[0].length-a[0].length);
 

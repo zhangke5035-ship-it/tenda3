@@ -174,6 +174,7 @@
   .inv-stat-label{font-size:12px;color:var(--text-dim);}
   .inv-stat-value{font-size:24px;font-weight:700;color:var(--text);margin-top:8px;}
   .inv-stat-value.warn{color:#B8863E;}
+  .inv-stat-delta .highlight{color:var(--copper);font-weight:700;}
   .inv-stat-value.danger{color:var(--alert);}
   .inv-stat-delta{font-size:11.5px;margin-top:6px;color:var(--text-faint);}
   .inv-toolbar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:14px;}
@@ -212,6 +213,18 @@
   .inv-row-actions{display:flex;gap:14px;}
   .inv-row-actions a{font-size:12.5px;color:var(--text-dim);cursor:pointer;}
   .inv-row-actions a:hover{color:var(--copper);}
+  .inv-transit-zero{display:flex;flex-direction:column;align-items:center;line-height:1.4;}
+  .inv-transit-zero .inv-transit-qty{color:var(--text-dim);font-size:13.5px;}
+  .inv-transit-zero .inv-transit-time{color:var(--text-faint);font-size:11px;margin-top:2px;}
+  .inv-transit-wrap{display:flex;flex-direction:column;align-items:center;line-height:1.4;cursor:pointer;}
+  .inv-transit-wrap .inv-transit-qty{color:var(--copper);font-weight:700;font-size:13.5px;}
+  .inv-transit-wrap .inv-transit-time{color:#B8863E;font-size:11px;margin-top:2px;white-space:nowrap;}
+  .inv-arrival-tooltip{position:fixed;z-index:999;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:0 6px 20px rgba(0,0,0,0.12);padding:10px 12px;font-size:12.5px;color:var(--text);display:none;max-width:260px;}
+  .inv-arrival-tooltip .tt-title{font-weight:700;margin-bottom:6px;padding-bottom:6px;border-bottom:1px solid var(--border-soft);color:var(--text);}
+  .inv-arrival-tooltip .tt-item{display:flex;align-items:center;gap:8px;padding:2px 0;white-space:nowrap;}
+  .inv-arrival-tooltip .tt-qty{color:var(--copper);font-weight:700;min-width:44px;}
+  .inv-arrival-tooltip .tt-divider{color:var(--border);}
+  .inv-arrival-tooltip .tt-date{color:var(--text-dim);}
   .inv-stock-wrap{width:90px;height:5px;background:var(--border);border-radius:4px;overflow:hidden;margin-top:6px;}
   .inv-stock-bar{height:100%;border-radius:4px;}
   .inv-pagination{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-top:1px solid var(--border);font-size:12.5px;color:var(--text-dim);}
@@ -698,7 +711,7 @@
     <div class="inv-stat-card">
       <div class="inv-stat-label">在途库存总数</div>
       <div class="inv-stat-value warn" id="invStatTotalTransit">--</div>
-      <div class="inv-stat-delta">已下单未到货</div>
+      <div class="inv-stat-delta" id="invStatTransitTip">已下单未到货</div>
     </div>
     <div class="inv-stat-card">
       <div class="inv-stat-label">缺货商品数</div>
@@ -761,7 +774,7 @@
           <th>产品信息</th>
           <th>仓库</th>
           <th id="invSortQtyTh" style="cursor:pointer;user-select:none;">当前库存 <span id="invSortQtyIcon" style="opacity:.5;">⇅</span></th>
-          <th>在途库存</th>
+          <th id="invSortTransitTh" style="cursor:pointer;user-select:none;">在途库存 <span id="invSortTransitIcon" style="opacity:.5;">⇅</span></th>
           <th>库存状态</th>
           <th>最后更新</th>
           <th>操作</th>
@@ -774,6 +787,8 @@
       <div class="inv-page-btns" id="invPageBtns"></div>
     </div>
   </div>
+
+  <div class="inv-arrival-tooltip" id="invArrivalTooltip"></div>
 
   <div class="inv-overlay" id="invModalOverlay">
     <div class="inv-modal">
@@ -4425,6 +4440,12 @@ const I18N_DICT = [
   ['个促销','promotions','promocji'],
   ['原价','Original Price','Cena pierwotna'],
   ['折扣金额','Discount Amount','Kwota rabatu'],
+  ['已下单未到货','Ordered, Not Yet Arrived','Zamówione, nie dostarczone'],
+  ['到货日期待定','Arrival Date TBD','Data dostawy do ustalenia'],
+  ['在途明细','In-Transit Details','Szczegóły przesyłki'],
+  ['最近到货','Next Arrival','Najbliższa dostawa'],
+  ['预计','Expected','Przewidywane'],
+  ['到货','Arrival','dostawa'],
   ['折扣','Discount','Rabat'],
   ['开始日期','Start Date','Data rozpoczęcia'],
   ['结束日期','End Date','Data zakończenia']
@@ -4776,10 +4797,10 @@ applyLanguage(currentLang);
     {sku:"60025599", model:"RP7", name:"RP7V2.0-TDE01-5MP智能无线云台摄像机-欧标可配置BOM", cat:"高清摄像头成品", wh:"罗马尼亚仓", qty:28, transit:0, unit:"台", updated:"2025-12-06"},
     {sku:"60025897", model:"RP3 Pro", name:"RP3 ProV1.1-TDE01-室内无线云台摄像机-欧标可配置BOM", cat:"高清摄像头成品", wh:"波兰仓", qty:118, transit:0, unit:"台", updated:"2026-03-26"},
     {sku:"60026609", model:"RH3-WCA", name:"RH3-WCAV2.0-TEU-室外无线球机-改机", cat:"高清摄像头成品", wh:"波兰仓", qty:454, transit:0, unit:"台", updated:"2026-03-26"},
-    {sku:"TEG1016G", model:"TEG1016G", name:"1000M 16-Port Gigabit Ethernet Switch", cat:"非网管型交换机", wh:"波兰仓", qty:0, transit:300, unit:"台", updated:"2026-07-15"},
-    {sku:"TEF1109P-8-102W", model:"TEF1109P-8-102W", name:"9-Port Fast Unmanaged Switch With 8-Port PoE", cat:"PoE交换机成品", wh:"波兰仓", qty:0, transit:200, unit:"台", updated:"2026-07-15"},
-    {sku:"BE12 Pro", model:"BE12 Pro", name:"Tenda BE12 Pro BE7200 Dual-Band 2.5G Wireless Router", cat:"家用无线成品", wh:"波兰仓", qty:0, transit:50, unit:"台", updated:"2026-07-15"},
-    {sku:"AX12 Pro", model:"AX12 Pro", name:"Tenda AX12 Pro AX3000 Dual-Band Gigabit Wireless Router", cat:"家用无线成品", wh:"波兰仓", qty:0, transit:1000, unit:"台", updated:"2026-07-15"}
+    {sku:"TEG1016G", model:"TEG1016G", name:"1000M 16-Port Gigabit Ethernet Switch", cat:"非网管型交换机", wh:"波兰仓", qty:0, transit:300, unit:"台", updated:"2026-07-15", arr:[{qty:300, date:"2026-08-30"}]},
+    {sku:"TEF1109P-8-102W", model:"TEF1109P-8-102W", name:"9-Port Fast Unmanaged Switch With 8-Port PoE", cat:"PoE交换机成品", wh:"波兰仓", qty:0, transit:200, unit:"台", updated:"2026-07-15", arr:[{qty:200, date:"2026-08-30"}]},
+    {sku:"BE12 Pro", model:"BE12 Pro", name:"Tenda BE12 Pro BE7200 Dual-Band 2.5G Wireless Router", cat:"家用无线成品", wh:"波兰仓", qty:0, transit:50, unit:"台", updated:"2026-07-15", arr:[{qty:50, date:"2026-08-30"}]},
+    {sku:"AX12 Pro", model:"AX12 Pro", name:"Tenda AX12 Pro AX3000 Dual-Band Gigabit Wireless Router", cat:"家用无线成品", wh:"波兰仓", qty:0, transit:1000, unit:"台", updated:"2026-07-15", arr:[{qty:1000, date:"2026-08-30"}]}
   ];
 
   const INV_PAGE_SIZE = 50;
@@ -4787,6 +4808,10 @@ applyLanguage(currentLang);
 
   function invStatusOf(item){
     return item.qty === 0 ? "out" : "ok";
+  }
+  function invEarliestArrival(item){
+    if(!item.arr || !item.arr.length) return null;
+    return item.arr.reduce(function(min, b){ return (!min || b.date < min) ? b.date : min; }, null);
   }
   function invBadgeHtml(status){
     const map = {
@@ -4824,12 +4849,26 @@ applyLanguage(currentLang);
     document.getElementById('invStatTotalQty').textContent = totalQty.toLocaleString('pl-PL');
     document.getElementById('invStatTotalTransit').textContent = totalTransit.toLocaleString('pl-PL');
     document.getElementById('invStatOut').textContent = out;
+    const arrivalDates = mockInventoryData.map(invEarliestArrival).filter(Boolean);
+    const soonest = arrivalDates.length ? arrivalDates.reduce(function(min,d){ return d<min?d:min; }) : null;
+    document.getElementById('invStatTransitTip').innerHTML = soonest
+      ? '最近到货：<span class="highlight">' + soonest + '</span>'
+      : '已下单未到货';
   }
 
+  let invSortTransitDir = 0;
   function renderInventoryTable(){
     const filtered = invGetFiltered();
     if(invSortDir !== 0){
       filtered.sort(function(a,b){ return invSortDir === 1 ? a.qty - b.qty : b.qty - a.qty; });
+    } else if(invSortTransitDir !== 0){
+      filtered.sort(function(a,b){
+        const da = invEarliestArrival(a), db = invEarliestArrival(b);
+        if(!da && !db) return 0;
+        if(!da) return 1;
+        if(!db) return -1;
+        return invSortTransitDir === 1 ? (da < db ? -1 : da > db ? 1 : 0) : (da > db ? -1 : da < db ? 1 : 0);
+      });
     }
     const totalPages = Math.max(1, Math.ceil(filtered.length / INV_PAGE_SIZE));
     if(invCurrentPage > totalPages) invCurrentPage = totalPages;
@@ -4842,13 +4881,23 @@ applyLanguage(currentLang);
     } else {
       tbody.innerHTML = pageItems.map(function(item){
         const status = invStatusOf(item);
+        let transitCell;
+        if(!item.transit){
+          transitCell = '<div class="inv-transit-zero"><span class="inv-transit-qty">0 ' + item.unit + '</span><span class="inv-transit-time">-</span></div>';
+        } else {
+          const earliest = invEarliestArrival(item);
+          transitCell = '<div class="inv-transit-wrap" data-sku="' + item.sku + '">' +
+            '<span class="inv-transit-qty">' + item.transit + ' ' + item.unit + '</span>' +
+            '<span class="inv-transit-time">' + (earliest ? ('预计 ' + earliest + ' 到货') : '到货日期待定') + '</span>' +
+            '</div>';
+        }
         return '<tr>' +
           '<td class="inv-sku">' + item.sku + '</td>' +
           '<td>' + (item.model || '--') + '</td>' +
           '<td><div class="inv-prod-name">' + item.name + '</div><div class="inv-prod-cat">' + item.cat + '</div></td>' +
           '<td>' + invWarehouseLabel(item.wh) + '</td>' +
           '<td><span class="inv-qty">' + item.qty + '</span><span class="inv-unit">' + item.unit + '</span></td>' +
-          '<td>' + (item.transit || 0) + ' ' + item.unit + '</td>' +
+          '<td>' + transitCell + '</td>' +
           '<td>' + invBadgeHtml(status) + '</td>' +
           '<td>' + item.updated + '</td>' +
           '<td><div class="inv-row-actions"><a data-action="edit" data-sku="' + item.sku + '">编辑</a><a data-action="log" data-sku="' + item.sku + '">出入库记录</a></div></td>' +
@@ -4879,9 +4928,45 @@ applyLanguage(currentLang);
   document.getElementById('invSearchInput').addEventListener('input', function(){ invCurrentPage=1; renderInventoryTable(); });
   document.getElementById('invSortQtyTh').addEventListener('click', function(){
     invSortDir = invSortDir === 1 ? -1 : 1;
+    invSortTransitDir = 0;
     document.getElementById('invSortQtyIcon').textContent = invSortDir === 1 ? '↑' : '↓';
+    document.getElementById('invSortTransitIcon').textContent = '⇅';
     invCurrentPage = 1;
     renderInventoryTable();
+  });
+  document.getElementById('invSortTransitTh').addEventListener('click', function(){
+    invSortTransitDir = invSortTransitDir === 1 ? -1 : 1;
+    invSortDir = 0;
+    document.getElementById('invSortTransitIcon').textContent = invSortTransitDir === 1 ? '↑' : '↓';
+    document.getElementById('invSortQtyIcon').textContent = '⇅';
+    invCurrentPage = 1;
+    renderInventoryTable();
+  });
+
+  const invArrivalTooltipEl = document.getElementById('invArrivalTooltip');
+  document.getElementById('invTableBody').addEventListener('mouseover', function(e){
+    const wrap = e.target.closest('.inv-transit-wrap');
+    if(!wrap) return;
+    const item = mockInventoryData.find(function(i){ return i.sku === wrap.dataset.sku; });
+    if(!item || !item.arr || !item.arr.length) return;
+    const batches = item.arr.slice().sort(function(a,b){ return a.date < b.date ? -1 : a.date > b.date ? 1 : 0; });
+    invArrivalTooltipEl.innerHTML = '<div class="tt-title">📦 在途明细 (SKU: ' + item.sku + ')</div>' +
+      batches.map(function(b){
+        return '<div class="tt-item"><span class="tt-qty">' + b.qty + ' ' + item.unit + '</span><span class="tt-divider">|</span><span class="tt-date">预计 ' + b.date + ' 到货</span></div>';
+      }).join('');
+    const rect = wrap.getBoundingClientRect();
+    invArrivalTooltipEl.style.display = 'block';
+    const ttRect = invArrivalTooltipEl.getBoundingClientRect();
+    let left = rect.left + rect.width/2 - ttRect.width/2;
+    left = Math.max(8, Math.min(left, window.innerWidth - ttRect.width - 8));
+    invArrivalTooltipEl.style.left = left + 'px';
+    invArrivalTooltipEl.style.top = Math.max(8, rect.top - ttRect.height - 8) + 'px';
+  });
+  document.getElementById('invTableBody').addEventListener('mouseout', function(e){
+    const wrap = e.target.closest('.inv-transit-wrap');
+    if(!wrap) return;
+    if(e.relatedTarget && wrap.contains(e.relatedTarget)) return;
+    invArrivalTooltipEl.style.display = 'none';
   });
 
   const invOverlay = document.getElementById('invModalOverlay');

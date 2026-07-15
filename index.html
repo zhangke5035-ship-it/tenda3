@@ -191,10 +191,11 @@
   .inv-table-wrap table{width:100%;border-collapse:collapse;}
   .inv-table-wrap thead th{text-align:left;font-size:12px;font-weight:600;color:var(--text-faint);text-transform:uppercase;letter-spacing:.03em;padding:12px 16px;border-bottom:1px solid var(--border);background:rgba(0,0,0,0.025);white-space:nowrap;}
   .inv-table-wrap tbody td{padding:13px 16px;border-bottom:1px solid var(--border-soft);font-size:13.5px;color:var(--text);white-space:nowrap;}
+  .inv-table-wrap tbody td:nth-child(3){white-space:normal;overflow-wrap:anywhere;max-width:340px;min-width:220px;}
   .inv-table-wrap tbody tr:last-child td{border-bottom:none;}
   .inv-table-wrap tbody tr:hover{background:rgba(0,0,0,0.025);}
   .inv-sku{color:var(--text-dim);font-family:'IBM Plex Mono',monospace;font-size:12.5px;}
-  .inv-prod-name{font-weight:600;color:var(--text);}
+  .inv-prod-name{font-weight:600;color:var(--text);overflow-wrap:anywhere;}
   .inv-prod-cat{font-size:12px;color:var(--text-dim);margin-top:2px;}
   .inv-qty{font-weight:700;color:var(--text);}
   .inv-unit{color:var(--text-faint);font-size:12px;margin-left:2px;}
@@ -4298,15 +4299,18 @@ const I18N_DICT = [
 ];
 I18N_DICT.sort((a,b)=>b[0].length-a[0].length);
 
+const I18N_TIGHT_KEYS = new Set(['口','路','台','个','箱']);
 function translateOne(original){
   if (currentLang === 'zh') return original;
   let result = original;
   I18N_DICT.forEach(([zh, en, pl])=>{
     if (result.indexOf(zh) !== -1){
       const target = currentLang === 'en' ? en : pl;
-      result = result.split(zh).join(target);
+      const piece = I18N_TIGHT_KEYS.has(zh) ? target : (' ' + target + ' ');
+      result = result.split(zh).join(piece);
     }
   });
+  result = result.replace(/\s+/g, ' ').replace(/\s+([,.\-)])/g, '$1').replace(/([(\-])\s+/g, '$1').trim();
   return result;
 }
 

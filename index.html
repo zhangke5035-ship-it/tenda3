@@ -489,8 +489,6 @@
         <div class="form-grid">
           <div class="field"><label>产品型号(报价)</label><input id="sim_product" list="hqModelDatalist" placeholder="例如 K4P-4CR"></div>
           <div class="field"><label>客户简称</label><input id="sim_customer" placeholder="例如 ELTROX"></div>
-          <div class="field mono"><label>含税净价(人民币)</label><input id="sim_gross_cny" type="number" step="0.01"></div>
-          <div class="field mono"><label>未税净价(人民币)</label><input id="sim_net_cny" type="number" step="0.01"></div>
           <div class="field mono"><label>含税净价(欧元)</label><input id="sim_gross_eur" type="number" step="0.01"></div>
           <div class="field mono"><label>未税净价(欧元)</label><input id="sim_net_eur" type="number" step="0.01"></div>
           <div class="field mono"><label>含税零售价(当地币种)</label><input id="sim_retail_local" type="number" step="0.01"></div>
@@ -501,8 +499,6 @@
           <div class="field mono"><label>返点点数</label><input id="sim_rebate_points" type="number" step="0.01"></div>
           <div class="field mono"><label>展延返点费用(当地MDR)</label><input id="sim_mdr_fee" type="number" step="0.01"></div>
           <div class="field mono"><label>N+1数量</label><input id="sim_n1_qty" type="number" step="0.01"></div>
-          <div class="field mono"><label>N+2数量</label><input id="sim_n2_qty" type="number" step="0.01"></div>
-          <div class="field mono"><label>N+3数量</label><input id="sim_n3_qty" type="number" step="0.01"></div>
           <div class="field"><label>当地币种</label><input id="sim_currency" placeholder="例如 PLN"></div>
           <div class="field mono"><label>未含PO价格(当地币种)</label><input id="sim_po_price_local" type="number" step="0.01"></div>
           <div class="field"><label>生命周期</label><input id="sim_lifecycle_month" placeholder="例如 6月"></div>
@@ -528,9 +524,9 @@
         <div class="inv-table-wrap" style="overflow-x:auto;">
         <table>
           <thead><tr>
-            <th>产品型号</th><th>客户简称</th><th>含税净价(CNY)</th><th>未税净价(CNY)</th><th>含税净价(EUR)</th><th>未税净价(EUR)</th>
+            <th>产品型号</th><th>客户简称</th><th>含税净价(EUR)</th><th>未税净价(EUR)</th>
             <th>含税零售价(当地)</th><th>VAT</th><th>二级客户利润空间</th><th>一级客户利润空间</th><th>PO协议互兑利率</th><th>返点点数</th>
-            <th>展延返点费用(MDR)</th><th>N+1</th><th>N+2</th><th>N+3</th><th>当地币种</th><th>未含PO价格(当地)</th>
+            <th>展延返点费用(MDR)</th><th>N+1</th><th>当地币种</th><th>未含PO价格(当地)</th>
             <th>生命周期</th><th>清关版本</th><th>未含净价(EUR)</th><th>未含净价(USD)</th><th>去化销售与预留平均价</th><th>PO</th>
             <th>兼体表格</th><th>品牌预算</th><th>MDF预算</th><th>风险与维标预算</th><th>单位重量</th><th>盈亏占比</th><th>盈利</th><th>VC专属PO价</th><th></th>
           </tr></thead>
@@ -2673,7 +2669,10 @@ const HQ_MODEL_LIST = ['M20-PoE','M20-8G-PoE','M30','M50-F','W36AP','W37AP','W39
 function populateHqModelDatalist(){
   const dl = document.getElementById('hqModelDatalist');
   if (!dl) return;
-  dl.innerHTML = HQ_MODEL_LIST.map(m=>`<option value="${m}">`).join('');
+  // 优先用"总部报价"列表(hq_prices表)里实际存在的型号；加载完成前先用静态型号库兜底，避免空列表
+  const fromHqPrices = (typeof hqPrices !== 'undefined' && hqPrices.length) ? hqPrices.map(h=>h.product) : [];
+  const models = fromHqPrices.length ? Array.from(new Set(fromHqPrices)) : HQ_MODEL_LIST;
+  dl.innerHTML = models.map(m=>`<option value="${m}">`).join('');
 }
 
 /* ============ 型号生命周期库 ============ */
@@ -3200,8 +3199,8 @@ if (addHqPriceBtn){
 /* ===================== 总部报价模拟测算 ===================== */
 let simRows = [];
 const SIM_TEXT_FIELDS = ['product','customer','currency','lifecycle_month','clearance_version','po','compat_table'];
-const SIM_NUM_FIELDS = ['gross_cny','net_cny','gross_eur','net_eur','retail_local','vat','l2_margin','l1_margin','po_fx_rate','rebate_points','mdr_fee','n1_qty','n2_qty','n3_qty','po_price_local','net_price_eur','net_price_usd','sales_reserve_avg','brand_budget','mdf_budget','risk_budget','unit_weight','profit_ratio','profit','vc_po_price'];
-const SIM_ALL_FIELDS = ['product','customer','gross_cny','net_cny','gross_eur','net_eur','retail_local','vat','l2_margin','l1_margin','po_fx_rate','rebate_points','mdr_fee','n1_qty','n2_qty','n3_qty','currency','po_price_local','lifecycle_month','clearance_version','net_price_eur','net_price_usd','sales_reserve_avg','po','compat_table','brand_budget','mdf_budget','risk_budget','unit_weight','profit_ratio','profit','vc_po_price'];
+const SIM_NUM_FIELDS = ['gross_eur','net_eur','retail_local','vat','l2_margin','l1_margin','po_fx_rate','rebate_points','mdr_fee','n1_qty','po_price_local','net_price_eur','net_price_usd','sales_reserve_avg','brand_budget','mdf_budget','risk_budget','unit_weight','profit_ratio','profit','vc_po_price'];
+const SIM_ALL_FIELDS = ['product','customer','gross_eur','net_eur','retail_local','vat','l2_margin','l1_margin','po_fx_rate','rebate_points','mdr_fee','n1_qty','currency','po_price_local','lifecycle_month','clearance_version','net_price_eur','net_price_usd','sales_reserve_avg','po','compat_table','brand_budget','mdf_budget','risk_budget','unit_weight','profit_ratio','profit','vc_po_price'];
 
 function simNumCell(v){ return (v===null || v===undefined || v==='') ? '—' : Number(v).toFixed(2); }
 function renderSimTable(){
@@ -3211,8 +3210,6 @@ function renderSimTable(){
   tbody.innerHTML = simRows.map(r=>`<tr>
     <td class="mono">${r.product||'—'}</td>
     <td>${r.customer||'—'}</td>
-    <td class="num-cell">${simNumCell(r.gross_cny)}</td>
-    <td class="num-cell">${simNumCell(r.net_cny)}</td>
     <td class="num-cell">${simNumCell(r.gross_eur)}</td>
     <td class="num-cell">${simNumCell(r.net_eur)}</td>
     <td class="num-cell">${simNumCell(r.retail_local)}</td>
@@ -3223,8 +3220,6 @@ function renderSimTable(){
     <td class="num-cell">${simNumCell(r.rebate_points)}</td>
     <td class="num-cell">${simNumCell(r.mdr_fee)}</td>
     <td class="num-cell">${simNumCell(r.n1_qty)}</td>
-    <td class="num-cell">${simNumCell(r.n2_qty)}</td>
-    <td class="num-cell">${simNumCell(r.n3_qty)}</td>
     <td>${r.currency||'—'}</td>
     <td class="num-cell">${simNumCell(r.po_price_local)}</td>
     <td>${r.lifecycle_month||'—'}</td>

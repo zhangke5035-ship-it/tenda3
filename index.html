@@ -639,7 +639,7 @@
     <div class="cust-tabs" id="promoDealCustTabs"></div>
     <div class="cust-tabs" id="promoDealTypeTabs"></div>
     <table>
-      <thead><tr><th>促销名称</th><th>促销类型</th><th>客户</th><th>产品型号</th><th>DDP原价(PLN)</th><th>DDP促销价(PLN)</th><th>折扣</th><th>开始日期</th><th>结束日期</th><th>状态</th><th></th></tr></thead>
+      <thead><tr><th>促销名称</th><th>促销类型</th><th>客户</th><th>产品型号</th><th>DDP原价(PLN)</th><th>DDP促销价(PLN)</th><th>折扣</th><th>折扣金额(PLN)</th><th>开始日期</th><th>结束日期</th><th>状态</th><th></th></tr></thead>
       <tbody id="promoDealTableBody"></tbody>
     </table>
   </div>
@@ -2986,6 +2986,7 @@ function renderPromoDealTable(){
   if (promoDealTypeFilter !== '全部') rows = rows.filter(p=>p.type===promoDealTypeFilter);
   tbody.innerHTML = rows.map(p=>{
     const discount = p.original>0 ? promoDealDiscountPct(p).toFixed(1)+'%' : '—';
+    const discountAmount = (p.original>0 || p.promo>0) ? (p.original - p.promo).toFixed(2) : '—';
     return `<tr data-id="${p.id}" style="cursor:pointer;">
       <td>${p.name}</td>
       <td>${p.type||'—'}</td>
@@ -2994,6 +2995,7 @@ function renderPromoDealTable(){
       <td class="num-cell">${p.original.toFixed(2)}</td>
       <td class="num-cell">${p.promo.toFixed(2)}</td>
       <td class="num-cell">${discount}</td>
+      <td class="num-cell">${discountAmount}</td>
       <td>${p.start||'—'}</td>
       <td>${p.end||'—'}</td>
       <td><span class="status ${statusClass(p.status)}"><span class="sdot"></span>${p.status}</span></td>
@@ -4422,6 +4424,7 @@ const I18N_DICT = [
   ['累计登记','Total registered','Łącznie zarejestrowano'],
   ['个促销','promotions','promocji'],
   ['原价','Original Price','Cena pierwotna'],
+  ['折扣金额','Discount Amount','Kwota rabatu'],
   ['折扣','Discount','Rabat'],
   ['开始日期','Start Date','Data rozpoczęcia'],
   ['结束日期','End Date','Data zakończenia']

@@ -436,7 +436,7 @@
         <div class="navgroup-body">
           <div class="navitem sub" data-view="pricing-customer"><span class="dot"></span>客户报价</div>
           <div class="navitem sub" data-view="pricing-hq"><span class="dot"></span>总部报价</div>
-          <div class="navitem sub" data-view="pricing-customer"><span class="dot"></span>总部报价模拟测算</div>
+          <div class="navitem sub" data-view="pricing-customer" data-sim-mode="1"><span class="dot"></span>总部报价模拟测算</div>
         </div>
       </div>
 
@@ -638,7 +638,7 @@
     <!-- ===================== 报价管理 ===================== -->
     <section class="view" id="view-pricing-customer">
       <div class="viewhead">
-        <div><h2>报价管理 · 客户报价</h2><p>提取自总部《财务价26M71》波兰站"报价"工作表</p></div>
+        <div><h2 id="pricingViewTitle">报价管理 · 客户报价</h2><p id="pricingViewSub">提取自总部《财务价26M71》波兰站"报价"工作表</p></div>
       </div>
       
       
@@ -3103,6 +3103,28 @@ function getFilteredPriceRows(){
   return rows;
 }
 
+let priceTableSimMode = false;
+function setPriceTableMode(simMode){
+  priceTableSimMode = !!simMode;
+  const theadRow = document.querySelector('#priceDetailTable thead tr');
+  if (theadRow){
+    let th = document.getElementById('priceThBreakeven');
+    if (priceTableSimMode && !th){
+      th = document.createElement('th');
+      th.id = 'priceThBreakeven';
+      th.dataset.key = 'breakeven';
+      th.textContent = translateOne('盈亏平衡价 (USD)');
+      theadRow.insertBefore(th, theadRow.lastElementChild || null);
+    } else if (!priceTableSimMode && th){
+      th.remove();
+    }
+  }
+  const titleEl = document.getElementById('pricingViewTitle');
+  const subEl = document.getElementById('pricingViewSub');
+  if (titleEl) titleEl.textContent = priceTableSimMode ? translateOne('报价管理 · 总部报价模拟测算') : translateOne('报价管理 · 客户报价');
+  if (subEl) subEl.textContent = priceTableSimMode ? translateOne('基于总部报价体系，按产品匹配盈亏平衡价，辅助模拟测算各客户成本与盈亏') : translateOne('提取自总部《财务价26M71》波兰站"报价"工作表');
+  renderPriceTable();
+}
 function renderPriceTable(){
   const tbody = document.getElementById('priceTableBody');
   let rows = getFilteredPriceRows();
@@ -3779,6 +3801,9 @@ document.getElementById('nav').addEventListener('click', e=>{
   document.getElementById('view-'+item.dataset.view).classList.add('active');
   const grp = item.closest('.navgroup');
   if (grp) grp.classList.add('open');
+  if (item.dataset.view === 'pricing-customer' && typeof setPriceTableMode === 'function'){
+    setPriceTableMode(item.dataset.simMode === '1');
+  }
 });
 document.getElementById('fxRate').addEventListener('input', refreshAll);
 document.getElementById('routeSelect').addEventListener('change', renderRoute);
@@ -5034,6 +5059,16 @@ function injectAgentTiers(){
     row.insertBefore(tdProfit, buttonCell);
     row.insertBefore(tdFinal, buttonCell);
 
+    if (priceTableSimMode){
+      const tdBreakeven = document.createElement('td');
+      tdBreakeven.className = 'num-cell';
+      const priceId = Number(row.dataset.priceId);
+      const priceRow = priceList.find(x=>x.id === priceId);
+      const b = priceRow ? simBreakevenFor(priceRow.product) : null;
+      tdBreakeven.textContent = (b===null || b===undefined || isNaN(b)) ? '—' : usd(b);
+      row.insertBefore(tdBreakeven, buttonCell);
+    }
+
     row.dataset.tiersInjected = '1';
   });
 }
@@ -5103,6 +5138,12 @@ const I18N_DICT = [
   ['打印 / 导出 PDF','Print / Export PDF','Drukuj / Eksportuj PDF'],
   ['总览','Overview','Przegląd'],
   ['报价管理','Pricing','Zarządzanie cenami'],
+  ['盈亏平衡价 (USD)','Break-even Price (USD)','Cena progu rentowności (USD)'],
+  ['盈亏平衡价(USD)','Break-even Price (USD)','Cena progu rentowności (USD)'],
+  ['盈亏平衡价','Break-even Price','Cena progu rentowności'],
+  ['报价管理 · 总部报价模拟测算','Pricing · HQ Quote Simulation','Ceny · Symulacja ofert HQ'],
+  ['报价管理 · 客户报价','Pricing · Customer Quote','Ceny · Oferta klienta'],
+  ['基于总部报价体系，按产品匹配盈亏平衡价，辅助模拟测算各客户成本与盈亏','Based on the HQ pricing system, matches break-even price by product to help simulate cost and margin per customer','Na podstawie systemu cen HQ dopasowuje cenę progu rentowności wg produktu, aby wspomóc symulację kosztów i marży klienta'],
   ['营销费用','Marketing Spend','Wydatki marketingowe'],
   ['销售订单','Sales Orders','Zamówienia sprzedaży'],
   ['波兰站点 Incom / Action / Eltrox / SGM 代理的报价与利润健康度（数据来自 26M71 月度价格表）','Pricing & margin health for Poland-site agents Incom / Action / Eltrox / SGM (from the 26M71 monthly price list)','Kondycja cen i marż dla agentów Incom / Action / Eltrox / SGM (dane z listy cen 26M71)'],

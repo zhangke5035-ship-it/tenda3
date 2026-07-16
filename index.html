@@ -385,6 +385,8 @@
   .final-price-input{width:100%;padding:5px 7px;border:1px solid var(--border);border-radius:var(--radius);font-family:'IBM Plex Mono';font-size:12.5px;color:var(--text);background:var(--surface);}
   .final-price-input:focus{outline:none;border-color:var(--copper);}
   .final-price-input.invalid{border-color:var(--alert);color:var(--alert);background:var(--alert-soft);}
+  .final-price-input.locked{background:var(--surface-alt);color:var(--text-dim);cursor:not-allowed;}
+  .final-price-input.locked:focus{border-color:var(--border);}
 </style>
 <div id="authGate">
   <div class="auth-card">
@@ -425,6 +427,8 @@
     <nav id="nav">
       <div class="navitem active" data-view="overview"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg></span>总览</div>
 
+      <div class="navitem" data-view="customers"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg></span>客户管理</div>
+
       <div class="navgroup open" data-group="quotation">
         <div class="navgroup-head"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg></span>报价管理<span class="chevron">▾</span></div>
         <div class="navgroup-body">
@@ -445,7 +449,13 @@
       </div>
 
       <div class="navitem" data-view="orders"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg></span>销售订单</div>
-      <div class="navitem" data-view="inventory"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path></svg></span>库存管理</div>
+      <div class="navgroup open" data-group="inventory">
+        <div class="navgroup-head"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path></svg></span>库存管理<span class="chevron">▾</span></div>
+        <div class="navgroup-body">
+          <div class="navitem sub" data-view="inventory"><span class="dot"></span>Tenda库存</div>
+          <div class="navitem sub" data-view="inventory-agent"><span class="dot"></span>代理商库存</div>
+        </div>
+      </div>
     </nav>
     <div class="sidebar-foot">
       <div class="rate-box">
@@ -507,6 +517,118 @@
         <div class="panel">
           <div class="panel-head"><div><h3>产品净利率分布</h3><div class="desc">各产品在不同客户下的净利率区间</div></div></div>
           <div class="chart-wrap"><canvas id="chartProductMargin"></canvas></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== 客户管理 ===================== -->
+    <section class="view" id="view-customers">
+      <div class="viewhead">
+        <div><h2>客户管理</h2><p>波兰站点及周边市场 · 客户档案管理（数据与报价管理"客户"字段联动）</p></div>
+      </div>
+
+      <div class="inv-note">
+        以下客户档案根据已有报价/GTM数据中出现的客户名称初步整理，字段可能不完整。如需补充联系人、信用等级、合同信息等具体要求，请告诉我，我会继续完善。
+      </div>
+
+      <div class="inv-stat-grid" style="grid-template-columns:repeat(3,1fr);">
+        <div class="inv-stat-card">
+          <div class="inv-stat-label">客户总数</div>
+          <div class="inv-stat-value" id="custStatTotal">--</div>
+          <div class="inv-stat-delta">覆盖全部国家</div>
+        </div>
+        <div class="inv-stat-card">
+          <div class="inv-stat-label">已有报价的客户</div>
+          <div class="inv-stat-value" id="custStatActive">--</div>
+          <div class="inv-stat-delta">存在完整月度价格表</div>
+        </div>
+        <div class="inv-stat-card">
+          <div class="inv-stat-label">待补充资料客户</div>
+          <div class="inv-stat-value warn" id="custStatPending">--</div>
+          <div class="inv-stat-delta">仅有客户信息，价格表待录入</div>
+        </div>
+      </div>
+
+      <div class="inv-toolbar">
+        <div class="inv-filters">
+          <select class="inv-field" id="custFilterCountry"><option value="">全部国家</option></select>
+          <select class="inv-field" id="custFilterType"><option value="">全部类型</option></select>
+          <div class="inv-search">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" id="custSearchInput" placeholder="搜索客户名称">
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="inv-btn inv-btn-primary" id="custBtnAdd">＋ 新增客户</button>
+        </div>
+      </div>
+
+      <div class="inv-table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>客户名称</th>
+              <th>国家</th>
+              <th>类型</th>
+              <th>联系人</th>
+              <th>联系方式</th>
+              <th>状态</th>
+              <th>备注</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="custTableBody"></tbody>
+        </table>
+      </div>
+
+      <div class="inv-overlay" id="custModalOverlay">
+        <div class="inv-modal">
+          <div class="inv-modal-header">
+            <div class="inv-modal-title" id="custModalTitle">新增客户</div>
+            <div class="inv-modal-close" id="custModalClose">✕</div>
+          </div>
+          <div class="inv-form-grid">
+            <div class="inv-form-group full">
+              <label class="inv-form-label">客户名称</label>
+              <input class="inv-field" id="custFName" placeholder="如 Incom Group S.A.">
+            </div>
+            <div class="inv-form-group">
+              <label class="inv-form-label">国家</label>
+              <input class="inv-field" id="custFCountry" placeholder="如 波兰">
+            </div>
+            <div class="inv-form-group">
+              <label class="inv-form-label">类型</label>
+              <select class="inv-field" id="custFType">
+                <option value="代理商">代理商</option>
+                <option value="分销商">分销商</option>
+                <option value="直销客户">直销客户</option>
+              </select>
+            </div>
+            <div class="inv-form-group">
+              <label class="inv-form-label">联系人</label>
+              <input class="inv-field" id="custFContact" placeholder="选填">
+            </div>
+            <div class="inv-form-group">
+              <label class="inv-form-label">联系方式</label>
+              <input class="inv-field" id="custFPhone" placeholder="邮箱/电话，选填">
+            </div>
+            <div class="inv-form-group">
+              <label class="inv-form-label">状态</label>
+              <select class="inv-field" id="custFStatus">
+                <option value="合作中">合作中</option>
+                <option value="待开发">待开发</option>
+                <option value="已暂停">已暂停</option>
+              </select>
+            </div>
+            <div class="inv-form-group full">
+              <label class="inv-form-label">备注</label>
+              <input class="inv-field" id="custFNote" placeholder="选填">
+            </div>
+          </div>
+          <div class="inv-modal-footer">
+            <button class="inv-btn inv-btn-ghost" id="custBtnCancel">取消</button>
+            <button class="inv-btn inv-btn-primary" id="custBtnSave">保存</button>
+          </div>
         </div>
       </div>
     </section>
@@ -1244,6 +1366,114 @@
       <div class="inv-modal-footer">
         <button class="inv-btn inv-btn-ghost" id="invBtnCancel">取消</button>
         <button class="inv-btn inv-btn-primary" id="invBtnSave">保存</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+    <!-- ================ 代理商库存 ================ -->
+<section class="view" id="view-inventory-agent">
+  <div class="viewhead">
+    <div><h2>库存管理 · 代理商库存</h2><p>Incom / Action / Eltrox / Intelek / DC-Link 等代理商自报库存（手动录入，暂无自动数据源）</p></div>
+  </div>
+
+  <div class="inv-note">
+    此表用于记录代理商/分销商自行反馈的库存数据。当前尚无数据文件导入，可通过"＋ 新增库存"手动录入，或后续提供代理商库存表后由我批量导入。
+  </div>
+
+  <div class="inv-stat-grid" style="grid-template-columns:repeat(3,1fr);">
+    <div class="inv-stat-card">
+      <div class="inv-stat-label">记录条数</div>
+      <div class="inv-stat-value" id="agentInvStatTotal">0</div>
+      <div class="inv-stat-delta">全部代理商合计</div>
+    </div>
+    <div class="inv-stat-card">
+      <div class="inv-stat-label">覆盖代理商数</div>
+      <div class="inv-stat-value" id="agentInvStatAgents">0</div>
+      <div class="inv-stat-delta">有库存记录的代理商</div>
+    </div>
+    <div class="inv-stat-card">
+      <div class="inv-stat-label">当前库存总数</div>
+      <div class="inv-stat-value" id="agentInvStatQty">0</div>
+      <div class="inv-stat-delta">全部记录合计件数</div>
+    </div>
+  </div>
+
+  <div class="inv-toolbar">
+    <div class="inv-filters">
+      <select class="inv-field" id="agentInvFilterAgent"><option value="">全部代理商</option></select>
+      <div class="inv-search">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="agentInvSearchInput" placeholder="搜索 SKU 或产品型号">
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button class="inv-btn inv-btn-ghost" id="agentInvBtnExport">导出 Excel</button>
+      <button class="inv-btn inv-btn-primary" id="agentInvBtnAdd">＋ 新增库存</button>
+    </div>
+  </div>
+
+  <div class="inv-table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>代理商</th>
+          <th>SKU 编码</th>
+          <th>产品型号</th>
+          <th>产品信息</th>
+          <th>当前库存</th>
+          <th>更新日期</th>
+          <th>备注</th>
+          <th>操作</th>
+        </tr>
+      </thead>
+      <tbody id="agentInvTableBody"></tbody>
+    </table>
+    <div class="inv-pagination">
+      <span id="agentInvPageInfo">共 0 条记录</span>
+    </div>
+  </div>
+
+  <div class="inv-overlay" id="agentInvModalOverlay">
+    <div class="inv-modal">
+      <div class="inv-modal-header">
+        <div class="inv-modal-title" id="agentInvModalTitle">新增库存</div>
+        <div class="inv-modal-close" id="agentInvModalClose">✕</div>
+      </div>
+      <div class="inv-form-grid">
+        <div class="inv-form-group full">
+          <label class="inv-form-label">代理商</label>
+          <input class="inv-field" id="agentInvFAgent" list="agentInvAgentList" placeholder="如 Incom Group S.A.">
+          <datalist id="agentInvAgentList"></datalist>
+        </div>
+        <div class="inv-form-group">
+          <label class="inv-form-label">SKU 编码</label>
+          <input class="inv-field" id="agentInvFSku" placeholder="选填">
+        </div>
+        <div class="inv-form-group">
+          <label class="inv-form-label">产品型号</label>
+          <input class="inv-field" id="agentInvFModel" placeholder="如 TE6L Pro">
+        </div>
+        <div class="inv-form-group full">
+          <label class="inv-form-label">产品信息</label>
+          <input class="inv-field" id="agentInvFName" placeholder="选填">
+        </div>
+        <div class="inv-form-group">
+          <label class="inv-form-label">当前库存</label>
+          <input class="inv-field" type="number" id="agentInvFQty" placeholder="0">
+        </div>
+        <div class="inv-form-group">
+          <label class="inv-form-label">更新日期</label>
+          <input class="inv-field" type="date" id="agentInvFDate">
+        </div>
+        <div class="inv-form-group full">
+          <label class="inv-form-label">备注</label>
+          <input class="inv-field" id="agentInvFNote" placeholder="选填">
+        </div>
+      </div>
+      <div class="inv-modal-footer">
+        <button class="inv-btn inv-btn-ghost" id="agentInvBtnCancel">取消</button>
+        <button class="inv-btn inv-btn-primary" id="agentInvBtnSave">保存</button>
       </div>
     </div>
   </div>
@@ -4031,7 +4261,7 @@ const authErrorEl = document.getElementById('authError');
 const userBadgeEl = document.getElementById('userBadge');
 const logoutBtnEl = document.getElementById('logoutBtn');
 
-const RESTRICTED_HQ_PRICING_EMAILS = ['gajowski@tenda.cn', 'piotr.kowalski@tenda.cn', 'roman.danko@tenda.cn'];
+const RESTRICTED_HQ_PRICING_EMAILS = ['gajowski@tenda.cn', 'piotr.kowalski@tenda.cn', 'roman.danko@tenda.cn', 'mirek.mietka@tenda.cn'];
 function applyRoleRestrictions(session){
   const userEmail = ((session && session.user && session.user.email) || '').toLowerCase();
   if (RESTRICTED_HQ_PRICING_EMAILS.includes(userEmail)){
@@ -4046,7 +4276,7 @@ function applyRoleRestrictions(session){
   }
 }
 
-const POLISH_DEFAULT_EMAILS = ['piotr.kowalski@tenda.cn', 'gajowski@tenda.cn', 'roman.danko@tenda.cn'];
+const POLISH_DEFAULT_EMAILS = ['piotr.kowalski@tenda.cn', 'gajowski@tenda.cn', 'roman.danko@tenda.cn', 'mirek.mietka@tenda.cn'];
 function applyDefaultLanguageForUser(session){
   const userEmail = ((session && session.user && session.user.email) || '').toLowerCase();
   if (POLISH_DEFAULT_EMAILS.includes(userEmail) && typeof applyLanguage === 'function'){
@@ -4782,7 +5012,7 @@ function injectAgentTiers(){
     const tdFinal = document.createElement('td');
     tdFinal.className = 'num-cell';
     const finalPriceLocal = convertLocal(computeFinalPurchasePrice(retail, fixedProfit, effectiveVat));
-    tdFinal.innerHTML = '<input type="number" class="final-price-input" step="0.01" value="' + finalPriceLocal.toFixed(2) + '">';
+    tdFinal.innerHTML = '<input type="number" class="final-price-input locked" step="0.01" value="' + finalPriceLocal.toFixed(2) + '" readonly>';
 
     const buttonCell = row.lastElementChild;
     row.insertBefore(tdDmp, buttonCell);
@@ -5895,6 +6125,277 @@ applyLanguage(currentLang);
   };
 
   refreshInventory();
+})();
+</script>
+<script>
+(function(){
+  let custData = [
+    {name:'Incom Group S.A.', country:'波兰', type:'代理商', contact:'', phone:'', status:'合作中', note:'', hasQuote:true},
+    {name:'Action S.A.', country:'波兰', type:'代理商', contact:'', phone:'', status:'合作中', note:'', hasQuote:true},
+    {name:'Eltrox Sp. z o.o.', country:'波兰', type:'代理商', contact:'', phone:'', status:'合作中', note:'', hasQuote:true},
+    {name:'Intelek', country:'捷克', type:'代理商', contact:'', phone:'', status:'合作中', note:'', hasQuote:true},
+    {name:'DC-Link', country:'乌克兰', type:'代理商', contact:'', phone:'', status:'待开发', note:'客户信息已录入，暂无对应月度价格表', hasQuote:false}
+  ];
+  let custSearchTerm = '';
+  let custFilterCountry = '';
+  let custFilterType = '';
+
+  function populateCustFilters(){
+    const countrySel = document.getElementById('custFilterCountry');
+    const typeSel = document.getElementById('custFilterType');
+    const countries = Array.from(new Set(custData.map(function(c){ return c.country; }).filter(Boolean)));
+    const types = Array.from(new Set(custData.map(function(c){ return c.type; }).filter(Boolean)));
+    countrySel.innerHTML = '<option value="">全部国家</option>' + countries.map(function(c){ return '<option value="'+c+'">'+c+'</option>'; }).join('');
+    typeSel.innerHTML = '<option value="">全部类型</option>' + types.map(function(t){ return '<option value="'+t+'">'+t+'</option>'; }).join('');
+    countrySel.value = custFilterCountry;
+    typeSel.value = custFilterType;
+  }
+
+  function filteredCustData(){
+    return custData.filter(function(c){
+      if (custFilterCountry && c.country !== custFilterCountry) return false;
+      if (custFilterType && c.type !== custFilterType) return false;
+      if (custSearchTerm && c.name.toLowerCase().indexOf(custSearchTerm.toLowerCase()) === -1) return false;
+      return true;
+    });
+  }
+
+  function renderCustStats(){
+    document.getElementById('custStatTotal').textContent = custData.length;
+    document.getElementById('custStatActive').textContent = custData.filter(function(c){ return c.hasQuote; }).length;
+    document.getElementById('custStatPending').textContent = custData.filter(function(c){ return !c.hasQuote; }).length;
+  }
+
+  function renderCustTable(){
+    const tbody = document.getElementById('custTableBody');
+    const list = filteredCustData();
+    if (!list.length){
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text-faint);padding:24px;">暂无匹配客户</td></tr>';
+      return;
+    }
+    tbody.innerHTML = list.map(function(c){
+      const statusClass = c.status === '合作中' ? 'inv-badge-ok' : (c.status === '待开发' ? 'inv-badge-low' : 'inv-badge-out');
+      return '<tr>' +
+        '<td class="inv-prod-name">' + c.name + '</td>' +
+        '<td>' + (c.country||'—') + '</td>' +
+        '<td>' + (c.type||'—') + '</td>' +
+        '<td>' + (c.contact||'—') + '</td>' +
+        '<td>' + (c.phone||'—') + '</td>' +
+        '<td><span class="inv-badge ' + statusClass + '"><span class="inv-bdot"></span>' + c.status + '</span></td>' +
+        '<td>' + (c.note||'—') + '</td>' +
+        '<td><div class="inv-row-actions"><a data-action="edit" data-name="' + c.name + '">编辑</a><a data-action="del" data-name="' + c.name + '">删除</a></div></td>' +
+      '</tr>';
+    }).join('');
+  }
+
+  function refreshCustomers(){
+    populateCustFilters();
+    renderCustStats();
+    renderCustTable();
+  }
+
+  const custOverlay = document.getElementById('custModalOverlay');
+  function openCustModal(mode, item){
+    document.getElementById('custModalTitle').textContent = mode === 'edit' ? '编辑客户' : '新增客户';
+    document.getElementById('custFName').value = item ? item.name : '';
+    document.getElementById('custFName').disabled = mode === 'edit';
+    document.getElementById('custFCountry').value = item ? item.country : '';
+    document.getElementById('custFType').value = item ? item.type : '代理商';
+    document.getElementById('custFContact').value = item ? (item.contact||'') : '';
+    document.getElementById('custFPhone').value = item ? (item.phone||'') : '';
+    document.getElementById('custFStatus').value = item ? item.status : '合作中';
+    document.getElementById('custFNote').value = item ? (item.note||'') : '';
+    custOverlay.classList.add('open');
+  }
+  function closeCustModal(){ custOverlay.classList.remove('open'); }
+
+  document.getElementById('custBtnAdd').onclick = function(){ openCustModal('add', null); };
+  document.getElementById('custModalClose').onclick = closeCustModal;
+  document.getElementById('custBtnCancel').onclick = closeCustModal;
+  custOverlay.addEventListener('click', function(e){ if (e.target === custOverlay) closeCustModal(); });
+
+  document.getElementById('custBtnSave').onclick = function(){
+    const name = document.getElementById('custFName').value.trim();
+    if (!name){ alert('请填写客户名称'); return; }
+    const idx = custData.findIndex(function(c){ return c.name === name; });
+    const payload = {
+      name: name,
+      country: document.getElementById('custFCountry').value.trim(),
+      type: document.getElementById('custFType').value,
+      contact: document.getElementById('custFContact').value.trim(),
+      phone: document.getElementById('custFPhone').value.trim(),
+      status: document.getElementById('custFStatus').value,
+      note: document.getElementById('custFNote').value.trim(),
+      hasQuote: idx >= 0 ? custData[idx].hasQuote : false
+    };
+    if (idx >= 0){ custData[idx] = payload; } else { custData.push(payload); }
+    closeCustModal();
+    refreshCustomers();
+  };
+
+  document.getElementById('custTableBody').addEventListener('click', function(e){
+    const target = e.target.closest('a[data-action]');
+    if (!target) return;
+    const name = target.dataset.name;
+    const item = custData.find(function(c){ return c.name === name; });
+    if (target.dataset.action === 'edit'){
+      openCustModal('edit', item);
+    } else if (target.dataset.action === 'del'){
+      if (confirm('确定删除客户 "' + name + '" 吗？')){
+        custData = custData.filter(function(c){ return c.name !== name; });
+        refreshCustomers();
+      }
+    }
+  });
+
+  document.getElementById('custFilterCountry').addEventListener('change', function(e){ custFilterCountry = e.target.value; renderCustTable(); });
+  document.getElementById('custFilterType').addEventListener('change', function(e){ custFilterType = e.target.value; renderCustTable(); });
+  document.getElementById('custSearchInput').addEventListener('input', function(e){ custSearchTerm = e.target.value; renderCustTable(); });
+
+  refreshCustomers();
+})();
+</script>
+<script>
+(function(){
+  const KNOWN_AGENTS = ['Incom Group S.A.','Action S.A.','Eltrox Sp. z o.o.','Intelek','DC-Link'];
+  let agentInvData = [];
+  let agentInvFilterAgent = '';
+  let agentInvSearchTerm = '';
+  let agentInvEditIdx = null;
+
+  function populateAgentInvFilters(){
+    const agentSel = document.getElementById('agentInvFilterAgent');
+    const usedAgents = Array.from(new Set(agentInvData.map(function(i){ return i.agent; }).filter(Boolean)));
+    agentSel.innerHTML = '<option value="">全部代理商</option>' + usedAgents.map(function(a){ return '<option value="'+a+'">'+a+'</option>'; }).join('');
+    agentSel.value = agentInvFilterAgent;
+
+    const datalist = document.getElementById('agentInvAgentList');
+    const allAgents = Array.from(new Set(KNOWN_AGENTS.concat(usedAgents)));
+    datalist.innerHTML = allAgents.map(function(a){ return '<option value="'+a+'"></option>'; }).join('');
+  }
+
+  function filteredAgentInvData(){
+    return agentInvData.filter(function(i){
+      if (agentInvFilterAgent && i.agent !== agentInvFilterAgent) return false;
+      if (agentInvSearchTerm){
+        const term = agentInvSearchTerm.toLowerCase();
+        const hay = ((i.sku||'') + ' ' + (i.model||'') + ' ' + (i.name||'')).toLowerCase();
+        if (hay.indexOf(term) === -1) return false;
+      }
+      return true;
+    });
+  }
+
+  function renderAgentInvStats(){
+    document.getElementById('agentInvStatTotal').textContent = agentInvData.length;
+    document.getElementById('agentInvStatAgents').textContent = Array.from(new Set(agentInvData.map(function(i){ return i.agent; }).filter(Boolean))).length;
+    document.getElementById('agentInvStatQty').textContent = agentInvData.reduce(function(s,i){ return s + (Number(i.qty)||0); }, 0);
+  }
+
+  function renderAgentInvTable(){
+    const tbody = document.getElementById('agentInvTableBody');
+    const list = filteredAgentInvData();
+    document.getElementById('agentInvPageInfo').textContent = '共 ' + list.length + ' 条记录';
+    if (!list.length){
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text-faint);padding:24px;">暂无代理商库存记录，点击"＋ 新增库存"手动录入</td></tr>';
+      return;
+    }
+    tbody.innerHTML = list.map(function(i, idx){
+      return '<tr>' +
+        '<td class="inv-prod-name">' + i.agent + '</td>' +
+        '<td class="inv-sku">' + (i.sku||'—') + '</td>' +
+        '<td>' + (i.model||'—') + '</td>' +
+        '<td>' + (i.name||'—') + '</td>' +
+        '<td class="inv-qty">' + (i.qty||0) + '<span class="inv-unit">台</span></td>' +
+        '<td>' + (i.date||'—') + '</td>' +
+        '<td>' + (i.note||'—') + '</td>' +
+        '<td><div class="inv-row-actions"><a data-action="edit" data-idx="' + idx + '">编辑</a><a data-action="del" data-idx="' + idx + '">删除</a></div></td>' +
+      '</tr>';
+    }).join('');
+  }
+
+  function refreshAgentInventory(){
+    populateAgentInvFilters();
+    renderAgentInvStats();
+    renderAgentInvTable();
+  }
+
+  const agentInvOverlay = document.getElementById('agentInvModalOverlay');
+  function openAgentInvModal(mode, item, idx){
+    agentInvEditIdx = (mode === 'edit') ? idx : null;
+    document.getElementById('agentInvModalTitle').textContent = mode === 'edit' ? '编辑库存' : '新增库存';
+    document.getElementById('agentInvFAgent').value = item ? item.agent : '';
+    document.getElementById('agentInvFSku').value = item ? (item.sku||'') : '';
+    document.getElementById('agentInvFModel').value = item ? (item.model||'') : '';
+    document.getElementById('agentInvFName').value = item ? (item.name||'') : '';
+    document.getElementById('agentInvFQty').value = item ? item.qty : '';
+    document.getElementById('agentInvFDate').value = item ? (item.date||'') : new Date().toISOString().slice(0,10);
+    document.getElementById('agentInvFNote').value = item ? (item.note||'') : '';
+    agentInvOverlay.classList.add('open');
+  }
+  function closeAgentInvModal(){ agentInvOverlay.classList.remove('open'); }
+
+  document.getElementById('agentInvBtnAdd').onclick = function(){ openAgentInvModal('add', null, null); };
+  document.getElementById('agentInvModalClose').onclick = closeAgentInvModal;
+  document.getElementById('agentInvBtnCancel').onclick = closeAgentInvModal;
+  agentInvOverlay.addEventListener('click', function(e){ if (e.target === agentInvOverlay) closeAgentInvModal(); });
+
+  document.getElementById('agentInvBtnSave').onclick = function(){
+    const agent = document.getElementById('agentInvFAgent').value.trim();
+    if (!agent){ alert('请填写代理商名称'); return; }
+    const payload = {
+      agent: agent,
+      sku: document.getElementById('agentInvFSku').value.trim(),
+      model: document.getElementById('agentInvFModel').value.trim(),
+      name: document.getElementById('agentInvFName').value.trim(),
+      qty: Number(document.getElementById('agentInvFQty').value) || 0,
+      date: document.getElementById('agentInvFDate').value || new Date().toISOString().slice(0,10),
+      note: document.getElementById('agentInvFNote').value.trim()
+    };
+    if (agentInvEditIdx !== null){ agentInvData[agentInvEditIdx] = payload; } else { agentInvData.push(payload); }
+    closeAgentInvModal();
+    refreshAgentInventory();
+  };
+
+  document.getElementById('agentInvTableBody').addEventListener('click', function(e){
+    const target = e.target.closest('a[data-action]');
+    if (!target) return;
+    const idx = Number(target.dataset.idx);
+    const list = filteredAgentInvData();
+    const item = list[idx];
+    const realIdx = agentInvData.indexOf(item);
+    if (target.dataset.action === 'edit'){
+      openAgentInvModal('edit', item, realIdx);
+    } else if (target.dataset.action === 'del'){
+      if (confirm('确定删除这条库存记录吗？')){
+        agentInvData.splice(realIdx, 1);
+        refreshAgentInventory();
+      }
+    }
+  });
+
+  document.getElementById('agentInvFilterAgent').addEventListener('change', function(e){ agentInvFilterAgent = e.target.value; renderAgentInvTable(); });
+  document.getElementById('agentInvSearchInput').addEventListener('input', function(e){ agentInvSearchTerm = e.target.value; renderAgentInvTable(); });
+
+  document.getElementById('agentInvBtnExport').onclick = function(){
+    if (!agentInvData.length){ alert('暂无数据可导出'); return; }
+    const header = ['代理商','SKU编码','产品型号','产品信息','当前库存','更新日期','备注'];
+    const rows = agentInvData.map(function(i){
+      return [i.agent, i.sku, i.model, i.name, i.qty, i.date, i.note].map(function(v){
+        const s = String(v==null?'':v);
+        return '"' + s.replace(/"/g,'""') + '"';
+      }).join(',');
+    });
+    const csv = '﻿' + header.join(',') + '\n' + rows.join('\n');
+    const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = '代理商库存.csv';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  refreshAgentInventory();
 })();
 </script>
 </body>

@@ -967,7 +967,7 @@
     <div class="cust-tabs" id="promoDealCustTabs"></div>
     <div class="cust-tabs" id="promoDealTypeTabs"></div>
     <table>
-      <thead><tr><th>促销活动 / 产品型号</th><th>客户</th><th>价格对比 (PLN)</th><th>活动周期</th><th>状态</th><th>操作</th></tr></thead>
+      <thead><tr><th>促销活动 / 产品型号</th><th>客户</th><th>价格对比 (PLN)</th><th>DMP促销价格</th><th>活动周期</th><th>状态</th><th>操作</th></tr></thead>
       <tbody id="promoDealTableBody"></tbody>
     </table>
   </div>
@@ -3319,7 +3319,6 @@ function renderPromoDealTable(){
       extraLine = '限购 ' + cfg.qtyCap + ' 台';
     }
     const tier3Info = getTier3PriceForPromo(p.product, p.cust);
-    const tier3Line = tier3Info ? `<div class="promo-price-dmp">DMP促销价格: ${tier3Info.value.toFixed(2)} ${tier3Info.symbol}</div>` : '';
     return `<tr data-id="${p.id}" style="cursor:pointer;">
       <td>
         <div class="promo-name-main">${p.name}</div>
@@ -3330,11 +3329,11 @@ function renderPromoDealTable(){
         <div class="promo-price-cell">
           <div class="promo-price-original">DDP采购价: ${p.original.toFixed(2)}</div>
           <div class="promo-price-promo">现价: ${p.promo.toFixed(2)}</div>
-          ${tier3Line}
           <div class="promo-price-discount">${discount!=='—' ? ('省 ' + discountAmount + ' PLN · ' + discount) : ''}</div>
           ${extraLine ? `<div class="promo-price-discount">${extraLine}</div>` : ''}
         </div>
       </td>
+      <td>${tier3Info ? `<div class="promo-price-dmp">${tier3Info.value.toFixed(2)} ${tier3Info.symbol}</div>` : '<span style="color:var(--text-faint)">—</span>'}</td>
       <td>
         <div class="promo-date-cell">
           <div>${p.start||'—'}</div>

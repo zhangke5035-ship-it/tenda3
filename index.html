@@ -968,7 +968,7 @@
     <div class="cust-tabs" id="promoDealCustTabs"></div>
     <div class="cust-tabs" id="promoDealTypeTabs"></div>
     <table>
-      <thead><tr><th>促销活动 / 产品型号</th><th>客户</th><th>价格对比 (PLN)</th><th>DMP三级原价</th><th>含税零售价</th><th>活动周期</th><th>状态</th><th>操作</th></tr></thead>
+      <thead><tr><th>促销活动 / 产品型号</th><th>客户</th><th>含税零售价</th><th>DMP三级原价</th><th>DDP促销价格 (PLN)</th><th>活动周期</th><th>状态</th><th>操作</th></tr></thead>
       <tbody id="promoDealTableBody"></tbody>
     </table>
   </div>
@@ -3342,6 +3342,8 @@ function renderPromoDealTable(){
         <div class="promo-name-sub">型号: ${p.product}${p.type ? (' · ' + p.type) : ''}</div>
       </td>
       <td><span class="promo-client-tag">${custName(p.cust)}</span></td>
+      <td>${retailInfo ? `<div class="promo-price-retail">${retailInfo.value.toFixed(2)} ${retailInfo.symbol}</div>` : '<span style="color:var(--text-faint)">—</span>'}</td>
+      <td>${tier3Info ? `<div class="promo-price-dmp">${tier3Info.value.toFixed(2)} ${tier3Info.symbol}</div>` : '<span style="color:var(--text-faint)">—</span>'}</td>
       <td>
         <div class="promo-price-cell">
           <div class="promo-price-original">DDP采购价: ${p.original.toFixed(2)}</div>
@@ -3350,8 +3352,6 @@ function renderPromoDealTable(){
           ${extraLine ? `<div class="promo-price-discount">${extraLine}</div>` : ''}
         </div>
       </td>
-      <td>${tier3Info ? `<div class="promo-price-dmp">${tier3Info.value.toFixed(2)} ${tier3Info.symbol}</div>` : '<span style="color:var(--text-faint)">—</span>'}</td>
-      <td>${retailInfo ? `<div class="promo-price-retail">${retailInfo.value.toFixed(2)} ${retailInfo.symbol}</div>` : '<span style="color:var(--text-faint)">—</span>'}</td>
       <td>
         <div class="promo-date-cell">
           <div>${p.start||'—'}</div>
@@ -5552,6 +5552,7 @@ const I18N_DICT = [
   ['结束日期','End Date','Data zakończenia'],
   ['促销活动 / 产品型号','Promotion / Model','Promocja / Model'],
   ['价格对比 (PLN)','Price Comparison (PLN)','Porównanie cen (PLN)'],
+  ['DDP促销价格 (PLN)','DDP Promo Price (PLN)','Cena promocyjna DDP (PLN)'],
   ['价格对比','Price Comparison','Porównanie cen'],
   ['活动周期','Campaign Period','Okres kampanii'],
   ['搜索促销名称、型号或客户...','Search promotion, model, or customer...','Szukaj promocji, modelu lub klienta...'],

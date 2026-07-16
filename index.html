@@ -434,7 +434,7 @@
         <div class="navgroup-body">
           <div class="navitem sub" data-view="pricing-customer"><span class="dot"></span>客户报价</div>
           <div class="navitem sub" data-view="pricing-hq"><span class="dot"></span>总部报价</div>
-          <div class="navitem sub" data-view="pricing-hq-sim"><span class="dot"></span>总部报价模拟测算</div>
+          <div class="navitem sub" data-view="pricing-customer"><span class="dot"></span>总部报价模拟测算</div>
         </div>
       </div>
 
@@ -740,7 +740,7 @@
         <table id="priceDetailTable">
          <thead><tr>
   <th><input type="checkbox" id="priceSelectAllCheck" title="全选/取消全选当前筛选结果"></th>
-  <th>类目</th><th>品牌</th><th>产品型号</th><th>产品信息描述</th><th>EAN</th><th>生命周期</th><th data-key="customer">客户</th><th data-key="country">国家</th><th>币种</th><th data-key="retail">含税零售价</th><th data-key="net">未税净价</th>
+  <th>类目</th><th>品牌</th><th>产品型号</th><th>EAN</th><th>生命周期</th><th data-key="customer">客户</th><th data-key="country">国家</th><th>币种</th><th data-key="retail">含税零售价</th><th data-key="net">未税净价</th>
   <th>DMP建议销售价</th><th>代理商利润点位</th><th>最终采购价</th><th></th>
 </tr></thead>
           <tbody id="priceTableBody"></tbody>
@@ -792,83 +792,6 @@
 
       </section>
 
-    <!-- ===================== 总部报价模拟测算 ===================== -->
-    <section class="view" id="view-pricing-hq-sim">
-      <div class="viewhead">
-        <div><h2>报价管理 · 总部报价模拟测算</h2><p>基于总部报价与盈亏平衡价，模拟不同结算价/汇率下的利润表现</p></div>
-      </div>
-      <div class="notebox">
-        已按你提供的截图新增字段，目前均为普通可编辑输入框（暂无自动公式），数据保存在 hq_pricing_sim 表。如果发现字段名称与你原表不完全对应，告诉我具体哪一列，我再改。
-      </div>
-
-      <div class="panel">
-        <div class="panel-head"><h3>测算参数</h3><div class="desc">当前测算的默认口径（暂不入库，仅供参考填写下方字段时对照）</div></div>
-        <div class="form-grid">
-          <div class="field"><label>面向站点</label><input id="sim_site" placeholder="例如 TDE"></div>
-          <div class="field"><label>贸易术语</label><input id="sim_incoterm" placeholder="例如 非FOB"></div>
-          <div class="field"><label>MU</label><input id="sim_mu" placeholder="例如 全MU"></div>
-          <div class="field"><label>清关国家</label><input id="sim_clearance_country" placeholder="例如 波兰"></div>
-          <div class="field"><label>模拟</label>
-            <select id="sim_is_sim">
-              <option value="是">是</option>
-              <option value="否">否</option>
-            </select>
-          </div>
-        </div>
-      </div>
-
-      <div class="panel">
-        <div class="panel-head"><h3>新增模拟测算</h3></div>
-        <div class="form-grid">
-          <div class="field"><label>产品型号(报价)</label><input id="sim_product" list="hqModelDatalist" placeholder="例如 K4P-4CR"></div>
-          <div class="field mono"><label>盈亏平衡价 (USD，自动带出)</label><input id="sim_breakeven" type="number" step="0.01" readonly placeholder="按产品型号自动匹配"></div>
-          <div class="field"><label>客户简称</label><select id="sim_customer"><option value="">请选择客户</option></select></div>
-          <div class="field mono"><label>含税净价(欧元)</label><input id="sim_gross_eur" type="number" step="0.01"></div>
-          <div class="field mono"><label>未税净价(欧元)</label><input id="sim_net_eur" type="number" step="0.01"></div>
-          <div class="field mono"><label>含税零售价(当地币种)</label><input id="sim_retail_local" type="number" step="0.01"></div>
-          <div class="field mono"><label>VAT (%)</label><input id="sim_vat" type="number" step="0.01" placeholder="23"></div>
-          <div class="field mono"><label>二级客户利润空间 (%)</label><input id="sim_l2_margin" type="number" step="0.01" placeholder="25"></div>
-          <div class="field mono"><label>一级客户利润空间 (%)</label><input id="sim_l1_margin" type="number" step="0.01" placeholder="11"></div>
-          <div class="field mono"><label>PO协议互兑利率</label><input id="sim_po_fx_rate" type="number" step="0.01" placeholder="1"></div>
-          <div class="field mono"><label>返点点数</label><input id="sim_rebate_points" type="number" step="0.01"></div>
-          <div class="field mono"><label>展延返点费用(当地MDR)</label><input id="sim_mdr_fee" type="number" step="0.01"></div>
-          <div class="field mono"><label>N+1数量</label><input id="sim_n1_qty" type="number" step="0.01"></div>
-          <div class="field"><label>当地币种</label><input id="sim_currency" placeholder="例如 PLN"></div>
-          <div class="field mono"><label>未含PO价格(当地币种)</label><input id="sim_po_price_local" type="number" step="0.01"></div>
-          <div class="field"><label>生命周期</label><input id="sim_lifecycle_month" placeholder="例如 6月"></div>
-          <div class="field"><label>清关版本</label><input id="sim_clearance_version" placeholder="例如 全版本"></div>
-          <div class="field mono"><label>未含净价(欧元)</label><input id="sim_net_price_eur" type="number" step="0.01"></div>
-          <div class="field mono"><label>未含净价(美元)</label><input id="sim_net_price_usd" type="number" step="0.01"></div>
-          <div class="field mono"><label>去化销售与预留平均价</label><input id="sim_sales_reserve_avg" type="number" step="0.01"></div>
-          <div class="field"><label>PO</label><input id="sim_po" placeholder="PO编号"></div>
-          <div class="field"><label>兼体表格</label><input id="sim_compat_table" placeholder="选填"></div>
-          <div class="field mono"><label>品牌预算</label><input id="sim_brand_budget" type="number" step="0.01"></div>
-          <div class="field mono"><label>MDF预算</label><input id="sim_mdf_budget" type="number" step="0.01"></div>
-          <div class="field mono"><label>风险与维标预算</label><input id="sim_risk_budget" type="number" step="0.01"></div>
-          <div class="field mono"><label>单位重量</label><input id="sim_unit_weight" type="number" step="0.01"></div>
-          <div class="field mono"><label>盈亏占比 (%)</label><input id="sim_profit_ratio" type="number" step="0.01"></div>
-          <div class="field mono"><label>盈利</label><input id="sim_profit" type="number" step="0.01"></div>
-          <div class="field mono"><label>VC专属PO价</label><input id="sim_vc_po_price" type="number" step="0.01"></div>
-        </div>
-        <button class="btn" id="addSimBtn">新增测算行</button>
-      </div>
-
-      <div class="panel">
-        <div class="panel-head"><h3>模拟测算列表</h3><div class="desc" id="simCount"></div></div>
-        <div class="inv-table-wrap" style="overflow-x:auto;">
-        <table>
-          <thead><tr>
-            <th>产品型号</th><th>盈亏平衡价(USD)</th><th>客户简称</th><th>含税净价(EUR)</th><th>未税净价(EUR)</th>
-            <th>含税零售价(当地)</th><th>VAT</th><th>二级客户利润空间</th><th>一级客户利润空间</th><th>PO协议互兑利率</th><th>返点点数</th>
-            <th>展延返点费用(MDR)</th><th>N+1</th><th>当地币种</th><th>未含PO价格(当地)</th>
-            <th>生命周期</th><th>清关版本</th><th>未含净价(EUR)</th><th>未含净价(USD)</th><th>去化销售与预留平均价</th><th>PO</th>
-            <th>兼体表格</th><th>品牌预算</th><th>MDF预算</th><th>风险与维标预算</th><th>单位重量</th><th>盈亏占比</th><th>盈利</th><th>VC专属PO价</th><th></th>
-          </tr></thead>
-          <tbody id="simTableBody"></tbody>
-        </table>
-        </div>
-      </div>
-    </section>
     <!-- ===================== 新产品GTM ===================== -->
 <section class="view" id="view-gtm">
   <div class="viewhead">
@@ -3188,7 +3111,6 @@ function renderPriceTable(){
       <td><span class="cat-badge ${categoryClass(productType(p.product))}">${productType(p.product)}</span></td>
       <td>${productBrand(p.product)}</td>
       <td title="${productDescription(p.product)}">${p.product}${p.category?` <span style="color:var(--text-faint);font-size:11px;">(${p.category})</span>`:''}</td>
-      <td class="desc" style="max-width:260px;"><div class="desc-edit" contenteditable="true" spellcheck="false" data-product="${p.product}" onblur="saveProductDescription(this)" onkeydown="invDescKeydown(event,this)">${productDescription(p.product)}</div></td>
       <td class="num-cell">${(p.ean || eanOf(p.product)) || dash}</td>
       <td><span class="lc-badge ${lifecycleClass(lifecycleOf(p.product))}">${lifecycleOf(p.product)}</span></td>
       <td><span class="tag ${custTypeClass(p.cust)}">${custName(p.cust)}</span></td>

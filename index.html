@@ -123,6 +123,7 @@
   .promo-price-promo{color:var(--alert);font-weight:700;font-size:14px;}
   .promo-price-discount{color:var(--text-dim);font-size:11px;margin-top:1px;}
   .promo-price-dmp{color:var(--copper);font-weight:600;font-size:12px;margin-top:2px;}
+  .promo-price-retail{color:var(--text);font-weight:600;font-size:12px;margin-top:2px;}
   .promo-date-cell{font-size:12px;color:var(--text-dim);text-align:center;line-height:1.5;}
   .promo-date-cell .promo-date-divider{color:var(--text-faint);}
   .promo-status-tag{display:inline-flex;align-items:center;padding:3px 12px;border-radius:20px;font-size:11.5px;font-weight:600;}
@@ -967,7 +968,7 @@
     <div class="cust-tabs" id="promoDealCustTabs"></div>
     <div class="cust-tabs" id="promoDealTypeTabs"></div>
     <table>
-      <thead><tr><th>促销活动 / 产品型号</th><th>客户</th><th>价格对比 (PLN)</th><th>DMP三级原价</th><th>活动周期</th><th>状态</th><th>操作</th></tr></thead>
+      <thead><tr><th>促销活动 / 产品型号</th><th>客户</th><th>价格对比 (PLN)</th><th>DMP三级原价</th><th>含税零售价</th><th>活动周期</th><th>状态</th><th>操作</th></tr></thead>
       <tbody id="promoDealTableBody"></tbody>
     </table>
   </div>
@@ -3305,6 +3306,15 @@ function getTier3PriceForPromo(product, custCode){
   const tier3 = convertLocal(retail/(1+effectiveVat)*(1-0.25));
   return { value: tier3, symbol: 'zł' };
 }
+function getRetailPriceForPromo(product, custCode){
+  if (!product || !custCode) return null;
+  const target = product.trim().toLowerCase();
+  const matches = priceList.filter(r => (r.product||'').trim().toLowerCase() === target && r.cust === custCode);
+  if (!matches.length) return null;
+  const row = matches.find(r=>r.quarter==='Q3') || matches[0];
+  if (!row.retailPLN) return null;
+  return { value: row.retailPLN, symbol: currencySymbol(custCurrency(custCode)) };
+}
 function renderPromoDealTable(){
   const tbody = document.getElementById('promoDealTableBody');
   if (!tbody) return;
@@ -3325,6 +3335,7 @@ function renderPromoDealTable(){
       extraLine = '限购 ' + cfg.qtyCap + ' 台';
     }
     const tier3Info = getTier3PriceForPromo(p.product, p.cust);
+    const retailInfo = getRetailPriceForPromo(p.product, p.cust);
     return `<tr data-id="${p.id}" style="cursor:pointer;">
       <td>
         <div class="promo-name-main">${p.name}</div>
@@ -3340,6 +3351,7 @@ function renderPromoDealTable(){
         </div>
       </td>
       <td>${tier3Info ? `<div class="promo-price-dmp">${tier3Info.value.toFixed(2)} ${tier3Info.symbol}</div>` : '<span style="color:var(--text-faint)">—</span>'}</td>
+      <td>${retailInfo ? `<div class="promo-price-retail">${retailInfo.value.toFixed(2)} ${retailInfo.symbol}</div>` : '<span style="color:var(--text-faint)">—</span>'}</td>
       <td>
         <div class="promo-date-cell">
           <div>${p.start||'—'}</div>

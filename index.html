@@ -370,6 +370,21 @@
   .dmp-bar-track{flex:1;height:10px;background:var(--border-soft);border-radius:5px;overflow:hidden;}
   .dmp-bar-fill{height:100%;background:var(--copper);border-radius:5px;}
   .dmp-rank-value{width:90px;text-align:right;flex-shrink:0;font-size:13px;font-weight:600;color:var(--text);}
+  .dmp-pop-wrap{position:relative;display:inline-block;cursor:pointer;}
+  .dmp-range-value{color:var(--copper);font-weight:600;font-size:13px;}
+  .dmp-range-hint{display:block;font-size:11px;color:var(--text-faint);margin-top:1px;}
+  .dmp-pop-panel{position:absolute;top:100%;left:0;margin-top:6px;width:230px;background:var(--surface);border:1px solid var(--border);border-radius:8px;box-shadow:0 8px 28px rgba(0,0,0,0.16);padding:10px;z-index:60;visibility:hidden;opacity:0;transform:translateY(-4px);transition:opacity .12s ease,transform .12s ease,visibility .12s;text-align:left;}
+  .dmp-pop-wrap:hover .dmp-pop-panel{visibility:visible;opacity:1;transform:translateY(0);}
+  .dmp-pop-title{font-size:11px;color:var(--text-faint);padding-bottom:6px;margin-bottom:6px;border-bottom:1px solid var(--border-soft);}
+  .dmp-pop-tier{display:flex;justify-content:space-between;align-items:center;padding:7px 8px;border-radius:6px;cursor:pointer;font-size:12.5px;color:var(--text-dim);}
+  .dmp-pop-tier:hover{background:var(--surface-alt);}
+  .dmp-pop-tier.selected{background:var(--copper-soft);color:var(--copper);}
+  .dmp-pop-tier + .dmp-pop-tier{margin-top:2px;}
+  .dmp-pop-tier .val{font-weight:600;color:var(--text);}
+  .dmp-pop-tier.selected .val{color:var(--copper);}
+  .final-price-input{width:100%;padding:5px 7px;border:1px solid var(--border);border-radius:var(--radius);font-family:'IBM Plex Mono';font-size:12.5px;color:var(--text);background:var(--surface);}
+  .final-price-input:focus{outline:none;border-color:var(--copper);}
+  .final-price-input.invalid{border-color:var(--alert);color:var(--alert);background:var(--alert-soft);}
 </style>
 <div id="authGate">
   <div class="auth-card">
@@ -4486,6 +4501,16 @@ function sanitizePriceTableClone(){
   const table = document.getElementById('priceDetailTable');
   if (!table) return null;
   const clone = table.cloneNode(true);
+  // 同步"最终采购价"输入框的实时值到克隆表格（cloneNode不会带上用户手动修改后的value）
+  const liveFinalInputs = table.querySelectorAll('.final-price-input');
+  const cloneFinalInputs = clone.querySelectorAll('.final-price-input');
+  liveFinalInputs.forEach((inp, i)=>{
+    if (cloneFinalInputs[i]){
+      cloneFinalInputs[i].outerHTML = '<span>' + (inp.value || '') + '</span>';
+    }
+  });
+  // 去掉DMP气泡的隐藏浮层内容，导出/打印时只保留价格区间文本
+  clone.querySelectorAll('.dmp-pop-panel').forEach(p=>p.remove());
   // 去掉勾选框列（始终是第一列）
   clone.querySelectorAll('tr').forEach(tr=>{ if (tr.children[0]) tr.children[0].remove(); });
   // 若有选中的行，仅保留选中行
@@ -4660,17 +4685,38 @@ function getPriceHeaderIndex(prefix){
   return -1;
 }
 
+function finalPriceInputCheck(input){
+  const val = parseFloat(input.value);
+  if (isNaN(val) || val < 0){
+    input.classList.add('invalid');
+  } else {
+    input.classList.remove('invalid');
+  }
+}
+
 function injectAgentTiers(){
   const tbody = document.getElementById('priceTableBody');
   if (!tbody) return;
   if (!tbody.dataset.dmpClickBound){
     tbody.dataset.dmpClickBound = '1';
     tbody.addEventListener('click', (e)=>{
-      const cell = e.target.closest('.dmp-cell');
-      if (!cell) return;
-      const row = cell.closest('tr');
-      if (!row) return;
-      toggleDmpDetailRow(row, cell);
+      const tierEl = e.target.closest('.dmp-pop-tier');
+      if (tierEl){
+        const wrap = tierEl.closest('.dmp-pop-wrap');
+        const row = tierEl.closest('tr');
+        if (!wrap || !row) return;
+        wrap.querySelectorAll('.dmp-pop-tier').forEach(t=>t.classList.remove('selected'));
+        tierEl.classList.add('selected');
+        const input = row.querySelector('.final-price-input');
+        if (input){
+          input.value = tierEl.dataset.value;
+          finalPriceInputCheck(input);
+        }
+      }
+    });
+    tbody.addEventListener('input', (e)=>{
+      const input = e.target.closest('.final-price-input');
+      if (input) finalPriceInputCheck(input);
     });
   }
   const idxRetail = getPriceHeaderIndex('retail');
@@ -4703,17 +4749,31 @@ function injectAgentTiers(){
       if (row.children[i]) row.removeChild(row.children[i]);
     });
 
-    const tier1 = retail/(1+effectiveVat)*(1-0.05);
-    const tier2 = retail/(1+effectiveVat)*(1-0.15);
-    const tier3 = retail/(1+effectiveVat)*(1-0.25);
+    const isCzk = symbol === 'Kč';
+    const finalSymbol = isCzk ? 'zł' : symbol;
+    const convertLocal = v => isCzk ? (v / CZK_TO_PLN_RATE) : v;
+
+    const tier1 = convertLocal(retail/(1+effectiveVat)*(1-0.05));
+    const tier2 = convertLocal(retail/(1+effectiveVat)*(1-0.15));
+    const tier3 = convertLocal(retail/(1+effectiveVat)*(1-0.25));
 
     const tdDmp = document.createElement('td');
-    tdDmp.className = 'num-cell dmp-cell';
-    tdDmp.dataset.tier1 = tier1.toFixed(2);
-    tdDmp.dataset.tier2 = tier2.toFixed(2);
-    tdDmp.dataset.tier3 = tier3.toFixed(2);
-    tdDmp.dataset.symbol = symbol;
-    tdDmp.textContent = translateOne('点击产品查看');
+    tdDmp.className = 'num-cell';
+    const rangeMin = Math.min(tier1, tier2, tier3);
+    const rangeMax = Math.max(tier1, tier2, tier3);
+    const tiersForPop = [
+      {label: translateOne('一级报价'), value: tier1},
+      {label: translateOne('二级报价'), value: tier2},
+      {label: translateOne('三级报价'), value: tier3}
+    ];
+    tdDmp.innerHTML = '<div class="dmp-pop-wrap">' +
+        '<div class="dmp-range-value">' + fmtMoney(rangeMin, finalSymbol) + ' - ' + fmtMoney(rangeMax, finalSymbol) + '</div>' +
+        '<div class="dmp-range-hint">' + translateOne('查看 3 个梯度') + '</div>' +
+        '<div class="dmp-pop-panel">' +
+          '<div class="dmp-pop-title">' + translateOne('点击价格可直接应用') + '</div>' +
+          tiersForPop.map(t=>'<div class="dmp-pop-tier" data-value="' + t.value.toFixed(2) + '"><span>' + t.label + '</span><span class="val">' + fmtMoney(t.value, finalSymbol) + '</span></div>').join('') +
+        '</div>' +
+      '</div>';
 
     const tdProfit = document.createElement('td');
     tdProfit.className = 'num-cell';
@@ -4721,12 +4781,8 @@ function injectAgentTiers(){
 
     const tdFinal = document.createElement('td');
     tdFinal.className = 'num-cell';
-    const finalPriceLocal = computeFinalPurchasePrice(retail, fixedProfit, effectiveVat);
-    if (symbol === 'Kč'){
-      tdFinal.textContent = fmtMoney(finalPriceLocal / CZK_TO_PLN_RATE, 'zł');
-    } else {
-      tdFinal.textContent = fmtMoney(finalPriceLocal, symbol);
-    }
+    const finalPriceLocal = convertLocal(computeFinalPurchasePrice(retail, fixedProfit, effectiveVat));
+    tdFinal.innerHTML = '<input type="number" class="final-price-input" step="0.01" value="' + finalPriceLocal.toFixed(2) + '">';
 
     const buttonCell = row.lastElementChild;
     row.insertBefore(tdDmp, buttonCell);
@@ -4737,61 +4793,10 @@ function injectAgentTiers(){
   });
 }
 
-function toggleDmpDetailRow(row, cell){
-  const existing = row.nextElementSibling;
-  if (existing && existing.classList.contains('dmp-detail-row')){
-    existing.remove();
-    cell.textContent = translateOne('点击产品查看');
-    cell.classList.remove('open');
-    return;
-  }
-  document.querySelectorAll('.dmp-detail-row').forEach(r=>r.remove());
-  document.querySelectorAll('.dmp-cell.open').forEach(c=>{ c.textContent = translateOne('点击产品查看'); c.classList.remove('open'); });
-
-  const t1 = parseFloat(cell.dataset.tier1);
-  const t2 = parseFloat(cell.dataset.tier2);
-  const t3 = parseFloat(cell.dataset.tier3);
-  const symbol = cell.dataset.symbol;
-  const maxVal = t1 || 1;
-  const tiers = [
-    {label:translateOne('一级报价'), value:t1},
-    {label:translateOne('二级报价'), value:t2},
-    {label:translateOne('三级报价'), value:t3}
-  ];
-  const barsHtml = tiers.map((t,i)=>{
-    const pct = Math.max(4, Math.round((t.value/maxVal)*100));
-    return '<div class="dmp-rank-row">' +
-      '<span class="dmp-rank-badge">' + (i+1) + '</span>' +
-      '<span class="dmp-rank-label">' + t.label + '</span>' +
-      '<div class="dmp-bar-track"><div class="dmp-bar-fill" style="width:' + pct + '%;"></div></div>' +
-      '<span class="dmp-rank-value">' + fmtMoney(t.value, symbol) + '</span>' +
-      '</div>';
-  }).join('');
-
-  const colCount = row.children.length;
-  const detailRow = document.createElement('tr');
-  detailRow.className = 'dmp-detail-row';
-  const detailTd = document.createElement('td');
-  detailTd.colSpan = colCount;
-  detailTd.innerHTML = '<div class="dmp-detail-title">' + translateOne('DMP建议销售价排名') + '</div>' + barsHtml;
-  detailRow.appendChild(detailTd);
-  row.parentNode.insertBefore(detailRow, row.nextSibling);
-
-  cell.textContent = translateOne('收起 ▲');
-  cell.classList.add('open');
-}
-
 const priceTableBodyForTiers = document.getElementById('priceTableBody');
 if (priceTableBodyForTiers){
   new MutationObserver(()=>{ injectAgentTiers(); }).observe(priceTableBodyForTiers, {childList:true});
   injectAgentTiers();
-  priceTableBodyForTiers.addEventListener('click', (e)=>{
-    const cell = e.target.closest('.dmp-cell');
-    if (!cell) return;
-    const row = cell.closest('tr');
-    if (!row) return;
-    toggleDmpDetailRow(row, cell);
-  });
 }
 </script>
   <script>
@@ -4912,6 +4917,8 @@ const I18N_DICT = [
   ['一级报价','Tier 1 Price','Cena poziom 1'],
   ['二级报价','Tier 2 Price','Cena poziom 2'],
   ['三级报价','Tier 3 Price','Cena poziom 3'],
+  ['查看 3 个梯度','View 3 tiers','Zobacz 3 poziomy'],
+  ['点击价格可直接应用','Click a price to apply it','Kliknij cenę, aby ją zastosować'],
   ['一级客户报价','Tier-1 Customer Price','Cena klienta 1. poziomu'],
   ['二级客户报价','Tier-2 Customer Price','Cena klienta 2. poziomu'],
   ['三级客户报价','Tier-3 Customer Price','Cena klienta 3. poziomu'],

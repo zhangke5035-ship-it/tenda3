@@ -124,10 +124,50 @@
   .promo-price-discount{color:var(--text-dim);font-size:11px;margin-top:1px;}
   .promo-price-dmp{color:var(--copper);font-weight:600;font-size:12px;margin-top:2px;}
   .promo-price-retail{color:var(--text);font-weight:600;font-size:12px;margin-top:2px;}
-  .promo-date-cell{font-size:12px;color:var(--text-dim);text-align:center;line-height:1.5;}
+  .promo-date-cell{font-size:12px;color:var(--text-dim);text-align:center;line-height:1.5;white-space:nowrap;}
   .promo-date-cell .promo-date-divider{color:var(--text-faint);}
   .promo-status-tag{display:inline-flex;align-items:center;padding:3px 12px;border-radius:20px;font-size:11.5px;font-weight:600;}
   .promo-end-link:hover{color:var(--alert) !important;}
+
+  /* ---- 促销管理表格：加大加粗现价 + 弱化参考信息 + hover 明细 tooltip ---- */
+  .promo-price-wrap{position:relative;display:inline-block;text-align:right;cursor:default;}
+  .promo-price-main{font-size:16.5px;font-weight:700;color:var(--alert);white-space:nowrap;}
+  .promo-price-sub{font-size:11px;color:var(--text-faint);margin-top:2px;white-space:nowrap;}
+  .promo-price-sub .strike{text-decoration:line-through;}
+  .promo-price-extra{font-size:11px;color:var(--text-dim);margin-top:1px;white-space:nowrap;}
+  .promo-price-tip{display:none;position:absolute;right:0;top:calc(100% + 6px);min-width:210px;background:#2b2b2b;color:#fff;font-size:11.5px;line-height:1.7;padding:8px 10px;border-radius:6px;box-shadow:0 8px 20px rgba(0,0,0,0.2);z-index:15;text-align:left;white-space:nowrap;}
+  .promo-price-wrap:hover .promo-price-tip{display:block;}
+
+  /* ---- 促销管理：状态一级筛选 Tab 页签 ---- */
+  .promo-filter-row{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:14px;flex-wrap:wrap;}
+  .ptab-bar{display:flex;gap:22px;border-bottom:1px solid var(--border);flex:1;min-width:260px;}
+  .ptab-item{position:relative;padding:8px 2px 10px;font-size:13px;color:var(--text-dim);cursor:pointer;white-space:nowrap;user-select:none;}
+  .ptab-item:hover{color:var(--text);}
+  .ptab-item .count{margin-left:4px;font-size:11px;color:var(--text-faint);}
+  .ptab-item.active{color:var(--copper);font-weight:600;}
+  .ptab-item.active::after{content:'';position:absolute;left:0;right:0;bottom:-1px;height:2px;background:var(--copper);border-radius:2px;}
+
+  /* ---- 促销管理：客户可搜索多选下拉 ---- */
+  .ms-dropdown{position:relative;flex-shrink:0;}
+  .ms-trigger{padding:7px 14px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);font-size:12.5px;color:var(--text-dim);cursor:pointer;min-width:150px;text-align:left;}
+  .ms-trigger:hover{border-color:var(--text-faint);}
+  .ms-trigger.active{border-color:var(--copper);color:var(--copper);}
+  .ms-panel{display:none;position:absolute;top:calc(100% + 6px);right:0;width:250px;max-height:300px;background:var(--surface);border:1px solid var(--border);border-radius:8px;box-shadow:0 10px 28px rgba(0,0,0,0.14);z-index:25;padding:8px;}
+  .ms-panel.open{display:block;}
+  .ms-search{width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-size:12.5px;margin-bottom:6px;box-sizing:border-box;}
+  .ms-options{max-height:220px;overflow-y:auto;}
+  .ms-option{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;font-size:12.5px;cursor:pointer;}
+  .ms-option:hover{background:var(--surface-alt);}
+  .ms-option input{margin:0;}
+  .ms-option .count{margin-left:auto;color:var(--text-faint);font-size:11px;}
+  .ms-empty{padding:10px 8px;color:var(--text-faint);font-size:12px;text-align:center;}
+
+  /* ---- 促销管理：表格对齐规范 ---- */
+  .promo-num{text-align:right;}
+  .promo-center{text-align:center;}
+  .promo-check-th{width:40px;text-align:center;}
+  .promo-check-td{width:40px;text-align:center;}
+  .promo-period-col{min-width:220px;}
   .form-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px;}
   .form-grid.cols-2{grid-template-columns:repeat(2,1fr);}
   .form-grid.cols-3{grid-template-columns:repeat(3,1fr);}
@@ -961,14 +1001,26 @@
       </div>
       <div style="display:flex;gap:8px;">
         <button class="inv-btn inv-btn-ghost" id="promoDealExportBtn">导出报表</button>
+        <button class="inv-btn inv-btn-ghost" id="promoDealBatchEndBtn" disabled>批量结束</button>
         <button class="inv-btn inv-btn-primary" id="promoDealAddBtn">＋ 新增促销</button>
       </div>
     </div>
-    <div class="cust-tabs" id="promoDealStatusTabs"></div>
-    <div class="cust-tabs" id="promoDealCustTabs"></div>
+    <div class="promo-filter-row">
+      <div class="ptab-bar" id="promoDealStatusTabs"></div>
+      <div class="ms-dropdown" id="promoDealCustDropdown">
+        <button type="button" class="ms-trigger" id="promoDealCustTrigger">全部客户</button>
+        <div class="ms-panel" id="promoDealCustPanel">
+          <input type="text" class="ms-search" id="promoDealCustSearchInput" placeholder="搜索客户...">
+          <div class="ms-options" id="promoDealCustOptions"></div>
+        </div>
+      </div>
+    </div>
     <div class="cust-tabs" id="promoDealTypeTabs"></div>
     <table>
-      <thead><tr><th>促销活动 / 产品型号</th><th>客户</th><th>含税零售价</th><th>DMP三级原价</th><th>DDP促销价格 (PLN)</th><th>活动周期</th><th>状态</th><th>操作</th></tr></thead>
+      <thead><tr>
+        <th class="promo-check-th"><input type="checkbox" id="promoDealSelectAllCheck" title="全选/取消全选当前筛选结果"></th>
+        <th>促销活动 / 产品型号</th><th>客户</th><th class="promo-num">含税零售价</th><th class="promo-num">DMP三级原价</th><th class="promo-num">DDP促销价格 (PLN)</th><th class="promo-period-col">活动周期</th><th class="promo-center">状态</th><th>操作</th>
+      </tr></thead>
       <tbody id="promoDealTableBody"></tbody>
     </table>
   </div>
@@ -3217,8 +3269,10 @@ async function deletePromo(id){
 let promoDeals = [];
 let nextPromoDealId = 8000;
 let promoDealStatusFilter = '全部';
-let promoDealCustFilter = '全部';
+let promoDealCustFilterSet = new Set();
+let promoDealCustSearchTerm = '';
 let promoDealTypeFilter = '全部';
+let promoDealSelectedIds = new Set();
 const PROMO_TYPE_LIST = ['DDP-满减促销(一级客户)','DMP促销(二级客户)','Sell-in价格促销'];
 
 function populatePromoDealSelects(){
@@ -3260,21 +3314,9 @@ function renderPromoDealKpi(){
 }
 
 function renderPromoDealTabs(){
-  const statusBox = document.getElementById('promoDealStatusTabs');
-  const custBox = document.getElementById('promoDealCustTabs');
+  renderPromoDealStatusTabBar();
+  renderPromoDealCustDropdown();
   const typeBox = document.getElementById('promoDealTypeTabs');
-  if (!statusBox || !custBox) return;
-  const statuses = ['全部','未开始','进行中','已结束','已取消'];
-  statusBox.innerHTML = statuses.map(s=>{
-    const count = s==='全部' ? promoDeals.length : promoDeals.filter(p=>p.status===s).length;
-    return `<div class="cust-tab ${promoDealStatusFilter===s?'active':''}" data-status="${s}">${s}<span class="count">${count}</span></div>`;
-  }).join('');
-  const custKeys = ['全部', ...uniqueCustomers()];
-  custBox.innerHTML = custKeys.map(k=>{
-    const label = k==='全部' ? '全部客户' : custName(k);
-    const count = k==='全部' ? promoDeals.length : promoDeals.filter(p=>p.cust===k).length;
-    return `<div class="cust-tab ${promoDealCustFilter===k?'active':''}" data-cust="${k}">${label}<span class="count">${count}</span></div>`;
-  }).join('');
   if (typeBox){
     const typeKeys = ['全部', ...new Set(promoDeals.map(p=>p.type).filter(Boolean))];
     typeBox.innerHTML = typeKeys.map(t=>{
@@ -3285,11 +3327,59 @@ function renderPromoDealTabs(){
       tab.addEventListener('click', ()=>{ promoDealTypeFilter = tab.dataset.type; renderPromoDealAll(); });
     });
   }
-  statusBox.querySelectorAll('.cust-tab').forEach(tab=>{
+}
+
+/* 状态一级筛选：Tab 页签样式 */
+function renderPromoDealStatusTabBar(){
+  const statusBox = document.getElementById('promoDealStatusTabs');
+  if (!statusBox) return;
+  const statuses = ['全部','未开始','进行中','已结束','已取消'];
+  statusBox.innerHTML = statuses.map(s=>{
+    const count = s==='全部' ? promoDeals.length : promoDeals.filter(p=>p.status===s).length;
+    return `<div class="ptab-item ${promoDealStatusFilter===s?'active':''}" data-status="${s}">${s}<span class="count">${count}</span></div>`;
+  }).join('');
+  statusBox.querySelectorAll('.ptab-item').forEach(tab=>{
     tab.addEventListener('click', ()=>{ promoDealStatusFilter = tab.dataset.status; renderPromoDealAll(); });
   });
-  custBox.querySelectorAll('.cust-tab').forEach(tab=>{
-    tab.addEventListener('click', ()=>{ promoDealCustFilter = tab.dataset.cust; renderPromoDealAll(); });
+}
+
+/* 客户二级筛选：可搜索多选下拉，避免客户过多撑破布局 */
+function promoDealCustTriggerLabel(){
+  if (promoDealCustFilterSet.size === 0) return '全部客户';
+  if (promoDealCustFilterSet.size === 1){
+    const only = Array.from(promoDealCustFilterSet)[0];
+    return custName(only);
+  }
+  return `已选 ${promoDealCustFilterSet.size} 个客户`;
+}
+function renderPromoDealCustDropdown(){
+  const trigger = document.getElementById('promoDealCustTrigger');
+  const optionsBox = document.getElementById('promoDealCustOptions');
+  if (!trigger || !optionsBox) return;
+  trigger.textContent = promoDealCustTriggerLabel();
+  trigger.classList.toggle('active', promoDealCustFilterSet.size > 0);
+  const q = promoDealCustSearchTerm.trim().toLowerCase();
+  const custKeys = uniqueCustomers().filter(k=>!q || custName(k).toLowerCase().includes(q));
+  if (!custKeys.length){
+    optionsBox.innerHTML = '<div class="ms-empty">未找到匹配客户</div>';
+    return;
+  }
+  optionsBox.innerHTML = custKeys.map(k=>{
+    const count = promoDeals.filter(p=>p.cust===k).length;
+    const checked = promoDealCustFilterSet.has(k) ? 'checked' : '';
+    return `<label class="ms-option"><input type="checkbox" data-cust="${k}" ${checked}><span>${custName(k)}</span><span class="count">${count}</span></label>`;
+  }).join('');
+  optionsBox.querySelectorAll('input[type=checkbox]').forEach(cb=>{
+    cb.addEventListener('change', ()=>{
+      if (cb.checked) promoDealCustFilterSet.add(cb.dataset.cust);
+      else promoDealCustFilterSet.delete(cb.dataset.cust);
+      renderPromoDealAll();
+      // 重新渲染后保持下拉面板打开状态，避免每次勾选都需要重新点击
+      const panel = document.getElementById('promoDealCustPanel');
+      const t = document.getElementById('promoDealCustTrigger');
+      if (panel) panel.classList.add('open');
+      if (t) t.classList.toggle('active', promoDealCustFilterSet.size > 0);
+    });
   });
 }
 let promoDealSearchTerm = '';
@@ -3306,7 +3396,7 @@ function promoStatusTag(status){
 function invGetFilteredPromoDeals(){
   let rows = promoDeals;
   if (promoDealStatusFilter !== '全部') rows = rows.filter(p=>p.status===promoDealStatusFilter);
-  if (promoDealCustFilter !== '全部') rows = rows.filter(p=>p.cust===promoDealCustFilter);
+  if (promoDealCustFilterSet.size > 0) rows = rows.filter(p=>promoDealCustFilterSet.has(p.cust));
   if (promoDealTypeFilter !== '全部') rows = rows.filter(p=>p.type===promoDealTypeFilter);
   const q = promoDealSearchTerm.trim().toLowerCase();
   if (q) rows = rows.filter(p=>(p.name||'').toLowerCase().includes(q) || (p.product||'').toLowerCase().includes(q) || custName(p.cust).toLowerCase().includes(q));
@@ -3358,30 +3448,36 @@ function renderPromoDealTable(){
     }
     const tier3Info = getTier3PriceForPromo(p.product, p.cust);
     const retailInfo = getRetailPriceForPromo(p.product, p.cust);
+    const hasDiscount = discount !== '—';
     return `<tr data-id="${p.id}" style="cursor:pointer;">
+      <td class="promo-check-td"><input type="checkbox" class="promo-row-check" data-id="${p.id}" ${promoDealSelectedIds.has(p.id)?'checked':''}></td>
       <td>
         <div class="promo-name-main">${p.name}</div>
         <div class="promo-name-sub">型号: ${p.product}${p.type ? (' · ' + p.type) : ''}</div>
       </td>
       <td><span class="promo-client-tag">${custName(p.cust)}</span></td>
-      <td>${retailInfo ? `<div class="promo-price-retail">${retailInfo.value.toFixed(2)} ${retailInfo.symbol}</div>` : '<span style="color:var(--text-faint)">—</span>'}</td>
-      <td>${tier3Info ? `<div class="promo-price-dmp">${tier3Info.value.toFixed(2)} ${tier3Info.symbol}</div>` : '<span style="color:var(--text-faint)">—</span>'}</td>
-      <td>
-        <div class="promo-price-cell">
-          <div class="promo-price-original">DDP采购价: ${p.original.toFixed(2)}</div>
-          <div class="promo-price-promo">现价: ${p.promo.toFixed(2)}</div>
-          <div class="promo-price-discount">${discount!=='—' ? ('省 ' + discountAmount + ' PLN · ' + discount) : ''}</div>
-          ${extraLine ? `<div class="promo-price-discount">${extraLine}</div>` : ''}
+      <td class="promo-num">${retailInfo ? `<div class="promo-price-retail">${retailInfo.value.toFixed(2)} ${retailInfo.symbol}</div>` : '<span style="color:var(--text-faint)">—</span>'}</td>
+      <td class="promo-num">${tier3Info ? `<div class="promo-price-dmp">${tier3Info.value.toFixed(2)} ${tier3Info.symbol}</div>` : '<span style="color:var(--text-faint)">—</span>'}</td>
+      <td class="promo-num">
+        <div class="promo-price-wrap">
+          <div class="promo-price-main">现价: ${p.promo.toFixed(2)} PLN</div>
+          <div class="promo-price-sub">原价: <span class="strike">${p.original.toFixed(2)}</span>${hasDiscount ? ` · 省 ${discountAmount} (${discount})` : ''}</div>
+          ${extraLine ? `<div class="promo-price-extra">${extraLine}</div>` : ''}
+          <div class="promo-price-tip">
+            DDP采购价：${p.original.toFixed(2)} PLN<br>
+            现价：${p.promo.toFixed(2)} PLN<br>
+            折扣 = (原价 − 现价) ÷ 原价 = ${discount}
+          </div>
         </div>
       </td>
-      <td>
+      <td class="promo-period-col">
         <div class="promo-date-cell">
           <div>${p.start||'—'}</div>
           <div class="promo-date-divider">至</div>
           <div>${p.end||'—'}</div>
         </div>
       </td>
-      <td>${promoStatusTag(p.status)}</td>
+      <td class="promo-center">${promoStatusTag(p.status)}</td>
       <td>
         <div class="inv-row-actions">
           <a onclick="event.stopPropagation();editPromoDeal(${p.id})">编辑</a>
@@ -3390,6 +3486,28 @@ function renderPromoDealTable(){
       </td>
     </tr>`;
   }).join('');
+
+  if (!tbody.dataset.checkBound){
+    tbody.dataset.checkBound = '1';
+    tbody.addEventListener('change', (e)=>{
+      const cb = e.target.closest('.promo-row-check');
+      if (!cb) return;
+      const id = Number(cb.dataset.id);
+      if (cb.checked) promoDealSelectedIds.add(id);
+      else promoDealSelectedIds.delete(id);
+      syncPromoDealSelectAllState();
+      if (typeof updatePromoDealBatchBtnState === 'function') updatePromoDealBatchBtnState();
+    });
+  }
+  syncPromoDealSelectAllState();
+}
+function syncPromoDealSelectAllState(){
+  const selectAll = document.getElementById('promoDealSelectAllCheck');
+  if (!selectAll) return;
+  const rows = invGetFilteredPromoDeals();
+  const selectedCount = rows.filter(p=>promoDealSelectedIds.has(p.id)).length;
+  selectAll.checked = rows.length > 0 && selectedCount === rows.length;
+  selectAll.indeterminate = selectedCount > 0 && selectedCount < rows.length;
 }
 async function endPromoDeal(id){
   const p = promoDeals.find(x=>x.id===id);
@@ -3422,7 +3540,7 @@ function exportPromoDealsCSV(){
 if (!document.getElementById('promoDealTableBody').dataset.rowClickBound){
   document.getElementById('promoDealTableBody').dataset.rowClickBound = '1';
   document.getElementById('promoDealTableBody').addEventListener('click', function(e){
-    if (e.target.closest('button')) return;
+    if (e.target.closest('button') || e.target.closest('a') || e.target.closest('input')) return;
     const tr = e.target.closest('tr[data-id]');
     if (!tr) return;
     openPromoDealDetail(Number(tr.dataset.id));
@@ -3470,6 +3588,7 @@ function renderPromoDealAll(){
   renderPromoDealKpi();
   renderPromoDealTabs();
   renderPromoDealTable();
+  if (typeof updatePromoDealBatchBtnState === 'function') updatePromoDealBatchBtnState();
 }
 
 /* ================ 新产品GTM ================ */
@@ -4062,6 +4181,57 @@ const promoDealSearchInputEl = document.getElementById('promoDealSearchInput');
 if (promoDealSearchInputEl) promoDealSearchInputEl.addEventListener('input', function(){ promoDealSearchTerm = this.value; renderPromoDealTable(); });
 const promoDealExportBtnEl = document.getElementById('promoDealExportBtn');
 if (promoDealExportBtnEl) promoDealExportBtnEl.addEventListener('click', exportPromoDealsCSV);
+
+/* 客户可搜索多选下拉：开关面板 + 搜索 + 点击外部关闭 */
+const promoDealCustTriggerEl = document.getElementById('promoDealCustTrigger');
+const promoDealCustPanelEl = document.getElementById('promoDealCustPanel');
+if (promoDealCustTriggerEl && promoDealCustPanelEl){
+  promoDealCustTriggerEl.addEventListener('click', (e)=>{
+    e.stopPropagation();
+    promoDealCustPanelEl.classList.toggle('open');
+  });
+  promoDealCustPanelEl.addEventListener('click', (e)=> e.stopPropagation());
+  document.addEventListener('click', ()=>{ promoDealCustPanelEl.classList.remove('open'); });
+}
+const promoDealCustSearchInputEl = document.getElementById('promoDealCustSearchInput');
+if (promoDealCustSearchInputEl){
+  promoDealCustSearchInputEl.addEventListener('input', function(){
+    promoDealCustSearchTerm = this.value;
+    renderPromoDealCustDropdown();
+    if (promoDealCustPanelEl) promoDealCustPanelEl.classList.add('open');
+    document.getElementById('promoDealCustSearchInput').focus();
+  });
+}
+
+/* 批量选择：全选/单选 + 批量结束 */
+function updatePromoDealBatchBtnState(){
+  const btn = document.getElementById('promoDealBatchEndBtn');
+  if (btn) btn.disabled = promoDealSelectedIds.size === 0;
+}
+const promoDealSelectAllCheckEl = document.getElementById('promoDealSelectAllCheck');
+if (promoDealSelectAllCheckEl){
+  promoDealSelectAllCheckEl.addEventListener('change', ()=>{
+    const rows = invGetFilteredPromoDeals();
+    if (promoDealSelectAllCheckEl.checked) rows.forEach(p=>promoDealSelectedIds.add(p.id));
+    else rows.forEach(p=>promoDealSelectedIds.delete(p.id));
+    renderPromoDealTable();
+    updatePromoDealBatchBtnState();
+  });
+}
+const promoDealBatchEndBtnEl = document.getElementById('promoDealBatchEndBtn');
+if (promoDealBatchEndBtnEl){
+  promoDealBatchEndBtnEl.addEventListener('click', async ()=>{
+    if (!promoDealSelectedIds.size) return;
+    const ids = Array.from(promoDealSelectedIds);
+    if (!confirm(`确认将选中的 ${ids.length} 个促销标记为"已结束"？`)) return;
+    const { data, error } = await sb.from('promo_deals').update({ status: '已结束' }).in('id', ids).select();
+    if (error){ alert('批量结束失败：' + error.message); return; }
+    const updatedIds = new Set((data||[]).map(r=>r.id));
+    promoDeals.forEach(p=>{ if (updatedIds.has(p.id)) p.status = '已结束'; });
+    promoDealSelectedIds.clear();
+    renderPromoDealAll();
+  });
+}
 
 document.getElementById('promoDealDetailBackBtn').addEventListener('click', ()=>{ showView('promodeals'); });
 document.getElementById('promoDealDetailSaveBtn').addEventListener('click', async ()=>{
@@ -5183,6 +5353,11 @@ const I18N_DICT = [
   ['全部季度','all quarters','wszystkie kwartały'],
   ['全部国家','all countries','wszystkie kraje'],
   ['全部客户','all customers','wszyscy klienci'],
+  ['批量结束','Batch End','Zakończ zbiorczo'],
+  ['搜索客户...','Search customer...','Szukaj klienta...'],
+  ['未找到匹配客户','No matching customers found','Nie znaleziono pasujących klientów'],
+  ['已选','Selected','Wybrano'],
+  ['个客户','customers','klientów'],
   ['全部类目','all categories','wszystkie kategorie'],
   ['波兰','Poland','Polska'],
   ['捷克','Czech','Czechy'],

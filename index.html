@@ -122,6 +122,7 @@
   .promo-price-original{color:var(--text-faint);font-size:12px;text-decoration:line-through;}
   .promo-price-promo{color:var(--alert);font-weight:700;font-size:14px;}
   .promo-price-discount{color:var(--text-dim);font-size:11px;margin-top:1px;}
+  .promo-price-dmp{color:var(--copper);font-weight:600;font-size:12px;margin-top:2px;}
   .promo-date-cell{font-size:12px;color:var(--text-dim);text-align:center;line-height:1.5;}
   .promo-date-cell .promo-date-divider{color:var(--text-faint);}
   .promo-status-tag{display:inline-flex;align-items:center;padding:3px 12px;border-radius:20px;font-size:11.5px;font-weight:600;}
@@ -3282,6 +3283,22 @@ function invGetFilteredPromoDeals(){
   if (q) rows = rows.filter(p=>(p.name||'').toLowerCase().includes(q) || (p.product||'').toLowerCase().includes(q) || custName(p.cust).toLowerCase().includes(q));
   return rows;
 }
+function getTier3PriceForPromo(product, custCode){
+  if (!product || !custCode) return null;
+  const target = product.trim().toLowerCase();
+  const matches = priceList.filter(r => (r.product||'').trim().toLowerCase() === target && r.cust === custCode);
+  if (!matches.length) return null;
+  const row = matches.find(r=>r.quarter==='Q3') || matches[0];
+  const retail = row.retailPLN;
+  if (!retail) return null;
+  const country = custCountry(custCode);
+  const vatRate = computeVat(country);
+  const effectiveVat = vatRate !== null ? vatRate : 0.23;
+  const isCzk = custCurrency(custCode) === 'CZK';
+  const convertLocal = v => isCzk ? (v / CZK_TO_PLN_RATE) : v;
+  const tier3 = convertLocal(retail/(1+effectiveVat)*(1-0.25));
+  return { value: tier3, symbol: 'zł' };
+}
 function renderPromoDealTable(){
   const tbody = document.getElementById('promoDealTableBody');
   if (!tbody) return;
@@ -3301,6 +3318,8 @@ function renderPromoDealTable(){
     } else if (cfg && cfg.qtyCap){
       extraLine = '限购 ' + cfg.qtyCap + ' 台';
     }
+    const tier3Info = getTier3PriceForPromo(p.product, p.cust);
+    const tier3Line = tier3Info ? `<div class="promo-price-dmp">DMP促销价格: ${tier3Info.value.toFixed(2)} ${tier3Info.symbol}</div>` : '';
     return `<tr data-id="${p.id}" style="cursor:pointer;">
       <td>
         <div class="promo-name-main">${p.name}</div>
@@ -3309,8 +3328,9 @@ function renderPromoDealTable(){
       <td><span class="promo-client-tag">${custName(p.cust)}</span></td>
       <td>
         <div class="promo-price-cell">
-          <div class="promo-price-original">原价: ${p.original.toFixed(2)}</div>
+          <div class="promo-price-original">DDP采购价: ${p.original.toFixed(2)}</div>
           <div class="promo-price-promo">现价: ${p.promo.toFixed(2)}</div>
+          ${tier3Line}
           <div class="promo-price-discount">${discount!=='—' ? ('省 ' + discountAmount + ' PLN · ' + discount) : ''}</div>
           ${extraLine ? `<div class="promo-price-discount">${extraLine}</div>` : ''}
         </div>
@@ -5487,6 +5507,8 @@ const I18N_DICT = [
   ['累计登记','Total registered','Łącznie zarejestrowano'],
   ['个促销','promotions','promocji'],
   ['原价','Original Price','Cena pierwotna'],
+  ['DDP采购价','DDP Purchase Price','Cena zakupu DDP'],
+  ['DMP促销价格','DMP Promo Price','Cena promocyjna DMP'],
   ['折扣金额','Discount Amount','Kwota rabatu'],
   ['已下单未到货','Ordered, Not Yet Arrived','Zamówione, nie dostarczone'],
   ['到货日期待定','Arrival Date TBD','Data dostawy do ustalenia'],

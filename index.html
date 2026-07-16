@@ -967,7 +967,7 @@
     <div class="cust-tabs" id="promoDealCustTabs"></div>
     <div class="cust-tabs" id="promoDealTypeTabs"></div>
     <table>
-      <thead><tr><th>促销活动 / 产品型号</th><th>客户</th><th>价格对比 (PLN)</th><th>DMP原价</th><th>活动周期</th><th>状态</th><th>操作</th></tr></thead>
+      <thead><tr><th>促销活动 / 产品型号</th><th>客户</th><th>价格对比 (PLN)</th><th>DMP三级原价</th><th>活动周期</th><th>状态</th><th>操作</th></tr></thead>
       <tbody id="promoDealTableBody"></tbody>
     </table>
   </div>
@@ -1025,6 +1025,11 @@
         <div class="field mono" id="pdOriginalField">
           <label id="pdOriginalLabel">标准分销价</label>
           <input id="pd_original" type="number" readonly placeholder="根据客户+型号自动带出">
+        </div>
+
+        <div class="field mono" id="pdTier3RefField">
+          <label>DMP三级原价（参考）</label>
+          <input id="pd_tier3ref" type="text" readonly placeholder="根据客户+型号自动带出">
         </div>
 
         <div class="form-grid cols-2" id="pdPriceRow">
@@ -3839,12 +3844,23 @@ function computePurchasePriceFor(cust, product){
 function updatePromoDealOriginalPrice(){
   const cust = document.getElementById('pd_customer').value;
   const product = document.getElementById('pd_product').value.trim();
+  updatePromoDealTier3Ref(cust, product);
   if (!cust || !product) return;
   const price = computePurchasePriceFor(cust, product);
   if (price !== null){
     document.getElementById('pd_original').value = price.toFixed(2);
   }
   pdRecalcMargin();
+}
+
+function updatePromoDealTier3Ref(cust, product){
+  const el = document.getElementById('pd_tier3ref');
+  if (!el) return;
+  if (cust === undefined) cust = document.getElementById('pd_customer').value;
+  if (product === undefined) product = document.getElementById('pd_product').value.trim();
+  if (!cust || !product){ el.value = ''; return; }
+  const info = getTier3PriceForPromo(product, cust);
+  el.value = info ? (info.value.toFixed(2) + ' ' + info.symbol) : '暂无数据';
 }
 
 /* ============ 促销创建向导 (单品特价 / 阶梯定价 / 清仓甩卖) ============ */
@@ -3981,7 +3997,7 @@ document.getElementById('addPromoDealBtn').addEventListener('click', async ()=>{
 });
 
 function openPromoDealDrawer(){
-  ['pd_name','pd_product','pd_original','pd_promo','pd_extra','pd_batch','pd_tier2_price','pd_tier3_price','pd_start','pd_end'].forEach(id=>{
+  ['pd_name','pd_product','pd_original','pd_tier3ref','pd_promo','pd_extra','pd_batch','pd_tier2_price','pd_tier3_price','pd_start','pd_end'].forEach(id=>{
     const el = document.getElementById(id); if (el) el.value='';
   });
   document.getElementById('pd_tier2_qty').value = 1000;
@@ -5509,6 +5525,8 @@ const I18N_DICT = [
   ['DDP采购价','DDP Purchase Price','Cena zakupu DDP'],
   ['DMP促销价格','DMP Promo Price','Cena promocyjna DMP'],
   ['DMP原价','DMP Base Price','Cena bazowa DMP'],
+  ['DMP三级原价','DMP Tier-3 Price','Cena DMP poziom 3'],
+  ['DMP三级原价（参考）','DMP Tier-3 Price (Reference)','Cena DMP poziom 3 (referencyjna)'],
   ['折扣金额','Discount Amount','Kwota rabatu'],
   ['已下单未到货','Ordered, Not Yet Arrived','Zamówione, nie dostarczone'],
   ['到货日期待定','Arrival Date TBD','Data dostawy do ustalenia'],

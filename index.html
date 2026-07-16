@@ -405,6 +405,44 @@
   .inv-form-label{font-size:12px;color:var(--text-dim);}
   .inv-form-group .inv-field{width:100%;}
   .inv-modal-footer{display:flex;justify-content:flex-end;gap:10px;margin-top:20px;}
+
+  /* ---- 返利管理：一级分销商年度达标返利联动锁 ---- */
+  .rbl-row-distributor{cursor:pointer;}
+  .rbl-row-distributor:hover td{background:var(--surface-alt);}
+  .rbl-row-distributor.rbl-locked-row td{background:var(--alert-soft);}
+  .rbl-dist-name{font-weight:700;display:flex;align-items:center;gap:8px;}
+  .rbl-chevron{display:inline-block;width:14px;text-align:center;color:var(--text-faint);transition:transform .15s ease;}
+  .rbl-chevron.rbl-open{transform:rotate(90deg);}
+  .rbl-edit-input{width:112px;padding:5px 8px;border:1px solid var(--border);border-radius:var(--radius);font-size:12.5px;text-align:right;background:var(--surface);color:var(--text);font-family:'IBM Plex Mono',monospace;}
+  .rbl-edit-input:focus{outline:none;border-color:var(--copper);}
+  .rbl-edit-input.rbl-input-narrow{width:60px;}
+  .rbl-rate-pill{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-weight:700;font-size:12.5px;}
+  .rbl-rate-pill.rbl-rate-locked{background:var(--alert-soft);color:var(--alert);}
+  .rbl-rate-pill.rbl-rate-unlocked{background:var(--good-soft);color:var(--good);}
+  .rbl-status-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:11.5px;font-weight:700;}
+  .rbl-status-badge.rbl-status-locked{background:var(--alert-soft);color:var(--alert);}
+  .rbl-status-badge.rbl-status-active{background:var(--good-soft);color:var(--good);}
+  .rbl-sub-panel-row td{padding:0;border-bottom:1px solid var(--border);background:var(--surface-alt);}
+  .rbl-sub-panel{padding:16px 18px 18px 46px;}
+  .rbl-lock-banner{display:flex;align-items:center;gap:8px;background:var(--alert-soft);color:var(--alert);font-size:12.5px;font-weight:700;padding:9px 14px;border-radius:var(--radius);margin-bottom:12px;}
+  .rbl-sub-toolbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+  .rbl-sub-title{font-size:12.5px;font-weight:700;color:var(--text-faint);}
+  .rbl-sub-table{width:100%;border-collapse:collapse;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;font-size:12.5px;}
+  .rbl-sub-table thead th{padding:8px 12px;background:var(--surface);border-bottom:1px solid var(--border);font-size:10.8px;color:var(--text-faint);text-transform:uppercase;text-align:left;}
+  .rbl-sub-table tbody td{padding:9px 12px;border-bottom:1px solid var(--border-soft);color:var(--text);}
+  .rbl-sub-table tbody tr:last-child td{border-bottom:none;}
+  .rbl-sub-empty{padding:16px;text-align:center;color:var(--text-faint);font-size:12.5px;}
+  .rbl-rebate-zero-tag{display:inline-block;margin-left:6px;padding:1px 7px;border-radius:20px;background:var(--alert-soft);color:var(--alert);font-size:10.5px;font-weight:700;}
+  .rbl-add-form{display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--surface);border-top:1px dashed var(--border);flex-wrap:wrap;}
+  .rbl-add-form input{padding:6px 9px;border:1px solid var(--border);border-radius:var(--radius);font-size:12.5px;}
+  .rbl-add-form input.rbl-add-name{width:200px;}
+  .rbl-add-form input.rbl-add-num{width:110px;text-align:right;}
+  .rbl-footer-row td{padding:10px 12px;background:var(--surface-alt);font-weight:700;}
+  .rbl-footer-total{font-size:13.5px;}
+  .rbl-footer-total.rbl-total-zero{color:var(--alert);}
+  .rbl-footer-total.rbl-total-active{color:var(--good);}
+  .rbl-footer-note{font-weight:400;font-size:11.5px;color:var(--alert);margin-left:10px;}
+
   @media (max-width:1100px){.inv-stat-grid{grid-template-columns:repeat(2,1fr);}}
   .tier-cell{cursor:pointer;}
   .tier-cell.masked{color:var(--text-faint);letter-spacing:2px;user-select:none;}
@@ -478,6 +516,8 @@
       <div class="navitem active" data-view="overview"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg></span>总览</div>
 
       <div class="navitem" data-view="customers"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg></span>客户管理</div>
+
+      <div class="navitem" data-view="rebate-lock"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg></span>返利管理</div>
 
       <div class="navgroup open" data-group="quotation">
         <div class="navgroup-head"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg></span>报价管理<span class="chevron">▾</span></div>
@@ -678,6 +718,73 @@
           <div class="inv-modal-footer">
             <button class="inv-btn inv-btn-ghost" id="custBtnCancel">取消</button>
             <button class="inv-btn inv-btn-primary" id="custBtnSave">保存</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== 返利管理 ===================== -->
+    <section class="view" id="view-rebate-lock">
+      <div class="viewhead">
+        <div><h2>返利管理</h2><p>一级分销商年度签约目标达成率前置锁 · 达标激活下属二级客户阶梯返利</p></div>
+      </div>
+
+      <div class="inv-note">
+        一级分销商（如 Incom、Action）需录入年度签约销售目标与当前已达成销售额，系统自动计算年度达成率。仅当达成率达到下方设定的解锁阈值时，其名下二级客户的阶梯返利才会生效；未达标时，二级返利与合计 Credit Note 金额将自动熔断归零，并标记"一级商未达标锁定"。
+      </div>
+
+      <div class="inv-toolbar">
+        <div class="inv-filters" style="align-items:center;">
+          <span style="font-size:13px;color:var(--text-dim);white-space:nowrap;">达标解锁阈值：</span>
+          <input type="text" class="inv-field" id="rblThresholdInput" style="width:64px;text-align:right;" value="80">
+          <span style="font-size:13px;color:var(--text-dim);">%</span>
+          <button class="inv-btn inv-btn-ghost" id="rblApplyThreshold">应用</button>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="inv-btn inv-btn-primary" id="rblBtnAddDistributor">＋ 新增一级分销商</button>
+        </div>
+      </div>
+
+      <div class="inv-table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:32px;"></th>
+              <th>一级分销商</th>
+              <th style="text-align:right;">年度签约目标 (PLN)</th>
+              <th style="text-align:right;">当前已完成 (PLN)</th>
+              <th style="text-align:center;">年度达成率</th>
+              <th style="text-align:center;">状态</th>
+              <th style="text-align:center;width:210px;">操作</th>
+            </tr>
+          </thead>
+          <tbody id="rblMainTbody"></tbody>
+        </table>
+      </div>
+
+      <div class="inv-overlay" id="rblDistModalOverlay">
+        <div class="inv-modal">
+          <div class="inv-modal-header">
+            <div class="inv-modal-title" id="rblDistModalTitle">新增一级分销商</div>
+            <div class="inv-modal-close" id="rblDistModalClose">✕</div>
+          </div>
+          <div class="inv-form-grid">
+            <div class="inv-form-group full">
+              <label class="inv-form-label">分销商名称</label>
+              <input class="inv-field" id="rblDistFName" placeholder="如 Incom Group S.A.">
+            </div>
+            <div class="inv-form-group">
+              <label class="inv-form-label">年度签约目标 (PLN)</label>
+              <input class="inv-field" id="rblDistFTarget" placeholder="如 5000000">
+            </div>
+            <div class="inv-form-group">
+              <label class="inv-form-label">当前已完成 (PLN)</label>
+              <input class="inv-field" id="rblDistFAchieved" placeholder="如 0">
+            </div>
+          </div>
+          <div class="inv-modal-footer">
+            <button class="inv-btn inv-btn-ghost" id="rblDistBtnCancel">取消</button>
+            <button class="inv-btn inv-btn-primary" id="rblDistBtnSave">保存</button>
           </div>
         </div>
       </div>
@@ -5830,7 +5937,36 @@ const I18N_DICT = [
   ['请选择客户','Select customer','Wybierz klienta'],
   ['覆盖全部国家','Covers all countries','Obejmuje wszystkie kraje'],
   ['存在完整月度价格表','Has a complete monthly price list','Ma pełny cennik miesięczny'],
-  ['仅有客户信息，价格表待录入','Customer info only, price list pending','Tylko dane klienta, cennik oczekuje']
+  ['仅有客户信息，价格表待录入','Customer info only, price list pending','Tylko dane klienta, cennik oczekuje'],
+  ['返利管理','Rebate Management','Zarządzanie rabatami'],
+  ['一级分销商年度签约目标达成率前置锁 · 达标激活下属二级客户阶梯返利','Tier-1 distributor annual target achievement pre-condition lock · unlocks tiered rebates for sub-channels once met','Blokada warunkowa realizacji rocznego celu dystrybutora poziomu 1 · odblokowuje progresywne rabaty kanałów podrzędnych po osiągnięciu celu'],
+  ['一级分销商（如 Incom、Action）需录入年度签约销售目标与当前已达成销售额，系统自动计算年度达成率。仅当达成率达到下方设定的解锁阈值时，其名下二级客户的阶梯返利才会生效；未达标时，二级返利与合计 Credit Note 金额将自动熔断归零，并标记"一级商未达标锁定"。','Tier-1 distributors (e.g. Incom, Action) must record their annual contracted sales target and current achieved sales; the system automatically calculates the annual achievement rate. Only once the rate reaches the unlock threshold below will tiered rebates for its sub-channels take effect; below target, sub-channel rebates and the total Credit Note amount are automatically zeroed out and flagged "Locked: Tier-1 Below Target".','Dystrybutorzy poziomu 1 (np. Incom, Action) muszą wprowadzić roczny umowny cel sprzedaży i aktualnie osiągniętą sprzedaż; system automatycznie oblicza roczny wskaźnik realizacji. Dopiero po osiągnięciu progu odblokowania poniżej, progresywne rabaty ich kanałów podrzędnych zaczną obowiązywać; poniżej celu rabaty kanałów podrzędnych i łączna kwota Credit Note są automatycznie zerowane i oznaczane "Zablokowane: Poziom 1 poniżej celu".'],
+  ['达标解锁阈值','Unlock Threshold','Próg odblokowania'],
+  ['应用','Apply','Zastosuj'],
+  ['一级分销商','Tier-1 Distributor','Dystrybutor poziomu 1'],
+  ['年度签约目标 (PLN)','Annual Contracted Target (PLN)','Roczny cel umowny (PLN)'],
+  ['当前已完成 (PLN)','Currently Achieved (PLN)','Aktualnie osiągnięte (PLN)'],
+  ['年度达成率','Annual Achievement Rate','Roczny wskaźnik realizacji'],
+  ['一级商未达标锁定','Locked: Tier-1 Below Target','Zablokowane: Poziom 1 poniżej celu'],
+  ['新增一级分销商','Add Tier-1 Distributor','Dodaj dystrybutora poziomu 1'],
+  ['分销商名称','Distributor Name','Nazwa dystrybutora'],
+  ['展开','Expand','Rozwiń'],
+  ['收起','Collapse','Zwiń'],
+  ['新增二级渠道','Add Sub-Channel','Dodaj kanał podrzędny'],
+  ['因一级分销商年度目标未达标，二级返利无法释放','Sub-channel rebates cannot be released because the Tier-1 distributor has not met its annual target','Rabaty kanału podrzędnego nie mogą zostać uwolnione, ponieważ dystrybutor poziomu 1 nie osiągnął rocznego celu'],
+  ['一级分销商年度目标未达标，暂无法新增二级渠道','Tier-1 distributor has not met its annual target; adding sub-channels is temporarily unavailable','Dystrybutor poziomu 1 nie osiągnął rocznego celu; dodawanie kanałów podrzędnych jest chwilowo niedostępne'],
+  ['二级渠道','Sub-Channels','Kanały podrzędne'],
+  ['二级客户名称','Sub-Channel Name','Nazwa kanału podrzędnego'],
+  ['季度采购额 (PLN)','Quarterly Purchase (PLN)','Kwartalny zakup (PLN)'],
+  ['违规次数','Violation Count','Liczba naruszeń'],
+  ['阶梯返利比例','Tier Rebate Rate','Stawka rabatu wg progu'],
+  ['最终返利比例','Final Rebate Rate','Ostateczna stawka rabatu'],
+  ['应发返利金额','Payable Rebate Amount','Kwota należnego rabatu'],
+  ['未达标锁定','Locked (Below Target)','Zablokowane (poniżej celu)'],
+  ['合计 Credit Note 金额','Total Credit Note Amount','Łączna kwota Credit Note'],
+  ['暂无一级分销商数据','No Tier-1 distributor data yet','Brak jeszcze danych dystrybutora poziomu 1'],
+  ['暂无二级渠道，点击上方"新增二级渠道"添加','No sub-channels yet — click "Add Sub-Channel" above to add one','Brak kanałów podrzędnych — kliknij "Dodaj kanał podrzędny" powyżej, aby dodać'],
+  ['确认添加','Confirm Add','Potwierdź dodanie']
 ];
 I18N_DICT.sort((a,b)=>b[0].length-a[0].length);
 
@@ -6695,6 +6831,331 @@ applyLanguage(currentLang);
   };
 
   refreshAgentInventory();
+})();
+</script>
+<script>
+(function(){
+  /* ================ 返利管理：一级分销商年度达标返利联动锁 ================ */
+
+  // 5 档采购额阶梯返利规则：等比递进
+  const RBL_TIERS = [
+    { min: 50000, rate: 0.05 },
+    { min: 40000, rate: 0.04 },
+    { min: 30000, rate: 0.03 },
+    { min: 20000, rate: 0.02 },
+    { min: 10000, rate: 0.01 },
+    { min: 0,     rate: 0.00 },
+  ];
+  const RBL_VIOLATION_PENALTY = 0.01; // 每次砸价违规扣减 1 个返利点数
+
+  let rblUidSeed = 1;
+  function rblUid(prefix){ rblUidSeed += 1; return prefix + '_' + Date.now().toString(36) + '_' + rblUidSeed; }
+
+  function rblToNumber(v, fallback){
+    const n = typeof v === 'string' ? parseFloat(v.replace(/[^\d.-]/g,'')) : Number(v);
+    return Number.isFinite(n) ? n : (Number.isFinite(fallback) ? fallback : 0);
+  }
+  function rblToInt(v, fallback){
+    const n = typeof v === 'string' ? parseInt(v.replace(/[^\d-]/g,''),10) : Math.round(Number(v));
+    return Number.isFinite(n) ? n : (Number.isFinite(fallback) ? fallback : 0);
+  }
+  function rblFmtPLN(n){
+    const v = Number.isFinite(n) ? n : 0;
+    return v.toLocaleString('pl-PL', {minimumFractionDigits:0, maximumFractionDigits:0}) + ' zł';
+  }
+  function rblFmtPct(n){
+    const v = Number.isFinite(n) ? n : 0;
+    return (v*100).toFixed(1) + '%';
+  }
+  function rblEscapeHtml(s){
+    return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  // ---- 数据状态（生产环境替换点：可将 distributors / subChannels 替换为真实接口数据） ----
+  let rblLockThreshold = 0.8; // 达标解锁阈值 80%，界面可调
+  let rblDistributors = [
+    { id:'d_incom',  name:'Incom Group S.A.', annualTarget:5000000, achieved:4300000 },
+    { id:'d_action', name:'Action S.A.',      annualTarget:3000000, achieved:1650000 },
+    { id:'d_eltrox', name:'Eltrox Sp. z o.o.', annualTarget:2000000, achieved:1800000 },
+    { id:'d_sgm',    name:'SGM Sp. z o.o.',   annualTarget:1200000, achieved:0 },
+  ];
+  let rblSubChannels = [
+    { id:'s_1', distributorId:'d_incom', name:'Media Expert - Warszawa', quarterlyPurchase:32000, violations:1 },
+    { id:'s_2', distributorId:'d_incom', name:'Neo24 - Kraków',           quarterlyPurchase:18500, violations:0 },
+    { id:'s_3', distributorId:'d_eltrox', name:'Komputronik - Poznań',    quarterlyPurchase:51000, violations:0 },
+  ];
+  let rblExpandedIds = new Set(['d_incom']);
+  let rblAddFormOpenIds = new Set();
+
+  // ---- 核心计算逻辑 ----
+  function rblAchievementRate(d){
+    if (!d.annualTarget || d.annualTarget <= 0) return 0;
+    return d.achieved / d.annualTarget;
+  }
+  function rblIsLocked(d){
+    return rblAchievementRate(d) < rblLockThreshold;
+  }
+  function rblTierBaseRate(purchase){
+    const amount = rblToNumber(purchase, 0);
+    for (const tier of RBL_TIERS){ if (amount >= tier.min) return tier.rate; }
+    return 0;
+  }
+  function rblFinalRebateRate(sub){
+    const base = rblTierBaseRate(sub.quarterlyPurchase);
+    const penalty = rblToInt(sub.violations, 0) * RBL_VIOLATION_PENALTY;
+    return Math.max(0, base - penalty);
+  }
+  function rblSubRebateAmount(d, sub){
+    if (rblIsLocked(d)) return 0;
+    return rblToNumber(sub.quarterlyPurchase, 0) * rblFinalRebateRate(sub);
+  }
+  function rblCreditNoteTotal(d){
+    const subs = rblSubChannels.filter(s=>s.distributorId === d.id);
+    if (rblIsLocked(d)) return 0;
+    return subs.reduce((sum, s)=>sum + rblSubRebateAmount(d, s), 0);
+  }
+
+  // ---- 渲染 ----
+  function rblRenderMainTbody(){
+    const tbody = document.getElementById('rblMainTbody');
+    if (!tbody) return;
+
+    const rowsHtml = rblDistributors.map(function(d){
+      const rate = rblAchievementRate(d);
+      const locked = rblIsLocked(d);
+      const expanded = rblExpandedIds.has(d.id);
+
+      const mainRow = '' +
+        '<tr class="rbl-row-distributor ' + (locked?'rbl-locked-row':'') + '" data-dist-id="' + d.id + '" data-role="toggle-row">' +
+          '<td style="text-align:center;"><span class="rbl-chevron ' + (expanded?'rbl-open':'') + '">▶</span></td>' +
+          '<td><div class="rbl-dist-name">' + rblEscapeHtml(d.name) + '</div></td>' +
+          '<td style="text-align:right;"><input type="text" class="rbl-edit-input" data-role="edit-dist" data-field="annualTarget" data-dist-id="' + d.id + '" value="' + d.annualTarget + '"></td>' +
+          '<td style="text-align:right;"><input type="text" class="rbl-edit-input" data-role="edit-dist" data-field="achieved" data-dist-id="' + d.id + '" value="' + d.achieved + '"></td>' +
+          '<td style="text-align:center;"><span class="rbl-rate-pill ' + (locked?'rbl-rate-locked':'rbl-rate-unlocked') + '">' + (locked?'🔒':'🔓') + ' ' + rblFmtPct(rate) + '</span></td>' +
+          '<td style="text-align:center;"><span class="rbl-status-badge ' + (locked?'rbl-status-locked':'rbl-status-active') + '">' + (locked?'一级商未达标锁定':'已激活') + '</span></td>' +
+          '<td style="text-align:center;">' +
+            '<button class="inv-btn inv-btn-ghost" style="padding:5px 11px;font-size:12px;" data-role="toggle-btn" data-dist-id="' + d.id + '">' + (expanded?'收起':'展开') + '</button> ' +
+            '<button class="inv-btn inv-btn-primary" style="padding:5px 11px;font-size:12px;" data-role="open-add-form" data-dist-id="' + d.id + '" ' + (locked?'disabled title="一级分销商年度目标未达标，暂无法新增二级渠道"':'') + '>＋ 新增二级渠道</button>' +
+          '</td>' +
+        '</tr>';
+
+      const subPanelRow = expanded ? (
+        '<tr class="rbl-sub-panel-row" data-dist-id="' + d.id + '"><td colspan="7">' + rblRenderSubPanelHtml(d) + '</td></tr>'
+      ) : '';
+
+      return mainRow + subPanelRow;
+    }).join('');
+
+    tbody.innerHTML = rowsHtml || '<tr><td colspan="7" style="text-align:center;color:var(--text-faint);padding:24px;">暂无一级分销商数据</td></tr>';
+    rblBindDynamicEvents();
+  }
+
+  function rblRenderSubPanelHtml(d){
+    const locked = rblIsLocked(d);
+    const subs = rblSubChannels.filter(s=>s.distributorId === d.id);
+    const total = rblCreditNoteTotal(d);
+    const addFormOpen = rblAddFormOpenIds.has(d.id);
+
+    const lockBanner = locked ? '<div class="rbl-lock-banner">⚠️ 因一级分销商年度目标未达标，二级返利无法释放</div>' : '';
+
+    const rowsHtml = subs.map(function(sub){
+      const base = rblTierBaseRate(sub.quarterlyPurchase);
+      const final = rblFinalRebateRate(sub);
+      const amount = rblSubRebateAmount(d, sub);
+      return '' +
+        '<tr data-sub-id="' + sub.id + '">' +
+          '<td>' + rblEscapeHtml(sub.name) + '</td>' +
+          '<td style="text-align:right;"><input type="text" class="rbl-edit-input" data-role="edit-sub" data-field="quarterlyPurchase" data-sub-id="' + sub.id + '" value="' + sub.quarterlyPurchase + '"></td>' +
+          '<td style="text-align:center;"><input type="text" class="rbl-edit-input rbl-input-narrow" data-role="edit-sub" data-field="violations" data-sub-id="' + sub.id + '" value="' + rblToInt(sub.violations,0) + '"></td>' +
+          '<td style="text-align:right;">' + rblFmtPct(base) + '</td>' +
+          '<td style="text-align:right;">' + rblFmtPct(final) + '</td>' +
+          '<td style="text-align:right;">' + rblFmtPLN(amount) + (locked ? '<span class="rbl-rebate-zero-tag">未达标锁定</span>' : '') + '</td>' +
+          '<td style="text-align:center;"><button class="inv-btn inv-btn-ghost" style="padding:4px 9px;font-size:11.5px;color:var(--alert);border-color:var(--alert-soft);" data-role="delete-sub" data-sub-id="' + sub.id + '">删除</button></td>' +
+        '</tr>';
+    }).join('');
+
+    const addFormHtml = addFormOpen ? (
+      '<div class="rbl-add-form">' +
+        '<input type="text" class="rbl-add-name" placeholder="二级客户名称" data-role="add-name" data-dist-id="' + d.id + '">' +
+        '<input type="text" class="rbl-add-num" placeholder="季度采购额 (PLN)" data-role="add-purchase" data-dist-id="' + d.id + '">' +
+        '<input type="text" class="rbl-add-num" placeholder="违规次数" value="0" data-role="add-violations" data-dist-id="' + d.id + '">' +
+        '<button class="inv-btn inv-btn-primary" style="padding:5px 12px;font-size:12px;" data-role="confirm-add" data-dist-id="' + d.id + '">确认添加</button>' +
+        '<button class="inv-btn inv-btn-ghost" style="padding:5px 12px;font-size:12px;" data-role="cancel-add" data-dist-id="' + d.id + '">取消</button>' +
+      '</div>'
+    ) : '';
+
+    return '' +
+      '<div class="rbl-sub-panel">' +
+        lockBanner +
+        '<div class="rbl-sub-toolbar"><div class="rbl-sub-title">二级渠道（' + subs.length + ' 个客户）</div></div>' +
+        '<table class="rbl-sub-table">' +
+          '<thead><tr>' +
+            '<th>二级客户名称</th>' +
+            '<th style="text-align:right;">季度采购额 (PLN)</th>' +
+            '<th style="text-align:center;">违规次数</th>' +
+            '<th style="text-align:right;">阶梯返利比例</th>' +
+            '<th style="text-align:right;">最终返利比例</th>' +
+            '<th style="text-align:right;">应发返利金额</th>' +
+            '<th style="text-align:center;width:80px;">操作</th>' +
+          '</tr></thead>' +
+          '<tbody>' + (rowsHtml || '<tr><td colspan="7" class="rbl-sub-empty">暂无二级渠道，点击上方"新增二级渠道"添加</td></tr>') + '</tbody>' +
+          '<tfoot><tr class="rbl-footer-row">' +
+            '<td colspan="5" style="text-align:right;">合计 Credit Note 金额</td>' +
+            '<td style="text-align:right;">' +
+              '<span class="rbl-footer-total ' + (locked?'rbl-total-zero':'rbl-total-active') + '">' + rblFmtPLN(total) + '</span>' +
+              (locked ? '<div class="rbl-footer-note">因一级分销商年度目标未达标，二级返利无法释放</div>' : '') +
+            '</td>' +
+            '<td></td>' +
+          '</tr></tfoot>' +
+        '</table>' +
+        addFormHtml +
+      '</div>';
+  }
+
+  // ---- 事件绑定 ----
+  function rblToggleExpand(distId){
+    if (rblExpandedIds.has(distId)){ rblExpandedIds.delete(distId); rblAddFormOpenIds.delete(distId); }
+    else { rblExpandedIds.add(distId); }
+    rblRenderMainTbody();
+  }
+
+  function rblCommitDistributorEdit(inputEl){
+    const distId = inputEl.dataset.distId;
+    const field = inputEl.dataset.field;
+    const d = rblDistributors.find(x=>x.id === distId);
+    if (!d) return;
+    d[field] = Math.max(0, rblToNumber(inputEl.value, d[field]));
+    // 生产环境替换点：同步调用后端 / Supabase 更新该分销商记录
+    rblRenderMainTbody();
+  }
+
+  function rblCommitSubEdit(inputEl){
+    const subId = inputEl.dataset.subId;
+    const field = inputEl.dataset.field;
+    const sub = rblSubChannels.find(x=>x.id === subId);
+    if (!sub) return;
+    if (field === 'violations'){ sub.violations = Math.max(0, rblToInt(inputEl.value, sub.violations)); }
+    else { sub[field] = Math.max(0, rblToNumber(inputEl.value, sub[field])); }
+    // 生产环境替换点：同步调用后端 / Supabase 更新该二级客户记录
+    rblRenderMainTbody();
+  }
+
+  function rblCommitAddSubChannel(distId){
+    const nameInput = document.querySelector('[data-role="add-name"][data-dist-id="' + distId + '"]');
+    const purchaseInput = document.querySelector('[data-role="add-purchase"][data-dist-id="' + distId + '"]');
+    const violationsInput = document.querySelector('[data-role="add-violations"][data-dist-id="' + distId + '"]');
+    if (!nameInput) return;
+    const name = (nameInput.value || '').trim();
+    if (!name){ nameInput.focus(); nameInput.style.borderColor = 'var(--alert)'; return; }
+    rblSubChannels.push({
+      id: rblUid('s'),
+      distributorId: distId,
+      name: name,
+      quarterlyPurchase: Math.max(0, rblToNumber(purchaseInput.value, 0)),
+      violations: Math.max(0, rblToInt(violationsInput.value, 0)),
+    });
+    // 生产环境替换点：同步调用后端 / Supabase 插入新二级客户记录
+    rblAddFormOpenIds.delete(distId);
+    rblRenderMainTbody();
+  }
+
+  function rblBindDynamicEvents(){
+    const tbody = document.getElementById('rblMainTbody');
+    if (!tbody || tbody.dataset.eventsBound === '1') return;
+    tbody.dataset.eventsBound = '1';
+
+    tbody.addEventListener('click', function(e){
+      const toggleBtn = e.target.closest('[data-role="toggle-btn"]');
+      const rowEl = e.target.closest('[data-role="toggle-row"]');
+      const isInteractive = e.target.closest('input, button');
+
+      if (toggleBtn){ rblToggleExpand(toggleBtn.dataset.distId); return; }
+      if (rowEl && !isInteractive){ rblToggleExpand(rowEl.dataset.distId); return; }
+
+      const openAddBtn = e.target.closest('[data-role="open-add-form"]');
+      if (openAddBtn && !openAddBtn.disabled){
+        rblExpandedIds.add(openAddBtn.dataset.distId);
+        rblAddFormOpenIds.add(openAddBtn.dataset.distId);
+        rblRenderMainTbody();
+        return;
+      }
+
+      const cancelAddBtn = e.target.closest('[data-role="cancel-add"]');
+      if (cancelAddBtn){ rblAddFormOpenIds.delete(cancelAddBtn.dataset.distId); rblRenderMainTbody(); return; }
+
+      const confirmAddBtn = e.target.closest('[data-role="confirm-add"]');
+      if (confirmAddBtn){ rblCommitAddSubChannel(confirmAddBtn.dataset.distId); return; }
+
+      const deleteBtn = e.target.closest('[data-role="delete-sub"]');
+      if (deleteBtn){
+        const subId = deleteBtn.dataset.subId;
+        rblSubChannels = rblSubChannels.filter(s=>s.id !== subId);
+        rblRenderMainTbody();
+        return;
+      }
+    });
+
+    tbody.addEventListener('change', function(e){
+      const distInput = e.target.closest('[data-role="edit-dist"]');
+      if (distInput){ rblCommitDistributorEdit(distInput); return; }
+      const subInput = e.target.closest('[data-role="edit-sub"]');
+      if (subInput){ rblCommitSubEdit(subInput); return; }
+    });
+
+    tbody.addEventListener('keydown', function(e){
+      if (e.key !== 'Enter') return;
+      const editable = e.target.closest('[data-role="edit-dist"], [data-role="edit-sub"]');
+      if (editable){ e.preventDefault(); editable.blur(); }
+    });
+  }
+
+  // ---- 工具栏：达标阈值 ----
+  const rblApplyBtn = document.getElementById('rblApplyThreshold');
+  if (rblApplyBtn){
+    rblApplyBtn.addEventListener('click', function(){
+      const input = document.getElementById('rblThresholdInput');
+      const pct = rblToNumber(input.value, rblLockThreshold*100);
+      rblLockThreshold = Math.min(100, Math.max(0, pct)) / 100;
+      rblRenderMainTbody();
+    });
+  }
+
+  // ---- 新增一级分销商弹窗 ----
+  const rblDistOverlay = document.getElementById('rblDistModalOverlay');
+  function rblOpenDistModal(){
+    document.getElementById('rblDistFName').value = '';
+    document.getElementById('rblDistFTarget').value = '';
+    document.getElementById('rblDistFAchieved').value = '';
+    if (rblDistOverlay) rblDistOverlay.classList.add('open');
+  }
+  function rblCloseDistModal(){ if (rblDistOverlay) rblDistOverlay.classList.remove('open'); }
+
+  const rblBtnAddDistributor = document.getElementById('rblBtnAddDistributor');
+  if (rblBtnAddDistributor) rblBtnAddDistributor.addEventListener('click', rblOpenDistModal);
+  const rblDistModalClose = document.getElementById('rblDistModalClose');
+  if (rblDistModalClose) rblDistModalClose.addEventListener('click', rblCloseDistModal);
+  const rblDistBtnCancel = document.getElementById('rblDistBtnCancel');
+  if (rblDistBtnCancel) rblDistBtnCancel.addEventListener('click', rblCloseDistModal);
+  if (rblDistOverlay) rblDistOverlay.addEventListener('click', function(e){ if (e.target === rblDistOverlay) rblCloseDistModal(); });
+
+  const rblDistBtnSave = document.getElementById('rblDistBtnSave');
+  if (rblDistBtnSave){
+    rblDistBtnSave.addEventListener('click', function(){
+      const name = document.getElementById('rblDistFName').value.trim();
+      if (!name){ alert('请填写分销商名称'); return; }
+      rblDistributors.push({
+        id: rblUid('d'),
+        name: name,
+        annualTarget: Math.max(0, rblToNumber(document.getElementById('rblDistFTarget').value, 0)),
+        achieved: Math.max(0, rblToNumber(document.getElementById('rblDistFAchieved').value, 0)),
+      });
+      // 生产环境替换点：同步调用后端 / Supabase 插入新一级分销商记录
+      rblCloseDistModal();
+      rblRenderMainTbody();
+    });
+  }
+
+  rblRenderMainTbody();
 })();
 </script>
 </body>

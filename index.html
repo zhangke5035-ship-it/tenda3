@@ -741,7 +741,7 @@
         <table id="priceDetailTable">
          <thead><tr>
   <th><input type="checkbox" id="priceSelectAllCheck" title="全选/取消全选当前筛选结果"></th>
-  <th>类目</th><th>品牌</th><th>产品型号</th><th>EAN</th><th>生命周期</th><th data-key="customer">客户</th><th data-key="country">国家</th><th>币种</th><th data-key="retail">含税零售价</th><th data-key="net">未税净价</th>
+  <th>类目</th><th>品牌</th><th>产品型号</th><th>产品信息描述</th><th>EAN</th><th>生命周期</th><th data-key="customer">客户</th><th data-key="country">国家</th><th>币种</th><th data-key="retail">含税零售价</th><th data-key="net">未税净价</th>
   <th>DMP建议销售价</th><th>代理商利润点位</th><th>最终采购价</th><th></th>
 </tr></thead>
           <tbody id="priceTableBody"></tbody>
@@ -3117,6 +3117,7 @@ function renderPriceTable(){
       <td><span class="cat-badge ${categoryClass(productType(p.product))}">${productType(p.product)}</span></td>
       <td>${productBrand(p.product)}</td>
       <td title="${productDescription(p.product)}">${p.product}${p.category?` <span style="color:var(--text-faint);font-size:11px;">(${p.category})</span>`:''}</td>
+      <td class="desc" style="max-width:260px;"><div class="desc-edit" contenteditable="true" data-product="${p.product}" onblur="saveProductDescription(this)" onkeydown="invDescKeydown(event,this)">${productDescription(p.product)}</div></td>
       <td class="num-cell">${(p.ean || eanOf(p.product)) || dash}</td>
       <td><span class="lc-badge ${lifecycleClass(lifecycleOf(p.product))}">${lifecycleOf(p.product)}</span></td>
       <td><span class="tag ${custTypeClass(p.cust)}">${custName(p.cust)}</span></td>

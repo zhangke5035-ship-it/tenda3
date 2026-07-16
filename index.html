@@ -168,6 +168,14 @@
   .promo-check-th{width:40px;text-align:center;}
   .promo-check-td{width:40px;text-align:center;}
   .promo-period-col{min-width:220px;}
+
+  /* ---- 总部报价模拟测算：隐藏类目/产品信息描述列(仅该模块，客户报价不受影响) ---- */
+  #priceDetailTable.sim-hide-cols th:nth-child(2),
+  #priceDetailTable.sim-hide-cols td:nth-child(2),
+  #priceDetailTable.sim-hide-cols th:nth-child(5),
+  #priceDetailTable.sim-hide-cols td:nth-child(5){
+    display:none;
+  }
   .form-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px;}
   .form-grid.cols-2{grid-template-columns:repeat(2,1fr);}
   .form-grid.cols-3{grid-template-columns:repeat(3,1fr);}
@@ -3175,6 +3183,8 @@ function setPriceTableMode(simMode){
   const subEl = document.getElementById('pricingViewSub');
   if (titleEl) titleEl.textContent = priceTableSimMode ? translateOne('报价管理 · 总部报价模拟测算') : translateOne('报价管理 · 客户报价');
   if (subEl) subEl.textContent = priceTableSimMode ? translateOne('基于总部报价体系，按产品匹配盈亏平衡价，辅助模拟测算各客户成本与盈亏') : translateOne('提取自总部《财务价26M71》波兰站"报价"工作表');
+  const table = document.getElementById('priceDetailTable');
+  if (table) table.classList.toggle('sim-hide-cols', priceTableSimMode);
   renderPriceTable();
 }
 function renderPriceTable(){

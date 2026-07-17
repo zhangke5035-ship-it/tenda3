@@ -538,7 +538,13 @@
         </div>
       </div>
 
-      <div class="navitem" data-view="orders"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg></span>销售订单</div>
+      <div class="navgroup open" data-group="orders">
+        <div class="navgroup-head"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg></span>销售订单<span class="chevron">▾</span></div>
+        <div class="navgroup-body">
+          <div class="navitem sub" data-view="orders"><span class="dot"></span>订单列表</div>
+          <div class="navitem sub" data-view="invoices"><span class="dot"></span>发票</div>
+        </div>
+      </div>
       <div class="navgroup open" data-group="inventory">
         <div class="navgroup-head"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path></svg></span>库存管理<span class="chevron">▾</span></div>
         <div class="navgroup-body">
@@ -1096,6 +1102,25 @@
         <tbody id="orderItemTableBody"></tbody>
       </table>
     </div>
+  </div>
+</section>
+<section class="view" id="view-invoices">
+  <div class="viewhead">
+    <div><h2>发票</h2><p>同步自 Fakturownia 的正式发票记录（Intelek / Eltrox / Action），按开票/回款状态跟踪</p></div>
+  </div>
+
+  <div class="kpi-row" id="invoiceKpiRow"></div>
+
+  <div class="panel">
+    <div class="panel-head"><h3>发票列表</h3><div class="desc" id="invoiceCount"></div></div>
+    <div class="cust-tabs" id="invoiceStatusTabs"></div>
+    <div class="cust-tabs" id="invoiceCustTabs"></div>
+    <table>
+      <thead><tr>
+        <th>发票号</th><th>WZ单号</th><th>客户</th><th>开票日期</th><th>回款日期</th><th>净额(PLN)</th><th>含税额(PLN)</th><th>状态</th><th></th>
+      </tr></thead>
+      <tbody id="invoiceTableBody"></tbody>
+    </table>
   </div>
 </section>
     <!-- ================ 促销管理 ================ -->
@@ -4767,6 +4792,7 @@ async function loadAllRemoteData(){
     loadPromoDeals(),
     loadMarketingActivities(),
     loadOrdersData(),
+    loadInvoicesData(),
     loadHqPrices(),
     loadSimRows(),
     loadProductDescriptions(),
@@ -4850,6 +4876,9 @@ let orderItems = [];
 let orderStatusFilter = '全部';
 let orderCustFilter = '全部';
 let selectedOrderId = null;
+let invoices = [];
+let invoiceStatusFilter = '全部';
+let invoiceCustFilter = '全部';
 
 function populateOrderCustomerSelect(){
   const sel = document.getElementById('o_customer');
@@ -4949,6 +4978,94 @@ function renderOrders(){
   renderOrderKpi();
   renderOrderTabs();
   renderOrderTable();
+}
+
+async function loadInvoicesData(){
+  try{
+    const { data, error } = await sb.from('invoices').select('*').order('issue_date', {ascending:false});
+    if (error){ console.error('loadInvoices', error); }
+    invoices = (data||[]).map(r=>({ id:r.id, no:r.invoice_no, wz:r.wz_no, cust:r.cust, currency:r.currency||'PLN', net:Number(r.net_total)||0, gross:Number(r.gross_total)||0, issueDate:r.issue_date||'', payDate:r.payment_date||'', status:r.status }));
+    if (typeof renderInvoices === 'function') renderInvoices();
+  }catch(e){ console.error(e); }
+}
+
+function renderInvoiceKpi(){
+  const box = document.getElementById('invoiceKpiRow');
+  if (!box) return;
+  const total = invoices.length;
+  const netSum = invoices.reduce((s,i)=>s+i.net,0);
+  const grossSum = invoices.reduce((s,i)=>s+i.gross,0);
+  const unpaid = invoices.filter(i=>i.status==='待付款').length;
+  box.innerHTML = `
+    <div class="kpi"><div class="label">发票总数</div><div class="value">${total}</div><div class="sub">${total?('累计 '+total+' 张'):'暂无发票'}</div></div>
+    <div class="kpi"><div class="label">发票总金额（含税）</div><div class="value copper">${grossSum.toFixed(1)} zł</div><div class="sub">净额合计 ${netSum.toFixed(1)} zł</div></div>
+    <div class="kpi"><div class="label">待付款发票</div><div class="value ${unpaid>0?'alert':''}">${unpaid}</div><div class="sub">尚未回款的发票数</div></div>
+  `;
+}
+
+function renderInvoiceTabs(){
+  const statusBox = document.getElementById('invoiceStatusTabs');
+  const custBox = document.getElementById('invoiceCustTabs');
+  if (!statusBox || !custBox) return;
+  const statuses = ['全部','待付款','已付款'];
+  statusBox.innerHTML = statuses.map(s=>{
+    const count = s==='全部' ? invoices.length : invoices.filter(i=>i.status===s).length;
+    return `<div class="cust-tab ${invoiceStatusFilter===s?'active':''}" data-status="${s}">${s}<span class="count">${count}</span></div>`;
+  }).join('');
+  const custKeys = ['全部', ...Object.keys(CUSTOMERS)];
+  custBox.innerHTML = custKeys.map(k=>{
+    const label = k==='全部' ? '全部客户' : CUSTOMERS[k].name;
+    const count = k==='全部' ? invoices.length : invoices.filter(i=>i.cust===k).length;
+    return `<div class="cust-tab ${invoiceCustFilter===k?'active':''}" data-cust="${k}">${label}<span class="count">${count}</span></div>`;
+  }).join('');
+  statusBox.querySelectorAll('.cust-tab').forEach(tab=>{
+    tab.addEventListener('click', ()=>{ invoiceStatusFilter = tab.dataset.status; renderInvoices(); });
+  });
+  custBox.querySelectorAll('.cust-tab').forEach(tab=>{
+    tab.addEventListener('click', ()=>{ invoiceCustFilter = tab.dataset.cust; renderInvoices(); });
+  });
+}
+
+function renderInvoiceTable(){
+  const body = document.getElementById('invoiceTableBody');
+  const countBox = document.getElementById('invoiceCount');
+  if (!body) return;
+  let rows = invoices;
+  if (invoiceStatusFilter !== '全部') rows = rows.filter(i=>i.status===invoiceStatusFilter);
+  if (invoiceCustFilter !== '全部') rows = rows.filter(i=>i.cust===invoiceCustFilter);
+  if (countBox) countBox.textContent = `共 ${rows.length} 张发票（总 ${invoices.length} 张）`;
+  body.innerHTML = rows.map(i=>{
+    const custName = CUSTOMERS[i.cust] ? CUSTOMERS[i.cust].name : (i.cust||'');
+    const statusClass = i.status==='已付款' ? 'done' : 'live';
+    return `<tr>
+      <td class="mono">${i.no}</td>
+      <td class="mono">${i.wz||''}</td>
+      <td>${custName}</td>
+      <td>${i.issueDate||''}</td>
+      <td>${i.payDate||''}</td>
+      <td class="num-cell">${i.net.toFixed(2)}</td>
+      <td class="num-cell">${i.gross.toFixed(2)}</td>
+      <td><span class="status ${statusClass}"><span class="sdot"></span>${i.status}</span></td>
+      <td><button class="del-btn" data-id="${i.id}" title="删除">✕</button></td>
+    </tr>`;
+  }).join('');
+  body.querySelectorAll('.del-btn').forEach(btn=>{
+    btn.addEventListener('click', async (e)=>{
+      e.stopPropagation();
+      const id = Number(btn.dataset.id);
+      if(!confirm('确定删除该发票记录？')) return;
+      const { error } = await sb.from('invoices').delete().eq('id', id);
+      if (error){ alert('删除失败：'+error.message); return; }
+      invoices = invoices.filter(i=>i.id!==id);
+      renderInvoices();
+    });
+  });
+}
+
+function renderInvoices(){
+  renderInvoiceKpi();
+  renderInvoiceTabs();
+  renderInvoiceTable();
 }
 
 function openOrderDetail(orderId){

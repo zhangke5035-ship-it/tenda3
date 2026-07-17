@@ -513,6 +513,14 @@
       <div class="brand-ver">数据版本 26M71</div>
     </div>
     <nav id="nav">
+      <div class="navgroup open" data-group="orders">
+        <div class="navgroup-head"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg></span>销售订单<span class="chevron">▾</span></div>
+        <div class="navgroup-body">
+          <div class="navitem sub" data-view="orders"><span class="dot"></span>订单列表</div>
+          <div class="navitem sub" data-view="invoices"><span class="dot"></span>发票</div>
+        </div>
+      </div>
+
       <div class="navitem active" data-view="overview"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg></span>总览</div>
 
       <div class="navitem" data-view="customers"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg></span>客户管理</div>
@@ -528,23 +536,15 @@
         </div>
       </div>
 
-      <div class="navitem" data-view="gtm"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg></span>新产品GTM</div>
-
       <div class="navgroup open" data-group="marketing">
         <div class="navgroup-head"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg></span>营销活动<span class="chevron">▾</span></div>
         <div class="navgroup-body">
           <div class="navitem sub" data-view="promo"><span class="dot"></span>营销费用</div>
           <div class="navitem sub" data-view="promodeals"><span class="dot"></span>促销管理</div>
+          <div class="navitem sub" data-view="gtm"><span class="dot"></span>新产品GTM</div>
         </div>
       </div>
 
-      <div class="navgroup open" data-group="orders">
-        <div class="navgroup-head"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg></span>销售订单<span class="chevron">▾</span></div>
-        <div class="navgroup-body">
-          <div class="navitem sub" data-view="orders"><span class="dot"></span>订单列表</div>
-          <div class="navitem sub" data-view="invoices"><span class="dot"></span>发票</div>
-        </div>
-      </div>
       <div class="navgroup open" data-group="inventory">
         <div class="navgroup-head"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path></svg></span>库存管理<span class="chevron">▾</span></div>
         <div class="navgroup-body">
@@ -573,47 +573,42 @@
     <section class="view active" id="view-overview">
       <div class="viewhead">
         <div>
-          <h2>总览</h2>
-          <p>波兰站点 Incom / Action / Eltrox / SGM 代理的报价与利润健康度（数据来自 26M71 月度价格表）</p>
+          <h2>销售业绩进展</h2>
+          <p>波兰站点 Intelek / Eltrox / Action 销售订单与发票回款实况（数据来自"销售订单/发票"模块，同步自 Fakturownia）</p>
         </div>
       </div>
 
-      <div class="notebox">
-        目前<b>波兰</b>站点（Incom / Action / Eltrox）和<b>捷克</b>的 Intelek 已有完整 Q3 报价数据。DC-Link 属于<b>乌克兰</b>——客户信息已经录入，但还没有对应的月度价格表，报价和利润数据会显示为空。上传对应国家的价格文件后即可补全。
-      </div>
-
-      <div class="kpi-row" id="kpiRow"></div>
-
-      <div class="panel">
-        <div class="panel-head">
-          <div>
-            <h3>价格航线：从出厂成本到零售价</h3>
-            <div class="desc">选择一个"产品 × 客户"组合，查看真实报价表中的加价结构</div>
-          </div>
-        </div>
-        <div class="route-select-row"><select id="routeSelect"></select></div>
-        <div id="routeDiagram"></div>
-      </div>
-
-      <div class="panel">
-        <div class="panel-head">
-          <div><h3>Q2 → Q3 价格变化 Top 10（Eltrox）</h3><div class="desc">按未税净价环比变化幅度排序，目前只有 Eltrox 有跨季度数据</div></div>
-        </div>
-        <table>
-          <thead><tr><th>产品型号</th><th>Q2 未税净价</th><th>Q3 未税净价</th><th>环比变化</th></tr></thead>
-          <tbody id="qoqTableBody"></tbody>
-        </table>
-      </div>
+      <div class="kpi-row" id="salesKpiRow"></div>
 
       <div class="two-col">
         <div class="panel">
-          <div class="panel-head"><div><h3>各客户净利率对比</h3><div class="desc">按客户汇总的平均净利率（来自报价表"盈亏占比"）</div></div></div>
-          <div class="chart-wrap"><canvas id="chartCustomerMargin"></canvas></div>
+          <div class="panel-head"><div><h3>客户销售占比</h3><div class="desc">按订单净额汇总的客户销售份额</div></div></div>
+          <div class="chart-wrap"><canvas id="chartCustomerSales"></canvas></div>
         </div>
         <div class="panel">
-          <div class="panel-head"><div><h3>产品净利率分布</h3><div class="desc">各产品在不同客户下的净利率区间</div></div></div>
-          <div class="chart-wrap"><canvas id="chartProductMargin"></canvas></div>
+          <div class="panel-head"><div><h3>月度销售趋势</h3><div class="desc">按下单日期汇总的月度订单净额（PLN）</div></div></div>
+          <div class="chart-wrap"><canvas id="chartMonthlySales"></canvas></div>
         </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <div><h3>最近订单</h3><div class="desc" id="recentOrdersDesc"></div></div>
+        </div>
+        <table>
+          <thead><tr><th>订单号</th><th>客户</th><th>下单日期</th><th>订单净额(PLN)</th><th>状态</th></tr></thead>
+          <tbody id="recentOrdersTableBody"></tbody>
+        </table>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <div><h3>待付款发票 Top 10</h3><div class="desc">按净额从高到低排序，尚未回款的正式发票</div></div>
+        </div>
+        <table>
+          <thead><tr><th>发票号</th><th>客户</th><th>开票日期</th><th>净额(PLN)</th><th>含税额(PLN)</th></tr></thead>
+          <tbody id="unpaidInvoicesTableBody"></tbody>
+        </table>
       </div>
     </section>
 
@@ -3218,7 +3213,7 @@ function renderQuarterTabs(){
   el.onchange = ()=>{
     activeQuarterFilter = el.value;
     activeCountryFilter = 'ALL'; activeCustFilter = 'ALL';
-    renderQuarterTabs(); renderCountryTabs(); renderCustTabs(); renderCategoryTabs(); renderBrandTabs(); renderPriceTable(); renderKPI(); renderCharts();
+    renderQuarterTabs(); renderCountryTabs(); renderCustTabs(); renderCategoryTabs(); renderBrandTabs(); renderPriceTable();
   };
 }
 
@@ -4124,9 +4119,10 @@ function renderCharts(){
 
 /* ============ 汇总刷新 ============ */
 function refreshAll(){
-  renderQuarterTabs(); populateRouteSelect(); populatePromoSelects(); populatePromoDealSelects(); renderCountryTabs(); renderCustTabs(); renderCategoryTabs(); renderBrandTabs(); populateModelDatalist(); populateHqModelDatalist(); renderCatalog();
-  renderKPI(); renderRoute(); renderPriceTable(); renderPromoTable(); renderPromoDealAll(); renderCharts(); renderQoQTable(); renderHqPriceTable(); renderSimTable();
+  renderQuarterTabs(); populatePromoSelects(); populatePromoDealSelects(); renderCountryTabs(); renderCustTabs(); renderCategoryTabs(); renderBrandTabs(); populateModelDatalist(); populateHqModelDatalist(); renderCatalog();
+  renderPriceTable(); renderPromoTable(); renderPromoDealAll(); renderHqPriceTable(); renderSimTable();
   if (typeof renderGtmAll === 'function') renderGtmAll();
+  if (typeof renderSalesOverview === 'function') renderSalesOverview();
 }
 
 /* ============ 事件绑定 ============ */
@@ -4744,6 +4740,106 @@ async function loadMarketingActivities(){
   }catch(e){ console.error(e); }
 }
 
+let chartCustomerSales = null;
+let chartMonthlySales = null;
+
+function renderSalesOverview(){
+  if (typeof orders === 'undefined' || typeof invoices === 'undefined') return;
+  renderSalesKpi();
+  renderSalesCharts();
+  renderRecentOrdersTable();
+  renderUnpaidInvoicesTable();
+}
+
+function renderSalesKpi(){
+  const box = document.getElementById('salesKpiRow');
+  if (!box) return;
+  const totalNet = orders.reduce((s,o)=>s+orderTotal(o.id),0);
+  const invGross = invoices.reduce((s,i)=>s+i.gross,0);
+  const unpaidList = invoices.filter(i=>i.status==='待付款');
+  const unpaidNet = unpaidList.reduce((s,i)=>s+i.net,0);
+  const doneCount = orders.filter(o=>o.status==='已发货'||o.status==='已完成').length;
+  const doneRate = orders.length ? Math.round(doneCount/orders.length*100) : 0;
+  box.innerHTML = `
+    <div class="kpi"><div class="label">累计销售净额</div><div class="value copper">${totalNet.toFixed(1)} zł</div><div class="sub">${orders.length} 个订单合计</div></div>
+    <div class="kpi"><div class="label">发票总额（含税）</div><div class="value">${invGross.toFixed(1)} zł</div><div class="sub">${invoices.length} 张正式发票</div></div>
+    <div class="kpi"><div class="label">待回款金额</div><div class="value ${unpaidNet>0?'alert':''}">${unpaidNet.toFixed(1)} zł</div><div class="sub">${unpaidList.length} 张待付款发票</div></div>
+    <div class="kpi"><div class="label">订单履约率</div><div class="value">${doneRate}%</div><div class="sub">已发货/已完成 ${doneCount} / ${orders.length}</div></div>
+  `;
+}
+
+function renderSalesCharts(){
+  if (typeof Chart === 'undefined') return;
+  const byCust = {};
+  orders.forEach(o=>{ byCust[o.cust] = (byCust[o.cust]||0) + orderTotal(o.id); });
+  const custKeys = Object.keys(byCust);
+  const custLabels = custKeys.map(k=> (typeof CUSTOMERS!=='undefined' && CUSTOMERS[k]) ? CUSTOMERS[k].name : k);
+  const custData = custKeys.map(k=>byCust[k]);
+  const ctx1 = document.getElementById('chartCustomerSales');
+  if (ctx1){
+    if (chartCustomerSales) chartCustomerSales.destroy();
+    chartCustomerSales = new Chart(ctx1, {
+      type: 'doughnut',
+      data: { labels: custLabels, datasets: [{ data: custData, backgroundColor: ['#C1793A','#2E8B8A','#5B6B80','#D14343','#8B96A6'] }] },
+      options: { plugins: { legend: { position: 'bottom', labels: { color: '#5B6B80', font: { size: 11 } } } } }
+    });
+  }
+
+  const byMonth = {};
+  orders.forEach(o=>{
+    const m = (o.date||'').slice(0,7);
+    if (!m) return;
+    byMonth[m] = (byMonth[m]||0) + orderTotal(o.id);
+  });
+  const monthLabels = Object.keys(byMonth).sort();
+  const monthData = monthLabels.map(m=>byMonth[m]);
+  const ctx2 = document.getElementById('chartMonthlySales');
+  if (ctx2){
+    if (chartMonthlySales) chartMonthlySales.destroy();
+    chartMonthlySales = new Chart(ctx2, {
+      type: 'bar',
+      data: { labels: monthLabels, datasets: [{ data: monthData, backgroundColor: '#C1793A', borderRadius: 2, barThickness: 26 }] },
+      options: { plugins: { legend: { display: false } },
+        scales: { x: { ticks: { color: '#5B6B80' }, grid: { display: false } }, y: { ticks: { color: '#5B6B80' }, grid: { color: '#DCE1E8' } } } }
+    });
+  }
+}
+
+function renderRecentOrdersTable(){
+  const body = document.getElementById('recentOrdersTableBody');
+  const desc = document.getElementById('recentOrdersDesc');
+  if (!body) return;
+  const rows = [...orders].sort((a,b)=> (b.date||'').localeCompare(a.date||'')).slice(0,8);
+  if (desc) desc.textContent = `最近 ${rows.length} 条（共 ${orders.length} 个订单）`;
+  body.innerHTML = rows.map(o=>{
+    const custName = (typeof CUSTOMERS!=='undefined' && CUSTOMERS[o.cust]) ? CUSTOMERS[o.cust].name : (o.cust||'');
+    const statusClass = o.status==='待处理'?'plan':(o.status==='已完成'?'done':'live');
+    return `<tr>
+      <td class="mono">${o.no}</td>
+      <td>${custName}</td>
+      <td>${o.date||''}</td>
+      <td class="num-cell">${orderTotal(o.id).toFixed(1)}</td>
+      <td><span class="status ${statusClass}"><span class="sdot"></span>${o.status}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+function renderUnpaidInvoicesTable(){
+  const body = document.getElementById('unpaidInvoicesTableBody');
+  if (!body) return;
+  const rows = invoices.filter(i=>i.status==='待付款').sort((a,b)=>b.net-a.net).slice(0,10);
+  body.innerHTML = rows.map(i=>{
+    const custName = (typeof CUSTOMERS!=='undefined' && CUSTOMERS[i.cust]) ? CUSTOMERS[i.cust].name : (i.cust||'');
+    return `<tr>
+      <td class="mono">${i.no}</td>
+      <td>${custName}</td>
+      <td>${i.issueDate||''}</td>
+      <td class="num-cell">${i.net.toFixed(2)}</td>
+      <td class="num-cell">${i.gross.toFixed(2)}</td>
+    </tr>`;
+  }).join('');
+}
+
 async function loadOrdersData(){
   try{
     const [ordersRes, itemsRes] = await Promise.all([
@@ -4755,6 +4851,7 @@ async function loadOrdersData(){
     orders = (ordersRes.data||[]).map(r=>({ id: r.id, no: r.order_no, cust: r.cust, date: r.order_date||'', status: r.status }));
     orderItems = (itemsRes.data||[]).map(r=>({ id: r.id, orderId: r.order_id, product: r.product, qty: Number(r.qty)||0, price: Number(r.price)||0 }));
     if (typeof renderOrders === 'function') renderOrders();
+    if (typeof renderSalesOverview === 'function') renderSalesOverview();
   }catch(e){ console.error(e); }
 }
 
@@ -4793,6 +4890,7 @@ async function loadInvoicesData(){
     if (error){ console.error('loadInvoices', error); }
     invoices = (data||[]).map(r=>({ id:r.id, no:r.invoice_no, wz:r.wz_no, cust:r.cust, currency:r.currency||'PLN', net:Number(r.net_total)||0, gross:Number(r.gross_total)||0, issueDate:r.issue_date||'', payDate:r.payment_date||'', status:r.status }));
     if (typeof renderInvoices === 'function') renderInvoices();
+    if (typeof renderSalesOverview === 'function') renderSalesOverview();
   }catch(e){ console.error(e); }
 }
 

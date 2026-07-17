@@ -3286,6 +3286,16 @@ function setPriceTableMode(simMode){
     } else if (!priceTableSimMode && th){
       th.remove();
     }
+    let thNetUsd = document.getElementById('priceThNetUsd');
+    if (priceTableSimMode && !thNetUsd){
+      thNetUsd = document.createElement('th');
+      thNetUsd.id = 'priceThNetUsd';
+      thNetUsd.dataset.key = 'netUsd';
+      thNetUsd.textContent = translateOne('未含税净价（USD）');
+      theadRow.insertBefore(thNetUsd, theadRow.lastElementChild || null);
+    } else if (!priceTableSimMode && thNetUsd){
+      thNetUsd.remove();
+    }
   }
   const titleEl = document.getElementById('pricingViewTitle');
   const subEl = document.getElementById('pricingViewSub');
@@ -5355,6 +5365,11 @@ function injectAgentTiers(){
       const b = priceRow ? simBreakevenFor(priceRow.product) : null;
       tdBreakeven.textContent = (b===null || b===undefined || isNaN(b)) ? '—' : usd(b);
       row.insertBefore(tdBreakeven, buttonCell);
+      const tdNetUsd = document.createElement('td');
+      tdNetUsd.className = 'num-cell';
+      const netUsdVal = finalPriceLocal / 3.59;
+      tdNetUsd.textContent = isNaN(netUsdVal) ? '—' : usd(netUsdVal);
+      row.insertBefore(tdNetUsd, buttonCell);
     }
 
     row.dataset.tiersInjected = '1';

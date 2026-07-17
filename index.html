@@ -2908,7 +2908,7 @@ const rate = () => parseFloat(document.getElementById('fxRate').value) || 3.98;
 function custName(code){ return (CUSTOMERS[code]||{}).name || code; }
 function custCountry(code){ return (CUSTOMERS[code]||{}).country || '待确认'; }
 function custCurrency(cust){ return custCountry(cust).indexOf('捷克') !== -1 ? 'CZK' : 'PLN'; }
-function currencySymbol(code){ return code === 'CZK' ? 'Kč' : 'zł'; }
+function currencySymbol(code){ return code === 'CZK' ? 'Kč' : ''; }
 function lifecycleOf(product){ return LIFECYCLE_MAP[product] || '未收录'; }
 const EAN_MAP_LC = Object.fromEntries(Object.entries(EAN_MAP).map(([k,v])=>[k.toLowerCase(), v]));
 function eanOf(product){ return EAN_MAP[product] || EAN_MAP_LC[(product||'').toLowerCase()] || ''; }
@@ -3397,8 +3397,8 @@ function renderPriceTable(){
       <td><span class="tag ${custTypeClass(p.cust)}">${custName(p.cust)}</span></td>
       <td>${custCountry(p.cust)}</td>
       <td>${custCurrency(p.cust)}</td>
-      <td class="num-cell">${p.retailPLN ? fmt(p.retailPLN)+' '+currencySymbol(custCurrency(p.cust)) : dash}</td>
-      <td class="num-cell">${p.netPLN ? fmt(p.netPLN)+' '+currencySymbol(custCurrency(p.cust)) : dash}</td>
+      <td class="num-cell">${p.retailPLN ? fmt(p.retailPLN)+(currencySymbol(custCurrency(p.cust))?' '+currencySymbol(custCurrency(p.cust)):'') : dash}</td>
+      <td class="num-cell">${p.netPLN ? fmt(p.netPLN)+(currencySymbol(custCurrency(p.cust))?' '+currencySymbol(custCurrency(p.cust)):'') : dash}</td>
       <td class="num-cell">${deltaCell}</td>
       <td class="num-cell">${hasCost ? usd(p.costUSD) : dash}</td>
       <td class="num-cell">${hasCost ? usd(p.profitUSD) : dash}</td>
@@ -5293,7 +5293,7 @@ function parseMoneyText(text){
   return parseFloat(text.replace(/[^\d.\-]/g,''));
 }
 function fmtMoney(n, symbol){
-  return isNaN(n) ? '—' : (n.toFixed(2) + ' ' + (symbol || 'zł'));
+  return isNaN(n) ? '—' : (n.toFixed(2) + ((symbol && symbol !== 'zł') ? ' ' + symbol : ''));
 }
 function currencySymbolFromCountry(countryText){
   return (countryText && countryText.indexOf('捷克') !== -1) ? 'Kč' : 'zł';
@@ -5421,7 +5421,7 @@ function injectAgentTiers(){
     const tdFinal = document.createElement('td');
     tdFinal.className = 'num-cell';
     const finalPriceLocal = convertLocal(computeFinalPurchasePrice(retail, fixedProfit, effectiveVat));
-    tdFinal.innerHTML = '<input type="number" class="final-price-input locked" step="0.01" value="' + finalPriceLocal.toFixed(2) + '" readonly>';
+    tdFinal.innerHTML = '<input type="text" class="final-price-input locked" value="' + finalPriceLocal.toFixed(2) + '" readonly>';
 
     const buttonCell = row.lastElementChild;
     row.insertBefore(tdDmp, buttonCell);

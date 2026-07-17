@@ -4787,6 +4787,15 @@ async function loadGtmProducts(){
   }catch(e){ console.error(e); }
 }
 
+async function loadInvoicesData(){
+  try{
+    const { data, error } = await sb.from('invoices').select('*').order('issue_date', {ascending:false});
+    if (error){ console.error('loadInvoices', error); }
+    invoices = (data||[]).map(r=>({ id:r.id, no:r.invoice_no, wz:r.wz_no, cust:r.cust, currency:r.currency||'PLN', net:Number(r.net_total)||0, gross:Number(r.gross_total)||0, issueDate:r.issue_date||'', payDate:r.payment_date||'', status:r.status }));
+    if (typeof renderInvoices === 'function') renderInvoices();
+  }catch(e){ console.error(e); }
+}
+
 async function loadAllRemoteData(){
   await Promise.all([
     loadPromoDeals(),
@@ -4980,14 +4989,7 @@ function renderOrders(){
   renderOrderTable();
 }
 
-async function loadInvoicesData(){
-  try{
-    const { data, error } = await sb.from('invoices').select('*').order('issue_date', {ascending:false});
-    if (error){ console.error('loadInvoices', error); }
-    invoices = (data||[]).map(r=>({ id:r.id, no:r.invoice_no, wz:r.wz_no, cust:r.cust, currency:r.currency||'PLN', net:Number(r.net_total)||0, gross:Number(r.gross_total)||0, issueDate:r.issue_date||'', payDate:r.payment_date||'', status:r.status }));
-    if (typeof renderInvoices === 'function') renderInvoices();
-  }catch(e){ console.error(e); }
-}
+
 
 function renderInvoiceKpi(){
   const box = document.getElementById('invoiceKpiRow');

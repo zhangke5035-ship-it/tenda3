@@ -3296,6 +3296,16 @@ function setPriceTableMode(simMode){
     } else if (!priceTableSimMode && thNetUsd){
       thNetUsd.remove();
     }
+    let thBalance = document.getElementById('priceThBalance');
+    if (priceTableSimMode && !thBalance){
+      thBalance = document.createElement('th');
+      thBalance.id = 'priceThBalance';
+      thBalance.dataset.key = 'balance';
+      thBalance.textContent = translateOne('去营销与预留平衡价');
+      theadRow.insertBefore(thBalance, theadRow.lastElementChild || null);
+    } else if (!priceTableSimMode && thBalance){
+      thBalance.remove();
+    }
   }
   const titleEl = document.getElementById('pricingViewTitle');
   const subEl = document.getElementById('pricingViewSub');
@@ -5370,6 +5380,10 @@ function injectAgentTiers(){
       const netUsdVal = finalPriceLocal / 3.59;
       tdNetUsd.textContent = isNaN(netUsdVal) ? '—' : usd(netUsdVal);
       row.insertBefore(tdNetUsd, buttonCell);
+      const tdBalance = document.createElement('td');
+      tdBalance.className = 'num-cell';
+      tdBalance.textContent = '';
+      row.insertBefore(tdBalance, buttonCell);
     }
 
     row.dataset.tiersInjected = '1';

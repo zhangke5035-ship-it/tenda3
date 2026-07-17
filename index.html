@@ -3306,6 +3306,66 @@ function setPriceTableMode(simMode){
     } else if (!priceTableSimMode && thBalance){
       thBalance.remove();
     }
+    let thBrandReserve = document.getElementById('priceThBrandReserve');
+    if (priceTableSimMode && !thBrandReserve){
+      thBrandReserve = document.createElement('th');
+      thBrandReserve.id = 'priceThBrandReserve';
+      thBrandReserve.dataset.key = 'brandReserve';
+      thBrandReserve.textContent = translateOne('品牌预留 (单个)');
+      theadRow.insertBefore(thBrandReserve, theadRow.lastElementChild || null);
+    } else if (!priceTableSimMode && thBrandReserve){
+      thBrandReserve.remove();
+    }
+    let thMdfReserve = document.getElementById('priceThMdfReserve');
+    if (priceTableSimMode && !thMdfReserve){
+      thMdfReserve = document.createElement('th');
+      thMdfReserve.id = 'priceThMdfReserve';
+      thMdfReserve.dataset.key = 'mdfReserve';
+      thMdfReserve.textContent = translateOne('MDF预留 (单个)');
+      theadRow.insertBefore(thMdfReserve, theadRow.lastElementChild || null);
+    } else if (!priceTableSimMode && thMdfReserve){
+      thMdfReserve.remove();
+    }
+    let thRiskReserve = document.getElementById('priceThRiskReserve');
+    if (priceTableSimMode && !thRiskReserve){
+      thRiskReserve = document.createElement('th');
+      thRiskReserve.id = 'priceThRiskReserve';
+      thRiskReserve.dataset.key = 'riskReserve';
+      thRiskReserve.textContent = translateOne('风险与指标预留');
+      theadRow.insertBefore(thRiskReserve, theadRow.lastElementChild || null);
+    } else if (!priceTableSimMode && thRiskReserve){
+      thRiskReserve.remove();
+    }
+    let thUnitPnl = document.getElementById('priceThUnitPnl');
+    if (priceTableSimMode && !thUnitPnl){
+      thUnitPnl = document.createElement('th');
+      thUnitPnl.id = 'priceThUnitPnl';
+      thUnitPnl.dataset.key = 'unitPnl';
+      thUnitPnl.textContent = translateOne('单位盈亏');
+      theadRow.insertBefore(thUnitPnl, theadRow.lastElementChild || null);
+    } else if (!priceTableSimMode && thUnitPnl){
+      thUnitPnl.remove();
+    }
+    let thPnlRatio = document.getElementById('priceThPnlRatio');
+    if (priceTableSimMode && !thPnlRatio){
+      thPnlRatio = document.createElement('th');
+      thPnlRatio.id = 'priceThPnlRatio';
+      thPnlRatio.dataset.key = 'pnlRatio';
+      thPnlRatio.textContent = translateOne('盈亏占比');
+      theadRow.insertBefore(thPnlRatio, theadRow.lastElementChild || null);
+    } else if (!priceTableSimMode && thPnlRatio){
+      thPnlRatio.remove();
+    }
+    let thProfitRatio = document.getElementById('priceThProfitRatio');
+    if (priceTableSimMode && !thProfitRatio){
+      thProfitRatio = document.createElement('th');
+      thProfitRatio.id = 'priceThProfitRatio';
+      thProfitRatio.dataset.key = 'profitRatio';
+      thProfitRatio.textContent = translateOne('盈利占比');
+      theadRow.insertBefore(thProfitRatio, theadRow.lastElementChild || null);
+    } else if (!priceTableSimMode && thProfitRatio){
+      thProfitRatio.remove();
+    }
   }
   const titleEl = document.getElementById('pricingViewTitle');
   const subEl = document.getElementById('pricingViewSub');
@@ -5384,6 +5444,30 @@ function injectAgentTiers(){
       tdBalance.className = 'num-cell';
       tdBalance.textContent = '';
       row.insertBefore(tdBalance, buttonCell);
+      const tdBrandReserve = document.createElement('td');
+      tdBrandReserve.className = 'num-cell';
+      tdBrandReserve.textContent = '';
+      row.insertBefore(tdBrandReserve, buttonCell);
+      const tdMdfReserve = document.createElement('td');
+      tdMdfReserve.className = 'num-cell';
+      tdMdfReserve.textContent = '';
+      row.insertBefore(tdMdfReserve, buttonCell);
+      const tdRiskReserve = document.createElement('td');
+      tdRiskReserve.className = 'num-cell';
+      tdRiskReserve.textContent = '';
+      row.insertBefore(tdRiskReserve, buttonCell);
+      const tdUnitPnl = document.createElement('td');
+      tdUnitPnl.className = 'num-cell';
+      tdUnitPnl.textContent = '';
+      row.insertBefore(tdUnitPnl, buttonCell);
+      const tdPnlRatio = document.createElement('td');
+      tdPnlRatio.className = 'num-cell';
+      tdPnlRatio.textContent = '';
+      row.insertBefore(tdPnlRatio, buttonCell);
+      const tdProfitRatio = document.createElement('td');
+      tdProfitRatio.className = 'num-cell';
+      tdProfitRatio.textContent = '';
+      row.insertBefore(tdProfitRatio, buttonCell);
     }
 
     row.dataset.tiersInjected = '1';

@@ -586,8 +586,11 @@
 
       <div class="two-col">
         <div class="panel">
-          <div class="panel-head"><div><h3>客户销售占比</h3><div class="desc">按订单净额汇总的客户销售份额</div></div></div>
-          <div class="chart-wrap"><canvas id="chartCustomerSales"></canvas></div>
+          <div class="panel-head"><div><h3>客户维度月环比</h3><div class="desc">各客户订单净额，本月与上月对比</div></div></div>
+          <table>
+            <thead><tr><th>客户</th><th>上月净额(PLN)</th><th>本月净额(PLN)</th><th>环比</th></tr></thead>
+            <tbody id="custMomTableBody"></tbody>
+          </table>
         </div>
         <div class="panel">
           <div class="panel-head"><div><h3>月度销售趋势</h3><div class="desc">按下单日期汇总的月度订单净额（PLN）</div></div></div>
@@ -4743,12 +4746,12 @@ async function loadMarketingActivities(){
   }catch(e){ console.error(e); }
 }
 
-let chartCustomerSales = null;
 let chartMonthlySales = null;
 
 function renderSalesOverview(){
   if (typeof orders === 'undefined' || typeof invoices === 'undefined') return;
   renderSalesKpi();
+  renderCustMomTable();
   renderSalesCharts();
   renderRecentOrdersTable();
   renderUnpaidInvoicesTable();
@@ -4773,21 +4776,6 @@ function renderSalesKpi(){
 
 function renderSalesCharts(){
   if (typeof Chart === 'undefined') return;
-  const byCust = {};
-  orders.forEach(o=>{ byCust[o.cust] = (byCust[o.cust]||0) + orderTotal(o.id); });
-  const custKeys = Object.keys(byCust);
-  const custLabels = custKeys.map(k=> (typeof CUSTOMERS!=='undefined' && CUSTOMERS[k]) ? CUSTOMERS[k].name : k);
-  const custData = custKeys.map(k=>byCust[k]);
-  const ctx1 = document.getElementById('chartCustomerSales');
-  if (ctx1){
-    if (chartCustomerSales) chartCustomerSales.destroy();
-    chartCustomerSales = new Chart(ctx1, {
-      type: 'doughnut',
-      data: { labels: custLabels, datasets: [{ data: custData, backgroundColor: ['#C1793A','#2E8B8A','#5B6B80','#D14343','#8B96A6'] }] },
-      options: { plugins: { legend: { position: 'bottom', labels: { color: '#5B6B80', font: { size: 11 } } } } }
-    });
-  }
-
   const byMonth = {};
   orders.forEach(o=>{
     const m = (o.date||'').slice(0,7);
@@ -4806,6 +4794,47 @@ function renderSalesCharts(){
         scales: { x: { ticks: { color: '#5B6B80' }, grid: { display: false } }, y: { ticks: { color: '#5B6B80' }, grid: { color: '#DCE1E8' } } } }
     });
   }
+}
+
+function renderCustMomTable(){
+  const body = document.getElementById('custMomTableBody');
+  if (!body) return;
+  const byCustMonth = {};
+  orders.forEach(o=>{
+    const m = (o.date||'').slice(0,7);
+    if (!m) return;
+    if (!byCustMonth[o.cust]) byCustMonth[o.cust] = {};
+    byCustMonth[o.cust][m] = (byCustMonth[o.cust][m]||0) + orderTotal(o.id);
+  });
+  const allMonths = [...new Set(orders.map(o=>(o.date||'').slice(0,7)).filter(Boolean))].sort();
+  const curMonth = allMonths[allMonths.length-1];
+  const prevMonth = allMonths.length>1 ? allMonths[allMonths.length-2] : null;
+  const custKeys = Object.keys(byCustMonth);
+  if (!custKeys.length || !curMonth){
+    body.innerHTML = '<tr><td colspan="4" style="color:var(--text-faint);">暂无数据</td></tr>';
+    return;
+  }
+  const rows = custKeys.map(k=>{
+    const name = (typeof CUSTOMERS!=='undefined' && CUSTOMERS[k]) ? CUSTOMERS[k].name : k;
+    const cur = byCustMonth[k][curMonth] || 0;
+    const prev = prevMonth ? (byCustMonth[k][prevMonth] || 0) : 0;
+    let momText = '—';
+    let momColor = 'var(--text-dim)';
+    if (prevMonth){
+      if (prev > 0){
+        const pct = ((cur - prev) / prev) * 100;
+        momText = (pct>=0?'+':'') + pct.toFixed(1) + '%';
+        momColor = pct>=0 ? 'var(--good)' : 'var(--alert)';
+      } else if (cur > 0){
+        momText = '+100.0%';
+        momColor = 'var(--good)';
+      }
+    }
+    return { name, cur, prev, momText, momColor };
+  }).sort((a,b)=>b.cur-a.cur);
+  body.innerHTML = rows.map(r=>
+    '<tr><td>'+r.name+'</td><td style="text-align:right;">'+r.prev.toFixed(1)+'</td><td style="text-align:right;">'+r.cur.toFixed(1)+'</td><td style="text-align:right;color:'+r.momColor+';">'+r.momText+'</td></tr>'
+  ).join('');
 }
 
 function renderRecentOrdersTable(){

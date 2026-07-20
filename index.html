@@ -943,7 +943,7 @@
          <thead><tr>
   <th><input type="checkbox" id="priceSelectAllCheck" title="全选/取消全选当前筛选结果"></th>
   <th>类目</th><th>品牌</th><th>产品型号</th><th>产品信息描述</th><th>EAN</th><th>生命周期</th><th data-key="customer">客户</th><th data-key="country">国家</th><th>币种</th><th data-key="retail">含税零售价</th><th data-key="vat">VAT税率</th><th data-key="net">未税净价</th>
-  <th>环比</th><th>出厂成本 (USD)</th><th>单位盈亏 (USD)</th><th>净利率 (%)</th><th></th>
+  <th>DMP建议销售价</th><th>代理商利润点位</th><th>最终采购价</th><th></th>
 </tr></thead>
           <tbody id="priceTableBody"></tbody>
           <tfoot><tr id="priceTableFootRow"></tr></tfoot>
@@ -3520,10 +3520,6 @@ function renderPriceTable(){
   let rows = getFilteredPriceRows();
   const dash = '<span style="color:var(--text-faint)">—</span>';
   tbody.innerHTML = rows.map(p=>{
-    const hasCost = typeof p.costUSD === 'number';
-    const hasMargin = typeof p.marginPct === 'number';
-    const delta = (p.quarter!=='Q2') ? qoqDelta(p.product, p.cust) : null;
-    const deltaCell = delta===null ? dash : `<span style="color:${delta>=0?'var(--alert)':'var(--good)'}">${delta>=0?'▲':'▼'}${fmt(Math.abs(delta))}%</span>`;
     return `
     <tr data-price-id="${p.id}">
       <td class="num-cell"><input type="checkbox" class="price-row-check" data-id="${p.id}" ${priceSelectedIds.has(p.id)?'checked':''}></td>
@@ -3539,10 +3535,6 @@ function renderPriceTable(){
       <td class="num-cell">${p.retailPLN ? fmt(p.retailPLN)+(currencySymbol(custCurrency(p.cust))?' '+currencySymbol(custCurrency(p.cust)):'') : dash}</td>
       <td class="num-cell">${typeof p.vatRate==='number' ? (p.vatRate*100).toFixed(0)+'%' : (custCountry(p.cust)==='波兰' ? '23%' : dash)}</td>
       <td class="num-cell">${p.netPLN ? fmt(p.netPLN)+(currencySymbol(custCurrency(p.cust))?' '+currencySymbol(custCurrency(p.cust)):'') : dash}</td>
-      <td class="num-cell">${deltaCell}</td>
-      <td class="num-cell">${hasCost ? usd(p.costUSD) : dash}</td>
-      <td class="num-cell">${hasCost ? usd(p.profitUSD) : dash}</td>
-      <td class="num-cell ${hasMargin && p.marginPct<0?'warn':''}">${hasMargin ? fmt(p.marginPct)+'%' : dash}</td>
       <td><button class="del-btn" onclick="deletePrice(${p.id})">✕</button></td>
     </tr>`;
   }).join('');
@@ -3554,7 +3546,7 @@ function renderPriceTable(){
     const marginRows = rows.filter(p=>typeof p.marginPct === 'number');
     const avgMargin = marginRows.length ? (marginRows.reduce((s,p)=>s+p.marginPct,0) / marginRows.length) : null;
     const avgText = avgMargin===null ? '暂无净利率数据' : `平均净利率 ${fmt(avgMargin)}%`;
-    footRow.innerHTML = `<td></td><td>总计 (Total)</td><td colspan="15" style="text-align:left;">本页包含 ${rows.length} 条报价，${avgText}</td><td></td>`;
+    footRow.innerHTML = `<td></td><td>总计 (Total)</td><td colspan="14" style="text-align:left;">本页包含 ${rows.length} 条报价，${avgText}</td><td></td>`;
   }
   updateSelectAllCheckboxState(rows);
   if (typeof updatePriceExportBtnLabel === 'function') updatePriceExportBtnLabel();

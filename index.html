@@ -82,6 +82,10 @@
   thead th{text-align:left;color:var(--text-faint);font-weight:500;font-size:10.8px;text-transform:uppercase;letter-spacing:0.4px;padding:8px 10px;border-bottom:1px solid var(--border);}
   tbody td{padding:8px 10px;border-bottom:1px solid var(--border-soft);color:var(--text);}
   tbody tr:hover{background:var(--surface-alt);}
+  .ytd-col-head{background:#dbe8fb!important;}
+  .ytd-col-sub{background:#e8f0fc!important;}
+  td.ytd-col-cell{background:#eef4fc;}
+  tbody tr:hover td.ytd-col-cell{background:#dfeafc;}
   .num-cell{font-family:'IBM Plex Mono';}
   .price-table-scroll table th:nth-child(3),
   .price-table-scroll table td:nth-child(3){position:sticky;left:0;background:var(--surface);z-index:2;box-shadow:2px 0 4px rgba(0,0,0,0.05);}
@@ -4792,9 +4796,11 @@ function renderCustMomTable(){
   const months = getRollingMonths(3);
   const curMonth = months[months.length-1];
   const prevMonth = months.length>1 ? months[months.length-2] : null;
+  const ytdYear = curMonth.slice(0,4);
 
   const theadEl = head.parentElement;
   head.innerHTML = '<th rowspan="2">客户</th>' +
+    '<th colspan="2" class="ytd-col-head" style="text-align:center;">'+ytdYear+' 年累计(YTD)</th>' +
     months.map(m=>'<th colspan="2" style="text-align:center;">'+m+'</th>').join('') +
     '<th rowspan="2" style="text-align:right;">环比</th>';
   let subHead = document.getElementById('custMomTableSubHead');
@@ -4804,24 +4810,32 @@ function renderCustMomTable(){
     theadEl.appendChild(subHead);
   }
   if (subHead){
-    subHead.innerHTML = months.map(()=>'<th style="text-align:right;color:var(--text-faint);font-weight:500;">金额</th><th style="text-align:right;color:var(--text-faint);font-weight:500;">数量</th>').join('');
+    subHead.innerHTML = '<th class="ytd-col-sub" style="text-align:right;color:var(--text-dim);font-weight:500;">金额</th><th class="ytd-col-sub" style="text-align:right;color:var(--text-dim);font-weight:500;">数量</th>' +
+      months.map(()=>'<th style="text-align:right;color:var(--text-faint);font-weight:500;">金额</th><th style="text-align:right;color:var(--text-faint);font-weight:500;">数量</th>').join('');
   }
 
   const byCustMonth = {};
+  const byCustYtd = {};
   orders.forEach(o=>{
     const m = (o.date||'').slice(0,7);
     if (!m) return;
     if (!byCustMonth[o.cust]) byCustMonth[o.cust] = {};
     if (!byCustMonth[o.cust][m]) byCustMonth[o.cust][m] = {amount:0, qty:0};
     const qty = orderItems.filter(i=>i.orderId===o.id).reduce((s,i)=>s+i.qty,0);
-    byCustMonth[o.cust][m].amount += orderTotal(o.id);
+    const amount = orderTotal(o.id);
+    byCustMonth[o.cust][m].amount += amount;
     byCustMonth[o.cust][m].qty += qty;
+    if (m.slice(0,4) === ytdYear){
+      if (!byCustYtd[o.cust]) byCustYtd[o.cust] = {amount:0, qty:0};
+      byCustYtd[o.cust].amount += amount;
+      byCustYtd[o.cust].qty += qty;
+    }
   });
   const custKeys = Object.keys(byCustMonth);
   const table = body.closest('table');
   let foot = table ? table.querySelector('tfoot') : null;
   if (!custKeys.length){
-    body.innerHTML = '<tr><td colspan="'+(months.length*2+2)+'" style="color:var(--text-faint);">暂无数据</td></tr>';
+    body.innerHTML = '<tr><td colspan="'+(months.length*2+4)+'" style="color:var(--text-faint);">暂无数据</td></tr>';
     if (foot) foot.innerHTML = '';
     return;
   }
@@ -4829,6 +4843,7 @@ function renderCustMomTable(){
   const rows = custKeys.map(k=>{
     const name = (typeof CUSTOMERS!=='undefined' && CUSTOMERS[k]) ? CUSTOMERS[k].name : k;
     const vals = months.map(m=>byCustMonth[k][m] || {amount:0, qty:0});
+    const ytd = byCustYtd[k] || {amount:0, qty:0};
     const cur = (byCustMonth[k][curMonth] || {amount:0}).amount;
     const prev = prevMonth ? (byCustMonth[k][prevMonth] || {amount:0}).amount : 0;
     let momText = '—';
@@ -4843,11 +4858,12 @@ function renderCustMomTable(){
         momColor = 'var(--good)';
       }
     }
-    return { name, vals, momText, momColor, cur };
+    return { name, vals, ytd, momText, momColor, cur };
   }).sort((a,b)=>b.cur-a.cur);
 
   body.innerHTML = rows.map(r=>
     '<tr><td>'+r.name+'</td>' +
+    '<td class="ytd-col-cell" style="text-align:right;font-weight:600;">'+r.ytd.amount.toFixed(1)+'</td><td class="ytd-col-cell" style="text-align:right;color:var(--text-dim);">'+r.ytd.qty+'</td>' +
     r.vals.map(v=>'<td style="text-align:right;">'+v.amount.toFixed(1)+'</td><td style="text-align:right;color:var(--text-dim);">'+v.qty+'</td>').join('') +
     '<td style="text-align:right;color:'+r.momColor+';font-weight:600;">'+r.momText+'</td></tr>'
   ).join('');
@@ -4866,6 +4882,11 @@ function renderCustMomTable(){
         return acc;
       }, {amount:0, qty:0});
     });
+    const ytdTotal = Object.keys(byCustYtd).reduce((acc,k)=>{
+      acc.amount += byCustYtd[k].amount;
+      acc.qty += byCustYtd[k].qty;
+      return acc;
+    }, {amount:0, qty:0});
     const curTotal = (totals[curMonth]||{amount:0}).amount;
     const prevTotal = prevMonth ? (totals[prevMonth]||{amount:0}).amount : 0;
     let fMomText = '—';
@@ -4882,6 +4903,7 @@ function renderCustMomTable(){
     }
     foot.innerHTML = '<tr style="font-weight:700;background:var(--surface-alt);border-top:2px solid var(--border);">' +
       '<td>合计</td>' +
+      '<td class="ytd-col-cell" style="text-align:right;">'+ytdTotal.amount.toFixed(1)+'</td><td class="ytd-col-cell" style="text-align:right;color:var(--text-dim);">'+ytdTotal.qty+'</td>' +
       months.map(m=>{
         const t = totals[m] || {amount:0, qty:0};
         return '<td style="text-align:right;">'+t.amount.toFixed(1)+'</td><td style="text-align:right;color:var(--text-dim);">'+t.qty+'</td>';
@@ -5826,6 +5848,7 @@ let currentLang = localStorage.getItem(I18N_LANG_KEY) || 'zh';
 
 // [中文, English, Polski] —— 可以随时往这个数组里加新条目
 const I18N_DICT = [
+  [' 年累计(YTD)',' YTD',' YTD'],
   ['合计','Total','Razem'],
   ['密码登录','Sign in','Logowanie hasłem'],
   ['账号由管理员线下创建并分配，如无账号请联系管理员，本页面不提供自助注册。','Accounts are created offline by an admin. Contact your admin if you need one — self-registration is not available.','Konta tworzy administrator offline. Skontaktuj się z administratorem — brak samodzielnej rejestracji.'],

@@ -16,6 +16,7 @@
     --copper:#C1793A; --copper-soft:#FBEEE1;
     --teal:#2E8B8A; --alert:#D14343; --alert-soft:#FBEAEA;
     --good:#2F9E5C; --good-soft:#E6F5EC; --radius:3px;
+    --amber:#B7791F; --amber-soft:#FCF6EC;
   }
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;height:100%;}
@@ -65,14 +66,16 @@
   .btn.ghost{background:transparent;color:var(--text-dim);border:1px solid var(--border);}
   .btn.ghost:hover{color:var(--text);border-color:var(--text-faint);}
   .kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:26px;}
-  .kpi{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px;}
+  .kpi{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px 20px;box-shadow:0 1px 2px rgba(16,24,40,.04),0 4px 10px rgba(16,24,40,.05);}
   .kpi .label{font-size:11px;color:var(--text-faint);text-transform:uppercase;letter-spacing:0.6px;}
-  .kpi .value{font-family:'Space Grotesk';font-size:26px;font-weight:600;margin-top:8px;}
-  .kpi .sub{font-size:11.5px;color:var(--text-dim);margin-top:4px;}
-  .kpi .value.copper{color:var(--copper);} .kpi .value.alert{color:var(--alert);} .kpi .value.good{color:var(--good);}
+  .kpi .value{font-family:'Space Grotesk';font-size:30px;font-weight:700;letter-spacing:-0.3px;margin-top:10px;font-variant-numeric:tabular-nums;}
+  .kpi .unit{font-size:13px;font-weight:500;color:var(--text-faint);margin-left:3px;}
+  .kpi .sub{font-size:11.5px;color:var(--text-dim);margin-top:6px;}
+  .kpi .value.copper{color:var(--copper);} .kpi .value.alert{color:var(--alert);} .kpi .value.good{color:var(--good);} .kpi .value.amber{color:var(--amber);}
   .kpi.risk{background:var(--alert-soft);}
+  .kpi.amber-tone{background:var(--amber-soft);border-color:#F2E4CB;}
   .kpi .label.alert{color:var(--alert);}
-  .panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px 22px;margin-bottom:22px;}
+  .panel{background:var(--surface);border:1px solid var(--border-soft);border-radius:14px;padding:24px 26px;margin-bottom:24px;box-shadow:0 1px 2px rgba(16,24,40,.04),0 4px 12px rgba(16,24,40,.05);}
   .panel-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
   .panel-head h3{font-size:14.5px;font-weight:600;}
   .panel-head .desc{font-size:12px;color:var(--text-faint);margin-top:3px;}
@@ -87,6 +90,10 @@
   .ytd-col-sub{background:#e8f0fc!important;}
   td.ytd-col-cell{background:#eef4fc;}
   tbody tr:hover td.ytd-col-cell{background:#dfeafc;}
+  #custMomTable tbody tr:nth-child(even) td{background:#FAFBFD;}
+  #custMomTable tbody tr:nth-child(even) td.ytd-col-cell{background:#F3F7FD;}
+  #custMomTable tbody td:not(:first-child),
+  #custMomTable tfoot td:not(:first-child){font-variant-numeric:tabular-nums;font-family:'IBM Plex Mono','IBM Plex Sans SC',sans-serif;}
   .num-cell{font-family:'IBM Plex Mono';}
   .price-table-scroll table th:nth-child(3),
   .price-table-scroll table td:nth-child(3){position:sticky;left:0;background:var(--surface);z-index:2;box-shadow:2px 0 4px rgba(0,0,0,0.05);}
@@ -101,10 +108,11 @@
   .tag.type-prospect{background:#FFF3D6;color:#B27B00;}
   .tag.status-shipped{background:var(--good-soft);color:var(--good);}
   .tag.status-pending{background:#FFF3D6;color:#B27B00;}
-  .mom-badge{display:inline-flex;align-items:center;gap:2px;padding:2px 8px;border-radius:12px;font-weight:700;font-size:12px;}
-  .mom-badge.up{background:var(--good-soft);color:var(--good);}
-  .mom-badge.down{background:var(--alert-soft);color:var(--alert);}
-  .mom-badge.flat{background:transparent;color:var(--text-faint);font-weight:400;}
+  .mom-badge{display:inline-flex;align-items:center;gap:3px;font-weight:600;font-size:12.5px;font-variant-numeric:tabular-nums;}
+  .mom-badge .arrow{font-size:10px;line-height:1;}
+  .mom-badge.up{color:var(--good);}
+  .mom-badge.down{color:var(--alert);}
+  .mom-badge.flat{color:var(--text-faint);font-weight:400;}
   .status{display:inline-flex;align-items:center;gap:6px;font-size:12px;}
   .status .sdot{width:6px;height:6px;border-radius:50%;}
   .status.plan .sdot{background:var(--text-faint);} .status.live .sdot{background:var(--good);} .status.done .sdot{background:var(--text-dim);}
@@ -597,7 +605,7 @@
 
       <div class="panel">
         <div class="panel-head"><div><h3>客户维度月环比</h3><div class="desc">各客户近3个月订单净额趋势及最新环比</div></div><button class="btn ghost" id="custMomExportBtn" style="font-size:12px;padding:6px 12px;">导出 Excel</button></div>
-        <table>
+        <table id="custMomTable">
           <thead><tr id="custMomTableHead"><th>客户</th></tr></thead>
           <tbody id="custMomTableBody"></tbody>
         </table>
@@ -4763,6 +4771,7 @@ function renderSalesOverview(){
 function renderSalesKpi(){
   const box = document.getElementById('salesKpiRow');
   if (!box) return;
+  const fmtMoney = n => n.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
   const totalNet = orders.reduce((s,o)=>s+orderTotal(o.id),0);
   const invGross = invoices.reduce((s,i)=>s+i.gross,0);
   const unpaidList = invoices.filter(i=>i.status==='待付款');
@@ -4770,10 +4779,10 @@ function renderSalesKpi(){
   const doneCount = orders.filter(o=>o.status==='已发货'||o.status==='已完成').length;
   const doneRate = orders.length ? Math.round(doneCount/orders.length*100) : 0;
   box.innerHTML = `
-    <div class="kpi" style="border-top:3px solid var(--copper);"><div class="label">累计销售净额</div><div class="value copper">${totalNet.toFixed(1)} zł</div><div class="sub">${orders.length} 个订单合计</div></div>
-    <div class="kpi" style="border-top:3px solid var(--text-dim);"><div class="label">发票总额（含税）</div><div class="value">${invGross.toFixed(1)} zł</div><div class="sub">${invoices.length} 张正式发票</div></div>
-    <div class="kpi${unpaidNet>0?' risk':''}" style="border-top:3px solid var(--alert);"><div class="label">待回款金额</div><div class="value ${unpaidNet>0?'alert':''}">${unpaidNet.toFixed(1)} zł</div><div class="sub">${unpaidList.length} 张待付款发票</div></div>
-    <div class="kpi" style="border-top:3px solid var(--good);"><div class="label">订单履约率</div><div class="value">${doneRate}%</div><div class="sub">已发货/已完成 ${doneCount} / ${orders.length}</div></div>
+    <div class="kpi" style="border-top:3px solid var(--copper);"><div class="label">累计销售净额</div><div class="value copper">${fmtMoney(totalNet)}<span class="unit">zł</span></div><div class="sub">${orders.length} 个订单合计</div></div>
+    <div class="kpi" style="border-top:3px solid var(--text-dim);"><div class="label">发票总额（含税）</div><div class="value">${fmtMoney(invGross)}<span class="unit">zł</span></div><div class="sub">${invoices.length} 张正式发票</div></div>
+    <div class="kpi${unpaidNet>0?' amber-tone':''}" style="border-top:3px solid var(--amber);"><div class="label">待回款金额</div><div class="value ${unpaidNet>0?'amber':''}">${fmtMoney(unpaidNet)}<span class="unit">zł</span></div><div class="sub">${unpaidList.length} 张待付款发票</div></div>
+    <div class="kpi" style="border-top:3px solid var(--good);"><div class="label">订单履约率</div><div class="value good">${doneRate}<span class="unit">%</span></div><div class="sub">已发货/已完成 ${doneCount} / ${orders.length}</div></div>
   `;
 }
 
@@ -4801,7 +4810,7 @@ function renderMomBadge(momText, momColor){
   const isUp = momColor === 'var(--good)';
   const cls = isUp ? 'up' : 'down';
   const arrow = isUp ? '↑' : '↓';
-  return '<span class="mom-badge '+cls+'">'+arrow+' '+momText+'</span>';
+  return '<span class="mom-badge '+cls+'"><span class="arrow">'+arrow+'</span>'+momText+'</span>';
 }
 
 function exportCustMomCSV(){
@@ -4839,6 +4848,8 @@ function renderCustMomTable(){
   const head = document.getElementById('custMomTableHead');
   const body = document.getElementById('custMomTableBody');
   if (!head || !body) return;
+  const fmtAmt = n => n.toLocaleString('en-US', {minimumFractionDigits:1, maximumFractionDigits:1});
+  const fmtQty = n => n.toLocaleString('en-US');
   const months = getRollingMonths(3);
   const curMonth = months[months.length-1];
   const prevMonth = months.length>1 ? months[months.length-2] : null;
@@ -4913,8 +4924,8 @@ function renderCustMomTable(){
 
   body.innerHTML = rows.map(r=>
     '<tr><td>'+r.name+'</td>' +
-    '<td class="ytd-col-cell" style="text-align:right;font-weight:600;">'+r.ytd.amount.toFixed(1)+'</td><td class="ytd-col-cell" style="text-align:right;color:var(--text-dim);">'+r.ytd.qty+'</td>' +
-    r.vals.map(v=>'<td style="text-align:right;">'+v.amount.toFixed(1)+'</td><td style="text-align:right;color:var(--text-dim);">'+v.qty+'</td>').join('') +
+    '<td class="ytd-col-cell" style="text-align:right;font-weight:600;">'+fmtAmt(r.ytd.amount)+'</td><td class="ytd-col-cell" style="text-align:right;color:var(--text-dim);">'+fmtQty(r.ytd.qty)+'</td>' +
+    r.vals.map(v=>'<td style="text-align:right;">'+fmtAmt(v.amount)+'</td><td style="text-align:right;color:var(--text-dim);">'+fmtQty(v.qty)+'</td>').join('') +
     '<td style="text-align:right;">'+renderMomBadge(r.momText, r.momColor)+'</td></tr>'
   ).join('');
 
@@ -4954,10 +4965,10 @@ function renderCustMomTable(){
     }
     foot.innerHTML = '<tr style="font-weight:700;background:var(--surface-alt);border-top:2px solid var(--border);">' +
       '<td>合计</td>' +
-      '<td class="ytd-col-cell" style="text-align:right;">'+ytdTotal.amount.toFixed(1)+'</td><td class="ytd-col-cell" style="text-align:right;color:var(--text-dim);">'+ytdTotal.qty+'</td>' +
+      '<td class="ytd-col-cell" style="text-align:right;">'+fmtAmt(ytdTotal.amount)+'</td><td class="ytd-col-cell" style="text-align:right;color:var(--text-dim);">'+fmtQty(ytdTotal.qty)+'</td>' +
       months.map(m=>{
         const t = totals[m] || {amount:0, qty:0};
-        return '<td style="text-align:right;">'+t.amount.toFixed(1)+'</td><td style="text-align:right;color:var(--text-dim);">'+t.qty+'</td>';
+        return '<td style="text-align:right;">'+fmtAmt(t.amount)+'</td><td style="text-align:right;color:var(--text-dim);">'+fmtQty(t.qty)+'</td>';
       }).join('') +
       '<td style="text-align:right;">'+renderMomBadge(fMomText, fMomColor)+'</td></tr>';
   }

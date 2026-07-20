@@ -584,18 +584,12 @@
 
       <div class="kpi-row" id="salesKpiRow"></div>
 
-      <div class="two-col">
-        <div class="panel">
-          <div class="panel-head"><div><h3>客户维度月环比</h3><div class="desc">各客户近3个月订单净额趋势及最新环比</div></div></div>
-          <table>
-            <thead><tr id="custMomTableHead"><th>客户</th></tr></thead>
-            <tbody id="custMomTableBody"></tbody>
-          </table>
-        </div>
-        <div class="panel">
-          <div class="panel-head"><div><h3>月度销售趋势</h3><div class="desc">按下单日期汇总的月度订单净额（PLN）</div></div></div>
-          <div class="chart-wrap"><canvas id="chartMonthlySales"></canvas></div>
-        </div>
+      <div class="panel">
+        <div class="panel-head"><div><h3>客户维度月环比</h3><div class="desc">各客户近3个月订单净额趋势及最新环比</div></div></div>
+        <table>
+          <thead><tr id="custMomTableHead"><th>客户</th></tr></thead>
+          <tbody id="custMomTableBody"></tbody>
+        </table>
       </div>
 
       <div class="panel">
@@ -4747,13 +4741,10 @@ async function loadMarketingActivities(){
   }catch(e){ console.error(e); }
 }
 
-let chartMonthlySales = null;
-
 function renderSalesOverview(){
   if (typeof orders === 'undefined' || typeof invoices === 'undefined') return;
   renderSalesKpi();
   renderCustMomTable();
-  renderSalesCharts();
   renderRecentOrdersTable();
   renderUnpaidInvoicesTable();
 }
@@ -4792,28 +4783,6 @@ function getRollingMonths(n){
     result.push(y+'-'+String(m).padStart(2,'0'));
   }
   return result;
-}
-
-function renderSalesCharts(){
-  if (typeof Chart === 'undefined') return;
-  const byMonth = {};
-  orders.forEach(o=>{
-    const m = (o.date||'').slice(0,7);
-    if (!m) return;
-    byMonth[m] = (byMonth[m]||0) + orderTotal(o.id);
-  });
-  const monthLabels = getRollingMonths(6);
-  const monthData = monthLabels.map(m=>byMonth[m]||0);
-  const ctx2 = document.getElementById('chartMonthlySales');
-  if (ctx2){
-    if (chartMonthlySales) chartMonthlySales.destroy();
-    chartMonthlySales = new Chart(ctx2, {
-      type: 'bar',
-      data: { labels: monthLabels, datasets: [{ data: monthData, backgroundColor: '#C1793A', borderRadius: 2, barThickness: 26 }] },
-      options: { plugins: { legend: { display: false } },
-        scales: { x: { ticks: { color: '#5B6B80' }, grid: { display: false } }, y: { ticks: { color: '#5B6B80' }, grid: { color: '#DCE1E8' } } } }
-    });
-  }
 }
 
 function renderCustMomTable(){

@@ -75,6 +75,11 @@
   .kpi.risk{background:var(--alert-soft);}
   .kpi.amber-tone{background:var(--amber-soft);border-color:#F2E4CB;}
   .kpi .label.alert{color:var(--alert);}
+  
+  .promo-alert-banner{display:flex;align-items:center;gap:10px;background:var(--surface-alt);border-left:3px solid var(--teal);border-radius:0 var(--radius) var(--radius) 0;padding:12px 16px;margin-bottom:14px;}
+  .promo-alert-icon{color:var(--teal);font-size:16px;flex-shrink:0;}
+  .promo-alert-stats{display:flex;flex-wrap:wrap;gap:20px;font-size:13px;color:var(--text-dim);}
+  .promo-alert-stats b{color:var(--text);font-weight:600;}
   .panel{background:var(--surface);border:1px solid var(--border-soft);border-radius:14px;padding:24px 26px;margin-bottom:24px;box-shadow:0 1px 2px rgba(16,24,40,.04),0 4px 12px rgba(16,24,40,.05);}
   .panel-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
   .panel-head h3{font-size:14.5px;font-weight:600;}
@@ -3539,20 +3544,13 @@ function renderPromoDealKpi(){
   const discounts = promoDeals.filter(p=>p.original>0).map(promoDealDiscountPct);
   const avgDiscount = discounts.length ? (discounts.reduce((a,b)=>a+b,0)/discounts.length) : 0;
   box.innerHTML = `
-    <div class="kpi">
-      <div class="label">促销活动总数</div>
-      <div class="value">${total}</div>
-      <div class="sub">${total?('累计登记 '+total+' 个促销'):'暂无促销活动'}</div>
-    </div>
-    <div class="kpi">
-      <div class="label">进行中促销</div>
-      <div class="value">${active}</div>
-      <div class="sub">当前状态为"进行中"的促销数</div>
-    </div>
-    <div class="kpi">
-      <div class="label">平均折扣力度</div>
-      <div class="value">${avgDiscount.toFixed(1)}%</div>
-      <div class="sub">按(DDP原价-DDP促销价)/DDP原价计算</div>
+    <div class="promo-alert-banner">
+      <div class="promo-alert-icon">\u2726</div>
+      <div class="promo-alert-stats">
+        <span>促销活动总数 <b>${total}</b></span>
+        <span>进行中促销 <b>${active}</b></span>
+        <span>平均折扣力度 <b>${avgDiscount.toFixed(1)}%</b></span>
+      </div>
     </div>
   `;
 }

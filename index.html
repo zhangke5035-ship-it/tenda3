@@ -586,9 +586,9 @@
 
       <div class="two-col">
         <div class="panel">
-          <div class="panel-head"><div><h3>客户维度月环比</h3><div class="desc">各客户订单净额，本月与上月对比</div></div></div>
+          <div class="panel-head"><div><h3>客户维度月环比</h3><div class="desc">各客户近3个月订单净额趋势及最新环比</div></div></div>
           <table>
-            <thead><tr><th>客户</th><th>上月净额(PLN)</th><th>本月净额(PLN)</th><th>环比</th></tr></thead>
+            <thead><tr id="custMomTableHead"><th>客户</th></tr></thead>
             <tbody id="custMomTableBody"></tbody>
           </table>
         </div>
@@ -4774,6 +4774,25 @@ function renderSalesKpi(){
   `;
 }
 
+function getRollingMonths(n){
+  const seen = {};
+  orders.forEach(o=>{ const m=(o.date||'').slice(0,7); if (m) seen[m]=1; });
+  const keys = Object.keys(seen).sort();
+  let endMonth = keys.length ? keys[keys.length-1] : null;
+  const today = new Date();
+  const curMonth = today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0');
+  if (!endMonth || curMonth > endMonth) endMonth = curMonth;
+  const parts = endMonth.split('-').map(Number);
+  const ey = parts[0], em = parts[1];
+  const result = [];
+  for (let i=n-1;i>=0;i--){
+    let y=ey, m=em-i;
+    while (m<=0){ m+=12; y-=1; }
+    result.push(y+'-'+String(m).padStart(2,'0'));
+  }
+  return result;
+}
+
 function renderSalesCharts(){
   if (typeof Chart === 'undefined') return;
   const byMonth = {};
@@ -4782,8 +4801,8 @@ function renderSalesCharts(){
     if (!m) return;
     byMonth[m] = (byMonth[m]||0) + orderTotal(o.id);
   });
-  const monthLabels = Object.keys(byMonth).sort();
-  const monthData = monthLabels.map(m=>byMonth[m]);
+  const monthLabels = getRollingMonths(6);
+  const monthData = monthLabels.map(m=>byMonth[m]||0);
   const ctx2 = document.getElementById('chartMonthlySales');
   if (ctx2){
     if (chartMonthlySales) chartMonthlySales.destroy();
@@ -4797,8 +4816,11 @@ function renderSalesCharts(){
 }
 
 function renderCustMomTable(){
+  const head = document.getElementById('custMomTableHead');
   const body = document.getElementById('custMomTableBody');
-  if (!body) return;
+  if (!head || !body) return;
+  const months = getRollingMonths(3);
+  head.innerHTML = '<th>客户</th>' + months.map(m=>'<th style="text-align:right;">'+m+'</th>').join('') + '<th style="text-align:right;">环比</th>';
   const byCustMonth = {};
   orders.forEach(o=>{
     const m = (o.date||'').slice(0,7);
@@ -4806,16 +4828,16 @@ function renderCustMomTable(){
     if (!byCustMonth[o.cust]) byCustMonth[o.cust] = {};
     byCustMonth[o.cust][m] = (byCustMonth[o.cust][m]||0) + orderTotal(o.id);
   });
-  const allMonths = [...new Set(orders.map(o=>(o.date||'').slice(0,7)).filter(Boolean))].sort();
-  const curMonth = allMonths[allMonths.length-1];
-  const prevMonth = allMonths.length>1 ? allMonths[allMonths.length-2] : null;
   const custKeys = Object.keys(byCustMonth);
-  if (!custKeys.length || !curMonth){
-    body.innerHTML = '<tr><td colspan="4" style="color:var(--text-faint);">暂无数据</td></tr>';
+  if (!custKeys.length){
+    body.innerHTML = '<tr><td colspan="'+(months.length+2)+'" style="color:var(--text-faint);">暂无数据</td></tr>';
     return;
   }
+  const curMonth = months[months.length-1];
+  const prevMonth = months.length>1 ? months[months.length-2] : null;
   const rows = custKeys.map(k=>{
     const name = (typeof CUSTOMERS!=='undefined' && CUSTOMERS[k]) ? CUSTOMERS[k].name : k;
+    const vals = months.map(m=>byCustMonth[k][m]||0);
     const cur = byCustMonth[k][curMonth] || 0;
     const prev = prevMonth ? (byCustMonth[k][prevMonth] || 0) : 0;
     let momText = '—';
@@ -4830,10 +4852,12 @@ function renderCustMomTable(){
         momColor = 'var(--good)';
       }
     }
-    return { name, cur, prev, momText, momColor };
+    return { name, vals, momText, momColor, cur };
   }).sort((a,b)=>b.cur-a.cur);
   body.innerHTML = rows.map(r=>
-    '<tr><td>'+r.name+'</td><td style="text-align:right;">'+r.prev.toFixed(1)+'</td><td style="text-align:right;">'+r.cur.toFixed(1)+'</td><td style="text-align:right;color:'+r.momColor+';">'+r.momText+'</td></tr>'
+    '<tr><td>'+r.name+'</td>' +
+    r.vals.map(v=>'<td style="text-align:right;">'+v.toFixed(1)+'</td>').join('') +
+    '<td style="text-align:right;color:'+r.momColor+';">'+r.momText+'</td></tr>'
   ).join('');
 }
 
@@ -6330,6 +6354,11 @@ const I18N_DICT = [
   ['暂无一级分销商数据','No Tier-1 distributor data yet','Brak jeszcze danych dystrybutora poziomu 1'],
   ['暂无二级渠道，点击上方"新增二级渠道"添加','No sub-channels yet — click "Add Sub-Channel" above to add one','Brak kanałów podrzędnych — kliknij "Dodaj kanał podrzędny" powyżej, aby dodać'],
   ['确认添加','Confirm Add','Potwierdź dodanie']
+,
+  ['客户维度月环比','Customer MoM Trend','Trend m/m wg klienta'],
+  ['各客户近3个月订单净额趋势及最新环比','Order net amount by customer for the last 3 months, with the latest month-over-month change','Wartość netto zamówień wg klienta za ostatnie 3 miesiące oraz najnowsza zmiana m/m'],
+  ['环比','MoM','m/m'],
+  ['暂无数据','No data yet','Brak danych']
 ];
 I18N_DICT.sort((a,b)=>b[0].length-a[0].length);
 

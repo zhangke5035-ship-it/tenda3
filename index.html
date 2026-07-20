@@ -1183,7 +1183,7 @@
     <table>
       <thead><tr>
         <th class="promo-check-th"><input type="checkbox" id="promoDealSelectAllCheck" title="全选/取消全选当前筛选结果"></th>
-        <th>促销活动 / 产品型号</th><th>客户</th><th class="promo-num">含税零售价</th><th class="promo-num">DMP三级原价</th><th class="promo-num">DDP促销价格 (PLN)</th><th class="promo-period-col">活动周期</th><th class="promo-center">状态</th><th>操作</th>
+        <th>促销活动 / 产品型号</th><th>客户</th><th class="promo-num">含税零售价</th><th class="promo-num">DMP三级原价</th><th class="promo-num">DDP促销价格 (PLN)</th><th class="promo-num">拉货进度</th><th class="promo-period-col">活动周期</th><th class="promo-center">状态</th><th>操作</th>
       </tr></thead>
       <tbody id="promoDealTableBody"></tbody>
     </table>
@@ -1297,6 +1297,7 @@
             </select>
           </div>
         </div>
+        <div class="field mono"><label>拉货目标 (台，选填)</label><input id="pd_target" type="number" placeholder="留空则不追踪拉货进度对比"></div>
       </div>
     </div>
     <div class="drawer-footer">
@@ -1334,6 +1335,7 @@
           <option>已取消</option>
         </select>
       </div>
+      <div class="field mono"><label>拉货目标 (台，选填)</label><input id="pdd_target" type="number" placeholder="留空则不追踪拉货进度对比"></div>
     </div>
     <button class="btn" id="promoDealDetailSaveBtn">保存修改</button>
     <button class="btn ghost" id="promoDealDetailDeleteBtn" style="margin-left:8px;color:var(--alert);">删除该促销</button>
@@ -3536,23 +3538,80 @@ function promoDealDiscountPct(p){
   return p.original>0 ? (1-p.promo/p.original)*100 : 0;
 }
 
+function promoDealTarget(p){
+  return (p.config && Number(p.config.target)) || 0;
+}
+function promoDealPullVolume(p){
+  if (!p.product || !p.cust || !p.start || !p.end) return 0;
+  return orderItems.filter(function(oi){
+    if (oi.product !== p.product) return false;
+    const ord = orders.find(function(o){ return o.id === oi.orderId; });
+    if (!ord || ord.cust !== p.cust || !ord.date) return false;
+    return ord.date >= p.start && ord.date <= p.end;
+  }).reduce(function(s, oi){ return s + oi.qty; }, 0);
+}
+function promoDealBaseline(p){
+  if (!p.product || !p.cust) return 0;
+  const matches = orderItems.filter(function(oi){
+    if (oi.product !== p.product) return false;
+    const ord = orders.find(function(o){ return o.id === oi.orderId; });
+    if (!ord || ord.cust !== p.cust || !ord.date) return false;
+    if (p.start && p.end && ord.date >= p.start && ord.date <= p.end) return false;
+    return true;
+  });
+  if (!matches.length) return 0;
+  const months = new Set(matches.map(function(oi){
+    const ord = orders.find(function(o){ return o.id === oi.orderId; });
+    return ord.date.slice(0, 7);
+  }));
+  const totalQty = matches.reduce(function(s, oi){ return s + oi.qty; }, 0);
+  return months.size ? totalQty / months.size : 0;
+}
+function togglePromoPullDetail(id){
+  const row = document.getElementById("promoPullDetail-" + id);
+  if (!row) return;
+  row.style.display = row.style.display === "none" ? "table-row" : "none";
+}
+
 function renderPromoDealKpi(){
-  const box = document.getElementById('promoDealKpiRow');
+  const box = document.getElementById("promoDealKpiRow");
   if (!box) return;
   const total = promoDeals.length;
-  const active = promoDeals.filter(p=>p.status==='进行中').length;
-  const discounts = promoDeals.filter(p=>p.original>0).map(promoDealDiscountPct);
-  const avgDiscount = discounts.length ? (discounts.reduce((a,b)=>a+b,0)/discounts.length) : 0;
-  box.innerHTML = `
-    <div class="promo-alert-banner">
-      <div class="promo-alert-icon">\u2726</div>
-      <div class="promo-alert-stats">
-        <span>促销活动总数 <b>${total}</b></span>
-        <span>进行中促销 <b>${active}</b></span>
-        <span>平均折扣力度 <b>${avgDiscount.toFixed(1)}%</b></span>
-      </div>
-    </div>
-  `;
+  const active = promoDeals.filter(function(p){ return p.status === "进行中"; }).length;
+  const discounts = promoDeals.filter(function(p){ return p.original>0; }).map(promoDealDiscountPct);
+  const avgDiscount = discounts.length ? (discounts.reduce(function(a,b){ return a+b; },0)/discounts.length) : 0;
+
+  const withTarget = promoDeals.filter(function(p){ return promoDealTarget(p) > 0; });
+  const totalPull = promoDeals.reduce(function(s,p){ return s + promoDealPullVolume(p); }, 0);
+  const totalTarget = withTarget.reduce(function(s,p){ return s + promoDealTarget(p); }, 0);
+  const achieveRate = totalTarget>0 ? (totalPull/totalTarget*100) : 0;
+
+  const withBaseline = promoDeals.filter(function(p){ return promoDealBaseline(p) > 0; });
+  const liftPull = withBaseline.reduce(function(s,p){ return s + promoDealPullVolume(p); }, 0);
+  const liftBaseline = withBaseline.reduce(function(s,p){ return s + promoDealBaseline(p); }, 0);
+  const avgLift = liftBaseline>0 ? (liftPull/liftBaseline) : 0;
+
+  box.innerHTML = "" +
+    "<div class=\"kpi\">" +
+      "<div class=\"label\">本月促销拉货总量</div>" +
+      "<div class=\"value\">" + totalPull + "<span class=\"unit\">台</span></div>" +
+      "<div class=\"sub\">" + (total ? ("累计登记 "+total+" 个促销") : "暂无促销活动") + "</div>" +
+    "</div>" +
+    "<div class=\"kpi\">" +
+      "<div class=\"label\">拉货目标整体达成率</div>" +
+      "<div class=\"value" + (achieveRate>=100?" good":"") + "\">" + achieveRate.toFixed(1) + "<span class=\"unit\">%</span></div>" +
+      "<div class=\"sub\">" + withTarget.length + " 个促销设置了拉货目标</div>" +
+    "</div>" +
+    "<div class=\"kpi amber-tone\">" +
+      "<div class=\"label\">平均拉货脉冲系数</div>" +
+      "<div class=\"value amber\">" + avgLift.toFixed(1) + "<span class=\"unit\">倍</span></div>" +
+      "<div class=\"sub\">较日常月均拉货量的放大倍数</div>" +
+    "</div>" +
+    "<div class=\"kpi\">" +
+      "<div class=\"label\">进行中促销</div>" +
+      "<div class=\"value\">" + active + "</div>" +
+      "<div class=\"sub\">平均折扣力度 " + avgDiscount.toFixed(1) + "%</div>" +
+    "</div>";
 }
 
 function renderPromoDealTabs(){
@@ -3676,6 +3735,15 @@ function renderPromoDealTable(){
   tbody.innerHTML = rows.map(p=>{
     const discount = p.original>0 ? promoDealDiscountPct(p).toFixed(1)+'%' : '—';
     const discountAmount = (p.original>0 || p.promo>0) ? (p.original - p.promo).toFixed(2) : '—';
+    const target = promoDealTarget(p);
+    const pull = promoDealPullVolume(p);
+    const baseline = promoDealBaseline(p);
+    const lift = baseline>0 ? (pull/baseline).toFixed(1) : '—';
+    const pct = target>0 ? Math.min(100, Math.round(pull/target*100)) : 0;
+    const pctColor = pct>=100 ? 'var(--good)' : (pct<50 ? 'var(--alert)' : 'var(--copper)');
+    const pullMax = Math.max(baseline, pull, 1);
+    const baselineBarPct = Math.round(baseline/pullMax*100);
+    const pullBarPct = Math.round(pull/pullMax*100);
     const cfg = p.config || null;
     let extraLine = '';
     if (cfg && Array.isArray(cfg.tiers) && cfg.tiers.length){
@@ -3712,6 +3780,8 @@ function renderPromoDealTable(){
           </div>
         </div>
       </td>
+      <td class="promo-num" style="min-width:150px;">${target>0 ? ('<div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-dim);margin-bottom:4px;"><span>已拉货 <b style="color:var(--text);">'+pull+'</b> 台</span><span>目标 '+target+'</span></div><div style="height:6px;background:var(--surface-alt);border-radius:3px;overflow:hidden;"><div style="height:100%;width:'+pct+'%;background:'+pctColor+';border-radius:3px;"></div></div>') : '<span style="color:var(--text-faint);font-size:12px;">未设置拉货目标</span>'}${baseline>0 ? ('<div style="margin-top:5px;"><a onclick="event.stopPropagation();togglePromoPullDetail('+p.id+')" style="cursor:pointer;color:var(--teal);font-size:11px;">拉货分析 '+lift+'x &#9662;</a></div>') : ''}
+      </td>
       <td class="promo-period-col">
         <div class="promo-date-cell">
           <div>${p.start||'—'}</div>
@@ -3724,6 +3794,28 @@ function renderPromoDealTable(){
         <div class="inv-row-actions">
           <a onclick="event.stopPropagation();editPromoDeal(${p.id})">编辑</a>
           <a class="promo-end-link" style="color:var(--text-dim);" onclick="event.stopPropagation();endPromoDeal(${p.id})">结束</a>
+        </div>
+      </td>
+    </tr>
+    <tr id="promoPullDetail-${p.id}" class="promo-pull-detail-row" style="display:none;">
+      <td colspan="10" style="background:var(--surface-alt);padding:12px 20px;">
+        <div style="display:flex;gap:40px;flex-wrap:wrap;font-size:12px;">
+          <div style="flex:1;min-width:220px;">
+            <div style="color:var(--text-dim);margin-bottom:6px;">拉货趋势对比（日常基线 vs 本次促销）</div>
+            <div style="display:flex;flex-direction:column;gap:6px;">
+              <div style="display:flex;align-items:center;gap:8px;">
+                <span style="width:64px;color:var(--text-faint);flex-shrink:0;">日常基线</span>
+                <div style="flex:1;height:7px;background:var(--surface-raise);border-radius:3px;overflow:hidden;"><div style="height:100%;width:${baselineBarPct}%;background:var(--text-faint);"></div></div>
+                <span style="width:64px;text-align:right;flex-shrink:0;">${baseline.toFixed(0)} 台/月</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;">
+                <span style="width:64px;color:var(--text-faint);flex-shrink:0;">本次拉货</span>
+                <div style="flex:1;height:7px;background:var(--surface-raise);border-radius:3px;overflow:hidden;"><div style="height:100%;width:${pullBarPct}%;background:var(--amber);"></div></div>
+                <span style="width:64px;text-align:right;flex-shrink:0;">${pull} 台</span>
+              </div>
+            </div>
+          </div>
+          <div style="color:var(--text-dim);align-self:center;">拉货脉冲系数 <b style="color:var(--amber);">${lift}x</b>，即本次促销拉货量是日常月均拉货量的 ${lift} 倍。</div>
         </div>
       </td>
     </tr>`;
@@ -3815,6 +3907,7 @@ function openPromoDealDetail(id){
   document.getElementById('pdd_start').value = p.start || '';
   document.getElementById('pdd_end').value = p.end || '';
   document.getElementById('pdd_status').value = p.status || '未开始';
+  document.getElementById('pdd_target').value = (p.config && p.config.target) || '';
   showView('promodeal-detail', 'promodeals');
 }
 function editPromoDeal(id){ openPromoDealDetail(id); }
@@ -4399,6 +4492,8 @@ document.getElementById('addPromoDealBtn').addEventListener('click', async ()=>{
     config = { stock, batch };
   }
 
+  config.target = parseFloat(document.getElementById('pd_target').value) || 0;
+
   const { data, error } = await sb.from('promo_deals').insert({
     name, cust, type, product, original, promo,
     start_date: start || null, end_date: end || null, status, config
@@ -4410,7 +4505,7 @@ document.getElementById('addPromoDealBtn').addEventListener('click', async ()=>{
 });
 
 function openPromoDealDrawer(){
-  ['pd_name','pd_product','pd_original','pd_tier3ref','pd_promo','pd_extra','pd_batch','pd_tier2_price','pd_tier3_price','pd_start','pd_end'].forEach(id=>{
+  ['pd_name','pd_product','pd_original','pd_tier3ref','pd_promo','pd_extra','pd_batch','pd_tier2_price','pd_tier3_price','pd_start','pd_end','pd_target'].forEach(id=>{
     const el = document.getElementById(id); if (el) el.value='';
   });
   document.getElementById('pd_tier2_qty').value = 1000;
@@ -4492,6 +4587,8 @@ if (promoDealBatchEndBtnEl){
 document.getElementById('promoDealDetailBackBtn').addEventListener('click', ()=>{ showView('promodeals'); });
 document.getElementById('promoDealDetailSaveBtn').addEventListener('click', async ()=>{
   if (!promoDealDetailId) return;
+  const existingDeal = promoDeals.find(x=>x.id===promoDealDetailId);
+  const pullTarget = parseFloat(document.getElementById('pdd_target').value) || 0;
   const name = document.getElementById('pdd_name').value.trim();
   const product = document.getElementById('pdd_product').value.trim();
   const original = parseFloat(document.getElementById('pdd_original').value) || 0;
@@ -4504,7 +4601,8 @@ document.getElementById('promoDealDetailSaveBtn').addEventListener('click', asyn
   const status = document.getElementById('pdd_status').value;
   const { data, error } = await sb.from('promo_deals').update({
     name, cust, type, product, original, promo,
-    start_date: start || null, end_date: end || null, status
+    start_date: start || null, end_date: end || null, status,
+    config: Object.assign({}, (existingDeal && existingDeal.config) || {}, { target: pullTarget })
   }).eq('id', promoDealDetailId).select().single();
   if (error){ alert('更新促销失败：' + error.message); return; }
   const idx = promoDeals.findIndex(p=>p.id===promoDealDetailId);

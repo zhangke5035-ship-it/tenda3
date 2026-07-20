@@ -4821,26 +4821,47 @@ function renderCustMomTable(){
   const body = document.getElementById('custMomTableBody');
   if (!head || !body) return;
   const months = getRollingMonths(3);
-  head.innerHTML = '<th>客户</th>' + months.map(m=>'<th style="text-align:right;">'+m+'</th>').join('') + '<th style="text-align:right;">环比</th>';
+  const curMonth = months[months.length-1];
+  const prevMonth = months.length>1 ? months[months.length-2] : null;
+
+  const theadEl = head.parentElement;
+  head.innerHTML = '<th rowspan="2">客户</th>' +
+    months.map(m=>'<th colspan="2" style="text-align:center;">'+m+'</th>').join('') +
+    '<th rowspan="2" style="text-align:right;">环比</th>';
+  let subHead = document.getElementById('custMomTableSubHead');
+  if (!subHead && theadEl){
+    subHead = document.createElement('tr');
+    subHead.id = 'custMomTableSubHead';
+    theadEl.appendChild(subHead);
+  }
+  if (subHead){
+    subHead.innerHTML = months.map(()=>'<th style="text-align:right;color:var(--text-faint);font-weight:500;">金额</th><th style="text-align:right;color:var(--text-faint);font-weight:500;">数量</th>').join('');
+  }
+
   const byCustMonth = {};
   orders.forEach(o=>{
     const m = (o.date||'').slice(0,7);
     if (!m) return;
     if (!byCustMonth[o.cust]) byCustMonth[o.cust] = {};
-    byCustMonth[o.cust][m] = (byCustMonth[o.cust][m]||0) + orderTotal(o.id);
+    if (!byCustMonth[o.cust][m]) byCustMonth[o.cust][m] = {amount:0, qty:0};
+    const qty = orderItems.filter(i=>i.orderId===o.id).reduce((s,i)=>s+i.qty,0);
+    byCustMonth[o.cust][m].amount += orderTotal(o.id);
+    byCustMonth[o.cust][m].qty += qty;
   });
   const custKeys = Object.keys(byCustMonth);
+  const table = body.closest('table');
+  let foot = table ? table.querySelector('tfoot') : null;
   if (!custKeys.length){
-    body.innerHTML = '<tr><td colspan="'+(months.length+2)+'" style="color:var(--text-faint);">暂无数据</td></tr>';
+    body.innerHTML = '<tr><td colspan="'+(months.length*2+2)+'" style="color:var(--text-faint);">暂无数据</td></tr>';
+    if (foot) foot.innerHTML = '';
     return;
   }
-  const curMonth = months[months.length-1];
-  const prevMonth = months.length>1 ? months[months.length-2] : null;
+
   const rows = custKeys.map(k=>{
     const name = (typeof CUSTOMERS!=='undefined' && CUSTOMERS[k]) ? CUSTOMERS[k].name : k;
-    const vals = months.map(m=>byCustMonth[k][m]||0);
-    const cur = byCustMonth[k][curMonth] || 0;
-    const prev = prevMonth ? (byCustMonth[k][prevMonth] || 0) : 0;
+    const vals = months.map(m=>byCustMonth[k][m] || {amount:0, qty:0});
+    const cur = (byCustMonth[k][curMonth] || {amount:0}).amount;
+    const prev = prevMonth ? (byCustMonth[k][prevMonth] || {amount:0}).amount : 0;
     let momText = '—';
     let momColor = 'var(--text-dim)';
     if (prevMonth){
@@ -4855,11 +4876,49 @@ function renderCustMomTable(){
     }
     return { name, vals, momText, momColor, cur };
   }).sort((a,b)=>b.cur-a.cur);
+
   body.innerHTML = rows.map(r=>
     '<tr><td>'+r.name+'</td>' +
-    r.vals.map(v=>'<td style="text-align:right;">'+v.toFixed(1)+'</td>').join('') +
-    '<td style="text-align:right;color:'+r.momColor+';">'+r.momText+'</td></tr>'
+    r.vals.map(v=>'<td style="text-align:right;">'+v.amount.toFixed(1)+'</td><td style="text-align:right;color:var(--text-dim);">'+v.qty+'</td>').join('') +
+    '<td style="text-align:right;color:'+r.momColor+';font-weight:600;">'+r.momText+'</td></tr>'
   ).join('');
+
+  if (table){
+    if (!foot){
+      foot = document.createElement('tfoot');
+      table.appendChild(foot);
+    }
+    const totals = {};
+    months.forEach(m=>{
+      totals[m] = custKeys.reduce((acc,k)=>{
+        const v = byCustMonth[k][m] || {amount:0, qty:0};
+        acc.amount += v.amount;
+        acc.qty += v.qty;
+        return acc;
+      }, {amount:0, qty:0});
+    });
+    const curTotal = (totals[curMonth]||{amount:0}).amount;
+    const prevTotal = prevMonth ? (totals[prevMonth]||{amount:0}).amount : 0;
+    let fMomText = '—';
+    let fMomColor = 'var(--text-dim)';
+    if (prevMonth){
+      if (prevTotal > 0){
+        const pct = ((curTotal - prevTotal) / prevTotal) * 100;
+        fMomText = (pct>=0?'+':'') + pct.toFixed(1) + '%';
+        fMomColor = pct>=0 ? 'var(--good)' : 'var(--alert)';
+      } else if (curTotal > 0){
+        fMomText = '+100.0%';
+        fMomColor = 'var(--good)';
+      }
+    }
+    foot.innerHTML = '<tr style="font-weight:700;background:var(--surface-alt);border-top:2px solid var(--border);">' +
+      '<td>合计</td>' +
+      months.map(m=>{
+        const t = totals[m] || {amount:0, qty:0};
+        return '<td style="text-align:right;">'+t.amount.toFixed(1)+'</td><td style="text-align:right;color:var(--text-dim);">'+t.qty+'</td>';
+      }).join('') +
+      '<td style="text-align:right;color:'+fMomColor+';">'+fMomText+'</td></tr>';
+  }
 }
 
 function renderRecentOrdersTable(){
@@ -5798,6 +5857,7 @@ let currentLang = localStorage.getItem(I18N_LANG_KEY) || 'zh';
 
 // [中文, English, Polski] —— 可以随时往这个数组里加新条目
 const I18N_DICT = [
+  ['合计','Total','Razem'],
   ['密码登录','Sign in','Logowanie hasłem'],
   ['账号由管理员线下创建并分配，如无账号请联系管理员，本页面不提供自助注册。','Accounts are created offline by an admin. Contact your admin if you need one — self-registration is not available.','Konta tworzy administrator offline. Skontaktuj się z administratorem — brak samodzielnej rejestracji.'],
   ['邮箱','Email','E-mail'],

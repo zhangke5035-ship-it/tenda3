@@ -822,7 +822,7 @@
         表中「未税净价」「单位盈亏」「净利率」均为报价表原始计算结果，已包含品牌预留、MDF 预留、风险与指标预留等费用，口径与总部一致。「生命周期」取自《报价型号生命周期_26年6月》清单；「EAN」取自《Q3_Price》价目表。报价明细覆盖 <b>Incom / Action / Eltrox / Intelek / DC-Link</b> 五个客户。Eltrox 同时有 Q2、Q3 两个季度的真实价目表，可以切换"Q3（当前）/ Q2（上一季度）/ 全部季度"查看价格随时间的变化，「环比(QoQ)」列会标出未税净价相对上一季度的涨跌幅。Intelek 的 <b>209 款型号</b> Q3 含税零售价（捷克 Kč）已从最新报价表导入，去税、经销商预留、7% 代理商利润的计算全程用 Kč 进行，仅「最终采购价」按 6.125 汇率换算成 PLN 展示；暂无出厂成本和净利率数据，显示为"—"。DC-Link 暂时只有客户信息，还没有对应的价目表。等你提供其他季度或其他客户的价格表，我可以继续补上。新增行为你手工补充的数据，需要自行核对口径。
       </div>
 
-     <div class="panel" style="display:none;">
+     <div class="panel" id="addPriceItemPanel" style="display:none;">
         <div class="panel-head"><h3>新增报价项</h3></div>
         <div class="form-grid">
           <div class="field"><label>产品型号</label><input id="p_product" list="modelDatalist" placeholder="例如 W15-Pro"></div>
@@ -869,6 +869,7 @@
           </div>
         </div>
         <div class="price-export-row" style="display:flex;justify-content:flex-end;gap:10px;margin:0 0 12px 0;">
+          <button type="button" class="btn" id="togglePriceAddBtn">+ 新增报价型号</button>
           <button type="button" class="btn ghost" id="exportCsvBtn">导出当前表格 CSV</button>
         </div>
 
@@ -4206,6 +4207,16 @@ document.getElementById('addPriceBtn').addEventListener('click', ()=>{
   });
   ['p_product','p_ean','p_customer','p_country','p_retail','p_net','p_cost','p_profit','p_margin'].forEach(id=>document.getElementById(id).value='');
   refreshAll();
+  const addPanel = document.getElementById('addPriceItemPanel');
+  if (addPanel) addPanel.style.display = 'none';
+});
+
+document.getElementById('togglePriceAddBtn').addEventListener('click', ()=>{
+  const addPanel = document.getElementById('addPriceItemPanel');
+  if (!addPanel) return;
+  const show = addPanel.style.display === 'none';
+  addPanel.style.display = show ? 'block' : 'none';
+  if (show) addPanel.scrollIntoView({behavior:'smooth', block:'center'});
 });
 
 document.getElementById('addPromoBtn').addEventListener('click', async ()=>{
@@ -5912,6 +5923,7 @@ let currentLang = localStorage.getItem(I18N_LANG_KEY) || 'zh';
 
 // [中文, English, Polski] —— 可以随时往这个数组里加新条目
 const I18N_DICT = [
+  ['+ 新增报价型号','+ Add Quote Model','+ Dodaj model oferty'],
   [' 年累计(YTD)',' YTD',' YTD'],
   ['合计','Total','Razem'],
   ['密码登录','Sign in','Logowanie hasłem'],

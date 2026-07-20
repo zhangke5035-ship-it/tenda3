@@ -511,6 +511,8 @@
   .dmp-pop-tier.selected .val{color:var(--copper);}
   .final-price-input{width:100%;padding:5px 7px;border:1px solid var(--border);border-radius:var(--radius);font-family:'IBM Plex Mono';font-size:12.5px;color:var(--text);background:var(--surface);}
   .final-price-input:focus{outline:none;border-color:var(--copper);}
+  .sim-reserve-input{width:76px;padding:5px 7px;border:1px solid var(--border);border-radius:var(--radius);font-family:'IBM Plex Mono';font-size:12.5px;color:var(--text);background:var(--surface);text-align:right;}
+  .sim-reserve-input:focus{outline:none;border-color:var(--copper);}
   .final-price-input.invalid{border-color:var(--alert);color:var(--alert);background:var(--alert-soft);}
   .final-price-input.locked{background:var(--surface-alt);color:var(--text-dim);cursor:not-allowed;}
   .final-price-input.locked:focus{border-color:var(--border);}
@@ -5915,6 +5917,7 @@ function finalPriceInputCheck(input){
   }
 }
 
+function numOrZero(v){ const n = parseFloat(v); return isNaN(n) ? 0 : n; }
 function injectAgentTiers(){
   const tbody = document.getElementById('priceTableBody');
   if (!tbody) return;
@@ -6016,7 +6019,8 @@ function injectAgentTiers(){
       const priceId = Number(row.dataset.priceId);
       const priceRow = priceList.find(x=>x.id === priceId);
       const b = priceRow ? simBreakevenFor(priceRow.product) : null;
-      tdBreakeven.textContent = (b===null || b===undefined || isNaN(b)) ? '—' : usd(b);
+      const breakevenVal = (b===null || b===undefined || isNaN(b)) ? null : b;
+      tdBreakeven.textContent = breakevenVal===null ? '—' : usd(breakevenVal);
       row.insertBefore(tdBreakeven, buttonCell);
       const tdNetUsd = document.createElement('td');
       tdNetUsd.className = 'num-cell';
@@ -6025,32 +6029,52 @@ function injectAgentTiers(){
       row.insertBefore(tdNetUsd, buttonCell);
       const tdBalance = document.createElement('td');
       tdBalance.className = 'num-cell';
-      tdBalance.textContent = '';
       row.insertBefore(tdBalance, buttonCell);
       const tdBrandReserve = document.createElement('td');
       tdBrandReserve.className = 'num-cell';
-      tdBrandReserve.textContent = '';
+      tdBrandReserve.innerHTML = '<input type="text" inputmode="decimal" class="sim-reserve-input" data-field="brandReserve" placeholder="0.00" style="width:76px;text-align:right;" value="' + (typeof priceRow.brandReserve==="number" ? priceRow.brandReserve.toFixed(2) : '') + '">';
       row.insertBefore(tdBrandReserve, buttonCell);
       const tdMdfReserve = document.createElement('td');
       tdMdfReserve.className = 'num-cell';
-      tdMdfReserve.textContent = '';
+      tdMdfReserve.innerHTML = '<input type="text" inputmode="decimal" class="sim-reserve-input" data-field="mdfReserve" placeholder="0.00" style="width:76px;text-align:right;" value="' + (typeof priceRow.mdfReserve==="number" ? priceRow.mdfReserve.toFixed(2) : '') + '">';
       row.insertBefore(tdMdfReserve, buttonCell);
       const tdRiskReserve = document.createElement('td');
       tdRiskReserve.className = 'num-cell';
-      tdRiskReserve.textContent = '';
+      tdRiskReserve.innerHTML = '<input type="text" inputmode="decimal" class="sim-reserve-input" data-field="riskReserve" placeholder="0.00" style="width:76px;text-align:right;" value="' + (typeof priceRow.riskReserve==="number" ? priceRow.riskReserve.toFixed(2) : '') + '">';
       row.insertBefore(tdRiskReserve, buttonCell);
       const tdUnitPnl = document.createElement('td');
       tdUnitPnl.className = 'num-cell';
-      tdUnitPnl.textContent = '';
       row.insertBefore(tdUnitPnl, buttonCell);
       const tdPnlRatio = document.createElement('td');
       tdPnlRatio.className = 'num-cell';
-      tdPnlRatio.textContent = '';
       row.insertBefore(tdPnlRatio, buttonCell);
       const tdProfitRatio = document.createElement('td');
       tdProfitRatio.className = 'num-cell';
-      tdProfitRatio.textContent = '';
       row.insertBefore(tdProfitRatio, buttonCell);
+      const recalcSimRow = function(){
+        const brandVal = numOrZero(tdBrandReserve.querySelector('input').value);
+        const mdfVal = numOrZero(tdMdfReserve.querySelector('input').value);
+        const riskVal = numOrZero(tdRiskReserve.querySelector('input').value);
+        priceRow.brandReserve = brandVal;
+        priceRow.mdfReserve = mdfVal;
+        priceRow.riskReserve = riskVal;
+        const reserveTotal = brandVal + mdfVal + riskVal;
+        const balanceVal = finalPriceLocal - reserveTotal;
+        tdBalance.textContent = isNaN(balanceVal) ? '—' : usd(balanceVal);
+        const unitPnlVal = (breakevenVal===null) ? null : (balanceVal - breakevenVal);
+        tdUnitPnl.textContent = unitPnlVal===null ? '—' : usd(unitPnlVal);
+        tdUnitPnl.className = 'num-cell' + (unitPnlVal!==null && unitPnlVal<0 ? ' warn' : '');
+        const pnlRatioVal = (breakevenVal===null || breakevenVal===0 || unitPnlVal===null) ? null : (unitPnlVal/breakevenVal*100);
+        tdPnlRatio.textContent = pnlRatioVal===null ? '—' : fmt(pnlRatioVal)+'%';
+        tdPnlRatio.className = 'num-cell' + (pnlRatioVal!==null && pnlRatioVal<0 ? ' warn' : '');
+        const profitRatioVal = (!finalPriceLocal || unitPnlVal===null) ? null : (unitPnlVal/finalPriceLocal*100);
+        tdProfitRatio.textContent = profitRatioVal===null ? '—' : fmt(profitRatioVal)+'%';
+        tdProfitRatio.className = 'num-cell' + (profitRatioVal!==null && profitRatioVal<0 ? ' warn' : '');
+      };
+      recalcSimRow();
+      tdBrandReserve.querySelector('input').addEventListener('input', recalcSimRow);
+      tdMdfReserve.querySelector('input').addEventListener('input', recalcSimRow);
+      tdRiskReserve.querySelector('input').addEventListener('input', recalcSimRow);
     }
 
     row.dataset.tiersInjected = '1';
@@ -6825,7 +6849,15 @@ const I18N_DICT = [
   ["当前状态为","Current status: ","Bieżący status: "],
   ["的促销数","promotions","promocji"],
   ["一级商未达标锁定","Tier-1 Not Met - Locked","Poziom 1 nie osiągnięty - zablokowane"],
-  ["已激活","Active","Aktywne"]
+  ["已激活","Active","Aktywne"],
+  ["未含税净价（USD）","Net Price Excl. VAT (USD)","Cena netto bez VAT (USD)"],
+  ["去营销与预留平衡价","Balance After Reserves","Saldo po rezerwach"],
+  ["品牌预留 (单个)","Brand Reserve (per unit)","Rezerwa marki (na szt.)"],
+  ["MDF预留 (单个)","MDF Reserve (per unit)","Rezerwa MDF (na szt.)"],
+  ["风险与指标预留","Risk \u0026 KPI Reserve","Rezerwa ryzyka i KPI"],
+  ["单位盈亏","Unit P\u0026L","Zysk/strata jedn."],
+  ["盈亏占比","P\u0026L Ratio","Wskaźnik zysku/straty"],
+  ["盈利占比","Profit Ratio","Wskaźnik rentowności"]
 ];
 I18N_DICT.sort((a,b)=>b[0].length-a[0].length);
 

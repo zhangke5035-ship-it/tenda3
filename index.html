@@ -823,9 +823,9 @@
       </div>
 
      <div class="panel" id="addPriceItemPanel" style="display:none;">
-        <div class="panel-head"><h3>新增报价项</h3></div>
-        <div class="form-grid">
-          <div class="field"><label>产品型号</label><input id="p_product" list="modelDatalist" placeholder="例如 W15-Pro"></div>
+        <div class="panel-head"><h3><span style="display:inline-block;width:4px;height:14px;background:var(--copper);border-radius:2px;margin-right:8px;vertical-align:-1px;"></span>新增报价项</h3></div>
+        <div class="form-grid" style="gap:16px 20px;">
+          <div class="field"><label>产品型号 <span style="color:var(--alert);">*</span></label><input id="p_product" list="modelDatalist" placeholder="例如 W15-Pro"></div>
           <div class="field mono"><label>EAN（留空则自动匹配型号库）</label><input id="p_ean" placeholder="例如 6932849424515"></div>
           <datalist id="modelDatalist"></datalist>
           <datalist id="hqModelDatalist"></datalist>
@@ -835,7 +835,7 @@
               <option value="agent">代理商</option>
             </select>
           </div>
-          <div class="field"><label>客户名称</label><input id="p_customer" placeholder="例如 Incom / Action / Eltrox"></div>
+          <div class="field"><label>客户名称 <span style="color:var(--alert);">*</span></label><input id="p_customer" placeholder="例如 Incom / Action / Eltrox"></div>
           <div class="field"><label>国家</label><input id="p_country" placeholder="例如 波兰 / 捷克 / 乌克兰"></div>
           <div class="field mono"><label>含税零售价 (PLN)</label><input id="p_retail" type="number" placeholder="199"></div>
           <div class="field mono"><label>未税净价 (PLN)</label><input id="p_net" type="number" placeholder="112.8"></div>
@@ -843,7 +843,10 @@
           <div class="field mono"><label>单位盈亏 (USD)</label><input id="p_profit" type="number" placeholder="8.3"></div>
           <div class="field mono"><label>净利率 (%)</label><input id="p_margin" type="number" placeholder="26.3"></div>
         </div>
-        <button class="btn" id="addPriceBtn">新增报价</button>
+        <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:6px;">
+          <button class="btn ghost" type="button" id="resetPriceFormBtn">重置</button>
+          <button class="btn" id="addPriceBtn">+ 新增报价</button>
+        </div>
       </div>
 
                   <div class="panel">
@@ -4205,6 +4208,10 @@ document.getElementById('addPriceBtn').addEventListener('click', ()=>{
     profitUSD: parseFloat(document.getElementById('p_profit').value) || 0,
     marginPct: parseFloat(document.getElementById('p_margin').value) || 0
   });
+
+document.getElementById('resetPriceFormBtn').addEventListener('click', ()=>{
+  ['p_product','p_ean','p_customer','p_country','p_retail','p_net','p_cost','p_profit','p_margin'].forEach(id=>document.getElementById(id).value='');
+});
   ['p_product','p_ean','p_customer','p_country','p_retail','p_net','p_cost','p_profit','p_margin'].forEach(id=>document.getElementById(id).value='');
   refreshAll();
   const addPanel = document.getElementById('addPriceItemPanel');

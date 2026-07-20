@@ -70,6 +70,7 @@
   .kpi .value{font-family:'Space Grotesk';font-size:26px;font-weight:600;margin-top:8px;}
   .kpi .sub{font-size:11.5px;color:var(--text-dim);margin-top:4px;}
   .kpi .value.copper{color:var(--copper);} .kpi .value.alert{color:var(--alert);} .kpi .value.good{color:var(--good);}
+  .kpi.risk{background:var(--alert-soft);}
   .kpi .label.alert{color:var(--alert);}
   .panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px 22px;margin-bottom:22px;}
   .panel-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
@@ -98,6 +99,12 @@
   .tag.type-direct{background:#E8F0FA;color:#2C6FBF;}
   .tag.type-agent{background:var(--good-soft);color:var(--good);}
   .tag.type-prospect{background:#FFF3D6;color:#B27B00;}
+  .tag.status-shipped{background:var(--good-soft);color:var(--good);}
+  .tag.status-pending{background:#FFF3D6;color:#B27B00;}
+  .mom-badge{display:inline-flex;align-items:center;gap:2px;padding:2px 8px;border-radius:12px;font-weight:700;font-size:12px;}
+  .mom-badge.up{background:var(--good-soft);color:var(--good);}
+  .mom-badge.down{background:var(--alert-soft);color:var(--alert);}
+  .mom-badge.flat{background:transparent;color:var(--text-faint);font-weight:400;}
   .status{display:inline-flex;align-items:center;gap:6px;font-size:12px;}
   .status .sdot{width:6px;height:6px;border-radius:50%;}
   .status.plan .sdot{background:var(--text-faint);} .status.live .sdot{background:var(--good);} .status.done .sdot{background:var(--text-dim);}
@@ -589,7 +596,7 @@
       <div class="kpi-row" id="salesKpiRow"></div>
 
       <div class="panel">
-        <div class="panel-head"><div><h3>客户维度月环比</h3><div class="desc">各客户近3个月订单净额趋势及最新环比</div></div></div>
+        <div class="panel-head"><div><h3>客户维度月环比</h3><div class="desc">各客户近3个月订单净额趋势及最新环比</div></div><button class="btn ghost" id="custMomExportBtn" style="font-size:12px;padding:6px 12px;">导出 Excel</button></div>
         <table>
           <thead><tr id="custMomTableHead"><th>客户</th></tr></thead>
           <tbody id="custMomTableBody"></tbody>
@@ -4763,10 +4770,10 @@ function renderSalesKpi(){
   const doneCount = orders.filter(o=>o.status==='已发货'||o.status==='已完成').length;
   const doneRate = orders.length ? Math.round(doneCount/orders.length*100) : 0;
   box.innerHTML = `
-    <div class="kpi"><div class="label">累计销售净额</div><div class="value copper">${totalNet.toFixed(1)} zł</div><div class="sub">${orders.length} 个订单合计</div></div>
-    <div class="kpi"><div class="label">发票总额（含税）</div><div class="value">${invGross.toFixed(1)} zł</div><div class="sub">${invoices.length} 张正式发票</div></div>
-    <div class="kpi"><div class="label">待回款金额</div><div class="value ${unpaidNet>0?'alert':''}">${unpaidNet.toFixed(1)} zł</div><div class="sub">${unpaidList.length} 张待付款发票</div></div>
-    <div class="kpi"><div class="label">订单履约率</div><div class="value">${doneRate}%</div><div class="sub">已发货/已完成 ${doneCount} / ${orders.length}</div></div>
+    <div class="kpi" style="border-top:3px solid var(--copper);"><div class="label">累计销售净额</div><div class="value copper">${totalNet.toFixed(1)} zł</div><div class="sub">${orders.length} 个订单合计</div></div>
+    <div class="kpi" style="border-top:3px solid var(--text-dim);"><div class="label">发票总额（含税）</div><div class="value">${invGross.toFixed(1)} zł</div><div class="sub">${invoices.length} 张正式发票</div></div>
+    <div class="kpi${unpaidNet>0?' risk':''}" style="border-top:3px solid var(--alert);"><div class="label">待回款金额</div><div class="value ${unpaidNet>0?'alert':''}">${unpaidNet.toFixed(1)} zł</div><div class="sub">${unpaidList.length} 张待付款发票</div></div>
+    <div class="kpi" style="border-top:3px solid var(--good);"><div class="label">订单履约率</div><div class="value">${doneRate}%</div><div class="sub">已发货/已完成 ${doneCount} / ${orders.length}</div></div>
   `;
 }
 
@@ -4787,6 +4794,45 @@ function getRollingMonths(n){
     result.push(y+'-'+String(m).padStart(2,'0'));
   }
   return result;
+}
+
+function renderMomBadge(momText, momColor){
+  if (momText === '—') return '<span class="mom-badge flat">'+momText+'</span>';
+  const isUp = momColor === 'var(--good)';
+  const cls = isUp ? 'up' : 'down';
+  const arrow = isUp ? '↑' : '↓';
+  return '<span class="mom-badge '+cls+'">'+arrow+' '+momText+'</span>';
+}
+
+function exportCustMomCSV(){
+  const cache = window.__custMomExportCache;
+  if (!cache) return;
+  const header = ['客户', cache.ytdYear+' YTD 金额', cache.ytdYear+' YTD 数量'];
+  cache.months.forEach(m=>{ header.push(m+' 金额', m+' 数量'); });
+  header.push('环比');
+  const lines = [header.join(',')];
+  cache.rows.forEach(r=>{
+    const vals = [r.name, r.ytd.amount.toFixed(1), r.ytd.qty];
+    r.vals.forEach(v=>{ vals.push(v.amount.toFixed(1), v.qty); });
+    vals.push(r.momText);
+    lines.push(vals.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(','));
+  });
+  const totalVals = ['合计', cache.ytdTotal.amount.toFixed(1), cache.ytdTotal.qty];
+  cache.months.forEach(m=>{
+    const t = cache.totals[m] || {amount:0, qty:0};
+    totalVals.push(t.amount.toFixed(1), t.qty);
+  });
+  totalVals.push(cache.fMomText);
+  lines.push(totalVals.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(','));
+  const blob = new Blob(['\ufeff' + lines.join('\n')], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = '客户维度月环比_' + new Date().toISOString().slice(0,10) + '.csv';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
 
 function renderCustMomTable(){
@@ -4814,6 +4860,9 @@ function renderCustMomTable(){
       months.map(()=>'<th style="text-align:right;color:var(--text-faint);font-weight:500;">金额</th><th style="text-align:right;color:var(--text-faint);font-weight:500;">数量</th>').join('');
   }
 
+  const exportBtn = document.getElementById('custMomExportBtn');
+  if (exportBtn) exportBtn.onclick = exportCustMomCSV;
+
   const byCustMonth = {};
   const byCustYtd = {};
   orders.forEach(o=>{
@@ -4837,6 +4886,7 @@ function renderCustMomTable(){
   if (!custKeys.length){
     body.innerHTML = '<tr><td colspan="'+(months.length*2+4)+'" style="color:var(--text-faint);">暂无数据</td></tr>';
     if (foot) foot.innerHTML = '';
+    window.__custMomExportCache = null;
     return;
   }
 
@@ -4865,15 +4915,17 @@ function renderCustMomTable(){
     '<tr><td>'+r.name+'</td>' +
     '<td class="ytd-col-cell" style="text-align:right;font-weight:600;">'+r.ytd.amount.toFixed(1)+'</td><td class="ytd-col-cell" style="text-align:right;color:var(--text-dim);">'+r.ytd.qty+'</td>' +
     r.vals.map(v=>'<td style="text-align:right;">'+v.amount.toFixed(1)+'</td><td style="text-align:right;color:var(--text-dim);">'+v.qty+'</td>').join('') +
-    '<td style="text-align:right;color:'+r.momColor+';font-weight:600;">'+r.momText+'</td></tr>'
+    '<td style="text-align:right;">'+renderMomBadge(r.momText, r.momColor)+'</td></tr>'
   ).join('');
 
+  let totals = {};
+  let ytdTotal = {amount:0, qty:0};
+  let fMomText = '—';
   if (table){
     if (!foot){
       foot = document.createElement('tfoot');
       table.appendChild(foot);
     }
-    const totals = {};
     months.forEach(m=>{
       totals[m] = custKeys.reduce((acc,k)=>{
         const v = byCustMonth[k][m] || {amount:0, qty:0};
@@ -4882,14 +4934,13 @@ function renderCustMomTable(){
         return acc;
       }, {amount:0, qty:0});
     });
-    const ytdTotal = Object.keys(byCustYtd).reduce((acc,k)=>{
+    ytdTotal = Object.keys(byCustYtd).reduce((acc,k)=>{
       acc.amount += byCustYtd[k].amount;
       acc.qty += byCustYtd[k].qty;
       return acc;
     }, {amount:0, qty:0});
     const curTotal = (totals[curMonth]||{amount:0}).amount;
     const prevTotal = prevMonth ? (totals[prevMonth]||{amount:0}).amount : 0;
-    let fMomText = '—';
     let fMomColor = 'var(--text-dim)';
     if (prevMonth){
       if (prevTotal > 0){
@@ -4908,8 +4959,10 @@ function renderCustMomTable(){
         const t = totals[m] || {amount:0, qty:0};
         return '<td style="text-align:right;">'+t.amount.toFixed(1)+'</td><td style="text-align:right;color:var(--text-dim);">'+t.qty+'</td>';
       }).join('') +
-      '<td style="text-align:right;color:'+fMomColor+';">'+fMomText+'</td></tr>';
+      '<td style="text-align:right;">'+renderMomBadge(fMomText, fMomColor)+'</td></tr>';
   }
+
+  window.__custMomExportCache = { months, ytdYear, rows, totals, ytdTotal, fMomText };
 }
 
 function renderRecentOrdersTable(){
@@ -4920,13 +4973,13 @@ function renderRecentOrdersTable(){
   if (desc) desc.textContent = `最近 ${rows.length} 条（共 ${orders.length} 个订单）`;
   body.innerHTML = rows.map(o=>{
     const custName = (typeof CUSTOMERS!=='undefined' && CUSTOMERS[o.cust]) ? CUSTOMERS[o.cust].name : (o.cust||'');
-    const statusClass = o.status==='待处理'?'plan':(o.status==='已完成'?'done':'live');
+    const statusTagClass = o.status==='待处理' ? 'status-pending' : 'status-shipped';
     return `<tr>
       <td class="mono">${o.no}</td>
       <td>${custName}</td>
       <td>${o.date||''}</td>
       <td class="num-cell">${orderTotal(o.id).toFixed(1)}</td>
-      <td><span class="status ${statusClass}"><span class="sdot"></span>${o.status}</span></td>
+      <td><span class="tag ${statusTagClass}">${o.status}</span></td>
     </tr>`;
   }).join('');
 }

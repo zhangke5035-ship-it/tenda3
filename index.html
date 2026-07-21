@@ -124,7 +124,7 @@
   .healthy{color:var(--good);} .warn{color:var(--alert);font-weight:600;}
   .rowwarn{background:var(--alert-soft) !important;}
   .progress-wrap{width:100%;background:var(--surface-alt);border-radius:20px;height:6px;overflow:hidden;}
-  .progress-bar{height:100%;background:var(--copper);} .progress-bar.over{background:var(--alert);}
+  .progress-bar{height:100%;background:var(--copper);} .progress-bar.over{background:var(--alert);} .progress-bar.good{background:var(--good);}
   .del-btn{color:var(--text-faint);background:none;border:none;cursor:pointer;font-size:15px;}
   .del-btn:hover{color:var(--alert);}
   .edit-btn{color:var(--text-faint);background:none;border:none;cursor:pointer;font-size:14px;margin-right:8px;}
@@ -769,65 +769,80 @@
     <!-- ===================== 返利管理 ===================== -->
     <section class="view" id="view-rebate-lock">
       <div class="viewhead">
-        <div><h2>返利管理</h2><p>一级分销商年度签约目标达成率前置锁 · 达标激活下属二级客户阶梯返利</p></div>
+        <div><h2>返利管理</h2><p>二级客户季度阶梯返利：按 NIP 合并 Action + Incom 渠道 Sell-out 数据，签约即生效，按季度阶梯自动计算返利</p></div>
       </div>
-
       <div class="inv-note">
-        一级分销商（如 Incom、Action）需录入年度签约销售目标与当前已达成销售额，系统自动计算年度达成率。仅当达成率达到下方设定的解锁阈值时，其名下二级客户的阶梯返利才会生效；未达标时，二级返利与合计 Credit Note 金额将自动熔断归零，并标记"一级商未达标锁定"。
+        二级客户不直接向我们进货，而是通过 Action、Incom 两家一级分销商进货。系统按波兰税号(NIP)将两家渠道上报的月度 Sell-out 数据自动求和，减去当期退货后得到季度合并总业绩，再按 5 档阶梯自动匹配返点：≥50000 zł 返 5%、≥40000 返 4%、≥30000 返 3%、≥20000 返 2%、≥10000 返 1%、低于 10000 不返。只有该客户在当前季度处于"已签约"状态时才计算返利；未签约则返利强制归零，若该客户已产生销售额但未签约，整行会标红提示。业务经理确认无误后点击"提报财务"，该季度数据即锁定，签约开关与提报按钮同步禁用。
       </div>
-
       <div class="inv-toolbar">
         <div class="inv-filters" style="align-items:center;">
-          <span style="font-size:13px;color:var(--text-dim);white-space:nowrap;">达标解锁阈值：</span>
-          <input type="text" class="inv-field" id="rblThresholdInput" style="width:64px;text-align:right;" value="80">
-          <span style="font-size:13px;color:var(--text-dim);">%</span>
-          <button class="inv-btn inv-btn-ghost" id="rblApplyThreshold">应用</button>
+          <span style="font-size:13px;color:var(--text-dim);white-space:nowrap;">季度：</span>
+          <select class="inv-field" id="qrbQuarterSelect"></select>
+          <span id="qrbQuarterTag"></span>
+          <span style="font-size:13px;color:var(--text-dim);white-space:nowrap;margin-left:10px;">负责人：</span>
+          <select class="inv-field" id="qrbOwnerFilter">
+            <option value="">全部</option>
+            <option value="Piotr">Piotr</option>
+            <option value="Wojtek">Wojtek</option>
+          </select>
         </div>
         <div style="display:flex;gap:8px;">
-          <button class="inv-btn inv-btn-primary" id="rblBtnAddDistributor">＋ 新增一级分销商</button>
+          <button class="inv-btn inv-btn-primary" id="qrbBtnAddCustomer">＋ 新增客户</button>
         </div>
       </div>
-
+      <div class="kpi-row" id="qrbStatGrid"></div>
       <div class="inv-table-wrap">
         <table>
           <thead>
             <tr>
-              <th style="width:32px;"></th>
-              <th>一级分销商</th>
-              <th style="text-align:right;">年度签约目标 (PLN)</th>
-              <th style="text-align:right;">当前已完成 (PLN)</th>
-              <th style="text-align:center;">年度达成率</th>
-              <th style="text-align:center;">状态</th>
-              <th style="text-align:center;width:210px;">操作</th>
+              <th>二级客户</th>
+              <th>负责人</th>
+              <th style="text-align:right;">Action销售</th>
+              <th style="text-align:right;">Incom销售</th>
+              <th style="text-align:right;">渠道退货</th>
+              <th style="text-align:right;">季度合并总业绩</th>
+              <th style="text-align:right;">签约目标金额</th>
+              <th style="text-align:center;">目标达成率</th>
+              <th style="text-align:center;">签约状态</th>
+              <th style="text-align:center;">签约时间</th>
+              <th style="text-align:center;">流程状态</th>
+              <th style="text-align:center;">季度返点</th>
+              <th style="text-align:right;">返利金额</th>
+              <th>风控备注</th>
+              <th style="text-align:center;width:170px;">操作</th>
             </tr>
           </thead>
-          <tbody id="rblMainTbody"></tbody>
+          <tbody id="qrbMainTbody"></tbody>
         </table>
       </div>
-
-      <div class="inv-overlay" id="rblDistModalOverlay">
+      <div class="inv-overlay" id="qrbCustModalOverlay">
         <div class="inv-modal">
           <div class="inv-modal-header">
-            <div class="inv-modal-title" id="rblDistModalTitle">新增一级分销商</div>
-            <div class="inv-modal-close" id="rblDistModalClose">✕</div>
+            <div class="inv-modal-title" id="qrbCustModalTitle">新增客户</div>
+            <div class="inv-modal-close" id="qrbCustModalClose">✕</div>
           </div>
           <div class="inv-form-grid">
             <div class="inv-form-group full">
-              <label class="inv-form-label">分销商名称</label>
-              <input class="inv-field" id="rblDistFName" placeholder="如 Incom Group S.A.">
+              <label class="inv-form-label">客户名称</label>
+              <input class="inv-field" id="qrbFName" placeholder="如 TedSoft.pl">
             </div>
             <div class="inv-form-group">
-              <label class="inv-form-label">年度签约目标 (PLN)</label>
-              <input class="inv-field" id="rblDistFTarget" placeholder="如 5000000">
+              <label class="inv-form-label">NIP税号</label>
+              <input class="inv-field" id="qrbFNip" placeholder="波兰10位税号" maxlength="10">
             </div>
             <div class="inv-form-group">
-              <label class="inv-form-label">当前已完成 (PLN)</label>
-              <input class="inv-field" id="rblDistFAchieved" placeholder="如 0">
+              <label class="inv-form-label">负责人</label>
+              <input class="inv-field" id="qrbFOwner" list="qrbOwnerList" placeholder="如 Piotr / Wojtek">
+              <datalist id="qrbOwnerList"><option value="Piotr"><option value="Wojtek"></datalist>
+            </div>
+            <div class="inv-form-group full">
+              <label class="inv-form-label">签约目标金额 (PLN)</label>
+              <input class="inv-field" id="qrbFTarget" type="number" placeholder="如 45000">
             </div>
           </div>
           <div class="inv-modal-footer">
-            <button class="inv-btn inv-btn-ghost" id="rblDistBtnCancel">取消</button>
-            <button class="inv-btn inv-btn-primary" id="rblDistBtnSave">保存</button>
+            <button class="inv-btn inv-btn-ghost" id="qrbCustBtnCancel">取消</button>
+            <button class="inv-btn inv-btn-primary" id="qrbCustBtnSave">保存</button>
           </div>
         </div>
       </div>
@@ -7808,10 +7823,9 @@ applyLanguage(currentLang);
 </script>
 <script>
 (function(){
-  /* ================ 返利管理：一级分销商年度达标返利联动锁 ================ */
-
-  // 5 档采购额阶梯返利规则：等比递进
-  const RBL_TIERS = [
+  /* ================ 返利管理：二级客户季度阶梯返利系统 ================ */
+  // 5档万级阶梯返利政策
+  const QRB_TIERS = [
     { min: 50000, rate: 0.05 },
     { min: 40000, rate: 0.04 },
     { min: 30000, rate: 0.03 },
@@ -7819,316 +7833,302 @@ applyLanguage(currentLang);
     { min: 10000, rate: 0.01 },
     { min: 0,     rate: 0.00 },
   ];
-  const RBL_VIOLATION_PENALTY = 0.01; // 每次砸价违规扣减 1 个返利点数
-
-  let rblUidSeed = 1;
-  function rblUid(prefix){ rblUidSeed += 1; return prefix + '_' + Date.now().toString(36) + '_' + rblUidSeed; }
-
-  function rblToNumber(v, fallback){
-    const n = typeof v === 'string' ? parseFloat(v.replace(/[^\d.-]/g,'')) : Number(v);
-    return Number.isFinite(n) ? n : (Number.isFinite(fallback) ? fallback : 0);
-  }
-  function rblToInt(v, fallback){
-    const n = typeof v === 'string' ? parseInt(v.replace(/[^\d-]/g,''),10) : Math.round(Number(v));
-    return Number.isFinite(n) ? n : (Number.isFinite(fallback) ? fallback : 0);
-  }
-  function rblFmtPLN(n){
-    const v = Number.isFinite(n) ? n : 0;
-    return v.toLocaleString('pl-PL', {minimumFractionDigits:0, maximumFractionDigits:0}) + ' zł';
-  }
-  function rblFmtPct(n){
-    const v = Number.isFinite(n) ? n : 0;
-    return (v*100).toFixed(1) + '%';
-  }
-  function rblEscapeHtml(s){
-    return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-  }
-
-  // ---- 数据状态（生产环境替换点：可将 distributors / subChannels 替换为真实接口数据） ----
-  let rblLockThreshold = 0.8; // 达标解锁阈值 80%，界面可调
-  let rblDistributors = [
-    { id:'d_incom',  name:'Incom Group S.A.', annualTarget:5000000, achieved:4300000 },
-    { id:'d_action', name:'Action S.A.',      annualTarget:3000000, achieved:1650000 },
-    { id:'d_eltrox', name:'Eltrox Sp. z o.o.', annualTarget:2000000, achieved:1800000 },
-    { id:'d_sgm',    name:'SGM Sp. z o.o.',   annualTarget:1200000, achieved:0 },
-  ];
-  let rblSubChannels = [
-    { id:'s_1', distributorId:'d_incom', name:'Media Expert - Warszawa', quarterlyPurchase:32000, violations:1 },
-    { id:'s_2', distributorId:'d_incom', name:'Neo24 - Kraków',           quarterlyPurchase:18500, violations:0 },
-    { id:'s_3', distributorId:'d_eltrox', name:'Komputronik - Poznań',    quarterlyPurchase:51000, violations:0 },
-  ];
-  let rblExpandedIds = new Set(['d_incom']);
-  let rblAddFormOpenIds = new Set();
-
-  // ---- 核心计算逻辑 ----
-  function rblAchievementRate(d){
-    if (!d.annualTarget || d.annualTarget <= 0) return 0;
-    return d.achieved / d.annualTarget;
-  }
-  function rblIsLocked(d){
-    return rblAchievementRate(d) < rblLockThreshold;
-  }
-  function rblTierBaseRate(purchase){
-    const amount = rblToNumber(purchase, 0);
-    for (const tier of RBL_TIERS){ if (amount >= tier.min) return tier.rate; }
+  function qrbCalcRebateRate(total){
+    for (const tier of QRB_TIERS){ if (total >= tier.min) return tier.rate; }
     return 0;
   }
-  function rblFinalRebateRate(sub){
-    const base = rblTierBaseRate(sub.quarterlyPurchase);
-    const penalty = rblToInt(sub.violations, 0) * RBL_VIOLATION_PENALTY;
-    return Math.max(0, base - penalty);
+  function qrbRound2(n){ return Math.round((n + Number.EPSILON) * 100) / 100; }
+  function qrbFmtPLN(n){
+    const v = Number.isFinite(n) ? n : 0;
+    return v.toLocaleString('pl-PL', {minimumFractionDigits:2, maximumFractionDigits:2}) + ' zł';
   }
-  function rblSubRebateAmount(d, sub){
-    if (rblIsLocked(d)) return 0;
-    return rblToNumber(sub.quarterlyPurchase, 0) * rblFinalRebateRate(sub);
+  function qrbFormatNow(){
+    const d = new Date();
+    const pad = x => String(x).padStart(2,'0');
+    return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate()) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
   }
-  function rblCreditNoteTotal(d){
-    const subs = rblSubChannels.filter(s=>s.distributorId === d.id);
-    if (rblIsLocked(d)) return 0;
-    return subs.reduce((sum, s)=>sum + rblSubRebateAmount(d, s), 0);
+  function qrbIsValidNip(nip){ return typeof nip === 'string' && /^\d{10}$/.test(nip); }
+  function qrbEscapeHtml(s){
+    return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
-
-  // ---- 渲染 ----
-  function rblRenderMainTbody(){
-    const tbody = document.getElementById('rblMainTbody');
+  // ---- 数据状态（生产环境替换点：这里是硬编码演示数据，可换成真实接口） ----
+  const QRB_QUARTERS = ['2026-Q1', '2026-Q2', '2026-Q3', '2026-Q4'];
+  const QRB_CURRENT_QUARTER = '2026-Q3';
+  let qrbQuarterSelect = QRB_CURRENT_QUARTER;
+  let qrbOwnerFilter = '';
+  let qrbCustomerMasters = [
+    { nip:'6221534938', name:'TedSoft.pl',           owner:'Piotr',  targetAmount:45000 },
+    { nip:'7251591901', name:'DUXO.pl',               owner:'Piotr',  targetAmount:30000 },
+    { nip:'5261055982', name:'WindComp',              owner:'Piotr',  targetAmount:40000 },
+    { nip:'8133187390', name:'Apollo Sp. z o.o.',     owner:'Wojtek', targetAmount:25000 },
+    { nip:'7171836660', name:'HARD-PC.pl',            owner:'Piotr',  targetAmount:15000 },
+  ];
+  let qrbQuarterlyStatus = {
+    '2026-Q1': {
+      '6221534938': { signed:true,  locked:true, signedAt:'2026-01-08 09:15', submittedAt:'2026-04-03 14:20' },
+      '7251591901': { signed:true,  locked:true, signedAt:'2026-01-10 11:00', submittedAt:'2026-04-03 14:22' },
+      '5261055982': { signed:true,  locked:true, signedAt:'2026-01-09 16:40', submittedAt:'2026-04-03 14:25' },
+      '8133187390': { signed:false, locked:true, signedAt:null,               submittedAt:'2026-04-03 14:30' },
+      '7171836660': { signed:true,  locked:true, signedAt:'2026-01-11 10:05', submittedAt:'2026-04-03 14:28' },
+    },
+    '2026-Q2': {
+      '6221534938': { signed:true,  locked:true, signedAt:'2026-04-07 09:00', submittedAt:'2026-07-05 10:10' },
+      '7251591901': { signed:true,  locked:true, signedAt:'2026-04-08 09:30', submittedAt:'2026-07-05 10:12' },
+      '5261055982': { signed:true,  locked:true, signedAt:'2026-04-09 14:00', submittedAt:'2026-07-05 10:15' },
+      '8133187390': { signed:false, locked:true, signedAt:null,               submittedAt:'2026-07-05 10:20' },
+      '7171836660': { signed:true,  locked:true, signedAt:'2026-04-10 11:20', submittedAt:'2026-07-05 10:18' },
+    },
+    '2026-Q3': {
+      '6221534938': { signed:true,  locked:false, signedAt:'2026-07-06 09:40', submittedAt:null },
+      '7251591901': { signed:true,  locked:false, signedAt:'2026-07-06 10:00', submittedAt:null },
+      '5261055982': { signed:true,  locked:false, signedAt:'2026-07-07 09:10', submittedAt:null },
+      '8133187390': { signed:false, locked:false, signedAt:null,               submittedAt:null },
+      '7171836660': { signed:true,  locked:false, signedAt:'2026-07-08 08:50', submittedAt:null },
+    },
+    '2026-Q4': {
+      '6221534938': { signed:false, locked:false, signedAt:null, submittedAt:null },
+      '7251591901': { signed:false, locked:false, signedAt:null, submittedAt:null },
+      '5261055982': { signed:false, locked:false, signedAt:null, submittedAt:null },
+      '8133187390': { signed:false, locked:false, signedAt:null, submittedAt:null },
+      '7171836660': { signed:false, locked:false, signedAt:null, submittedAt:null },
+    },
+  };
+  let qrbSalesLedger = {
+    '2026-Q1': {
+      '6221534938': { action:2500.00,  incom:20000.00, refund:0 },
+      '7251591901': { action:1200.00,  incom:15000.00, refund:0 },
+      '5261055982': { action:4000.00,  incom:25000.00, refund:0 },
+      '8133187390': { action:8000.00,  incom:0,         refund:0 },
+      '7171836660': { action:3000.00,  incom:0,         refund:0 },
+    },
+    '2026-Q2': {
+      '6221534938': { action:3800.00,  incom:33000.00, refund:-100.00 },
+      '7251591901': { action:1600.00,  incom:22000.00, refund:0 },
+      '5261055982': { action:5500.00,  incom:32000.00, refund:0 },
+      '8133187390': { action:10200.00, incom:0,         refund:0 },
+      '7171836660': { action:6000.00,  incom:0,         refund:0 },
+    },
+    '2026-Q3': {
+      '6221534938': { action:4665.42,  incom:45866.38, refund:-242.00 },
+      '7251591901': { action:1925.00,  incom:31252.20, refund:0 },
+      '5261055982': { action:6976.60,  incom:38124.55, refund:0 },
+      '8133187390': { action:12540.70, incom:0,         refund:0 },
+      '7171836660': { action:8111.89,  incom:0,         refund:0 },
+    },
+    '2026-Q4': {
+      '6221534938': { action:0, incom:0, refund:0 },
+      '7251591901': { action:0, incom:0, refund:0 },
+      '5261055982': { action:0, incom:0, refund:0 },
+      '8133187390': { action:0, incom:0, refund:0 },
+      '7171836660': { action:0, incom:0, refund:0 },
+    },
+  };
+  function qrbInitDataForCustomer(nip){
+    QRB_QUARTERS.forEach(q=>{
+      if (!qrbQuarterlyStatus[q][nip]) qrbQuarterlyStatus[q][nip] = { signed:false, locked:false, signedAt:null, submittedAt:null };
+      if (!qrbSalesLedger[q][nip]) qrbSalesLedger[q][nip] = { action:0, incom:0, refund:0 };
+    });
+  }
+  function qrbBuildView(master, quarter){
+    const status = (qrbQuarterlyStatus[quarter] && qrbQuarterlyStatus[quarter][master.nip]) || { signed:false, locked:false, signedAt:null, submittedAt:null };
+    const ledger = (qrbSalesLedger[quarter] && qrbSalesLedger[quarter][master.nip]) || { action:0, incom:0, refund:0 };
+    const totalSales = qrbRound2(ledger.action + ledger.incom - Math.abs(ledger.refund));
+    let procStatus;
+    if (status.locked) procStatus = 'LOCKED';
+    else if (status.signed) procStatus = 'ACTIVE';
+    else procStatus = 'DRAFT';
+    const rebateRate = status.signed ? qrbCalcRebateRate(totalSales) : 0;
+    const rebateAmount = status.signed ? qrbRound2(totalSales * rebateRate) : 0;
+    const anomaly = (ledger.action + ledger.incom) > 0 && !status.signed;
+    const targetAmount = master.targetAmount || 0;
+    const achievementRate = targetAmount > 0 ? qrbRound2((totalSales / targetAmount) * 100) : 0;
+    return {
+      nip: master.nip, name: master.name, owner: master.owner, quarter,
+      signed: status.signed, locked: status.locked,
+      signedAt: status.signedAt, submittedAt: status.submittedAt,
+      status: procStatus,
+      actionSales: qrbRound2(ledger.action), incomSales: qrbRound2(ledger.incom), refund: qrbRound2(ledger.refund),
+      totalSales, targetAmount, achievementRate,
+      rebateRate, rebateAmount, anomaly,
+      riskNote: anomaly ? '❌ 异常：该二级客户未签约季度协议，系统拦截！' : '',
+    };
+  }
+  function qrbGetFilteredViews(){
+    const views = qrbCustomerMasters.map(m => qrbBuildView(m, qrbQuarterSelect));
+    if (!qrbOwnerFilter) return views;
+    return views.filter(v => v.owner === qrbOwnerFilter);
+  }
+  // ---- 渲染：季度选择器 ----
+  function qrbRenderQuarterSelect(){
+    const sel = document.getElementById('qrbQuarterSelect');
+    if (!sel) return;
+    sel.innerHTML = QRB_QUARTERS.map(q=>'<option value="'+q+'"'+(q===qrbQuarterSelect?' selected':'')+'>'+q+'</option>').join('');
+    const tagEl = document.getElementById('qrbQuarterTag');
+    if (tagEl){
+      let label, cls;
+      if (qrbQuarterSelect === QRB_CURRENT_QUARTER){ label = '当期进行中·可编辑'; cls = 'status-shipped'; }
+      else if (qrbQuarterSelect < QRB_CURRENT_QUARTER){ label = '历史季度·已锁定归档'; cls = 'status-pending'; }
+      else { label = '未来季度·可提前签约'; cls = 'status-pending'; }
+      tagEl.innerHTML = '<span class="tag '+cls+'" style="margin-left:8px;">'+label+'</span>';
+    }
+  }
+  // ---- 渲染：统计卡 ----
+  function qrbRenderStats(){
+    const box = document.getElementById('qrbStatGrid');
+    if (!box) return;
+    const views = qrbGetFilteredViews();
+    const totalSales = views.reduce((s,v)=>s+v.totalSales,0);
+    const totalRebate = views.reduce((s,v)=>s+v.rebateAmount,0);
+    const totalRefund = views.reduce((s,v)=>s+v.refund,0);
+    box.innerHTML =
+      '<div class="kpi"><div class="label">当前视图总销售额</div><div class="value copper">'+qrbFmtPLN(totalSales)+'</div><div class="sub">'+views.length+' 个客户合计</div></div>' +
+      '<div class="kpi"><div class="label">预计应拨备总返利金</div><div class="value good">'+qrbFmtPLN(totalRebate)+'</div><div class="sub">仅统计已签约生效客户</div></div>' +
+      '<div class="kpi"><div class="label">本期渠道发生总退货</div><div class="value">'+qrbFmtPLN(totalRefund)+'</div><div class="sub">Action + Incom 渠道退货合计</div></div>';
+  }
+  // ---- 渲染：主表格 ----
+  function qrbRenderTable(){
+    const tbody = document.getElementById('qrbMainTbody');
     if (!tbody) return;
-
-    const rowsHtml = rblDistributors.map(function(d){
-      const rate = rblAchievementRate(d);
-      const locked = rblIsLocked(d);
-      const expanded = rblExpandedIds.has(d.id);
-
-      const mainRow = '' +
-        '<tr class="rbl-row-distributor ' + (locked?'rbl-locked-row':'') + '" data-dist-id="' + d.id + '" data-role="toggle-row">' +
-          '<td style="text-align:center;"><span class="rbl-chevron ' + (expanded?'rbl-open':'') + '">▶</span></td>' +
-          '<td><div class="rbl-dist-name">' + rblEscapeHtml(d.name) + '</div></td>' +
-          '<td style="text-align:right;"><input type="text" class="rbl-edit-input" data-role="edit-dist" data-field="annualTarget" data-dist-id="' + d.id + '" value="' + d.annualTarget + '"></td>' +
-          '<td style="text-align:right;"><input type="text" class="rbl-edit-input" data-role="edit-dist" data-field="achieved" data-dist-id="' + d.id + '" value="' + d.achieved + '"></td>' +
-          '<td style="text-align:center;"><span class="rbl-rate-pill ' + (locked?'rbl-rate-locked':'rbl-rate-unlocked') + '">' + (locked?'🔒':'🔓') + ' ' + rblFmtPct(rate) + '</span></td>' +
-          '<td style="text-align:center;"><span class="rbl-status-badge ' + (locked?'rbl-status-locked':'rbl-status-active') + '">' + (locked?'一级商未达标锁定':'已激活') + '</span></td>' +
-          '<td style="text-align:center;">' +
-            '<button class="inv-btn inv-btn-ghost" style="padding:5px 11px;font-size:12px;" data-role="toggle-btn" data-dist-id="' + d.id + '">' + (expanded?'收起':'展开') + '</button> ' +
-            '<button class="inv-btn inv-btn-primary" style="padding:5px 11px;font-size:12px;" data-role="open-add-form" data-dist-id="' + d.id + '" ' + (locked?'disabled title="一级分销商年度目标未达标，暂无法新增二级渠道"':'') + '>＋ 新增二级渠道</button>' +
-          '</td>' +
-        '</tr>';
-
-      const subPanelRow = expanded ? (
-        '<tr class="rbl-sub-panel-row" data-dist-id="' + d.id + '"><td colspan="7">' + rblRenderSubPanelHtml(d) + '</td></tr>'
-      ) : '';
-
-      return mainRow + subPanelRow;
+    const views = qrbGetFilteredViews();
+    if (!views.length){
+      tbody.innerHTML = '<tr><td colspan="15" style="text-align:center;color:var(--text-faint);padding:24px;">暂无客户数据</td></tr>';
+      return;
+    }
+    tbody.innerHTML = views.map(function(v){
+      const statusCls = v.status === 'ACTIVE' ? 'live' : (v.status === 'LOCKED' ? 'done' : 'plan');
+      const progressPct = Math.min(100, v.achievementRate);
+      const progressCls = v.achievementRate >= 100 ? 'good' : (v.achievementRate < 50 ? 'over' : '');
+      return '<tr class="'+(v.anomaly?'rowwarn':'')+'" data-nip="'+v.nip+'">' +
+        '<td><div class="inv-prod-name">'+qrbEscapeHtml(v.name)+'</div><div class="inv-sku">NIP: '+v.nip+'</div></td>' +
+        '<td>'+qrbEscapeHtml(v.owner)+'</td>' +
+        '<td style="text-align:right;">'+qrbFmtPLN(v.actionSales)+'</td>' +
+        '<td style="text-align:right;">'+qrbFmtPLN(v.incomSales)+'</td>' +
+        '<td style="text-align:right;">'+qrbFmtPLN(v.refund)+'</td>' +
+        '<td style="text-align:right;"><b>'+qrbFmtPLN(v.totalSales)+'</b></td>' +
+        '<td style="text-align:right;">'+qrbFmtPLN(v.targetAmount)+'</td>' +
+        '<td style="text-align:center;min-width:110px;">' +
+          '<div class="progress-wrap"><div class="progress-bar '+progressCls+'" style="width:'+progressPct+'%"></div></div>' +
+          '<div style="font-size:11px;color:var(--text-faint);margin-top:3px;">'+v.achievementRate.toFixed(1)+'%</div>' +
+        '</td>' +
+        '<td style="text-align:center;">' +
+          '<label style="display:inline-flex;align-items:center;gap:5px;cursor:'+(v.locked?'not-allowed':'pointer')+';">' +
+            '<input type="checkbox" data-role="qrb-toggle-sign" data-nip="'+v.nip+'" '+(v.signed?'checked':'')+' '+(v.locked?'disabled':'')+'>' +
+            '<span style="font-size:12px;color:var(--text-dim);">'+(v.signed?'已签约':'未签约')+'</span>' +
+          '</label>' +
+        '</td>' +
+        '<td style="text-align:center;font-size:11.5px;color:var(--text-dim);">'+(v.signedAt||'—')+'</td>' +
+        '<td style="text-align:center;"><span class="status '+statusCls+'"><span class="sdot"></span>'+v.status+'</span></td>' +
+        '<td style="text-align:center;">'+(v.rebateRate*100).toFixed(0)+'%</td>' +
+        '<td style="text-align:right;font-weight:700;color:'+(v.rebateAmount>0?'var(--good)':'var(--text-faint)')+';">'+qrbFmtPLN(v.rebateAmount)+'</td>' +
+        '<td style="font-size:12px;color:var(--alert);font-weight:600;">'+(v.riskNote||'')+'</td>' +
+        '<td style="text-align:center;">' +
+          '<div class="inv-row-actions" style="justify-content:center;">' +
+            '<a data-role="qrb-edit-cust" data-nip="'+v.nip+'">编辑</a>' +
+            '<a data-role="qrb-submit" data-nip="'+v.nip+'" style="'+(v.locked?'color:var(--text-faint);pointer-events:none;':'')+'">'+(v.locked?'已锁定':'提报财务')+'</a>' +
+          '</div>' +
+          (v.submittedAt ? '<div style="font-size:11px;color:var(--text-faint);margin-top:3px;">提报于 '+v.submittedAt+'</div>' : '') +
+        '</td>' +
+      '</tr>';
     }).join('');
-
-    tbody.innerHTML = rowsHtml || '<tr><td colspan="7" style="text-align:center;color:var(--text-faint);padding:24px;">暂无一级分销商数据</td></tr>';
-    rblBindDynamicEvents();
   }
-
-  function rblRenderSubPanelHtml(d){
-    const locked = rblIsLocked(d);
-    const subs = rblSubChannels.filter(s=>s.distributorId === d.id);
-    const total = rblCreditNoteTotal(d);
-    const addFormOpen = rblAddFormOpenIds.has(d.id);
-
-    const lockBanner = locked ? '<div class="rbl-lock-banner">⚠️ 因一级分销商年度目标未达标，二级返利无法释放</div>' : '';
-
-    const rowsHtml = subs.map(function(sub){
-      const base = rblTierBaseRate(sub.quarterlyPurchase);
-      const final = rblFinalRebateRate(sub);
-      const amount = rblSubRebateAmount(d, sub);
-      return '' +
-        '<tr data-sub-id="' + sub.id + '">' +
-          '<td>' + rblEscapeHtml(sub.name) + '</td>' +
-          '<td style="text-align:right;"><input type="text" class="rbl-edit-input" data-role="edit-sub" data-field="quarterlyPurchase" data-sub-id="' + sub.id + '" value="' + sub.quarterlyPurchase + '"></td>' +
-          '<td style="text-align:center;"><input type="text" class="rbl-edit-input rbl-input-narrow" data-role="edit-sub" data-field="violations" data-sub-id="' + sub.id + '" value="' + rblToInt(sub.violations,0) + '"></td>' +
-          '<td style="text-align:right;">' + rblFmtPct(base) + '</td>' +
-          '<td style="text-align:right;">' + rblFmtPct(final) + '</td>' +
-          '<td style="text-align:right;">' + rblFmtPLN(amount) + (locked ? '<span class="rbl-rebate-zero-tag">未达标锁定</span>' : '') + '</td>' +
-          '<td style="text-align:center;"><button class="inv-btn inv-btn-ghost" style="padding:4px 9px;font-size:11.5px;color:var(--alert);border-color:var(--alert-soft);" data-role="delete-sub" data-sub-id="' + sub.id + '">删除</button></td>' +
-        '</tr>';
-    }).join('');
-
-    const addFormHtml = addFormOpen ? (
-      '<div class="rbl-add-form">' +
-        '<input type="text" class="rbl-add-name" placeholder="二级客户名称" data-role="add-name" data-dist-id="' + d.id + '">' +
-        '<input type="text" class="rbl-add-num" placeholder="季度采购额 (PLN)" data-role="add-purchase" data-dist-id="' + d.id + '">' +
-        '<input type="text" class="rbl-add-num" placeholder="违规次数" value="0" data-role="add-violations" data-dist-id="' + d.id + '">' +
-        '<button class="inv-btn inv-btn-primary" style="padding:5px 12px;font-size:12px;" data-role="confirm-add" data-dist-id="' + d.id + '">确认添加</button>' +
-        '<button class="inv-btn inv-btn-ghost" style="padding:5px 12px;font-size:12px;" data-role="cancel-add" data-dist-id="' + d.id + '">取消</button>' +
-      '</div>'
-    ) : '';
-
-    return '' +
-      '<div class="rbl-sub-panel">' +
-        lockBanner +
-        '<div class="rbl-sub-toolbar"><div class="rbl-sub-title">二级渠道（' + subs.length + ' 个客户）</div></div>' +
-        '<table class="rbl-sub-table">' +
-          '<thead><tr>' +
-            '<th>二级客户名称</th>' +
-            '<th style="text-align:right;">季度采购额 (PLN)</th>' +
-            '<th style="text-align:center;">违规次数</th>' +
-            '<th style="text-align:right;">阶梯返利比例</th>' +
-            '<th style="text-align:right;">最终返利比例</th>' +
-            '<th style="text-align:right;">应发返利金额</th>' +
-            '<th style="text-align:center;width:80px;">操作</th>' +
-          '</tr></thead>' +
-          '<tbody>' + (rowsHtml || '<tr><td colspan="7" class="rbl-sub-empty">暂无二级渠道，点击上方"新增二级渠道"添加</td></tr>') + '</tbody>' +
-          '<tfoot><tr class="rbl-footer-row">' +
-            '<td colspan="5" style="text-align:right;">合计 Credit Note 金额</td>' +
-            '<td style="text-align:right;">' +
-              '<span class="rbl-footer-total ' + (locked?'rbl-total-zero':'rbl-total-active') + '">' + rblFmtPLN(total) + '</span>' +
-              (locked ? '<div class="rbl-footer-note">因一级分销商年度目标未达标，二级返利无法释放</div>' : '') +
-            '</td>' +
-            '<td></td>' +
-          '</tr></tfoot>' +
-        '</table>' +
-        addFormHtml +
-      '</div>';
+  function qrbRenderAll(){
+    qrbRenderQuarterSelect();
+    qrbRenderStats();
+    qrbRenderTable();
   }
-
-  // ---- 事件绑定 ----
-  function rblToggleExpand(distId){
-    if (rblExpandedIds.has(distId)){ rblExpandedIds.delete(distId); rblAddFormOpenIds.delete(distId); }
-    else { rblExpandedIds.add(distId); }
-    rblRenderMainTbody();
-  }
-
-  function rblCommitDistributorEdit(inputEl){
-    const distId = inputEl.dataset.distId;
-    const field = inputEl.dataset.field;
-    const d = rblDistributors.find(x=>x.id === distId);
-    if (!d) return;
-    d[field] = Math.max(0, rblToNumber(inputEl.value, d[field]));
-    // 生产环境替换点：同步调用后端 / Supabase 更新该分销商记录
-    rblRenderMainTbody();
-  }
-
-  function rblCommitSubEdit(inputEl){
-    const subId = inputEl.dataset.subId;
-    const field = inputEl.dataset.field;
-    const sub = rblSubChannels.find(x=>x.id === subId);
-    if (!sub) return;
-    if (field === 'violations'){ sub.violations = Math.max(0, rblToInt(inputEl.value, sub.violations)); }
-    else { sub[field] = Math.max(0, rblToNumber(inputEl.value, sub[field])); }
-    // 生产环境替换点：同步调用后端 / Supabase 更新该二级客户记录
-    rblRenderMainTbody();
-  }
-
-  function rblCommitAddSubChannel(distId){
-    const nameInput = document.querySelector('[data-role="add-name"][data-dist-id="' + distId + '"]');
-    const purchaseInput = document.querySelector('[data-role="add-purchase"][data-dist-id="' + distId + '"]');
-    const violationsInput = document.querySelector('[data-role="add-violations"][data-dist-id="' + distId + '"]');
-    if (!nameInput) return;
-    const name = (nameInput.value || '').trim();
-    if (!name){ nameInput.focus(); nameInput.style.borderColor = 'var(--alert)'; return; }
-    rblSubChannels.push({
-      id: rblUid('s'),
-      distributorId: distId,
-      name: name,
-      quarterlyPurchase: Math.max(0, rblToNumber(purchaseInput.value, 0)),
-      violations: Math.max(0, rblToInt(violationsInput.value, 0)),
+  // ---- 事件：季度 / 负责人筛选 ----
+  const qrbQuarterSelectEl = document.getElementById('qrbQuarterSelect');
+  if (qrbQuarterSelectEl){
+    qrbQuarterSelectEl.addEventListener('change', function(){
+      qrbQuarterSelect = qrbQuarterSelectEl.value;
+      qrbRenderAll();
     });
-    // 生产环境替换点：同步调用后端 / Supabase 插入新二级客户记录
-    rblAddFormOpenIds.delete(distId);
-    rblRenderMainTbody();
   }
-
-  function rblBindDynamicEvents(){
-    const tbody = document.getElementById('rblMainTbody');
-    if (!tbody || tbody.dataset.eventsBound === '1') return;
-    tbody.dataset.eventsBound = '1';
-
-    tbody.addEventListener('click', function(e){
-      const toggleBtn = e.target.closest('[data-role="toggle-btn"]');
-      const rowEl = e.target.closest('[data-role="toggle-row"]');
-      const isInteractive = e.target.closest('input, button');
-
-      if (toggleBtn){ rblToggleExpand(toggleBtn.dataset.distId); return; }
-      if (rowEl && !isInteractive){ rblToggleExpand(rowEl.dataset.distId); return; }
-
-      const openAddBtn = e.target.closest('[data-role="open-add-form"]');
-      if (openAddBtn && !openAddBtn.disabled){
-        rblExpandedIds.add(openAddBtn.dataset.distId);
-        rblAddFormOpenIds.add(openAddBtn.dataset.distId);
-        rblRenderMainTbody();
+  const qrbOwnerFilterEl = document.getElementById('qrbOwnerFilter');
+  if (qrbOwnerFilterEl){
+    qrbOwnerFilterEl.addEventListener('change', function(){
+      qrbOwnerFilter = qrbOwnerFilterEl.value;
+      qrbRenderAll();
+    });
+  }
+  // ---- 事件：签约开关 / 提报财务 / 编辑（事件委托到 tbody） ----
+  const qrbTbody = document.getElementById('qrbMainTbody');
+  if (qrbTbody){
+    qrbTbody.addEventListener('change', function(e){
+      const cb = e.target.closest('[data-role="qrb-toggle-sign"]');
+      if (!cb) return;
+      const nip = cb.dataset.nip;
+      const status = qrbQuarterlyStatus[qrbQuarterSelect][nip];
+      if (!status || status.locked) return;
+      status.signed = cb.checked;
+      status.signedAt = cb.checked ? qrbFormatNow() : null;
+      qrbRenderAll();
+    });
+    qrbTbody.addEventListener('click', function(e){
+      const submitLink = e.target.closest('[data-role="qrb-submit"]');
+      if (submitLink){
+        const nip = submitLink.dataset.nip;
+        const status = qrbQuarterlyStatus[qrbQuarterSelect][nip];
+        if (!status || status.locked) return;
+        const master = qrbCustomerMasters.find(m=>m.nip===nip);
+        if (!confirm('提报后 '+(master?master.name:nip)+' 本季度的签约状态与返利数据将被锁定，无法二次修改，确认提报财务吗？')) return;
+        status.locked = true;
+        status.submittedAt = qrbFormatNow();
+        qrbRenderAll();
         return;
       }
-
-      const cancelAddBtn = e.target.closest('[data-role="cancel-add"]');
-      if (cancelAddBtn){ rblAddFormOpenIds.delete(cancelAddBtn.dataset.distId); rblRenderMainTbody(); return; }
-
-      const confirmAddBtn = e.target.closest('[data-role="confirm-add"]');
-      if (confirmAddBtn){ rblCommitAddSubChannel(confirmAddBtn.dataset.distId); return; }
-
-      const deleteBtn = e.target.closest('[data-role="delete-sub"]');
-      if (deleteBtn){
-        const subId = deleteBtn.dataset.subId;
-        rblSubChannels = rblSubChannels.filter(s=>s.id !== subId);
-        rblRenderMainTbody();
+      const editLink = e.target.closest('[data-role="qrb-edit-cust"]');
+      if (editLink){
+        qrbOpenCustModal('edit', editLink.dataset.nip);
         return;
       }
     });
-
-    tbody.addEventListener('change', function(e){
-      const distInput = e.target.closest('[data-role="edit-dist"]');
-      if (distInput){ rblCommitDistributorEdit(distInput); return; }
-      const subInput = e.target.closest('[data-role="edit-sub"]');
-      if (subInput){ rblCommitSubEdit(subInput); return; }
-    });
-
-    tbody.addEventListener('keydown', function(e){
-      if (e.key !== 'Enter') return;
-      const editable = e.target.closest('[data-role="edit-dist"], [data-role="edit-sub"]');
-      if (editable){ e.preventDefault(); editable.blur(); }
-    });
   }
-
-  // ---- 工具栏：达标阈值 ----
-  const rblApplyBtn = document.getElementById('rblApplyThreshold');
-  if (rblApplyBtn){
-    rblApplyBtn.addEventListener('click', function(){
-      const input = document.getElementById('rblThresholdInput');
-      const pct = rblToNumber(input.value, rblLockThreshold*100);
-      rblLockThreshold = Math.min(100, Math.max(0, pct)) / 100;
-      rblRenderMainTbody();
-    });
+  // ---- 新增 / 编辑客户弹窗 ----
+  const qrbCustOverlay = document.getElementById('qrbCustModalOverlay');
+  let qrbEditingNip = null;
+  function qrbOpenCustModal(mode, nip){
+    qrbEditingNip = mode === 'edit' ? nip : null;
+    const master = nip ? qrbCustomerMasters.find(m=>m.nip===nip) : null;
+    document.getElementById('qrbCustModalTitle').textContent = mode === 'edit' ? '编辑客户' : '新增客户';
+    document.getElementById('qrbFName').value = master ? master.name : '';
+    document.getElementById('qrbFNip').value = master ? master.nip : '';
+    document.getElementById('qrbFNip').disabled = mode === 'edit';
+    document.getElementById('qrbFOwner').value = master ? master.owner : '';
+    document.getElementById('qrbFTarget').value = master ? master.targetAmount : '';
+    if (qrbCustOverlay) qrbCustOverlay.classList.add('open');
   }
-
-  // ---- 新增一级分销商弹窗 ----
-  const rblDistOverlay = document.getElementById('rblDistModalOverlay');
-  function rblOpenDistModal(){
-    document.getElementById('rblDistFName').value = '';
-    document.getElementById('rblDistFTarget').value = '';
-    document.getElementById('rblDistFAchieved').value = '';
-    if (rblDistOverlay) rblDistOverlay.classList.add('open');
-  }
-  function rblCloseDistModal(){ if (rblDistOverlay) rblDistOverlay.classList.remove('open'); }
-
-  const rblBtnAddDistributor = document.getElementById('rblBtnAddDistributor');
-  if (rblBtnAddDistributor) rblBtnAddDistributor.addEventListener('click', rblOpenDistModal);
-  const rblDistModalClose = document.getElementById('rblDistModalClose');
-  if (rblDistModalClose) rblDistModalClose.addEventListener('click', rblCloseDistModal);
-  const rblDistBtnCancel = document.getElementById('rblDistBtnCancel');
-  if (rblDistBtnCancel) rblDistBtnCancel.addEventListener('click', rblCloseDistModal);
-  if (rblDistOverlay) rblDistOverlay.addEventListener('click', function(e){ if (e.target === rblDistOverlay) rblCloseDistModal(); });
-
-  const rblDistBtnSave = document.getElementById('rblDistBtnSave');
-  if (rblDistBtnSave){
-    rblDistBtnSave.addEventListener('click', function(){
-      const name = document.getElementById('rblDistFName').value.trim();
-      if (!name){ alert('请填写分销商名称'); return; }
-      rblDistributors.push({
-        id: rblUid('d'),
-        name: name,
-        annualTarget: Math.max(0, rblToNumber(document.getElementById('rblDistFTarget').value, 0)),
-        achieved: Math.max(0, rblToNumber(document.getElementById('rblDistFAchieved').value, 0)),
-      });
-      // 生产环境替换点：同步调用后端 / Supabase 插入新一级分销商记录
-      rblCloseDistModal();
-      rblRenderMainTbody();
+  function qrbCloseCustModal(){ if (qrbCustOverlay) qrbCustOverlay.classList.remove('open'); }
+  const qrbBtnAddCustomer = document.getElementById('qrbBtnAddCustomer');
+  if (qrbBtnAddCustomer) qrbBtnAddCustomer.addEventListener('click', function(){ qrbOpenCustModal('add', null); });
+  const qrbCustModalClose = document.getElementById('qrbCustModalClose');
+  if (qrbCustModalClose) qrbCustModalClose.addEventListener('click', qrbCloseCustModal);
+  const qrbCustBtnCancel = document.getElementById('qrbCustBtnCancel');
+  if (qrbCustBtnCancel) qrbCustBtnCancel.addEventListener('click', qrbCloseCustModal);
+  if (qrbCustOverlay) qrbCustOverlay.addEventListener('click', function(e){ if (e.target === qrbCustOverlay) qrbCloseCustModal(); });
+  const qrbCustBtnSave = document.getElementById('qrbCustBtnSave');
+  if (qrbCustBtnSave){
+    qrbCustBtnSave.addEventListener('click', function(){
+      const name = document.getElementById('qrbFName').value.trim();
+      const nip = document.getElementById('qrbFNip').value.trim();
+      const owner = document.getElementById('qrbFOwner').value.trim();
+      const target = Math.max(0, parseFloat(document.getElementById('qrbFTarget').value) || 0);
+      if (!name){ alert('请填写客户名称'); return; }
+      if (!owner){ alert('请填写负责人'); return; }
+      if (qrbEditingNip){
+        const master = qrbCustomerMasters.find(m=>m.nip===qrbEditingNip);
+        if (master){ master.name = name; master.owner = owner; master.targetAmount = target; }
+      } else {
+        if (!qrbIsValidNip(nip)){ alert('NIP税号必须是10位数字'); return; }
+        if (qrbCustomerMasters.find(m=>m.nip===nip)){ alert('该 NIP 已存在，不能重复添加'); return; }
+        qrbCustomerMasters.push({ nip, name, owner, targetAmount: target });
+        qrbInitDataForCustomer(nip);
+      }
+      qrbCloseCustModal();
+      qrbRenderAll();
     });
   }
-
-  rblRenderMainTbody();
+  qrbRenderAll();
 })();
 </script>
 </body>

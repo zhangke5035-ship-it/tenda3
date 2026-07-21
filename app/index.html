@@ -6857,7 +6857,55 @@ const I18N_DICT = [
   ["风险与指标预留","Risk \u0026 KPI Reserve","Rezerwa ryzyka i KPI"],
   ["单位盈亏","Unit P\u0026L","Zysk/strata jedn."],
   ["盈亏占比","P\u0026L Ratio","Wskaźnik zysku/straty"],
-  ["盈利占比","Profit Ratio","Wskaźnik rentowności"]
+  ["盈利占比","Profit Ratio","Wskaźnik rentowności"],
+  ["二级客户季度阶梯返利：按 NIP 合并 Action + Incom 渠道 Sell-out 数据，签约即生效，按季度阶梯自动计算返利","Tier-2 customer quarterly tiered rebate: merges Action + Incom channel sell-out data by NIP, effective upon signing, rebate auto-calculated by quarterly tier","Kwartalny rabat warstwowy dla klientów poziomu 2: łączy dane sprzedaży kanałów Action i Incom wg NIP, obowiązuje po podpisaniu, rabat naliczany automatycznie wg progu kwartalnego"],
+  ["二级客户不直接向我们进货，而是通过 Action、Incom 两家一级分销商进货。系统按波兰税号(NIP)将两家渠道上报的月度 Sell-out 数据自动求和，减去当期退货后得到季度合并总业绩，再按 5 档阶梯自动匹配返点：≥50000 zł 返 5%、≥40000 返 4%、≥30000 返 3%、≥20000 返 2%、≥10000 返 1%、低于 10000 不返。只有该客户在当前季度处于“已签约”状态时才计算返利；未签约则返利强制归零，若该客户已产生销售额但未签约，整行会标红提示。业务经理确认无误后点击“提报财务”，该季度数据即锁定，签约开关与提报按钮同步禁用。","Tier-2 customers don't buy from us directly, but through two tier-1 distributors, Action and Incom. The system sums each channel's monthly sell-out data by Polish tax number (NIP), subtracts current-period returns to get the quarterly combined total, then auto-matches a 5-tier rebate rate: ≥50000 zł → 5%, ≥40000 → 4%, ≥30000 → 3%, ≥20000 → 2%, ≥10000 → 1%, below 10000 → 0%. Rebate is only calculated while the customer is \"Signed\" for the current quarter; if unsigned, rebate is forced to zero, and any row with sales but no signature is highlighted in red. Once the account manager confirms, clicking \"Submit to Finance\" locks that quarter's data — the sign toggle and submit button are disabled together.","Klienci poziomu 2 nie kupują bezpośrednio od nas, lecz za pośrednictwem dwóch dystrybutorów poziomu 1: Action i Incom. System sumuje miesięczne dane sprzedaży (sell-out) obu kanałów wg polskiego numeru NIP, odejmuje zwroty z bieżącego okresu, aby uzyskać łączny wynik kwartalny, a następnie automatycznie dopasowuje stawkę rabatu w 5 progach: ≥50000 zł → 5%, ≥40000 → 4%, ≥30000 → 3%, ≥20000 → 2%, ≥10000 → 1%, poniżej 10000 → 0%. Rabat jest naliczany tylko wtedy, gdy klient ma status „Podpisano” w bieżącym kwartale; bez podpisu rabat wynosi zero, a wiersz ze sprzedażą bez podpisu jest oznaczony na czerwono. Po weryfikacji przez kierownika konta kliknięcie „Zgłoś do finansów” blokuje dane tego kwartału — przełącznik podpisania i przycisk zgłoszenia zostają wyłączone."],
+  ["季度：","Quarter: ","Kwartał: "],
+  ["负责人：","Owner: ","Opiekun: "],
+  ["＋ 新增客户","+ Add Customer","+ Dodaj klienta"],
+  ["当前视图总销售额","Total Sales (Current View)","Łączna sprzedaż (bieżący widok)"],
+  ["预计应拨备总返利金","Est. Total Rebate Reserve","Szacowana łączna rezerwa rabatowa"],
+  ["本期渠道发生总退货","Total Channel Returns This Period","Łączne zwroty kanałów w tym okresie"],
+  ["个客户合计","customers total","klientów łącznie"],
+  ["仅统计已签约生效客户","Signed & active customers only","Tylko podpisani i aktywni klienci"],
+  ["Action + Incom 渠道退货合计","Action + Incom channel returns total","Łączne zwroty kanałów Action + Incom"],
+  ["二级客户","Tier-2 Customer","Klient poziomu 2"],
+  ["Action销售","Action Sales","Sprzedaż Action"],
+  ["Incom销售","Incom Sales","Sprzedaż Incom"],
+  ["渠道退货","Channel Returns","Zwroty kanału"],
+  ["季度合并总业绩","Quarterly Combined Total","Łączny wynik kwartalny"],
+  ["签约目标金额 (PLN)","Signed Target Amount (PLN)","Docelowa kwota umowy (PLN)"],
+  ["签约目标金额","Signed Target Amount","Docelowa kwota umowy"],
+  ["目标达成率","Target Achievement Rate","Wskaźnik realizacji celu"],
+  ["签约状态","Signing Status","Status podpisania"],
+  ["签约时间","Signed At","Data podpisania"],
+  ["流程状态","Process Status","Status procesu"],
+  ["季度返点","Quarterly Rebate Rate","Kwartalna stawka rabatu"],
+  ["返利金额","Rebate Amount","Kwota rabatu"],
+  ["风控备注","Risk Note","Uwaga ryzyka"],
+  ["编辑客户","Edit Customer","Edytuj klienta"],
+  ["客户名称","Customer Name","Nazwa klienta"],
+  ["如 TedSoft.pl","e.g. TedSoft.pl","np. TedSoft.pl"],
+  ["NIP税号","NIP Tax Number","Numer NIP"],
+  ["波兰10位税号","10-digit Polish tax number","10-cyfrowy polski numer NIP"],
+  ["如 Piotr / Wojtek","e.g. Piotr / Wojtek","np. Piotr / Wojtek"],
+  ["如 45000","e.g. 45000","np. 45000"],
+  ["当期进行中·可编辑","Current · Editable","Bieżący · Edytowalny"],
+  ["历史季度·已锁定归档","Past Quarter · Locked & Archived","Miniony kwartał · Zablokowany i zarchiwizowany"],
+  ["未来季度·可提前签约","Future Quarter · Early Signing Available","Przyszły kwartał · Możliwe wcześniejsze podpisanie"],
+  ["已签约","Signed","Podpisano"],
+  ["未签约","Unsigned","Niepodpisano"],
+  ["提报财务","Submit to Finance","Zgłoś do finansów"],
+  ["已锁定","Locked","Zablokowano"],
+  ["提报于 ","Submitted at ","Zgłoszono "],
+  ["暂无客户数据","No customer data yet","Brak danych klientów"],
+  ["❌ 异常：该二级客户未签约季度协议，系统拦截！","❌ Anomaly: this tier-2 customer has not signed the quarterly agreement — blocked by system!","❌ Anomalia: ten klient poziomu 2 nie podpisał umowy kwartalnej — zablokowane przez system!"],
+  ["提报后 ","After submission, ","Po zgłoszeniu "],
+  ["本季度的签约状态与返利数据将被锁定，无法二次修改，确认提报财务吗？","this quarter's signing status and rebate data will be locked and cannot be changed again. Confirm submission to finance?","status podpisania i dane rabatowe tego kwartau zostaną zablokowane i nie będzie można ich ponownie zmienić. Potwierdzić zgłoszenie do finansów?"],
+  ["请填写客户名称","Please enter customer name","Proszę podać nazwę klienta"],
+  ["请填写负责人","Please enter owner","Proszę podać opiekuna"],
+  ["NIP税号必须是10位数字","NIP tax number must be 10 digits","Numer NIP musi mieć 10 cyfr"],
+  ["该 NIP 已存在，不能重复添加","This NIP already exists, cannot add duplicate","Ten numer NIP już istnieje, nie można dodać duplikatu"]
 ];
 I18N_DICT.sort((a,b)=>b[0].length-a[0].length);
 
@@ -8047,7 +8095,7 @@ applyLanguage(currentLang);
         const status = qrbQuarterlyStatus[qrbQuarterSelect][nip];
         if (!status || status.locked) return;
         const master = qrbCustomerMasters.find(m=>m.nip===nip);
-        if (!confirm('提报后 '+(master?master.name:nip)+' 本季度的签约状态与返利数据将被锁定，无法二次修改，确认提报财务吗？')) return;
+        if (!confirm(translateOne('提报后 ')+(master?master.name:nip)+translateOne(' 本季度的签约状态与返利数据将被锁定，无法二次修改，确认提报财务吗？'))) return;
         status.locked = true;
         status.submittedAt = qrbFormatNow();
         qrbRenderAll();
@@ -8089,14 +8137,14 @@ applyLanguage(currentLang);
       const nip = document.getElementById('qrbFNip').value.trim();
       const owner = document.getElementById('qrbFOwner').value.trim();
       const target = Math.max(0, parseFloat(document.getElementById('qrbFTarget').value) || 0);
-      if (!name){ alert('请填写客户名称'); return; }
-      if (!owner){ alert('请填写负责人'); return; }
+      if (!name){ alert(translateOne('请填写客户名称')); return; }
+      if (!owner){ alert(translateOne('请填写负责人')); return; }
       if (qrbEditingNip){
         const master = qrbCustomerMasters.find(m=>m.nip===qrbEditingNip);
         if (master){ master.name = name; master.owner = owner; master.targetAmount = target; }
       } else {
-        if (!qrbIsValidNip(nip)){ alert('NIP税号必须是10位数字'); return; }
-        if (qrbCustomerMasters.find(m=>m.nip===nip)){ alert('该 NIP 已存在，不能重复添加'); return; }
+        if (!qrbIsValidNip(nip)){ alert(translateOne('NIP税号必须是10位数字')); return; }
+        if (qrbCustomerMasters.find(m=>m.nip===nip)){ alert(translateOne('该 NIP 已存在，不能重复添加')); return; }
         qrbCustomerMasters.push({ nip, name, owner, targetAmount: target });
         qrbInitDataForCustomer(nip);
       }

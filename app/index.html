@@ -345,30 +345,15 @@
 
 <!-- ===================== 登录门禁 ===================== -->
   <div id="langSwitcher">
-  <button type="button" id="langTrigger" class="lang-trigger">
-    <svg class="lang-globe-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path><path d="M2 12h20"></path></svg>
-    <span id="langCurrentLabel">中文</span>
-    <svg id="langChevron" class="lang-chevron-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg>
-  </button>
-  <div id="langMenu" class="lang-menu">
-    <button type="button" class="lang-btn" data-lang="zh">中文</button>
-    <button type="button" class="lang-btn" data-lang="en">EN</button>
-    <button type="button" class="lang-btn" data-lang="pl">PL</button>
-  </div>
+  <button type="button" class="lang-btn" data-lang="zh">中文</button>
+  <button type="button" class="lang-btn" data-lang="en">EN</button>
+  <button type="button" class="lang-btn" data-lang="pl">PL</button>
 </div>
 <style>
-  #langSwitcher{position:fixed;top:14px;right:20px;z-index:1100;}
-  #langSwitcher .lang-trigger{display:flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:7px 14px;font-size:12px;font-weight:500;color:var(--text-dim);cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,0.35);}
-  #langSwitcher .lang-trigger:hover{color:var(--text);}
-  #langSwitcher .lang-globe-icon{width:14px;height:14px;flex-shrink:0;color:var(--text-faint);}
-  #langSwitcher .lang-chevron-icon{width:12px;height:12px;flex-shrink:0;color:var(--text-faint);transition:transform .15s ease;}
-  #langSwitcher.open .lang-chevron-icon{transform:rotate(180deg);}
-  #langSwitcher .lang-menu{position:absolute;top:calc(100% + 6px);right:0;width:100px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:4px;box-shadow:0 8px 20px rgba(0,0,0,0.35);opacity:0;transform:translateY(-4px) scale(0.97);pointer-events:none;transition:opacity .12s ease,transform .12s ease;}
-  #langSwitcher.open .lang-menu{opacity:1;transform:translateY(0) scale(1);pointer-events:auto;}
-  #langSwitcher .lang-menu .lang-btn{display:flex;align-items:center;justify-content:space-between;width:100%;background:transparent;border:none;color:var(--text-dim);font-size:12px;font-weight:500;padding:7px 10px;border-radius:8px;cursor:pointer;text-align:left;transition:background .12s ease,color .12s ease;}
-  #langSwitcher .lang-menu .lang-btn:hover{background:var(--surface-alt);color:var(--text);}
-  #langSwitcher .lang-menu .lang-btn.active{color:var(--copper);font-weight:600;}
-  #langSwitcher .lang-menu .lang-btn.active::after{content:'\2713';margin-left:8px;}
+  #langSwitcher{position:fixed;top:14px;right:20px;z-index:1100;display:flex;align-items:center;gap:2px;background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:4px;box-shadow:0 4px 14px rgba(0,0,0,0.35);}
+  #langSwitcher .lang-btn{background:transparent;border:none;color:var(--text-dim);font-size:12px;font-weight:500;padding:6px 12px;border-radius:16px;cursor:pointer;transition:background .15s ease,color .15s ease;}
+  #langSwitcher .lang-btn:hover{color:var(--text);}
+  #langSwitcher .lang-btn.active{background:var(--copper);color:#fff;}
   .inv-note{display:flex;gap:12px;align-items:flex-start;background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--copper);border-radius:var(--radius);padding:14px 16px;font-size:13px;color:var(--text-dim);margin-bottom:20px;}
   .inv-stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:20px;}
   .inv-stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px;}
@@ -6927,19 +6912,10 @@ function applyLanguage(lang){
   document.querySelectorAll('#langSwitcher .lang-btn').forEach(btn=>{
     btn.classList.toggle('active', btn.dataset.lang === lang);
   });
-  var langLabelEl = document.getElementById('langCurrentLabel');
-  if (langLabelEl){ var langNames = {zh:'中文', en:'EN', pl:'PL'}; langLabelEl.textContent = langNames[lang] || lang; }
 }
 
-const langSwitcherEl = document.getElementById('langSwitcher');
-const langTriggerEl = document.getElementById('langTrigger');
-if (langSwitcherEl && langTriggerEl){
-  langTriggerEl.addEventListener('click', ()=>{ langSwitcherEl.classList.toggle('open'); });
-  langTriggerEl.addEventListener('mouseenter', ()=>{ langSwitcherEl.classList.add('open'); });
-  langSwitcherEl.addEventListener('mouseleave', ()=>{ langSwitcherEl.classList.remove('open'); });
-}
 document.querySelectorAll('#langSwitcher .lang-btn').forEach(btn=>{
-  btn.addEventListener('click', ()=> { applyLanguage(btn.dataset.lang); if (langSwitcherEl) langSwitcherEl.classList.remove('open'); });
+  btn.addEventListener('click', ()=> { applyLanguage(btn.dataset.lang); });
 });
 
 new MutationObserver(()=>{

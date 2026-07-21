@@ -5953,7 +5953,7 @@ function injectAgentTiers(){
   rows.forEach(row=>{
     if (row.dataset.tiersInjected === '1') return;
     const cells = Array.from(row.children);
-    if (cells.length < idxNet+5) return;
+    if (!cells[idxRetail] || !cells[idxCountry] || !cells[idxCust] || !cells[idxNet]) return;
 
     const retail = parseMoneyText(cells[idxRetail].innerText);
     const countryText = cells[idxCountry].innerText;
@@ -5967,11 +5967,6 @@ function injectAgentTiers(){
     if (vatRate !== null && !isNaN(retail)){
       cells[idxNet].textContent = fmtMoney(retail/(1+vatRate), symbol);
     }
-
-    // 未税净价之后紧跟的4列是旧的 环比/出厂成本/单位盈亏/净利率，从后往前删
-    [idxNet+4, idxNet+3, idxNet+2, idxNet+1].forEach(i=>{
-      if (row.children[i]) row.removeChild(row.children[i]);
-    });
 
     const isCzk = symbol === 'Kč';
     const finalSymbol = isCzk ? 'zł' : symbol;

@@ -6980,9 +6980,13 @@ document.querySelectorAll('#langSwitcher .lang-btn').forEach(btn=>{
   btn.addEventListener('click', ()=> { applyLanguage(btn.dataset.lang); });
 });
 
+let __i18nRetranslateTimer = null;
 new MutationObserver(()=>{
-  translateTextNodes(document.body);
-  translatePlaceholders(document.body);
+  clearTimeout(__i18nRetranslateTimer);
+  __i18nRetranslateTimer = setTimeout(()=>{
+    translateTextNodes(document.body);
+    translatePlaceholders(document.body);
+  }, 30);
 }).observe(document.body, {childList:true, subtree:true});
 
 applyLanguage(currentLang);

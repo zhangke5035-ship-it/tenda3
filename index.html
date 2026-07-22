@@ -235,6 +235,16 @@
   .gtm-thumb{width:40px;height:40px;border-radius:var(--radius);object-fit:contain;background:var(--surface-alt);border:1px solid var(--border-soft);cursor:zoom-in;display:block;}
   .gtm-thumb-placeholder{width:40px;height:40px;border-radius:var(--radius);background:var(--surface-alt);border:1px solid var(--border-soft);display:flex;align-items:center;justify-content:center;color:var(--text-faint);}
   .gtm-thumb-placeholder svg{width:16px;height:16px;}
+  .gtm-card-list{display:flex;flex-direction:column;gap:10px;}
+  .gtm-card{display:flex;gap:14px;align-items:flex-start;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;}
+  .gtm-card-risk{border:2px solid var(--alert);}
+  .gtm-card-thumb{width:64px;height:64px;border-radius:var(--radius);object-fit:contain;background:var(--surface-alt);border:1px solid var(--border-soft);cursor:zoom-in;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--text-faint);}
+  .gtm-card-thumb svg{width:22px;height:22px;}
+  .gtm-card-main{flex:1;min-width:0;}
+  .gtm-card-title-row{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:6px;}
+  .gtm-card-meta{display:flex;align-items:center;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--text-dim);margin-bottom:6px;}
+  .gtm-card-note{font-size:12.5px;color:var(--text-dim);background:var(--surface-alt);border-radius:var(--radius);padding:8px 10px;margin-top:4px;}
+  .gtm-card-actions{flex-shrink:0;padding-top:2px;}
   .gtm-upload-row{display:flex;align-items:center;gap:14px;}
   .gtm-upload-preview{width:72px;height:72px;border-radius:var(--radius);border:1px dashed var(--border);background:var(--surface-alt);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;}
   .gtm-upload-preview img{width:100%;height:100%;object-fit:contain;}
@@ -1017,10 +1027,7 @@
       </div>
     </div>
     <div class="cust-tabs" id="gtmStageTabs"></div>
-    <table>
-      <thead><tr><th>图片</th><th>产品型号 / 名称</th><th>目标市场</th><th>负责人</th><th>计划上市日期</th><th>当前阶段</th><th>备注</th><th>操作</th></tr></thead>
-      <tbody id="gtmTableBody"></tbody>
-    </table>
+    <div class="gtm-card-list" id="gtmTableBody"></div>
   </div>
 </section>
 
@@ -4145,29 +4152,41 @@ function renderGtmStageTabs(){
 }
 
 function renderGtmTable(){
-  const tbody = document.getElementById('gtmTableBody');
-  if (!tbody) return;
+  const box = document.getElementById('gtmTableBody');
+  if (!box) return;
   const rows = gtmFilteredRows();
   const dash = '<span style="color:var(--text-faint)">—</span>';
-  tbody.innerHTML = rows.map(p=>`
-    <tr>
-      <td>${p.image_url ? `<img class="gtm-thumb" src="${p.image_url}" onclick="openGtmImageLightbox('${p.image_url.replace(/'/g,"\\'")}')">` : `<div class="gtm-thumb-placeholder"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><path d="M21 15l-5-5L5 21"></path></svg></div>`}</td>
-      <td>
-        <div class="promo-name-main">${p.product||dash}</div>
-        <div class="promo-name-sub">${p.name||''}</div>
-      </td>
-      <td><span class="promo-client-tag">${p.market||'—'}</span></td>
-      <td>${p.owner||dash}</td>
-      <td>${p.launch_date||dash}</td>
-      <td>${gtmStageTagHtml(p)}</td>
-      <td class="desc" style="max-width:220px;">${p.note||dash}</td>
-      <td>
-        <div class="inv-row-actions">
-          <a onclick="editGtmProduct(${p.id})">编辑</a>
-          <a style="color:var(--alert);" onclick="deleteGtmProduct(${p.id})">删除</a>
-        </div>
-      </td>
-    </tr>`).join('');
+  if (!rows.length){
+    box.innerHTML = '<div style="text-align:center;color:var(--text-faint);padding:40px 0;">暂无新品记录</div>';
+    return;
+  }
+  box.innerHTML = rows.map(function(p){
+    const overdue = gtmIsOverdue(p);
+    const thumb = p.image_url
+      ? '<img class="gtm-card-thumb" src="' + p.image_url + '" onclick="openGtmImageLightbox(\'' + p.image_url.replace(/'/g,"\\'") + '\')">'
+      : '<div class="gtm-card-thumb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><path d="M21 15l-5-5L5 21"></path></svg></div>';
+    return '' +
+      '<div class="gtm-card' + (overdue ? ' gtm-card-risk' : '') + '">' +
+        thumb +
+        '<div class="gtm-card-main">' +
+          '<div class="gtm-card-title-row">' +
+            '<span class="promo-name-main">' + (p.product || dash) + '</span>' +
+            '<span class="promo-name-sub">' + (p.name || '') + '</span>' +
+          '</div>' +
+          '<div class="gtm-card-meta">' +
+            '<span class="promo-client-tag">' + (p.market || '—') + '</span>' +
+            '<span>负责人 ' + (p.owner || dash) + '</span>' +
+            '<span>计划上市 ' + (p.launch_date || dash) + '</span>' +
+            gtmStageTagHtml(p) +
+          '</div>' +
+          (p.note ? '<div class="gtm-card-note">' + p.note + '</div>' : '') +
+        '</div>' +
+        '<div class="inv-row-actions gtm-card-actions">' +
+          '<a onclick="editGtmProduct(' + p.id + ')">编辑</a>' +
+          '<a style="color:var(--alert);" onclick="deleteGtmProduct(' + p.id + ')">删除</a>' +
+        '</div>' +
+      '</div>';
+  }).join('');
 }
 
 function renderGtmAll(){

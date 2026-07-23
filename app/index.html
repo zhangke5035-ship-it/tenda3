@@ -304,6 +304,39 @@
   .lc-badge.lc-decline{background:var(--copper-soft);color:var(--copper);}
   .lc-badge.lc-eol{background:var(--alert-soft);color:var(--alert);}
   .lc-badge.lc-unknown{background:var(--surface-alt);color:var(--text-faint);}
+  #customerPortalRoot{min-height:100vh;background:var(--bg);display:flex;flex-direction:column;}
+  .cp-topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 28px;background:var(--surface);border-bottom:1px solid var(--border);}
+  .cp-topbar-brand{display:flex;align-items:center;gap:10px;}
+  .cp-topbar-brand img{height:26px;}
+  .cp-topbar-title{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:15px;color:var(--text);}
+  .cp-topbar-right{display:flex;align-items:center;gap:14px;}
+  .cp-customer-badge{font-size:12.5px;color:var(--text-dim);background:var(--surface-alt);padding:5px 12px;border-radius:20px;border:1px solid var(--border-soft);}
+  .cp-logout-btn{background:transparent;border:1px solid var(--border);color:var(--text-dim);font-size:12.5px;padding:6px 14px;border-radius:var(--radius);cursor:pointer;}
+  .cp-logout-btn:hover{color:var(--text);border-color:var(--copper);}
+  .cp-main{flex:1;padding:28px;max-width:900px;margin:0 auto;width:100%;box-sizing:border-box;display:flex;flex-direction:column;gap:20px;}
+  .cp-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:22px 24px;}
+  .cp-card h2{margin:0 0 16px;font-family:'Space Grotesk',sans-serif;font-size:15px;color:var(--text);}
+  .cp-form{display:grid;grid-template-columns:1fr 1fr;gap:14px 16px;}
+  .cp-form-row{display:flex;flex-direction:column;gap:6px;}
+  .cp-form-row-full{grid-column:1 / -1;}
+  .cp-form label{font-size:12.5px;color:var(--text-dim);}
+  .cp-form input,.cp-form textarea{border:1px solid var(--border);border-radius:var(--radius);padding:8px 10px;font-family:inherit;font-size:13px;color:var(--text);background:var(--bg);}
+  .cp-form input:focus,.cp-form textarea:focus{outline:none;border-color:var(--copper);}
+  .cp-form-actions{display:flex;align-items:center;gap:12px;}
+  .cp-submit-btn{background:var(--copper);color:#fff;border:none;border-radius:var(--radius);padding:9px 22px;font-size:13px;font-weight:600;cursor:pointer;}
+  .cp-submit-btn:hover{opacity:.9;}
+  .cp-submit-btn:disabled{opacity:.6;cursor:not-allowed;}
+  .cp-form-msg{font-size:12.5px;}
+  .cp-form-msg-ok{color:var(--good);}
+  .cp-form-msg-error{color:var(--alert);}
+  .cp-table{width:100%;border-collapse:collapse;font-size:13px;}
+  .cp-table th{text-align:left;padding:8px 10px;color:var(--text-dim);font-weight:500;font-size:12px;border-bottom:1px solid var(--border);white-space:nowrap;}
+  .cp-table td{padding:9px 10px;border-bottom:1px solid var(--border-soft);color:var(--text);}
+  .cp-status{display:inline-block;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:500;white-space:nowrap;}
+  .cp-status-pending{background:var(--amber-soft);color:var(--amber);}
+  .cp-status-accepted{background:#E8F0FA;color:#2568B8;}
+  .cp-status-done{background:var(--good-soft);color:var(--good);}
+  .cp-status-rejected{background:var(--alert-soft);color:var(--alert);}
   .cat-badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:500;white-space:nowrap;}
   .cat-badge.cat-mesh{background:#EFEDFC;color:#5B52C9;}
   .cat-badge.cat-usb{background:#E8F0FA;color:#2C6FBF;}
@@ -539,6 +572,58 @@
   </div>
 </div>
 
+<div class="hidden" id="customerPortalRoot">
+  <div class="cp-topbar">
+    <div class="cp-topbar-brand">
+      <img src="https://static.tenda.com.cn/public/logo.png" alt="Tenda" onerror="this.style.display='none'">
+      <span class="cp-topbar-title">客户服务门户</span>
+    </div>
+    <div class="cp-topbar-right">
+      <span id="cpCustomerBadge" class="cp-customer-badge"></span>
+      <button type="button" id="cpLogoutBtn" class="cp-logout-btn">退出登录</button>
+    </div>
+  </div>
+  <div class="cp-main">
+    <div class="cp-card">
+      <h2>提交退货申请</h2>
+      <form id="cpReturnForm" class="cp-form">
+        <div class="cp-form-row">
+          <label>产品型号 *</label>
+          <input type="text" id="cpFProduct" placeholder="如 AX12 Pro" required>
+        </div>
+        <div class="cp-form-row">
+          <label>数量 *</label>
+          <input type="number" id="cpFQty" min="1" step="1" required>
+        </div>
+        <div class="cp-form-row">
+          <label>关联订单号</label>
+          <input type="text" id="cpFOrderNo" placeholder="选填">
+        </div>
+        <div class="cp-form-row cp-form-row-full">
+          <label>退货原因 *</label>
+          <textarea id="cpFReason" rows="3" required></textarea>
+        </div>
+        <div class="cp-form-row cp-form-row-full">
+          <label>备注</label>
+          <textarea id="cpFNote" rows="2" placeholder="选填"></textarea>
+        </div>
+        <div class="cp-form-row cp-form-row-full cp-form-actions">
+          <button type="submit" id="cpSubmitBtn" class="cp-submit-btn">提交申请</button>
+          <span id="cpFormMsg" class="cp-form-msg"></span>
+        </div>
+      </form>
+    </div>
+    <div class="cp-card">
+      <h2>我的退货申请记录</h2>
+      <table class="cp-table">
+        <thead>
+          <tr><th>提交时间</th><th>产品型号</th><th>数量</th><th>关联订单</th><th>退货原因</th><th>状态</th></tr>
+        </thead>
+        <tbody id="cpReturnsTbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
 <div class="app hidden" id="appRoot">
   <aside class="sidebar">
     <div class="brand">
@@ -5294,7 +5379,18 @@ async function loadAllRemoteData(){
   ]);
 }
 
-function showApp(session){
+async function showApp(session){
+  let customerCode = null;
+  try{
+    const { data, error } = await sb.rpc('current_customer_code');
+    if (!error) customerCode = data || null;
+  }catch(e){ console.error('current_customer_code check failed', e); }
+
+  if (customerCode){
+    showCustomerApp(session, customerCode);
+    return;
+  }
+
   authGateEl.classList.add('hidden');
   appRootEl.classList.remove('hidden');
   if(userBadgeEl) userBadgeEl.textContent = (session && session.user && session.user.email) || '';
@@ -5308,6 +5404,101 @@ function showApp(session){
   }catch(e){ console.error('refreshAll/renderCharts failed', e); }
   if (typeof loadAllRemoteData === 'function') loadAllRemoteData();
 }
+
+let cpCustomerCode = null;
+
+function escapeHtmlCP(s){
+  return String(s==null?'':s).replace(/[&<>"']/g, function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+  });
+}
+
+function cpStatusClass(status){
+  return ({'待处理':'pending','已受理':'accepted','已退款':'done','已拒绝':'rejected'})[status] || 'pending';
+}
+
+async function showCustomerApp(session, customerCode){
+  cpCustomerCode = customerCode;
+  authGateEl.classList.add('hidden');
+  appRootEl.classList.add('hidden');
+  document.getElementById('customerPortalRoot').classList.remove('hidden');
+  const badge = document.getElementById('cpCustomerBadge');
+  if (badge) badge.textContent = (typeof CUSTOMERS !== 'undefined' && CUSTOMERS[customerCode] && CUSTOMERS[customerCode].name) || customerCode;
+  if (typeof applyDefaultLanguageForUser === 'function') applyDefaultLanguageForUser(session);
+  await loadCustomerReturns();
+}
+
+async function loadCustomerReturns(){
+  const tbody = document.getElementById('cpReturnsTbody');
+  if (!tbody) return;
+  const { data, error } = await sb.from('returns').select('*').order('created_at', {ascending:false});
+  if (error){ console.error('loadCustomerReturns', error); return; }
+  if (!data || !data.length){
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-faint);padding:20px;">暂无退货申请记录</td></tr>';
+    return;
+  }
+  tbody.innerHTML = data.map(function(r){
+    return '<tr>' +
+      '<td>' + escapeHtmlCP(r.created_at ? r.created_at.slice(0,16).replace('T',' ') : '') + '</td>' +
+      '<td>' + escapeHtmlCP(r.product) + '</td>' +
+      '<td>' + (r.qty||'') + '</td>' +
+      '<td>' + escapeHtmlCP(r.order_no||'-') + '</td>' +
+      '<td>' + escapeHtmlCP(r.reason||'') + '</td>' +
+      '<td><span class="cp-status cp-status-' + cpStatusClass(r.status) + '">' + escapeHtmlCP(r.status) + '</span></td>' +
+    '</tr>';
+  }).join('');
+  if (typeof translateTextNodes === 'function') translateTextNodes(tbody);
+}
+
+document.getElementById('cpReturnForm').addEventListener('submit', async function(e){
+  e.preventDefault();
+  const product = document.getElementById('cpFProduct').value.trim();
+  const qty = parseFloat(document.getElementById('cpFQty').value);
+  const orderNo = document.getElementById('cpFOrderNo').value.trim();
+  const reason = document.getElementById('cpFReason').value.trim();
+  const note = document.getElementById('cpFNote').value.trim();
+  const msgEl = document.getElementById('cpFormMsg');
+  if (!product || !qty || !reason){
+    msgEl.textContent = '请填写必填项';
+    msgEl.className = 'cp-form-msg cp-form-msg-error';
+    return;
+  }
+  const btn = document.getElementById('cpSubmitBtn');
+  btn.disabled = true;
+  btn.textContent = '提交中…';
+  try{
+    const { error } = await sb.from('returns').insert({
+      customer_code: cpCustomerCode,
+      product: product,
+      qty: qty,
+      order_no: orderNo || null,
+      reason: reason,
+      note: note || null
+    });
+    if (error){
+      msgEl.textContent = '提交失败：' + error.message;
+      msgEl.className = 'cp-form-msg cp-form-msg-error';
+    } else {
+      msgEl.textContent = '提交成功';
+      msgEl.className = 'cp-form-msg cp-form-msg-ok';
+      document.getElementById('cpReturnForm').reset();
+      await loadCustomerReturns();
+    }
+  }catch(err){
+    msgEl.textContent = '提交失败，请检查网络';
+    msgEl.className = 'cp-form-msg cp-form-msg-error';
+  }finally{
+    btn.disabled = false;
+    btn.textContent = '提交申请';
+  }
+});
+
+document.getElementById('cpLogoutBtn').addEventListener('click', async function(){
+  await sb.auth.signOut();
+  document.getElementById('customerPortalRoot').classList.add('hidden');
+  document.getElementById('loginPassword').value = '';
+  showLogin();
+});
 
 function showLogin(){
   appRootEl.classList.add('hidden');
@@ -6921,6 +7112,27 @@ const I18N_DICT = [
   ["请填写负责人","Please enter owner","Proszę podać opiekuna"],
   ["NIP税号必须是10位数字","NIP tax number must be 10 digits","Numer NIP musi mieć 10 cyfr"],
   ["该 NIP 已存在，不能重复添加","This NIP already exists, cannot add duplicate","Ten numer NIP już istnieje, nie można dodać duplikatu"]
+,
+  ["客户服务门户","Customer Portal","Portal klienta"],
+  ["提交退货申请","Submit Return Request","Złóż wniosek o zwrot"],
+  ["关联订单号","Related Order No.","Powiązany nr zamówienia"],
+  ["关联订单","Related Order","Powiązane zamówienie"],
+  ["选填","Optional","Opcjonalnie"],
+  ["退货原因","Reason for Return","Powód zwrotu"],
+  ["提交申请","Submit Request","Wyślij wniosek"],
+  ["我的退货申请记录","My Return Requests","Moje wnioski o zwrot"],
+  ["提交时间","Submitted At","Data zgłoszenia"],
+  ["已受理","Accepted","Przyjęto"],
+  ["已退款","Refunded","Zwrócono"],
+  ["已拒绝","Rejected","Odrzucono"],
+  ["请填写必填项","Please fill in all required fields","Proszę wypełnić wymagane pola"],
+  ["提交中…","Submitting…","Wysyłanie…"],
+  ["提交成功","Submitted successfully","Zgłoszenie wysłane pomyślnie"],
+  ["提交失败，请检查网络","Submission failed, please check your network","Błąd wysyłania, sprawdź połączenie"],
+  ["提交失败","Submission failed","Błąd wysyłania"],
+  ["暂无退货申请记录","No return requests yet","Brak wniosków o zwrot"],
+  ["退货管理","Returns Management","Zarządzanie zwrotami"],
+  ["更新状态","Update Status","Aktualizuj status"]
 ];
 I18N_DICT.sort((a,b)=>b[0].length-a[0].length);
 

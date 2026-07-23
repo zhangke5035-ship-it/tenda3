@@ -686,8 +686,8 @@
           <textarea id="cpFReason" rows="3" required></textarea>
         </div>
         <div class="cp-form-row cp-form-row-full">
-          <label>备注 <span class="cp-required">*</span></label>
-          <textarea id="cpFNote" rows="2" placeholder="请补充退货相关的详细说明" required></textarea>
+          <label>备注</label>
+          <textarea id="cpFNote" rows="2" placeholder="选填"></textarea>
         </div>
         <div class="cp-form-row cp-form-row-full cp-form-actions">
           <button type="submit" id="cpSubmitBtn" class="cp-submit-btn">提交申请</button>
@@ -5876,7 +5876,7 @@ async function showCustomerApp(session, customerCode){
   document.getElementById('customerPortalRoot').classList.remove('hidden');
   const badge = document.getElementById('cpCustomerBadge');
   if (badge) badge.textContent = (typeof CUSTOMERS !== 'undefined' && CUSTOMERS[customerCode] && CUSTOMERS[customerCode].name) || customerCode;
-  if (typeof applyDefaultLanguageForUser === 'function') applyDefaultLanguageForUser(session);
+  if (typeof applyLanguage === 'function') applyLanguage('pl');
   renderCpExtraFields(customerCode);
   renderCpProductModelOptions(customerCode);
   loadCpAnnouncement();
@@ -5925,7 +5925,7 @@ const CP_BATCH_BASE_FIELDS = [
   { key: 'carrier', label: '退货物流承运商' },
   { key: 'trackingNo', label: '物流单号' },
   { key: 'reason', label: '退货原因' },
-  { key: 'note', label: '备注' }
+  { key: 'note', label: '备注', optional: true }
 ];
 let cpBatchRows = [];
 
@@ -6012,8 +6012,8 @@ async function cpParseBatchRows(rawRows){
     const errors = [];
     if (!isBlank){
       CP_BATCH_BASE_FIELDS.forEach(function(f){
-        if (!values[f.key]) errors.push(f.label);
-        else if (f.numeric && (isNaN(parseFloat(values[f.key])) || parseFloat(values[f.key]) <= 0)) errors.push(f.label);
+        if (!f.optional && !values[f.key]) errors.push(f.label);
+        else if (values[f.key] && f.numeric && (isNaN(parseFloat(values[f.key])) || parseFloat(values[f.key]) <= 0)) errors.push(f.label);
       });
     }
     return { values: values, extraValues: extraValues, errors: errors, blank: isBlank };
@@ -6155,7 +6155,7 @@ document.getElementById('cpReturnForm').addEventListener('submit', async functio
   const reason = document.getElementById('cpFReason').value.trim();
   const note = document.getElementById('cpFNote').value.trim();
   const msgEl = document.getElementById('cpFormMsg');
-  if (!product || !qty || !orderNo || !invoiceNo || !serialNo || !carrier || !trackingNo || !reason || !note){
+  if (!product || !qty || !orderNo || !invoiceNo || !serialNo || !carrier || !trackingNo || !reason){
     msgEl.textContent = '请填写必填项';
     msgEl.className = 'cp-form-msg cp-form-msg-error';
     return;

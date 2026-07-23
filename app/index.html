@@ -315,17 +315,19 @@
   .cp-logout-btn svg{flex-shrink:0;}
   .cp-logout-btn:hover{background:var(--alert-soft);border-color:var(--alert);color:var(--alert);}
   .cp-main{flex:1;padding:28px;max-width:900px;margin:0 auto;width:100%;box-sizing:border-box;display:flex;flex-direction:column;gap:20px;}
-  .cp-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:22px 24px;}
+  .cp-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:26px 28px;box-shadow:0 1px 3px rgba(16,24,40,0.04);}
+  .cp-required{color:var(--alert);margin-left:2px;}
   .cp-card h2{margin:0 0 16px;font-family:'Space Grotesk',sans-serif;font-size:15px;color:var(--text);}
   .cp-form{display:grid;grid-template-columns:1fr 1fr;gap:14px 16px;}
   .cp-form-row{display:flex;flex-direction:column;gap:6px;}
   .cp-form-row-full{grid-column:1 / -1;}
-  .cp-form label{font-size:12.5px;color:var(--text-dim);}
-  .cp-form input,.cp-form textarea{border:1px solid var(--border);border-radius:var(--radius);padding:8px 10px;font-family:inherit;font-size:13px;color:var(--text);background:var(--bg);}
-  .cp-form input:focus,.cp-form textarea:focus{outline:none;border-color:var(--copper);}
+  .cp-form label{font-size:12.5px;font-weight:600;color:var(--text-dim);}
+  .cp-form input,.cp-form textarea{border:1px solid var(--border);border-radius:8px;padding:9px 12px;font-family:inherit;font-size:13px;color:var(--text);background:var(--bg);transition:border-color .15s ease,box-shadow .15s ease;}
+  .cp-form input:focus,.cp-form textarea:focus{outline:none;border-color:var(--copper);box-shadow:0 0 0 3px var(--copper-soft);}
   .cp-form-actions{display:flex;align-items:center;gap:12px;}
-  .cp-submit-btn{background:var(--copper);color:#fff;border:none;border-radius:var(--radius);padding:9px 22px;font-size:13px;font-weight:600;cursor:pointer;}
-  .cp-submit-btn:hover{opacity:.9;}
+  .cp-submit-btn{background:var(--copper);color:#fff;border:none;border-radius:8px;padding:10px 26px;font-size:13px;font-weight:700;letter-spacing:.2px;cursor:pointer;box-shadow:0 1px 2px rgba(193,121,58,0.3);transition:transform .12s ease,box-shadow .12s ease,opacity .12s ease;}
+  .cp-submit-btn:hover{opacity:.95;transform:translateY(-1px);box-shadow:0 4px 10px rgba(193,121,58,0.35);}
+  .cp-submit-btn:active{transform:translateY(0);box-shadow:0 1px 2px rgba(193,121,58,0.3);}
   .cp-submit-btn:disabled{opacity:.6;cursor:not-allowed;}
   .cp-form-msg{font-size:12.5px;}
   .cp-form-msg-ok{color:var(--good);}
@@ -333,9 +335,12 @@
   .cp-table-wrap{overflow-x:auto;}
   .cp-extra-fields{display:contents;}
   .cp-table{width:100%;border-collapse:collapse;font-size:13px;}
-  .cp-table th{text-align:left;padding:8px 10px;color:var(--text-dim);font-weight:500;font-size:12px;border-bottom:1px solid var(--border);white-space:nowrap;}
-  .cp-table td{padding:9px 10px;border-bottom:1px solid var(--border-soft);color:var(--text);}
-  .cp-status{display:inline-block;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:500;white-space:nowrap;}
+  .cp-table th{text-align:left;padding:10px 12px;color:var(--text-dim);font-weight:600;font-size:11.5px;letter-spacing:.3px;text-transform:uppercase;background:var(--surface-alt);border-bottom:1px solid var(--border);white-space:nowrap;}
+  .cp-table td{padding:11px 12px;border-bottom:1px solid var(--border-soft);color:var(--text);}
+  .cp-status{display:inline-flex;align-items:center;gap:5px;padding:4px 11px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap;}
+  .cp-status::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor;}
+  .cp-status-pending::before{animation:cpPulse 1.4s ease-in-out infinite;}
+  @keyframes cpPulse{0%,100%{opacity:1;}50%{opacity:.35;}}
   .cp-status-pending{background:var(--amber-soft);color:var(--amber);}
   .cp-status-accepted{background:#E8F0FA;color:#2568B8;}
   .cp-status-done{background:var(--good-soft);color:var(--good);}
@@ -591,11 +596,11 @@
       <h2>提交退货申请</h2>
       <form id="cpReturnForm" class="cp-form">
         <div class="cp-form-row">
-          <label>产品型号 *</label>
+          <label>产品型号 <span class="cp-required">*</span></label>
           <input type="text" id="cpFProduct" placeholder="如 AX12 Pro" required>
         </div>
         <div class="cp-form-row">
-          <label>数量 *</label>
+          <label>数量 <span class="cp-required">*</span></label>
           <input type="number" id="cpFQty" min="1" step="1" required>
         </div>
         <div class="cp-form-row">
@@ -620,7 +625,7 @@
         </div>
         <div id="cpExtraFields" class="cp-extra-fields"></div>
         <div class="cp-form-row cp-form-row-full">
-          <label>退货原因 *</label>
+          <label>退货原因 <span class="cp-required">*</span></label>
           <textarea id="cpFReason" rows="3" required></textarea>
         </div>
         <div class="cp-form-row cp-form-row-full">

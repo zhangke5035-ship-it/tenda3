@@ -675,6 +675,7 @@
         <div class="navgroup-body">
           <div class="navitem sub" data-view="customers"><span class="dot"></span>客户列表</div>
           <div class="navitem sub" data-view="rebate-lock"><span class="dot"></span>返利管理</div>
+          <div class="navitem sub" data-view="returns-admin"><span class="dot"></span>退货管理</div>
         </div>
       </div>
     </nav>
@@ -929,6 +930,65 @@
     </section>
 
     <!-- ===================== 报价管理 ===================== -->
+    <section class="view" id="view-returns-admin">
+      <div class="viewhead">
+        <div><h2>退货管理</h2><p>查看并处理所有客户提交的退货申请</p></div>
+      </div>
+
+      <div class="inv-stat-grid">
+        <div class="inv-stat-card">
+          <div class="inv-stat-label">退货申请总数</div>
+          <div class="inv-stat-value" id="raStatTotal">--</div>
+        </div>
+        <div class="inv-stat-card">
+          <div class="inv-stat-label">待处理</div>
+          <div class="inv-stat-value warn" id="raStatPending">--</div>
+        </div>
+        <div class="inv-stat-card">
+          <div class="inv-stat-label">已受理</div>
+          <div class="inv-stat-value" id="raStatAccepted">--</div>
+        </div>
+        <div class="inv-stat-card">
+          <div class="inv-stat-label">已退款</div>
+          <div class="inv-stat-value" id="raStatDone">--</div>
+        </div>
+      </div>
+
+      <div class="inv-toolbar">
+        <div class="inv-filters">
+          <select class="inv-field" id="raFilterCustomer">
+            <option value="">全部客户</option>
+          </select>
+          <select class="inv-field" id="raFilterStatus">
+            <option value="">全部状态</option>
+            <option value="待处理">待处理</option>
+            <option value="已受理">已受理</option>
+            <option value="已退款">已退款</option>
+            <option value="已拒绝">已拒绝</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="inv-table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>提交时间</th>
+              <th>客户</th>
+              <th>产品型号</th>
+              <th>数量</th>
+              <th>关联订单</th>
+              <th>退货原因</th>
+              <th>备注</th>
+              <th>状态</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="raTableBody"></tbody>
+        </table>
+      </div>
+    </section>
+
     <section class="view" id="view-pricing-customer">
       <div class="viewhead">
         <div><h2 id="pricingViewTitle">报价管理 · 客户报价</h2><p id="pricingViewSub">提取自总部《财务价26M71》波兰站"报价"工作表</p></div>
@@ -5347,6 +5407,109 @@ async function loadSimRows(){
   }catch(e){ console.error(e); }
 }
 
+let returnsAdminData = [];
+let raFilterCust = '';
+let raFilterStatus = '';
+
+function raCustomerName(code){
+  return (typeof CUSTOMERS !== 'undefined' && CUSTOMERS[code] && CUSTOMERS[code].name) || code;
+}
+
+function raStatusClass(status){
+  return ({'待处理':'pending','已受理':'accepted','已退款':'done','已拒绝':'rejected'})[status] || 'pending';
+}
+
+async function loadReturnsAdmin(){
+  try{
+    const { data, error } = await sb.from('returns').select('*').order('created_at', {ascending:false});
+    if (error){ console.error('loadReturnsAdmin', error); return; }
+    returnsAdminData = data||[];
+    renderReturnsAdminAll();
+  }catch(e){ console.error(e); }
+}
+
+function renderReturnsAdminStats(){
+  const total = returnsAdminData.length;
+  const pending = returnsAdminData.filter(function(r){ return r.status==='待处理'; }).length;
+  const accepted = returnsAdminData.filter(function(r){ return r.status==='已受理'; }).length;
+  const done = returnsAdminData.filter(function(r){ return r.status==='已退款'; }).length;
+  const set = function(id,v){ const el=document.getElementById(id); if(el) el.textContent=v; };
+  set('raStatTotal', total);
+  set('raStatPending', pending);
+  set('raStatAccepted', accepted);
+  set('raStatDone', done);
+}
+
+function renderReturnsAdminFilterOptions(){
+  const sel = document.getElementById('raFilterCustomer');
+  if (!sel || sel.dataset.populated) return;
+  const codes = Array.from(new Set(returnsAdminData.map(function(r){ return r.customer_code; }))).sort();
+  sel.innerHTML = '<option value="">全部客户</option>' + codes.map(function(c){
+    return '<option value="' + c + '">' + escapeHtmlCP(raCustomerName(c)) + '</option>';
+  }).join('');
+  sel.dataset.populated = '1';
+}
+
+function renderReturnsAdminTable(){
+  const tbody = document.getElementById('raTableBody');
+  if (!tbody) return;
+  const filtered = returnsAdminData.filter(function(r){
+    if (raFilterCust && r.customer_code !== raFilterCust) return false;
+    if (raFilterStatus && r.status !== raFilterStatus) return false;
+    return true;
+  });
+  if (!filtered.length){
+    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--text-faint);padding:24px;">暂无退货申请记录</td></tr>';
+    return;
+  }
+  tbody.innerHTML = filtered.map(function(r){
+    return '<tr>' +
+      '<td>' + escapeHtmlCP(r.created_at ? r.created_at.slice(0,16).replace('T',' ') : '') + '</td>' +
+      '<td>' + escapeHtmlCP(raCustomerName(r.customer_code)) + '</td>' +
+      '<td>' + escapeHtmlCP(r.product) + '</td>' +
+      '<td>' + (r.qty||'') + '</td>' +
+      '<td>' + escapeHtmlCP(r.order_no||'-') + '</td>' +
+      '<td>' + escapeHtmlCP(r.reason||'') + '</td>' +
+      '<td>' + escapeHtmlCP(r.note||'-') + '</td>' +
+      '<td><span class="cp-status cp-status-' + raStatusClass(r.status) + '">' + escapeHtmlCP(r.status) + '</span></td>' +
+      '<td><select class="inv-field ra-status-select" data-id="' + r.id + '" style="padding:4px 8px;font-size:12px;">' +
+        ['待处理','已受理','已退款','已拒绝'].map(function(s){
+          return '<option value="' + s + '"' + (s===r.status?' selected':'') + '>' + s + '</option>';
+        }).join('') +
+      '</select></td>' +
+    '</tr>';
+  }).join('');
+  if (typeof translateTextNodes === 'function') translateTextNodes(tbody);
+}
+
+function renderReturnsAdminAll(){
+  renderReturnsAdminStats();
+  renderReturnsAdminFilterOptions();
+  renderReturnsAdminTable();
+}
+
+document.addEventListener('change', function(e){
+  const sel = e.target.closest ? e.target.closest('.ra-status-select') : null;
+  if (!sel) return;
+  const id = Number(sel.dataset.id);
+  const newStatus = sel.value;
+  sel.disabled = true;
+  sb.from('returns').update({status:newStatus}).eq('id', id).then(function(res){
+    sel.disabled = false;
+    if (res.error){ console.error('update return status', res.error); alert('更新失败：' + res.error.message); return; }
+    const row = returnsAdminData.find(function(r){ return r.id===id; });
+    if (row) row.status = newStatus;
+    renderReturnsAdminStats();
+  });
+});
+
+(function(){
+  const custSel = document.getElementById('raFilterCustomer');
+  if (custSel) custSel.addEventListener('change', function(e){ raFilterCust = e.target.value; renderReturnsAdminTable(); });
+  const statusSel = document.getElementById('raFilterStatus');
+  if (statusSel) statusSel.addEventListener('change', function(e){ raFilterStatus = e.target.value; renderReturnsAdminTable(); });
+})();
+
 async function loadGtmProducts(){
   try{
     const { data, error } = await sb.from('gtm_products').select('*').order('id', {ascending:true});
@@ -5375,7 +5538,8 @@ async function loadAllRemoteData(){
     loadHqPrices(),
     loadSimRows(),
     loadProductDescriptions(),
-    loadGtmProducts()
+    loadGtmProducts(),
+    loadReturnsAdmin()
   ]);
 }
 
@@ -7133,6 +7297,9 @@ const I18N_DICT = [
   ["暂无退货申请记录","No return requests yet","Brak wniosków o zwrot"],
   ["退货管理","Returns Management","Zarządzanie zwrotami"],
   ["更新状态","Update Status","Aktualizuj status"]
+,
+  ["退货申请总数","Total Return Requests","Łączna liczba wniosków o zwrot"],
+  ["查看并处理所有客户提交的退货申请","View and process all customer return requests","Przeglądaj i przetwarzaj wnioski o zwrot od klientów"]
 ];
 I18N_DICT.sort((a,b)=>b[0].length-a[0].length);
 

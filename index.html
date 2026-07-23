@@ -331,6 +331,7 @@
   .cp-form-msg-ok{color:var(--good);}
   .cp-form-msg-error{color:var(--alert);}
   .cp-table-wrap{overflow-x:auto;}
+  .cp-extra-fields{display:contents;}
   .cp-table{width:100%;border-collapse:collapse;font-size:13px;}
   .cp-table th{text-align:left;padding:8px 10px;color:var(--text-dim);font-weight:500;font-size:12px;border-bottom:1px solid var(--border);white-space:nowrap;}
   .cp-table td{padding:9px 10px;border-bottom:1px solid var(--border-soft);color:var(--text);}
@@ -617,6 +618,7 @@
           <label>物流单号</label>
           <input type="text" id="cpFTracking" placeholder="选填">
         </div>
+        <div id="cpExtraFields" class="cp-extra-fields"></div>
         <div class="cp-form-row cp-form-row-full">
           <label>退货原因 *</label>
           <textarea id="cpFReason" rows="3" required></textarea>
@@ -635,7 +637,7 @@
       <h2>我的退货申请记录</h2>
       <div class="cp-table-wrap"><table class="cp-table">
         <thead>
-          <tr><th>提交时间</th><th>产品型号</th><th>数量</th><th>关联订单</th><th>发票号</th><th>序列号</th><th>承运商</th><th>物流单号</th><th>退货原因</th><th>状态</th></tr>
+          <tr><th>提交时间</th><th>产品型号</th><th>数量</th><th>关联订单</th><th>发票号</th><th>序列号</th><th>承运商</th><th>物流单号</th><th>退货原因</th><th>其他信息</th><th>状态</th></tr>
         </thead>
         <tbody id="cpReturnsTbody"></tbody>
       </table></div>
@@ -1002,6 +1004,7 @@
               <th>物流单号</th>
               <th>退货原因</th>
               <th>备注</th>
+              <th>其他信息</th>
               <th>状态</th>
               <th>操作</th>
             </tr>
@@ -5497,6 +5500,7 @@ function renderReturnsAdminTable(){
       '<td>' + escapeHtmlCP(r.tracking_no||'-') + '</td>' +
       '<td>' + escapeHtmlCP(r.reason||'') + '</td>' +
       '<td>' + escapeHtmlCP(r.note||'-') + '</td>' +
+      '<td>' + escapeHtmlCP(formatExtraFields(r.extra_fields)) + '</td>' +
       '<td><span class="cp-status cp-status-' + raStatusClass(r.status) + '">' + escapeHtmlCP(r.status) + '</span></td>' +
       '<td><select class="inv-field ra-status-select" data-id="' + r.id + '" style="padding:4px 8px;font-size:12px;">' +
         ['待处理','已受理','已退款','已拒绝'].map(function(s){
@@ -5607,6 +5611,35 @@ function cpStatusClass(status){
   return ({'待处理':'pending','已受理':'accepted','已退款':'done','已拒绝':'rejected'})[status] || 'pending';
 }
 
+const CUSTOMER_EXTRA_FIELDS = {
+  'ACT': [ { key: 'nr_rew', label: 'Nr Rew.', placeholder: '选填' } ]
+};
+
+function extraFieldLabel(key){
+  for (const code in CUSTOMER_EXTRA_FIELDS){
+    const found = CUSTOMER_EXTRA_FIELDS[code].find(function(f){ return f.key === key; });
+    if (found) return found.label;
+  }
+  return key;
+}
+
+function formatExtraFields(obj){
+  if (!obj || typeof obj !== 'object') return '-';
+  const keys = Object.keys(obj).filter(function(k){ return obj[k]; });
+  if (!keys.length) return '-';
+  return keys.map(function(k){ return extraFieldLabel(k) + ': ' + obj[k]; }).join('; ');
+}
+
+function renderCpExtraFields(customerCode){
+  const container = document.getElementById('cpExtraFields');
+  if (!container) return;
+  const fields = CUSTOMER_EXTRA_FIELDS[customerCode] || [];
+  container.innerHTML = fields.map(function(f){
+    return '<div class="cp-form-row"><label>' + escapeHtmlCP(f.label) + '</label>' +
+      '<input type="text" data-extra-key="' + escapeHtmlCP(f.key) + '" placeholder="' + escapeHtmlCP(f.placeholder||'选填') + '"></div>';
+  }).join('');
+}
+
 async function showCustomerApp(session, customerCode){
   cpCustomerCode = customerCode;
   authGateEl.classList.add('hidden');
@@ -5615,6 +5648,7 @@ async function showCustomerApp(session, customerCode){
   const badge = document.getElementById('cpCustomerBadge');
   if (badge) badge.textContent = (typeof CUSTOMERS !== 'undefined' && CUSTOMERS[customerCode] && CUSTOMERS[customerCode].name) || customerCode;
   if (typeof applyDefaultLanguageForUser === 'function') applyDefaultLanguageForUser(session);
+  renderCpExtraFields(customerCode);
   await loadCustomerReturns();
 }
 
@@ -5638,6 +5672,7 @@ async function loadCustomerReturns(){
       '<td>' + escapeHtmlCP(r.carrier||'-') + '</td>' +
       '<td>' + escapeHtmlCP(r.tracking_no||'-') + '</td>' +
       '<td>' + escapeHtmlCP(r.reason||'') + '</td>' +
+      '<td>' + escapeHtmlCP(formatExtraFields(r.extra_fields)) + '</td>' +
       '<td><span class="cp-status cp-status-' + cpStatusClass(r.status) + '">' + escapeHtmlCP(r.status) + '</span></td>' +
     '</tr>';
   }).join('');
@@ -5675,7 +5710,15 @@ document.getElementById('cpReturnForm').addEventListener('submit', async functio
       carrier: carrier || null,
       tracking_no: trackingNo || null,
       reason: reason,
-      note: note || null
+      note: note || null,
+      extra_fields: (function(){
+        const out = {};
+        document.querySelectorAll('#cpExtraFields [data-extra-key]').forEach(function(el){
+          const v = el.value.trim();
+          if (v) out[el.dataset.extraKey] = v;
+        });
+        return out;
+      })()
     });
     if (error){
       msgEl.textContent = '提交失败：' + error.message;
@@ -7346,6 +7389,8 @@ const I18N_DICT = [
   ["退货物流承运商","Return Carrier","Przewoźnik zwrotu"],
   ["承运商","Carrier","Przewoźnik"],
   ["物流单号","Tracking No.","Numer śledzenia"]
+,
+  ["其他信息","Additional Info","Dodatkowe informacje"]
 ];
 I18N_DICT.sort((a,b)=>b[0].length-a[0].length);
 

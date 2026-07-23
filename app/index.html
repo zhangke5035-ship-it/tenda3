@@ -1449,6 +1449,7 @@
         <tr>
           <th>SKU 编码</th>
           <th>产品型号</th>
+          <th>产品生命周期</th>
           <th>版本型号</th>
           <th>产品信息</th>
           <th>仓库</th>
@@ -7394,6 +7395,12 @@ applyLanguage(currentLang);
   }
 
   let invSortTransitDir = 0;
+  function invLifecycleBadge(model){
+    var stage = LIFECYCLE_MAP[model];
+    if(!stage) return '<span class="lc-badge lc-unknown">--</span>';
+    return '<span class="lc-badge ' + lifecycleClass(stage) + '">' + stage + '</span>';
+  }
+
   function renderInventoryTable(){
     const filtered = invGetFiltered();
     if(invSortDir !== 0){
@@ -7414,7 +7421,7 @@ applyLanguage(currentLang);
 
     const tbody = document.getElementById('invTableBody');
     if(pageItems.length === 0){
-      tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;color:var(--text-faint);padding:30px;">未找到匹配的库存记录</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="12" style="text-align:center;color:var(--text-faint);padding:30px;">未找到匹配的库存记录</td></tr>';
     } else {
       tbody.innerHTML = pageItems.map(function(item){
         const status = invStatusOf(item);
@@ -7431,6 +7438,7 @@ applyLanguage(currentLang);
         return '<tr>' +
           '<td class="inv-sku">' + item.sku + '</td>' +
           '<td>' + (item.model || '--') + '</td>' +
+          '<td>' + invLifecycleBadge(item.model) + '</td>' +
           '<td>' + invVersionOf(item) + '</td>' +
           '<td><div class="inv-prod-name">' + item.name + '</div><div class="inv-prod-cat">' + item.cat + '</div></td>' +
           '<td>' + invWarehouseLabel(item.wh) + '</td>' +

@@ -305,6 +305,7 @@
   .lc-badge.lc-eol{background:var(--alert-soft);color:var(--alert);}
   .lc-badge.lc-unknown{background:var(--surface-alt);color:var(--text-faint);}
   #customerPortalRoot{min-height:100vh;background:var(--bg);display:flex;flex-direction:column;}
+  #customerPortalRoot.hidden{display:none;}
   .cp-topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 190px 14px 28px;background:var(--surface);border-bottom:1px solid var(--border);}
   .cp-topbar-brand{display:flex;align-items:center;gap:10px;}
   .cp-topbar-brand img{height:26px;}
@@ -5592,6 +5593,8 @@ async function showApp(session){
 
   authGateEl.classList.add('hidden');
   appRootEl.classList.remove('hidden');
+  const cpRoot = document.getElementById('customerPortalRoot');
+  if (cpRoot) cpRoot.classList.add('hidden');
   if(userBadgeEl) userBadgeEl.textContent = (session && session.user && session.user.email) || '';
   applyRoleRestrictions(session);
   applyDefaultLanguageForUser(session);

@@ -319,6 +319,8 @@
   .cp-main{flex:1;padding:28px;max-width:900px;margin:0 auto;width:100%;box-sizing:border-box;display:flex;flex-direction:column;gap:20px;}
   .cp-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:26px 28px;box-shadow:0 1px 3px rgba(16,24,40,0.04);}
   .cp-required{color:var(--alert);margin-left:2px;}
+  .cp-field-warn{font-size:11.5px;color:var(--alert);margin-top:2px;}
+  .cp-field-warn.hidden{display:none;}
   .cp-card h2{margin:0 0 16px;font-family:'Space Grotesk',sans-serif;font-size:15px;color:var(--text);}
   .cp-form{display:grid;grid-template-columns:1fr 1fr;gap:14px 16px;}
   .cp-form-row{display:flex;flex-direction:column;gap:6px;}
@@ -631,7 +633,8 @@
       <form id="cpReturnForm" class="cp-form">
         <div class="cp-form-row">
           <label>产品型号 <span class="cp-required">*</span></label>
-          <input type="text" id="cpFProduct" placeholder="如 AX12 Pro" required>
+          <input type="text" id="cpFProduct" placeholder="如 AX12 Pro" list="cpProductModelList" autocomplete="off" required>
+          <datalist id="cpProductModelList"></datalist>
         </div>
         <div class="cp-form-row">
           <label>数量 <span class="cp-required">*</span></label>
@@ -648,6 +651,7 @@
         <div class="cp-form-row">
           <label>产品序列号 <span class="cp-required">*</span></label>
           <input type="text" id="cpFSerial" placeholder="请填写产品序列号" required>
+          <div class="cp-field-warn hidden" id="cpFSerialWarn">该产品序列号已提交过退货申请，请勿重复提交</div>
         </div>
         <div class="cp-form-row">
           <label>退货物流承运商 <span class="cp-required">*</span></label>
@@ -5706,6 +5710,40 @@ function formatExtraFields(obj){
   return keys.map(function(k){ return extraFieldLabel(k) + ': ' + obj[k]; }).join('; ');
 }
 
+function renderCpProductModelOptions(customerCode){
+  const dl = document.getElementById('cpProductModelList');
+  if (!dl) return;
+  const models = (typeof priceList !== 'undefined')
+    ? [...new Set(priceList.filter(function(p){ return p.cust === customerCode; }).map(function(p){ return p.product; }))].sort()
+    : [];
+  dl.innerHTML = models.map(function(m){ return '<option value="' + escapeHtmlCP(m) + '"></option>'; }).join('');
+}
+
+async function cpCheckSerialDuplicate(value){
+  const warnEl = document.getElementById('cpFSerialWarn');
+  if (!value){ if (warnEl) warnEl.classList.add('hidden'); return false; }
+  try{
+    const { data, error } = await sb.from('returns').select('id').eq('serial_no', value).limit(1);
+    if (error){ console.error('cpCheckSerialDuplicate', error); return false; }
+    const isDup = !!(data && data.length);
+    if (warnEl) warnEl.classList.toggle('hidden', !isDup);
+    return isDup;
+  }catch(err){ console.error('cpCheckSerialDuplicate', err); return false; }
+}
+
+const cpFSerialElForDupCheck = document.getElementById('cpFSerial');
+if (cpFSerialElForDupCheck){
+  let cpSerialCheckTimer = null;
+  cpFSerialElForDupCheck.addEventListener('input', function(){
+    clearTimeout(cpSerialCheckTimer);
+    const val = cpFSerialElForDupCheck.value.trim();
+    cpSerialCheckTimer = setTimeout(function(){ cpCheckSerialDuplicate(val); }, 500);
+  });
+  cpFSerialElForDupCheck.addEventListener('blur', function(){
+    clearTimeout(cpSerialCheckTimer);
+    cpCheckSerialDuplicate(cpFSerialElForDupCheck.value.trim());
+  });
+}
 function renderCpExtraFields(customerCode){
   const container = document.getElementById('cpExtraFields');
   if (!container) return;
@@ -5725,6 +5763,7 @@ async function showCustomerApp(session, customerCode){
   if (badge) badge.textContent = (typeof CUSTOMERS !== 'undefined' && CUSTOMERS[customerCode] && CUSTOMERS[customerCode].name) || customerCode;
   if (typeof applyDefaultLanguageForUser === 'function') applyDefaultLanguageForUser(session);
   renderCpExtraFields(customerCode);
+  renderCpProductModelOptions(customerCode);
   await loadCustomerReturns();
 }
 
@@ -5824,14 +5863,14 @@ function cpHandleBatchFile(file){
   const nameEl = document.getElementById('cpBatchFileName');
   if (nameEl) nameEl.textContent = file.name;
   const reader = new FileReader();
-  reader.onload = function(e){
+  reader.onload = async function(e){
     try{
       const data = new Uint8Array(e.target.result);
       const wb = XLSX.read(data, { type: 'array' });
       const wsName = wb.SheetNames[0];
       const ws = wb.Sheets[wsName];
       const rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
-      cpParseBatchRows(rows);
+      await cpParseBatchRows(rows);
     }catch(err){
       console.error('批量导入解析失败', err);
       const nameEl2 = document.getElementById('cpBatchFileName');
@@ -5841,9 +5880,9 @@ function cpHandleBatchFile(file){
   reader.readAsArrayBuffer(file);
 }
 
-function cpParseBatchRows(rawRows){
+async function cpParseBatchRows(rawRows){
   const extra = cpBatchExtraFields();
-  cpBatchRows = rawRows.map(function(row){
+  const parsed = rawRows.map(function(row){
     const values = {};
     CP_BATCH_BASE_FIELDS.forEach(function(f){ values[f.key] = String(row[f.label] == null ? '' : row[f.label]).trim(); });
     const extraValues = {};
@@ -5858,6 +5897,28 @@ function cpParseBatchRows(rawRows){
     }
     return { values: values, extraValues: extraValues, errors: errors, blank: isBlank };
   }).filter(function(r){ return !r.blank; });
+
+  const seenInFile = {};
+  parsed.forEach(function(r){
+    const sn = r.values.serialNo;
+    if (!sn) return;
+    if (seenInFile[sn]) { r.errors.push('产品序列号（文件内重复）'); }
+    seenInFile[sn] = true;
+  });
+  const uniqueSerials = [...new Set(parsed.map(function(r){ return r.values.serialNo; }).filter(Boolean))];
+  if (uniqueSerials.length){
+    try{
+      const { data, error } = await sb.from('returns').select('serial_no').in('serial_no', uniqueSerials);
+      if (!error && data){
+        const existing = new Set(data.map(function(d){ return d.serial_no; }));
+        parsed.forEach(function(r){
+          if (r.values.serialNo && existing.has(r.values.serialNo)) r.errors.push('产品序列号（已提交过）');
+        });
+      }
+    }catch(err){ console.error('批量序列号查重失败', err); }
+  }
+
+  cpBatchRows = parsed;
   cpRenderBatchPreview();
 }
 
@@ -5975,6 +6036,12 @@ document.getElementById('cpReturnForm').addEventListener('submit', async functio
   const msgEl = document.getElementById('cpFormMsg');
   if (!product || !qty || !orderNo || !invoiceNo || !serialNo || !carrier || !trackingNo || !reason || !note){
     msgEl.textContent = '请填写必填项';
+    msgEl.className = 'cp-form-msg cp-form-msg-error';
+    return;
+  }
+  const isDupSerial = await cpCheckSerialDuplicate(serialNo);
+  if (isDupSerial){
+    msgEl.textContent = '该产品序列号已提交过退货申请，请勿重复提交';
     msgEl.className = 'cp-form-msg cp-form-msg-error';
     return;
   }
@@ -7701,7 +7768,10 @@ const I18N_DICT = [
   ["产品型号","Product Model","Model produktu"],
   ["数量","Qty","Ilość"],
   ["备注","Note","Uwagi"],
-  ["状态","Status","Status"]
+  ["状态","Status","Status"],
+  ["该产品序列号已提交过退货申请，请勿重复提交","This serial number has already been submitted in a return request. Please do not submit it again.","Ten numer seryjny został już zgłoszony w innym wniosku o zwrot. Nie zgłaszaj go ponownie."],
+  ["产品序列号（文件内重复）","Product Serial No. (duplicate in file)","Numer seryjny (duplikat w pliku)"],
+  ["产品序列号（已提交过）","Product Serial No. (already submitted)","Numer seryjny (już zgłoszony)"]
 ];
 I18N_DICT.sort((a,b)=>b[0].length-a[0].length);
 

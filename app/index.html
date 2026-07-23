@@ -332,6 +332,26 @@
   .cp-required{color:var(--alert);margin-left:2px;}
   .cp-field-warn{font-size:11.5px;color:var(--alert);margin-top:2px;}
   .cp-field-warn.hidden{display:none;}
+  .ra-row-actions{display:flex;gap:6px;align-items:center;}
+  .ra-detail-btn{padding:4px 10px;font-size:12px;border:1px solid var(--border);border-radius:6px;background:var(--surface-alt);color:var(--text);cursor:pointer;white-space:nowrap;}
+  .ra-detail-btn:hover{background:var(--copper-soft);border-color:var(--copper);color:var(--copper);}
+  .ra-modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:1000;}
+  .ra-modal-overlay.hidden{display:none;}
+  .ra-modal{background:var(--surface);border:1px solid var(--border);border-radius:10px;width:640px;max-width:92vw;max-height:86vh;overflow-y:auto;box-shadow:0 12px 32px rgba(0,0,0,.28);}
+  .ra-modal-head{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border-soft);}
+  .ra-modal-head h3{margin:0;font-size:16px;color:var(--text);}
+  .ra-modal-close{cursor:pointer;font-size:20px;color:var(--text-dim);background:none;border:none;line-height:1;}
+  .ra-modal-close:hover{color:var(--alert);}
+  .ra-modal-body{display:grid;grid-template-columns:1fr 1fr;gap:12px 16px;padding:20px;}
+  .ra-modal-body-item{display:flex;flex-direction:column;gap:4px;}
+  .ra-label{font-size:12px;color:var(--text-faint);}
+  .ra-value{font-size:14px;color:var(--text);word-break:break-word;}
+  .ra-modal-body-full{grid-column:1 / -1;}
+  .ra-modal-foot{padding:16px 20px;border-top:1px solid var(--border-soft);display:flex;flex-direction:column;gap:10px;}
+  .ra-refund-input-row{display:flex;align-items:center;gap:10px;}
+  .ra-refund-input-row label{font-size:13px;color:var(--text-dim);white-space:nowrap;}
+  .ra-refund-input-row input{flex:1;padding:8px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface-alt);color:var(--text);font-size:14px;}
+  .ra-refund-input-row input:focus{outline:none;border-color:var(--copper);}
   .cp-card h2{margin:0 0 16px;font-family:'Space Grotesk',sans-serif;font-size:15px;color:var(--text);}
   .cp-form{display:grid;grid-template-columns:1fr 1fr;gap:14px 16px;}
   .cp-form-row{display:flex;flex-direction:column;gap:6px;}
@@ -1102,6 +1122,7 @@
               <th>退货原因</th>
               <th>备注</th>
               <th>其他信息</th>
+              <th>退款金额</th>
               <th>状态</th>
               <th>操作</th>
             </tr>
@@ -1109,6 +1130,24 @@
           <tbody id="raTableBody"></tbody>
         </table>
       </div>
+
+    <div class="ra-modal-overlay hidden" id="raDetailModal">
+      <div class="ra-modal">
+        <div class="ra-modal-head">
+          <h3>退货详情 / 人工退款审批</h3>
+          <button type="button" class="ra-modal-close" id="raDetailCloseBtn">&times;</button>
+        </div>
+        <div class="ra-modal-body" id="raDetailBody"></div>
+        <div class="ra-modal-foot">
+          <div class="ra-refund-input-row">
+            <label for="raRefundAmountInput">退款金额</label>
+            <input type="number" id="raRefundAmountInput" step="0.01" min="0" placeholder="请输入核验后的退款金额" />
+          </div>
+          <div class="cp-field-warn" id="raDetailMsg" style="color:var(--alert);font-size:12px;"></div>
+          <button type="button" class="btn" id="raDetailSubmitBtn">提交并完成受理</button>
+        </div>
+      </div>
+    </div>
     </section>
 
     <section class="view" id="view-pricing-customer">
@@ -5581,7 +5620,7 @@ function renderReturnsAdminTable(){
     return true;
   });
   if (!filtered.length){
-    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--text-faint);padding:24px;">暂无退货申请记录</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="15" style="text-align:center;color:var(--text-faint);padding:24px;">暂无退货申请记录</td></tr>';
     return;
   }
   tbody.innerHTML = filtered.map(function(r){
@@ -5598,12 +5637,13 @@ function renderReturnsAdminTable(){
       '<td>' + escapeHtmlCP(r.reason||'') + '</td>' +
       '<td>' + escapeHtmlCP(r.note||'-') + '</td>' +
       '<td>' + escapeHtmlCP(formatExtraFields(r.extra_fields)) + '</td>' +
+      '<td>' + (r.refund_amount !== null && r.refund_amount !== undefined ? Number(r.refund_amount).toFixed(2) : '-') + '</td>' +
       '<td><span class="cp-status cp-status-' + raStatusClass(r.status) + '">' + escapeHtmlCP(r.status) + '</span></td>' +
-      '<td><select class="inv-field ra-status-select" data-id="' + r.id + '" style="padding:4px 8px;font-size:12px;">' +
+      '<td><div class="ra-row-actions"><select class="inv-field ra-status-select" data-id="' + r.id + '" style="padding:4px 8px;font-size:12px;">' +
         ['待处理','已受理','已退款','已拒绝'].map(function(s){
           return '<option value="' + s + '"' + (s===r.status?' selected':'') + '>' + s + '</option>';
         }).join('') +
-      '</select></td>' +
+      '</select><button type="button" class="ra-detail-btn" data-id="' + r.id + '">审核</button></div></td>' +
     '</tr>';
   }).join('');
   if (typeof translateTextNodes === 'function') translateTextNodes(tbody);
@@ -5613,6 +5653,94 @@ function renderReturnsAdminAll(){
   renderReturnsAdminStats();
   renderReturnsAdminFilterOptions();
   renderReturnsAdminTable();
+}
+
+let raDetailRow = null;
+
+function raDetailField(label, value, full){
+  return '<div class="ra-modal-body-item' + (full ? ' ra-modal-body-full' : '') + '">' +
+    '<span class="ra-label">' + escapeHtmlCP(label) + '</span>' +
+    '<span class="ra-value">' + escapeHtmlCP(value || '-') + '</span>' +
+  '</div>';
+}
+
+function raOpenDetail(id){
+  const row = returnsAdminData.find(function(r){ return r.id === Number(id); });
+  if (!row) return;
+  raDetailRow = row;
+  const body = document.getElementById('raDetailBody');
+  if (body){
+    body.innerHTML =
+      raDetailField('提交时间', row.created_at ? row.created_at.slice(0,16).replace('T',' ') : '') +
+      raDetailField('客户', raCustomerName(row.customer_code)) +
+      raDetailField('产品型号', row.product) +
+      raDetailField('数量', row.qty) +
+      raDetailField('关联订单', row.invoice_no) +
+      raDetailField('序列号', row.serial_no) +
+      raDetailField('承运商', row.carrier) +
+      raDetailField('物流单号', row.tracking_no) +
+      raDetailField('退货原因', row.reason) +
+      raDetailField('当前状态', row.status) +
+      raDetailField('备注', row.note, true) +
+      raDetailField('其他信息', formatExtraFields(row.extra_fields), true);
+  }
+  const input = document.getElementById('raRefundAmountInput');
+  if (input) input.value = (row.refund_amount !== null && row.refund_amount !== undefined) ? row.refund_amount : '';
+  const msg = document.getElementById('raDetailMsg');
+  if (msg) msg.textContent = '';
+  const modal = document.getElementById('raDetailModal');
+  if (modal) modal.classList.remove('hidden');
+}
+
+function raCloseDetail(){
+  raDetailRow = null;
+  const modal = document.getElementById('raDetailModal');
+  if (modal) modal.classList.add('hidden');
+}
+
+const raTableBodyEl = document.getElementById('raTableBody');
+if (raTableBodyEl){
+  raTableBodyEl.addEventListener('click', function(e){
+    const btn = e.target.closest('.ra-detail-btn');
+    if (btn) raOpenDetail(btn.dataset.id);
+  });
+}
+
+const raDetailCloseBtnEl = document.getElementById('raDetailCloseBtn');
+if (raDetailCloseBtnEl){
+  raDetailCloseBtnEl.addEventListener('click', raCloseDetail);
+}
+
+const raDetailModalEl = document.getElementById('raDetailModal');
+if (raDetailModalEl){
+  raDetailModalEl.addEventListener('click', function(e){
+    if (e.target === raDetailModalEl) raCloseDetail();
+  });
+}
+
+const raDetailSubmitBtnEl = document.getElementById('raDetailSubmitBtn');
+if (raDetailSubmitBtnEl){
+  raDetailSubmitBtnEl.addEventListener('click', async function(){
+    if (!raDetailRow) return;
+    const input = document.getElementById('raRefundAmountInput');
+    const msg = document.getElementById('raDetailMsg');
+    const amount = input ? Number(input.value) : NaN;
+    if (!input || input.value === '' || isNaN(amount) || amount < 0){
+      if (msg) msg.textContent = '请输入有效的退款金额';
+      return;
+    }
+    raDetailSubmitBtnEl.disabled = true;
+    const { error } = await sb.from('returns').update({ status: '已退款', refund_amount: amount }).eq('id', raDetailRow.id);
+    raDetailSubmitBtnEl.disabled = false;
+    if (error){
+      if (msg) msg.textContent = '提交失败：' + error.message;
+      return;
+    }
+    raDetailRow.status = '已退款';
+    raDetailRow.refund_amount = amount;
+    raCloseDetail();
+    renderReturnsAdminAll();
+  });
 }
 
 document.addEventListener('change', function(e){
@@ -7705,6 +7833,12 @@ const I18N_DICT = [
   ["查看并编辑该促销的完整信息","View and edit the full details of this promotion","Wyświetl i edytuj pełne informacje o tej promocji"],
   ["← 返回促销列表","← Back to Promotion List","← Powrót do listy promocji"],
   ["保存修改","Save Changes","Zapisz zmiany"],
+  ["退货详情 / 人工退款审批","Return Detail / Manual Refund Approval","Szczegóły zwrotu / Ręczna akceptacja zwrotu"],
+  ["退款金额","Refund Amount","Kwota zwrotu"],
+  ["提交并完成受理","Submit & Complete","Wyślij i zakończ"],
+  ["请输入有效的退款金额","Please enter a valid refund amount","Wprowadź prawidłową kwotę zwrotu"],
+  ["请输入核验后的退款金额","Enter verified refund amount","Wprowadź zweryfikowaną kwotę zwrotu"],
+  ["审核","Review","Weryfikuj"],
   ["删除该促销","Delete This Promotion","Usuń tę promocję"],
   ["两仓合计件数","Total Units (Both Warehouses)","Łączna liczba sztuk (oba magazyny)"],
   ["在途库存总数","Total In-Transit Stock","Łączny stan w tranzycie"],

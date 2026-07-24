@@ -1141,6 +1141,10 @@
         <div class="ra-modal-body" id="raDetailBody"></div>
         <div class="ra-modal-foot">
           <div class="ra-refund-input-row">
+            <label for="raOaNoInput">OA流程号</label>
+            <input type="text" id="raOaNoInput" placeholder="请输入OA审批流程号" />
+          </div>
+          <div class="ra-refund-input-row">
             <label for="raRefundNetInput">退款金额（不含税）</label>
             <input type="number" id="raRefundNetInput" step="0.01" min="0" placeholder="请输入核验后的不含税退款金额" />
           </div>
@@ -5711,6 +5715,8 @@ function raOpenDetail(id){
       raDetailField('备注', row.note, true) +
       raDetailField('其他信息', formatExtraFields(row.extra_fields), true);
   }
+  const oaInput = document.getElementById('raOaNoInput');
+  if (oaInput) oaInput.value = row.oa_no || '';
   const input = document.getElementById('raRefundNetInput');
   if (input) input.value = (row.refund_amount !== null && row.refund_amount !== undefined) ? (Number(row.refund_amount) / (1 + RA_VAT_RATE)).toFixed(2) : '';
   raRecalcRefund();
@@ -5763,8 +5769,10 @@ if (raDetailSubmitBtnEl){
       return;
     }
     const grossAmount = Number((net * (1 + RA_VAT_RATE)).toFixed(2));
+    const oaInputEl = document.getElementById('raOaNoInput');
+    const oaNo = oaInputEl ? oaInputEl.value.trim() : '';
     raDetailSubmitBtnEl.disabled = true;
-    const { error } = await sb.from('returns').update({ status: '已退款', refund_amount: grossAmount }).eq('id', raDetailRow.id);
+    const { error } = await sb.from('returns').update({ status: '已退款', refund_amount: grossAmount, oa_no: oaNo || null }).eq('id', raDetailRow.id);
     raDetailSubmitBtnEl.disabled = false;
     if (error){
       if (msg) msg.textContent = '提交失败：' + error.message;
@@ -5772,6 +5780,7 @@ if (raDetailSubmitBtnEl){
     }
     raDetailRow.status = '已退款';
     raDetailRow.refund_amount = grossAmount;
+    raDetailRow.oa_no = oaNo || null;
     raCloseDetail();
     renderReturnsAdminAll();
   });
@@ -7872,6 +7881,8 @@ const I18N_DICT = [
   ["退款金额（不含税）","Refund Amount (excl. VAT)","Kwota zwrotu (bez VAT)"],
   ["VAT税额（23%）","VAT Amount (23%)","Kwota VAT (23%)"],
   ["退款金额（含税）","Refund Amount (incl. VAT)","Kwota zwrotu (z VAT)"],
+  ["OA流程号","OA Process No.","Numer procesu OA"],
+  ["请输入OA审批流程号","Enter OA approval process number","Wprowadź numer procesu zatwierdzania OA"],
   ["提交并完成受理","Submit & Complete","Wyślij i zakończ"],
   ["请输入有效的退款金额","Please enter a valid refund amount","Wprowadź prawidłową kwotę zwrotu"],
   ["请输入核验后的退款金额","Enter verified refund amount","Wprowadź zweryfikowaną kwotę zwrotu"],

@@ -5977,7 +5977,12 @@ function cpStatusClass(status){
 }
 
 const CUSTOMER_EXTRA_FIELDS = {
-  'ACT': [ { key: 'nr_rew', label: 'Nr Rew.', placeholder: '选填' } ]
+  'ACT': [ { key: 'nr_rew', label: 'Nr Rew.', placeholder: '选填' } ],
+  'INC': [
+    { key: 'symbol', label: 'Symbol', placeholder: '选填' },
+    { key: 'rma_no', label: 'RMA No', placeholder: '选填' },
+    { key: 'invoice_date', label: 'Invoice Date', placeholder: '选填', type: 'date' }
+  ]
 };
 
 function extraFieldLabel(key){
@@ -6129,7 +6134,7 @@ function renderCpExtraFields(customerCode){
   const fields = CUSTOMER_EXTRA_FIELDS[customerCode] || [];
   container.innerHTML = fields.map(function(f){
     return '<div class="cp-form-row"><label>' + escapeHtmlCP(f.label) + '</label>' +
-      '<input type="text" data-extra-key="' + escapeHtmlCP(f.key) + '" placeholder="' + escapeHtmlCP(f.placeholder||'选填') + '"></div>';
+      '<input type="' + (f.type||'text') + '" data-extra-key="' + escapeHtmlCP(f.key) + '" placeholder="' + escapeHtmlCP(f.placeholder||'选填') + '"></div>';
   }).join('');
 }
 

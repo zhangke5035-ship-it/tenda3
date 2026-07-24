@@ -352,6 +352,7 @@
   .ra-refund-input-row label{font-size:13px;color:var(--text-dim);white-space:nowrap;}
   .ra-refund-input-row input{flex:1;padding:8px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface-alt);color:var(--text);font-size:14px;}
   .ra-refund-input-row input:focus{outline:none;border-color:var(--copper);}
+  .ra-refund-readonly{flex:1;font-size:14px;color:var(--text);font-weight:600;}
   .cp-card h2{margin:0 0 16px;font-family:'Space Grotesk',sans-serif;font-size:15px;color:var(--text);}
   .cp-form{display:grid;grid-template-columns:1fr 1fr;gap:14px 16px;}
   .cp-form-row{display:flex;flex-direction:column;gap:6px;}
@@ -1140,8 +1141,16 @@
         <div class="ra-modal-body" id="raDetailBody"></div>
         <div class="ra-modal-foot">
           <div class="ra-refund-input-row">
-            <label for="raRefundAmountInput">退款金额</label>
-            <input type="number" id="raRefundAmountInput" step="0.01" min="0" placeholder="请输入核验后的退款金额" />
+            <label for="raRefundNetInput">退款金额（不含税）</label>
+            <input type="number" id="raRefundNetInput" step="0.01" min="0" placeholder="请输入核验后的不含税退款金额" />
+          </div>
+          <div class="ra-refund-input-row">
+            <label>VAT税额（23%）</label>
+            <span class="ra-refund-readonly" id="raRefundVatDisplay">-</span>
+          </div>
+          <div class="ra-refund-input-row">
+            <label>退款金额（含税）</label>
+            <span class="ra-refund-readonly" id="raRefundGrossDisplay">-</span>
           </div>
           <div class="cp-field-warn" id="raDetailMsg" style="color:var(--alert);font-size:12px;"></div>
           <button type="button" class="btn" id="raDetailSubmitBtn">提交并完成受理</button>
@@ -5664,6 +5673,24 @@ function raDetailField(label, value, full){
   '</div>';
 }
 
+const RA_VAT_RATE = 0.23;
+
+function raRecalcRefund(){
+  const input = document.getElementById('raRefundNetInput');
+  const vatEl = document.getElementById('raRefundVatDisplay');
+  const grossEl = document.getElementById('raRefundGrossDisplay');
+  const net = input ? Number(input.value) : NaN;
+  if (!input || input.value === '' || isNaN(net) || net < 0){
+    if (vatEl) vatEl.textContent = '-';
+    if (grossEl) grossEl.textContent = '-';
+    return;
+  }
+  const vat = net * RA_VAT_RATE;
+  const gross = net + vat;
+  if (vatEl) vatEl.textContent = vat.toFixed(2);
+  if (grossEl) grossEl.textContent = gross.toFixed(2);
+}
+
 function raOpenDetail(id){
   const row = returnsAdminData.find(function(r){ return r.id === Number(id); });
   if (!row) return;
@@ -5684,8 +5711,9 @@ function raOpenDetail(id){
       raDetailField('备注', row.note, true) +
       raDetailField('其他信息', formatExtraFields(row.extra_fields), true);
   }
-  const input = document.getElementById('raRefundAmountInput');
-  if (input) input.value = (row.refund_amount !== null && row.refund_amount !== undefined) ? row.refund_amount : '';
+  const input = document.getElementById('raRefundNetInput');
+  if (input) input.value = (row.refund_amount !== null && row.refund_amount !== undefined) ? (Number(row.refund_amount) / (1 + RA_VAT_RATE)).toFixed(2) : '';
+  raRecalcRefund();
   const msg = document.getElementById('raDetailMsg');
   if (msg) msg.textContent = '';
   const modal = document.getElementById('raDetailModal');
@@ -5696,6 +5724,11 @@ function raCloseDetail(){
   raDetailRow = null;
   const modal = document.getElementById('raDetailModal');
   if (modal) modal.classList.add('hidden');
+}
+
+const raRefundNetInputEl = document.getElementById('raRefundNetInput');
+if (raRefundNetInputEl){
+  raRefundNetInputEl.addEventListener('input', raRecalcRefund);
 }
 
 const raTableBodyEl = document.getElementById('raTableBody');
@@ -5722,22 +5755,23 @@ const raDetailSubmitBtnEl = document.getElementById('raDetailSubmitBtn');
 if (raDetailSubmitBtnEl){
   raDetailSubmitBtnEl.addEventListener('click', async function(){
     if (!raDetailRow) return;
-    const input = document.getElementById('raRefundAmountInput');
+    const input = document.getElementById('raRefundNetInput');
     const msg = document.getElementById('raDetailMsg');
-    const amount = input ? Number(input.value) : NaN;
-    if (!input || input.value === '' || isNaN(amount) || amount < 0){
+    const net = input ? Number(input.value) : NaN;
+    if (!input || input.value === '' || isNaN(net) || net < 0){
       if (msg) msg.textContent = '请输入有效的退款金额';
       return;
     }
+    const grossAmount = Number((net * (1 + RA_VAT_RATE)).toFixed(2));
     raDetailSubmitBtnEl.disabled = true;
-    const { error } = await sb.from('returns').update({ status: '已退款', refund_amount: amount }).eq('id', raDetailRow.id);
+    const { error } = await sb.from('returns').update({ status: '已退款', refund_amount: grossAmount }).eq('id', raDetailRow.id);
     raDetailSubmitBtnEl.disabled = false;
     if (error){
       if (msg) msg.textContent = '提交失败：' + error.message;
       return;
     }
     raDetailRow.status = '已退款';
-    raDetailRow.refund_amount = amount;
+    raDetailRow.refund_amount = grossAmount;
     raCloseDetail();
     renderReturnsAdminAll();
   });
@@ -7835,6 +7869,9 @@ const I18N_DICT = [
   ["保存修改","Save Changes","Zapisz zmiany"],
   ["退货详情 / 人工退款审批","Return Detail / Manual Refund Approval","Szczegóły zwrotu / Ręczna akceptacja zwrotu"],
   ["退款金额","Refund Amount","Kwota zwrotu"],
+  ["退款金额（不含税）","Refund Amount (excl. VAT)","Kwota zwrotu (bez VAT)"],
+  ["VAT税额（23%）","VAT Amount (23%)","Kwota VAT (23%)"],
+  ["退款金额（含税）","Refund Amount (incl. VAT)","Kwota zwrotu (z VAT)"],
   ["提交并完成受理","Submit & Complete","Wyślij i zakończ"],
   ["请输入有效的退款金额","Please enter a valid refund amount","Wprowadź prawidłową kwotę zwrotu"],
   ["请输入核验后的退款金额","Enter verified refund amount","Wprowadź zweryfikowaną kwotę zwrotu"],

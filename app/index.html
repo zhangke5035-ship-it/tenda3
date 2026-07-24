@@ -35,7 +35,7 @@
   nav{display:flex;flex-direction:column;gap:2px;padding:8px 10px;}
   .navitem{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--radius);color:var(--text-dim);cursor:pointer;font-size:13.5px;border-left:2px solid transparent;transition:background .12s ease,color .12s ease;}
   .navitem:hover{background:var(--surface-alt);color:var(--text);}
-  .navitem.active{background:var(--surface-raise);color:var(--text);border-left:2px solid var(--copper);}
+  .navitem.active{background:var(--copper-soft);color:var(--copper);font-weight:600;border-left:3px solid var(--copper);}
   .navitem .dot{width:5px;height:5px;border-radius:50%;background:var(--text-faint);flex-shrink:0;}
   .navitem.active .dot{background:var(--copper);}
   .navgroup-label{padding:10px 12px 0 12px;font-size:10.5px;color:var(--text-faint);letter-spacing:0.5px;margin-top:6px;text-transform:uppercase;}
@@ -476,6 +476,18 @@
   .inv-stat-value.danger{color:var(--alert);}
   .inv-stat-delta{font-size:11.5px;margin-top:6px;color:var(--text-faint);}
   .inv-toolbar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:14px;}
+  #view-returns-admin .inv-btn-ghost{background:var(--surface);}
+  #view-returns-admin .inv-stat-card{display:flex;align-items:center;gap:14px;transition:box-shadow .12s ease;}
+  #view-returns-admin .inv-stat-card:hover{box-shadow:0 2px 10px rgba(26,34,51,0.07);}
+  #view-returns-admin .inv-stat-value{font-size:27px;}
+  #view-returns-admin .ra-kpi-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:var(--surface-alt);color:var(--text-dim);}
+  #view-returns-admin .ra-kpi-card-warn{background:var(--copper-soft);border-color:var(--copper-soft);}
+  #view-returns-admin .ra-kpi-card-warn .ra-kpi-icon{background:#fff;color:var(--copper);}
+  #view-returns-admin .ra-kpi-card-warn .inv-stat-value{color:var(--copper);}
+  #view-returns-admin .ra-kpi-card-good{background:var(--good-soft);border-color:var(--good-soft);}
+  #view-returns-admin .ra-kpi-card-good .ra-kpi-icon{background:#fff;color:var(--good);}
+  #view-returns-admin .ra-kpi-card-good .inv-stat-value{color:var(--good);}
+  #view-returns-admin .ra-ellipsis{max-width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap!important;cursor:help;}
   .inv-filters{display:flex;gap:8px;flex-wrap:wrap;}
   .inv-field{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:8px 12px;color:var(--text);font-size:13px;min-width:120px;}
   .inv-field:focus{outline:none;border-color:var(--copper);}
@@ -1072,24 +1084,7 @@
         <div><h2>退货管理</h2><p>查看并处理所有客户提交的退货申请</p></div>
       </div>
 
-      <div class="inv-stat-grid">
-        <div class="inv-stat-card">
-          <div class="inv-stat-label">退货申请总数</div>
-          <div class="inv-stat-value" id="raStatTotal">--</div>
-        </div>
-        <div class="inv-stat-card">
-          <div class="inv-stat-label">待处理</div>
-          <div class="inv-stat-value warn" id="raStatPending">--</div>
-        </div>
-        <div class="inv-stat-card">
-          <div class="inv-stat-label">已受理</div>
-          <div class="inv-stat-value" id="raStatAccepted">--</div>
-        </div>
-        <div class="inv-stat-card">
-          <div class="inv-stat-label">已退款</div>
-          <div class="inv-stat-value" id="raStatDone">--</div>
-        </div>
-      </div>
+      <div class="inv-stat-grid"><div class="inv-stat-card ra-kpi-card"><div class="ra-kpi-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"></path><rect x="9" y="3" width="6" height="4" rx="2" ry="2"></rect></svg></div><div class="ra-kpi-body"><div class="inv-stat-label">退货申请总数</div><div class="inv-stat-value" id="raStatTotal">--</div></div></div><div class="inv-stat-card ra-kpi-card ra-kpi-card-warn"><div class="ra-kpi-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg></div><div class="ra-kpi-body"><div class="inv-stat-label">待处理</div><div class="inv-stat-value warn" id="raStatPending">--</div></div></div><div class="inv-stat-card ra-kpi-card"><div class="ra-kpi-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9 12l2 2 4-4"></path></svg></div><div class="ra-kpi-body"><div class="inv-stat-label">已受理</div><div class="inv-stat-value" id="raStatAccepted">--</div></div></div><div class="inv-stat-card ra-kpi-card ra-kpi-card-good"><div class="ra-kpi-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg></div><div class="ra-kpi-body"><div class="inv-stat-label">已退款</div><div class="inv-stat-value good" id="raStatDone">--</div></div></div></div>
 
       <div class="inv-toolbar">
         <div class="inv-filters">
@@ -5673,11 +5668,11 @@ function renderReturnsAdminTable(){
     return '<tr>' +
       '<td>' + escapeHtmlCP(r.created_at ? r.created_at.slice(0,16).replace('T',' ') : '') + '</td>' +
       '<td>' + escapeHtmlCP(raCustomerName(r.customer_code)) + '</td>' +
-      '<td>' + escapeHtmlCP(r.product) + '</td>' +
+      '<td class="ra-ellipsis" title="' + escapeHtmlCP(r.product) + '">' + escapeHtmlCP(r.product) + '</td>' +
       '<td>' + (r.qty||'') + '</td>' +
       '<td>' + escapeHtmlCP(r.order_no||'-') + '</td>' +
       '<td>' + escapeHtmlCP(r.invoice_no||'-') + '</td>' +
-      '<td>' + escapeHtmlCP(r.serial_no||'-') + '</td>' +
+      '<td class="ra-ellipsis" title="' + escapeHtmlCP(r.serial_no||'') + '">' + escapeHtmlCP(r.serial_no||'-') + '</td>' +
       '<td>' + escapeHtmlCP(r.carrier||'-') + '</td>' +
       '<td>' + escapeHtmlCP(r.tracking_no||'-') + '</td>' +
       '<td>' + escapeHtmlCP(r.reason||'') + '</td>' +

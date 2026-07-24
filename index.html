@@ -5264,6 +5264,26 @@ function applyRoleRestrictions(session){
     const hqSimView = document.getElementById('view-pricing-hq-sim');
     if (hqSimView) hqSimView.remove();
   }
+
+
+  const LIMITED_ACCESS_EMAILS = ['huangxiang@tenda.cn', 'yushisen@tenda.cn'];
+  if (LIMITED_ACCESS_EMAILS.includes(userEmail)){
+    const allowedViews = ['returns-admin', 'inventory', 'inventory-agent'];
+    document.querySelectorAll('.navitem[data-view]').forEach(function(item){
+      if (!allowedViews.includes(item.dataset.view)) item.style.display = 'none';
+    });
+    document.querySelectorAll('.navgroup').forEach(function(grp){
+      const items = Array.from(grp.querySelectorAll('.navitem[data-view]'));
+      const anyVisible = items.some(function(it){ return allowedViews.includes(it.dataset.view); });
+      if (!anyVisible) grp.style.display = 'none';
+    });
+    document.querySelectorAll('.navitem').forEach(function(n){ n.classList.remove('active'); });
+    document.querySelectorAll('.view').forEach(function(v){ v.classList.remove('active'); });
+    const targetNavItem = document.querySelector('.navitem[data-view="returns-admin"]');
+    if (targetNavItem) targetNavItem.classList.add('active');
+    const targetView = document.getElementById('view-returns-admin');
+    if (targetView) targetView.classList.add('active');
+  }
 }
 
 const POLISH_DEFAULT_EMAILS = ['piotr.kowalski@tenda.cn', 'gajowski@tenda.cn', 'roman.danko@tenda.cn', 'mirek.mietka@tenda.cn'];

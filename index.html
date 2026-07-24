@@ -51,6 +51,8 @@
   .navitem .nav-icon,.navgroup-head .nav-icon{width:15px;height:15px;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--text-faint);}
   .navitem .nav-icon svg,.navgroup-head .nav-icon svg{width:15px;height:15px;}
   .navitem.active .nav-icon{color:var(--copper);}
+  .nav-badge{width:7px;height:7px;border-radius:50%;background:var(--alert);margin-left:auto;flex-shrink:0;box-shadow:0 0 0 2px var(--surface);}
+  .nav-badge.hidden{display:none;}
   .sidebar-foot{margin-top:auto;padding:16px 22px 0 22px;border-top:1px solid var(--border-soft);}
   .rate-box label{display:block;font-size:10.5px;color:var(--text-faint);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:6px;}
   .rate-input{display:flex;align-items:center;gap:6px;background:var(--surface-alt);border:1px solid var(--border);border-radius:var(--radius);padding:7px 9px;}
@@ -791,7 +793,7 @@
         <div class="navgroup-body">
           <div class="navitem sub" data-view="orders"><span class="dot"></span>订单列表</div>
           <div class="navitem sub" data-view="invoices"><span class="dot"></span>发票</div>
-          <div class="navitem sub" data-view="returns-admin"><span class="dot"></span>退货管理</div>
+          <div class="navitem sub" data-view="returns-admin"><span class="dot"></span>退货管理<span class="nav-badge hidden" id="raNavBadge"></span></div>
         </div>
       </div>
 
@@ -4303,6 +4305,7 @@ function showView(name, navName){
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   const view = document.getElementById('view-'+name);
   if (view) view.classList.add('active');
+  if (name === 'returns-admin' && typeof raClearNotificationBadge === 'function') raClearNotificationBadge();
   const nav = document.querySelector('.navitem[data-view="'+(navName||name)+'"]');
   if (nav){
     nav.classList.add('active');
@@ -5929,6 +5932,40 @@ async function loadAllRemoteData(){
   ]);
 }
 
+const RA_BADGE_STORAGE_KEY = 'raNotifLastSeenTs';
+function raGetLastSeenTs(){
+  return localStorage.getItem(RA_BADGE_STORAGE_KEY) || '1970-01-01T00:00:00.000Z';
+}
+function raSetLastSeenNow(){
+  try{ localStorage.setItem(RA_BADGE_STORAGE_KEY, new Date().toISOString()); }catch(e){}
+}
+function raShowNavBadge(){
+  const el = document.getElementById('raNavBadge');
+  if (el) el.classList.remove('hidden');
+}
+function raHideNavBadge(){
+  const el = document.getElementById('raNavBadge');
+  if (el) el.classList.add('hidden');
+}
+function raClearNotificationBadge(){
+  raSetLastSeenNow();
+  raHideNavBadge();
+}
+async function initReturnsNotificationBadge(){
+  try{
+    const lastSeen = raGetLastSeenTs();
+    const { data, error } = await sb.from('message_notification').select('id').gt('created_at', lastSeen).limit(1);
+    if (!error && data && data.length) raShowNavBadge();
+  }catch(e){ console.error('initReturnsNotificationBadge check failed', e); }
+  try{
+    sb.channel('message_notification_channel')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'message_notification' }, function(payload){
+        raShowNavBadge();
+      })
+      .subscribe();
+  }catch(e){ console.error('message_notification realtime subscribe failed', e); }
+}
+
 async function showApp(session){
   let customerCode = null;
   try{
@@ -5955,6 +5992,7 @@ async function showApp(session){
     }
   }catch(e){ console.error('refreshAll/renderCharts failed', e); }
   if (typeof loadAllRemoteData === 'function') loadAllRemoteData();
+  if (typeof initReturnsNotificationBadge === 'function') initReturnsNotificationBadge();
 }
 
 let cpCustomerCode = null;

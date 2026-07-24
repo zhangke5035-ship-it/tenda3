@@ -1105,6 +1105,9 @@
             <option value="已拒绝">已拒绝</option>
           </select>
         </div>
+        <div style="display:flex;gap:8px;">
+          <button class="inv-btn inv-btn-ghost" id="raBtnExport">导出 Excel</button>
+        </div>
       </div>
 
       <div class="inv-table-wrap">
@@ -5694,6 +5697,45 @@ function renderReturnsAdminAll(){
   renderReturnsAdminTable();
 }
 
+function exportReturnsAdminCSV(){
+  const rows = returnsAdminData.filter(function(r){
+    if (raFilterCust && r.customer_code !== raFilterCust) return false;
+    if (raFilterStatus && r.status !== raFilterStatus) return false;
+    return true;
+  });
+  const header = ['提交时间','客户','产品型号','数量','关联订单','发票号','序列号','承运商','物流单号','退货原因','备注','其他信息','退款金额','Credit Note号码','OA流程号','状态'];
+  const lines = [header.join(',')];
+  rows.forEach(function(r){
+    const rowVals = [
+      r.created_at ? r.created_at.slice(0,16).replace('T',' ') : '',
+      raCustomerName(r.customer_code),
+      r.product || '',
+      r.qty || '',
+      r.invoice_no || '',
+      r.serial_no || '',
+      r.carrier || '',
+      r.tracking_no || '',
+      r.reason || '',
+      r.note || '',
+      formatExtraFields(r.extra_fields),
+      (r.refund_amount !== null && r.refund_amount !== undefined) ? Number(r.refund_amount).toFixed(2) : '',
+      r.credit_note_no || '',
+      r.oa_no || '',
+      r.status || ''
+    ];
+    lines.push(rowVals.map(function(v){ return '"' + String(v).replace(/"/g,'""') + '"'; }).join(','));
+  });
+  const blob = new Blob(['\uFEFF' + lines.join('\r\n')], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'Tenda退货管理_' + new Date().toISOString().slice(0,10) + '.csv';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
 let raDetailRow = null;
 
 function raDetailField(label, value, full){
@@ -5770,6 +5812,13 @@ if (raTableBodyEl){
   raTableBodyEl.addEventListener('click', function(e){
     const btn = e.target.closest('.ra-detail-btn');
     if (btn) raOpenDetail(btn.dataset.id);
+  });
+}
+
+const raBtnExportEl = document.getElementById('raBtnExport');
+if (raBtnExportEl){
+  raBtnExportEl.addEventListener('click', function(){
+    exportReturnsAdminCSV();
   });
 }
 
@@ -7920,6 +7969,7 @@ const I18N_DICT = [
   ["请输入有效的退款金额","Please enter a valid refund amount","Wprowadź prawidłową kwotę zwrotu"],
   ["请输入核验后的退款金额","Enter verified refund amount","Wprowadź zweryfikowaną kwotę zwrotu"],
   ["审核","Review","Weryfikuj"],
+["导出 Excel","Export Excel","Eksportuj Excel"],
   ["删除该促销","Delete This Promotion","Usuń tę promocję"],
   ["两仓合计件数","Total Units (Both Warehouses)","Łączna liczba sztuk (oba magazyny)"],
   ["在途库存总数","Total In-Transit Stock","Łączny stan w tranzycie"],

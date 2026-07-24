@@ -858,7 +858,7 @@
       <div class="kpi-row" id="salesKpiRow"></div>
 
       <div class="panel">
-        <div class="panel-head"><div><h3>客户维度月环比</h3><div class="desc">各客户近3个月订单净额趋势及最新环比</div></div><button class="btn ghost" id="custMomExportBtn" style="font-size:12px;padding:6px 12px;">导出 Excel</button></div>
+        <div class="panel-head"><div><h3>客户维度月环比</h3><div class="desc">各客户近3个月订单净额趋势</div></div><button class="btn ghost" id="custMomExportBtn" style="font-size:12px;padding:6px 12px;">导出 Excel</button></div>
         <table id="custMomTable">
           <thead><tr id="custMomTableHead"><th>客户</th></tr></thead>
           <tbody id="custMomTableBody"></tbody>
@@ -5384,12 +5384,10 @@ function exportCustMomCSV(){
   if (!cache) return;
   const header = ['客户', cache.ytdYear+' YTD 金额', cache.ytdYear+' YTD 数量'];
   cache.months.forEach(m=>{ header.push(m+' 金额', m+' 数量'); });
-  header.push('环比');
   const lines = [header.join(',')];
   cache.rows.forEach(r=>{
     const vals = [r.name, r.ytd.amount.toFixed(1), r.ytd.qty];
     r.vals.forEach(v=>{ vals.push(v.amount.toFixed(1), v.qty); });
-    vals.push(r.momText);
     lines.push(vals.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(','));
   });
   const totalVals = ['合计', cache.ytdTotal.amount.toFixed(1), cache.ytdTotal.qty];
@@ -5397,7 +5395,6 @@ function exportCustMomCSV(){
     const t = cache.totals[m] || {amount:0, qty:0};
     totalVals.push(t.amount.toFixed(1), t.qty);
   });
-  totalVals.push(cache.fMomText);
   lines.push(totalVals.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(','));
   const blob = new Blob(['\ufeff' + lines.join('\n')], {type:'text/csv;charset=utf-8;'});
   const url = URL.createObjectURL(blob);
@@ -5424,8 +5421,7 @@ function renderCustMomTable(){
   const theadEl = head.parentElement;
   head.innerHTML = '<th rowspan="2">客户</th>' +
     '<th colspan="2" class="ytd-col-head" style="text-align:center;">'+ytdYear+' 年累计(YTD)</th>' +
-    months.map(m=>'<th colspan="2" style="text-align:center;">'+m+'</th>').join('') +
-    '<th rowspan="2" style="text-align:right;">环比</th>';
+    months.map(m=>'<th colspan="2" style="text-align:center;">'+m+'</th>').join('');
   let subHead = document.getElementById('custMomTableSubHead');
   if (!subHead && theadEl){
     subHead = document.createElement('tr');
@@ -5492,7 +5488,7 @@ function renderCustMomTable(){
     '<tr><td>'+r.name+'</td>' +
     '<td class="ytd-col-cell" style="text-align:right;font-weight:600;">'+fmtAmt(r.ytd.amount)+'</td><td class="ytd-col-cell" style="text-align:right;color:var(--text-dim);">'+fmtQty(r.ytd.qty)+'</td>' +
     r.vals.map(v=>'<td style="text-align:right;">'+fmtAmt(v.amount)+'</td><td style="text-align:right;color:var(--text-dim);">'+fmtQty(v.qty)+'</td>').join('') +
-    '<td style="text-align:right;">'+renderMomBadge(r.momText, r.momColor)+'</td></tr>'
+    '</tr>'
   ).join('');
 
   let totals = {};
@@ -5536,7 +5532,7 @@ function renderCustMomTable(){
         const t = totals[m] || {amount:0, qty:0};
         return '<td style="text-align:right;">'+fmtAmt(t.amount)+'</td><td style="text-align:right;color:var(--text-dim);">'+fmtQty(t.qty)+'</td>';
       }).join('') +
-      '<td style="text-align:right;">'+renderMomBadge(fMomText, fMomColor)+'</td></tr>';
+      '</tr>';
   }
 
   window.__custMomExportCache = { months, ytdYear, rows, totals, ytdTotal, fMomText };
@@ -7946,8 +7942,7 @@ const I18N_DICT = [
   ['确认添加','Confirm Add','Potwierdź dodanie']
 ,
   ['客户维度月环比','Customer MoM Trend','Trend m/m wg klienta'],
-  ['各客户近3个月订单净额趋势及最新环比','Order net amount by customer for the last 3 months, with the latest month-over-month change','Wartość netto zamówień wg klienta za ostatnie 3 miesiące oraz najnowsza zmiana m/m'],
-  ['环比','MoM','m/m'],
+  ['各客户近3个月订单净额趋势','Order net amount by customer for the last 3 months','Wartość netto zamówień wg klienta za ostatnie 3 miesiące'],
   ['暂无数据','No data yet','Brak danych']
 ,
   ["Tenda 波兰价格与利润管理台 · 26M71","Tenda Poland Pricing & Profit Console · 26M71","Tenda Polska - konsola cen i zysków · 26M71"],

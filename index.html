@@ -9874,7 +9874,75 @@ applyLanguage(currentLang);
   }
 
   
-  function stWeekKey(i){ const info = isoWeekInfo(i.transaction_date); return info ? info.key : ''; }
+  
+  function isoWeekInfo(dateStr){
+    if (!dateStr) return null;
+    const d = new Date(dateStr + 'T00:00:00');
+    if (isNaN(d.getTime())) return null;
+    const target = new Date(d.getTime());
+    const dayNr = (d.getDay() + 6) % 7;
+    target.setDate(target.getDate() - dayNr + 3);
+    const firstThursday = new Date(target.getFullYear(), 0, 4);
+    const firstDayNr = (firstThursday.getDay() + 6) % 7;
+    firstThursday.setDate(firstThursday.getDate() - firstDayNr + 3);
+    const weekNum = 1 + Math.round((target.getTime() - firstThursday.getTime()) / (7*24*3600*1000));
+    const monday = new Date(d.getTime());
+    monday.setDate(d.getDate() - dayNr);
+    const sunday = new Date(monday.getTime());
+    sunday.setDate(monday.getDate() + 6);
+    function pad2(n){ return (n<10?'0':'')+n; }
+    function fmt(dt){ return pad2(dt.getMonth()+1) + '/' + pad2(dt.getDate()); }
+    return { year: target.getFullYear(), week: weekNum, key: target.getFullYear() + '-W' + pad2(weekNum), label: '第' + weekNum + '周 · ' + fmt(monday) + '-' + fmt(sunday) };
+  }
+  function currentWeekKey(offsetWeeks){
+    const now = new Date();
+    now.setDate(now.getDate() + (offsetWeeks||0)*7);
+    function pad2(n){ return (n<10?'0':'')+n; }
+    const info = isoWeekInfo(now.getFullYear() + '-' + pad2(now.getMonth()+1) + '-' + pad2(now.getDate()));
+    return info ? info.key : '';
+  }
+  function matchWeekFilter(filterVal, rowWeekKey){
+    if (!filterVal) return true;
+    if (!rowWeekKey) return false;
+    if (filterVal === '__this_week') return rowWeekKey === currentWeekKey(0);
+    if (filterVal === '__last_week') return rowWeekKey === currentWeekKey(-1);
+    return rowWeekKey === filterVal;
+  }
+  function excelSerialToDateStr(v){
+    const utcDays = Math.floor(v - 25569);
+    const utcMs = utcDays * 86400 * 1000;
+    const d = new Date(utcMs);
+    function pad2(n){ return (n<10?'0':'')+n; }
+    return d.getFullYear() + '-' + pad2(d.getMonth()+1) + '-' + pad2(d.getDate());
+  }
+  function normalizeDateValue(v){
+    if (v == null || v === '') return '';
+    if (v instanceof Date && !isNaN(v.getTime())){
+      function pad2(n){ return (n<10?'0':'')+n; }
+      return v.getFullYear() + '-' + pad2(v.getMonth()+1) + '-' + pad2(v.getDate());
+    }
+    if (typeof v === 'number') return excelSerialToDateStr(v);
+    const s = String(v).trim();
+    let m = s.match(/^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})/);
+    if (m) return m[1] + '-' + (m[2].length<2?'0'+m[2]:m[2]) + '-' + (m[3].length<2?'0'+m[3]:m[3]);
+    m = s.match(/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})/);
+    if (m) return m[3] + '-' + (m[1].length<2?'0'+m[1]:m[1]) + '-' + (m[2].length<2?'0'+m[2]:m[2]);
+    const d2 = new Date(s);
+    if (!isNaN(d2.getTime())){
+      function pad2b(n){ return (n<10?'0':'')+n; }
+      return d2.getFullYear() + '-' + pad2b(d2.getMonth()+1) + '-' + pad2b(d2.getDate());
+    }
+    return s;
+  }
+  function parseNumericValue(v){
+    if (v === '' || v == null) return null;
+    const raw = String(v).replace(/,/g,'').trim();
+    if (raw === '') return null;
+    const n = Number(raw);
+    return isNaN(n) ? null : n;
+  }
+
+function stWeekKey(i){ const info = isoWeekInfo(i.transaction_date); return info ? info.key : ''; }
   function stWeekLabel(i){ const info = isoWeekInfo(i.transaction_date); return info ? info.label : '—'; }
 
   function populateStWeekFilter(){

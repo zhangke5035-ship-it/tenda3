@@ -408,6 +408,34 @@
   .cp-batch-summary-num{font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:700;color:var(--text);}
   .cp-batch-summary-num.cp-batch-summary-ok{color:var(--good);}
   .cp-batch-summary-num.cp-batch-summary-err{color:var(--alert);}
+  .inv-modal-lg{width:820px;}
+  .inv-batch-step{margin-bottom:20px;}
+  .inv-batch-step:last-child{margin-bottom:0;}
+  .inv-batch-step-head{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:6px;}
+  .inv-batch-step-title{font-size:13px;font-weight:700;color:var(--text);margin-bottom:6px;}
+  .inv-batch-warn{font-size:12px;color:var(--alert);margin:0;}
+  .inv-batch-btn-outline{background:var(--surface);border:1px solid var(--copper);color:var(--copper);font-size:12.5px;font-weight:700;padding:8px 18px;border-radius:8px;cursor:pointer;transition:background .15s ease,color .15s ease;}
+  .inv-batch-btn-outline:hover{background:var(--copper);color:#fff;}
+  .inv-batch-dropzone{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;border:1.5px dashed var(--border);border-radius:10px;padding:26px 20px;text-align:center;cursor:pointer;background:var(--bg);transition:border-color .15s ease,background .15s ease;}
+  .inv-batch-dropzone:hover,.inv-batch-dropzone.inv-batch-dropzone-drag{border-color:var(--copper);background:var(--copper-soft);}
+  .inv-batch-dropzone-text{font-size:13px;font-weight:600;color:var(--text);}
+  .inv-batch-dropzone-sub{font-size:11.5px;color:var(--text-faint);}
+  .inv-batch-file-name{font-size:12px;color:var(--text-dim);margin-top:8px;}
+  .inv-batch-row-err{font-size:11px;color:var(--alert);margin-top:4px;}
+  .inv-batch-summary{display:flex;gap:22px;flex-wrap:wrap;padding:12px 0 4px;}
+  .inv-batch-summary-item{display:flex;flex-direction:column;gap:2px;}
+  .inv-batch-summary-label{font-size:11px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.3px;}
+  .inv-batch-summary-num{font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:700;color:var(--text);}
+  .inv-batch-summary-num.inv-batch-summary-ok{color:var(--good);}
+  .inv-batch-summary-num.inv-batch-summary-err{color:var(--alert);}
+  .inv-batch-summary-num.inv-batch-summary-dup{color:var(--text-dim);}
+  .inv-batch-badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap;}
+  .inv-batch-badge-ok{background:rgba(46,160,67,0.12);color:var(--good);}
+  .inv-batch-badge-err{background:rgba(224,63,63,0.12);color:var(--alert);}
+  .inv-batch-badge-dup{background:rgba(120,120,120,0.16);color:var(--text-dim);}
+  .inv-batch-msg{font-size:12.5px;}
+  .inv-batch-msg-ok{color:var(--good);}
+  .inv-batch-msg-error{color:var(--alert);}
   .cat-badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:500;white-space:nowrap;}
   .cat-badge.cat-mesh{background:#EFEDFC;color:#5B52C9;}
   .cat-badge.cat-usb{background:#E8F0FA;color:#2C6FBF;}
@@ -1917,6 +1945,7 @@
   <div class="inv-toolbar">
     <div class="inv-filters">
       <select class="inv-field" id="agentInvFilterAgent"><option value="">全部代理商</option></select>
+      <select class="inv-field" id="agentInvFilterWeek"><option value="">全部周次</option></select>
       <div class="inv-search">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         <input type="text" id="agentInvSearchInput" placeholder="搜索 SKU 或产品型号">
@@ -1924,6 +1953,7 @@
     </div>
     <div style="display:flex;gap:8px;">
       <button class="inv-btn inv-btn-ghost" id="agentInvBtnExport">导出 Excel</button>
+      <button class="inv-btn inv-btn-ghost" id="agentInvBtnImport">批量导入</button>
       <button class="inv-btn inv-btn-primary" id="agentInvBtnAdd">＋ 新增库存</button>
     </div>
   </div>
@@ -1939,6 +1969,7 @@
           <th>当前库存</th>
           <th>采购单价</th>
           <th>更新日期</th>
+          <th>周次</th>
           <th>备注</th>
           <th>操作</th>
         </tr>
@@ -2001,6 +2032,50 @@
       </div>
     </div>
   </div>
+
+  <div class="inv-overlay" id="agentInvBatchOverlay">
+    <div class="inv-modal inv-modal-lg">
+      <div class="inv-modal-header">
+        <div class="inv-modal-title">批量导入代理商库存</div>
+        <div class="inv-modal-close" id="agentInvBatchModalClose">✕</div>
+      </div>
+      <div class="inv-batch-step">
+        <div class="inv-batch-step-head">
+          <div class="inv-batch-step-title">第一步：下载标准导入模板</div>
+          <button type="button" id="agentInvBatchTemplateBtn" class="inv-batch-btn-outline">下载 Excel 模板</button>
+        </div>
+        <p class="inv-batch-warn">代理商、SKU编码、当前库存、更新日期为必填项；代理商名称请尽量选用下拉建议中已有的名称，避免拼写不一致。</p>
+      </div>
+      <div class="inv-batch-step">
+        <div class="inv-batch-step-title">第二步：上传填好的模板文件</div>
+        <label id="agentInvBatchDropzone" class="inv-batch-dropzone" for="agentInvBatchFileInput">
+          <span class="inv-batch-dropzone-text">点击选择文件，或将 Excel 文件拖拽到此处</span>
+          <span class="inv-batch-dropzone-sub">支持 .xlsx / .xls 格式</span>
+        </label>
+        <input type="file" id="agentInvBatchFileInput" accept=".xlsx,.xls" style="display:none;">
+        <div id="agentInvBatchFileName" class="inv-batch-file-name"></div>
+      </div>
+      <div id="agentInvBatchPreviewWrap" class="inv-batch-step hidden">
+        <div class="inv-batch-step-title">预览与校验</div>
+        <div class="inv-table-wrap"><table>
+          <thead><tr><th>行号</th><th>代理商</th><th>SKU编码</th><th>产品型号</th><th>当前库存</th><th>更新日期</th><th>状态</th></tr></thead>
+          <tbody id="agentInvBatchPreviewBody"></tbody>
+        </table></div>
+        <div class="inv-batch-summary">
+          <div class="inv-batch-summary-item"><span class="inv-batch-summary-label">解析总行数</span><span class="inv-batch-summary-num" id="agentInvBatchTotal">0</span></div>
+          <div class="inv-batch-summary-item"><span class="inv-batch-summary-label">校验通过</span><span class="inv-batch-summary-num inv-batch-summary-ok" id="agentInvBatchValidCount">0</span></div>
+          <div class="inv-batch-summary-item"><span class="inv-batch-summary-label">已存在(跳过)</span><span class="inv-batch-summary-num inv-batch-summary-dup" id="agentInvBatchDupCount">0</span></div>
+          <div class="inv-batch-summary-item"><span class="inv-batch-summary-label">校验未通过</span><span class="inv-batch-summary-num inv-batch-summary-err" id="agentInvBatchInvalidCount">0</span></div>
+        </div>
+      </div>
+      <div class="inv-modal-footer">
+        <button class="inv-btn inv-btn-ghost" id="agentInvBatchCancelBtn">取消</button>
+        <button class="inv-btn inv-btn-primary" id="agentInvBatchSubmitBtn" disabled>批量提交</button>
+        <span id="agentInvBatchMsg" class="inv-batch-msg"></span>
+      </div>
+    </div>
+  </div>
+
 </section>
 
 <section class="view" id="view-agent-sellthrough">
@@ -2026,6 +2101,7 @@
   <div class="inv-toolbar">
     <div class="inv-filters">
       <select class="inv-field" id="stFilterAgent"><option value="">全部代理商</option></select>
+      <select class="inv-field" id="stFilterWeek"><option value="">全部周次</option></select>
       <div class="inv-search">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         <input type="text" id="stSearchInput" placeholder="搜索 SKU / 型号 / 终端客户">
@@ -2033,6 +2109,7 @@
     </div>
     <div style="display:flex;gap:8px;">
       <button class="inv-btn inv-btn-ghost" id="stBtnExport">导出 Excel</button>
+      <button class="inv-btn inv-btn-ghost" id="stBtnImport">批量导入</button>
     </div>
   </div>
 
@@ -2047,6 +2124,7 @@
           <th>销量</th>
           <th>净额</th>
           <th>交易日期</th>
+          <th>周次</th>
           <th>终端客户</th>
           <th>城市</th>
         </tr>
@@ -2057,6 +2135,50 @@
       <span id="stPageInfo">共 0 条记录</span>
     </div>
   </div>
+
+  <div class="inv-overlay" id="stBatchOverlay">
+    <div class="inv-modal inv-modal-lg">
+      <div class="inv-modal-header">
+        <div class="inv-modal-title">批量导入代理商动销</div>
+        <div class="inv-modal-close" id="stBatchModalClose">✕</div>
+      </div>
+      <div class="inv-batch-step">
+        <div class="inv-batch-step-head">
+          <div class="inv-batch-step-title">第一步：下载标准导入模板</div>
+          <button type="button" id="stBatchTemplateBtn" class="inv-batch-btn-outline">下载 Excel 模板</button>
+        </div>
+        <p class="inv-batch-warn">代理商、销售单号、SKU编码、销量、交易日期为必填项；代理商名称请尽量选用下拉建议中已有的名称，避免拼写不一致。</p>
+      </div>
+      <div class="inv-batch-step">
+        <div class="inv-batch-step-title">第二步：上传填好的模板文件</div>
+        <label id="stBatchDropzone" class="inv-batch-dropzone" for="stBatchFileInput">
+          <span class="inv-batch-dropzone-text">点击选择文件，或将 Excel 文件拖拽到此处</span>
+          <span class="inv-batch-dropzone-sub">支持 .xlsx / .xls 格式</span>
+        </label>
+        <input type="file" id="stBatchFileInput" accept=".xlsx,.xls" style="display:none;">
+        <div id="stBatchFileName" class="inv-batch-file-name"></div>
+      </div>
+      <div id="stBatchPreviewWrap" class="inv-batch-step hidden">
+        <div class="inv-batch-step-title">预览与校验</div>
+        <div class="inv-table-wrap"><table>
+          <thead><tr><th>行号</th><th>代理商</th><th>销售单号</th><th>SKU编码</th><th>销量</th><th>交易日期</th><th>状态</th></tr></thead>
+          <tbody id="stBatchPreviewBody"></tbody>
+        </table></div>
+        <div class="inv-batch-summary">
+          <div class="inv-batch-summary-item"><span class="inv-batch-summary-label">解析总行数</span><span class="inv-batch-summary-num" id="stBatchTotal">0</span></div>
+          <div class="inv-batch-summary-item"><span class="inv-batch-summary-label">校验通过</span><span class="inv-batch-summary-num inv-batch-summary-ok" id="stBatchValidCount">0</span></div>
+          <div class="inv-batch-summary-item"><span class="inv-batch-summary-label">已存在(跳过)</span><span class="inv-batch-summary-num inv-batch-summary-dup" id="stBatchDupCount">0</span></div>
+          <div class="inv-batch-summary-item"><span class="inv-batch-summary-label">校验未通过</span><span class="inv-batch-summary-num inv-batch-summary-err" id="stBatchInvalidCount">0</span></div>
+        </div>
+      </div>
+      <div class="inv-modal-footer">
+        <button class="inv-btn inv-btn-ghost" id="stBatchCancelBtn">取消</button>
+        <button class="inv-btn inv-btn-primary" id="stBatchSubmitBtn" disabled>批量提交</button>
+        <span id="stBatchMsg" class="inv-batch-msg"></span>
+      </div>
+    </div>
+  </div>
+
 </section>
 
 <section class="view" id="view-inventory-dashboard">
@@ -7512,6 +7634,18 @@ let currentLang = localStorage.getItem(I18N_LANG_KEY) || 'pl';
 
 // [中文, English, Polski] —— 可以随时往这个数组里加新条目
 const I18N_DICT = [
+  ['批量导入代理商库存','Batch Import Agent Inventory','Import wsadowy stanu magazynowego agentów'],
+  ['批量导入代理商动销','Batch Import Agent Sell-Through','Import wsadowy sprzedaży agentów'],
+  ['代理商、SKU编码、当前库存、更新日期为必填项；代理商名称请尽量选用下拉建议中已有的名称，避免拼写不一致。','Agent, SKU, current stock and update date are required. Please use an existing agent name from the suggestion list to avoid spelling inconsistencies.','Agent, SKU, aktualny stan i data aktualizacji są wymagane. Użyj istniejącej nazwy agenta z listy podpowiedzi, aby uniknąć błędów pisowni.'],
+  ['代理商、销售单号、SKU编码、销量、交易日期为必填项；代理商名称请尽量选用下拉建议中已有的名称，避免拼写不一致。','Agent, SO number, SKU, units sold and transaction date are required. Please use an existing agent name from the suggestion list to avoid spelling inconsistencies.','Agent, numer SO, SKU, sprzedane sztuki i data transakcji są wymagane. Użyj istniejącej nazwy agenta z listy podpowiedzi, aby uniknąć błędów pisowni.'],
+  ['已存在(跳过)','Already Exists (Skipped)','Już istnieje (pominięto)'],
+  ['新代理商，请核对拼写','New agent name, please verify spelling','Nowy agent, sprawdź pisownię'],
+  ['周次','Week','Tydzień'],
+  ['全部周次','All Weeks','Wszystkie tygodnie'],
+  ['本周','This Week','Ten tydzień'],
+  ['上周','Last Week','Zeszły tydzień'],
+  ['批量导入','Batch Import','Import wsadowy'],
+  ['已存在','Already Exists','Już istnieje'],
   ['VAT税率','VAT Rate','Stawka VAT'],
   ['出厂成本 (USD)','Factory Cost (USD)','Koszt fabryczny (USD)'],
   ['单位盈亏 (USD)','Unit P&L (USD)','Zysk/strata jedn. (USD)'],
@@ -9207,6 +9341,7 @@ applyLanguage(currentLang);
   const KNOWN_AGENTS = ['Incom Group S.A.','Action S.A.','Eltrox Sp. z o.o.','Intelek','DC-Link'];
   let agentInvData = [];
   let agentInvFilterAgent = '';
+  let agentInvFilterWeek = '';
   let agentInvSearchTerm = '';
   let agentInvEditIdx = null;
   let agentInvEditId = null;
@@ -9225,6 +9360,7 @@ applyLanguage(currentLang);
   function filteredAgentInvData(){
     return agentInvData.filter(function(i){
       if (agentInvFilterAgent && i.agent !== agentInvFilterAgent) return false;
+      if (!matchWeekFilter(agentInvFilterWeek, agentInvWeekKey(i))) return false;
       if (agentInvSearchTerm){
         const term = agentInvSearchTerm.toLowerCase();
         const hay = ((i.sku||'') + ' ' + (i.model||'') + ' ' + (i.name||'')).toLowerCase();
@@ -9245,7 +9381,7 @@ applyLanguage(currentLang);
     const list = filteredAgentInvData();
     document.getElementById('agentInvPageInfo').textContent = '共 ' + list.length + ' 条记录';
     if (!list.length){
-      tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--text-faint);padding:24px;">暂无代理商库存记录，点击"＋ 新增库存"手动录入</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;color:var(--text-faint);padding:24px;">暂无代理商库存记录，点击"＋ 新增库存"手动录入</td></tr>';
       return;
     }
     tbody.innerHTML = list.map(function(i, idx){
@@ -9257,21 +9393,313 @@ applyLanguage(currentLang);
         '<td class="inv-qty">' + (i.qty||0) + '<span class="inv-unit">台</span></td>' +
         '<td>' + (i.purchase_price!=null && i.purchase_price!=='' ? Number(i.purchase_price).toFixed(2)+' '+(i.currency||'PLN') : '—') + '</td>' +
         '<td>' + (i.date||'—') + '</td>' +
+        '<td>' + (agentInvWeekLabel(i)) + '</td>' +
         '<td>' + (i.note||'—') + '</td>' +
         '<td><div class="inv-row-actions"><a data-action="edit" data-idx="' + idx + '">编辑</a><a data-action="del" data-idx="' + idx + '">删除</a></div></td>' +
       '</tr>';
     }).join('');
   }
 
+  
+  function isoWeekInfo(dateStr){
+    if (!dateStr) return null;
+    const d = new Date(dateStr + 'T00:00:00');
+    if (isNaN(d.getTime())) return null;
+    const target = new Date(d.getTime());
+    const dayNr = (d.getDay() + 6) % 7;
+    target.setDate(target.getDate() - dayNr + 3);
+    const firstThursday = new Date(target.getFullYear(), 0, 4);
+    const firstDayNr = (firstThursday.getDay() + 6) % 7;
+    firstThursday.setDate(firstThursday.getDate() - firstDayNr + 3);
+    const weekNum = 1 + Math.round((target.getTime() - firstThursday.getTime()) / (7*24*3600*1000));
+    const monday = new Date(d.getTime());
+    monday.setDate(d.getDate() - dayNr);
+    const sunday = new Date(monday.getTime());
+    sunday.setDate(monday.getDate() + 6);
+    function pad2(n){ return (n<10?'0':'')+n; }
+    function fmt(dt){ return pad2(dt.getMonth()+1) + '/' + pad2(dt.getDate()); }
+    return { year: target.getFullYear(), week: weekNum, key: target.getFullYear() + '-W' + pad2(weekNum), label: '第' + weekNum + '周 · ' + fmt(monday) + '-' + fmt(sunday) };
+  }
+  function currentWeekKey(offsetWeeks){
+    const now = new Date();
+    now.setDate(now.getDate() + (offsetWeeks||0)*7);
+    function pad2(n){ return (n<10?'0':'')+n; }
+    const info = isoWeekInfo(now.getFullYear() + '-' + pad2(now.getMonth()+1) + '-' + pad2(now.getDate()));
+    return info ? info.key : '';
+  }
+  function matchWeekFilter(filterVal, rowWeekKey){
+    if (!filterVal) return true;
+    if (!rowWeekKey) return false;
+    if (filterVal === '__this_week') return rowWeekKey === currentWeekKey(0);
+    if (filterVal === '__last_week') return rowWeekKey === currentWeekKey(-1);
+    return rowWeekKey === filterVal;
+  }
+  function excelSerialToDateStr(v){
+    const utcDays = Math.floor(v - 25569);
+    const utcMs = utcDays * 86400 * 1000;
+    const d = new Date(utcMs);
+    function pad2(n){ return (n<10?'0':'')+n; }
+    return d.getFullYear() + '-' + pad2(d.getMonth()+1) + '-' + pad2(d.getDate());
+  }
+  function normalizeDateValue(v){
+    if (v == null || v === '') return '';
+    if (v instanceof Date && !isNaN(v.getTime())){
+      function pad2(n){ return (n<10?'0':'')+n; }
+      return v.getFullYear() + '-' + pad2(v.getMonth()+1) + '-' + pad2(v.getDate());
+    }
+    if (typeof v === 'number') return excelSerialToDateStr(v);
+    const s = String(v).trim();
+    let m = s.match(/^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})/);
+    if (m) return m[1] + '-' + (m[2].length<2?'0'+m[2]:m[2]) + '-' + (m[3].length<2?'0'+m[3]:m[3]);
+    m = s.match(/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})/);
+    if (m) return m[3] + '-' + (m[1].length<2?'0'+m[1]:m[1]) + '-' + (m[2].length<2?'0'+m[2]:m[2]);
+    const d2 = new Date(s);
+    if (!isNaN(d2.getTime())){
+      function pad2b(n){ return (n<10?'0':'')+n; }
+      return d2.getFullYear() + '-' + pad2b(d2.getMonth()+1) + '-' + pad2b(d2.getDate());
+    }
+    return s;
+  }
+  function parseNumericValue(v){
+    if (v === '' || v == null) return null;
+    const raw = String(v).replace(/,/g,'').trim();
+    if (raw === '') return null;
+    const n = Number(raw);
+    return isNaN(n) ? null : n;
+  }
+
+  function agentInvWeekKey(i){ const info = isoWeekInfo(i.date || i.inventory_date); return info ? info.key : ''; }
+  function agentInvWeekLabel(i){ const info = isoWeekInfo(i.date || i.inventory_date); return info ? info.label : '—'; }
+
+  function populateAgentInvWeekFilter(){
+    const sel = document.getElementById('agentInvFilterWeek');
+    if (!sel) return;
+    const weekMap = {};
+    agentInvData.forEach(function(i){
+      const info = isoWeekInfo(i.date || i.inventory_date);
+      if (info) weekMap[info.key] = info.label;
+    });
+    const keys = Object.keys(weekMap).sort().reverse();
+    let opts = '<option value="">全部周次</option><option value="__this_week">本周</option><option value="__last_week">上周</option>';
+    opts += keys.map(function(k){ return '<option value="'+k+'">'+weekMap[k]+'</option>'; }).join('');
+    sel.innerHTML = opts;
+    sel.value = agentInvFilterWeek;
+  }
+
+  const AGENT_INV_BATCH_FIELDS = [
+    { key:'agent', label:'代理商', required:true },
+    { key:'sku', label:'SKU编码', required:true },
+    { key:'model', label:'产品型号' },
+    { key:'name', label:'产品信息' },
+    { key:'qty', label:'当前库存', numeric:true, required:true },
+    { key:'purchase_price', label:'采购单价', numeric:true },
+    { key:'currency', label:'币种' },
+    { key:'inventory_date', label:'更新日期', date:true, required:true },
+    { key:'note', label:'备注' }
+  ];
+  let agentInvBatchRows = [];
+
+  function agentInvBatchTemplateHandler(){
+    if (typeof XLSX === 'undefined') return;
+    const headers = AGENT_INV_BATCH_FIELDS.map(function(f){ return f.label; });
+    const ws = XLSX.utils.aoa_to_sheet([headers]);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, '代理商库存导入');
+    XLSX.writeFile(wb, '代理商库存批量导入模板.xlsx');
+  }
+
+  function agentInvKnownAgentSet(){
+    return new Set(agentInvData.map(function(i){ return (i.agent||'').trim(); }).filter(Boolean));
+  }
+
+  async function parseAgentInvBatchRows(rawRows){
+    const knownAgents = agentInvKnownAgentSet();
+    const dupKeySet = new Set();
+    try{
+      const resp = await sb.from('agent_inventory').select('agent,sku,inventory_date');
+      if (!resp.error && resp.data){
+        resp.data.forEach(function(r){
+          dupKeySet.add(((r.agent||'').trim()+'||'+(r.sku||'').trim()+'||'+(r.inventory_date||'')).toLowerCase());
+        });
+      }
+    }catch(e){ console.error('查询已有库存记录失败', e); }
+
+    const seenInBatch = new Set();
+    agentInvBatchRows = rawRows.map(function(raw, idx){
+      const row = { rowNo: idx + 2, errors: [], data: {} };
+      AGENT_INV_BATCH_FIELDS.forEach(function(f){
+        const val = raw[f.label];
+        if (f.numeric){ row.data[f.key] = parseNumericValue(val); }
+        else if (f.date){ row.data[f.key] = normalizeDateValue(val); }
+        else { row.data[f.key] = (val == null) ? '' : String(val).trim(); }
+      });
+      if (!row.data.currency) row.data.currency = 'PLN';
+
+      AGENT_INV_BATCH_FIELDS.forEach(function(f){
+        if (f.required){
+          const v = row.data[f.key];
+          let missing = (v === null || v === undefined || v === '');
+          if (f.numeric && v === 0) missing = false;
+          if (missing) row.errors.push('缺少必填项：' + f.label);
+        }
+      });
+      if (row.data.agent && !knownAgents.has(row.data.agent)){ row.warnNewAgent = true; }
+      const dupKey = ((row.data.agent||'').trim()+'||'+(row.data.sku||'').trim()+'||'+(row.data.inventory_date||'')).toLowerCase();
+      row.isDuplicate = false;
+      if (row.errors.length === 0){
+        if (dupKeySet.has(dupKey) || seenInBatch.has(dupKey)){ row.isDuplicate = true; }
+        seenInBatch.add(dupKey);
+      }
+      return row;
+    });
+    renderAgentInvBatchPreview();
+  }
+
+  function renderAgentInvBatchPreview(){
+    const wrap = document.getElementById('agentInvBatchPreviewWrap');
+    const tbody = document.getElementById('agentInvBatchPreviewBody');
+    if (!wrap || !tbody) return;
+    if (!agentInvBatchRows.length){
+      wrap.classList.add('hidden');
+      tbody.innerHTML = '';
+      const submitBtn0 = document.getElementById('agentInvBatchSubmitBtn');
+      if (submitBtn0) submitBtn0.disabled = true;
+      return;
+    }
+    wrap.classList.remove('hidden');
+    tbody.innerHTML = agentInvBatchRows.map(function(row){
+      let status = '<span class="inv-batch-badge inv-batch-badge-ok">校验通过</span>';
+      if (row.errors.length){
+        status = '<span class="inv-batch-badge inv-batch-badge-err">校验未通过</span><div class="inv-batch-row-err">' + row.errors.join('；') + '</div>';
+      } else if (row.isDuplicate){
+        status = '<span class="inv-batch-badge inv-batch-badge-dup">已存在</span>';
+      } else if (row.warnNewAgent){
+        status = '<span class="inv-batch-badge inv-batch-badge-ok">校验通过</span><div class="inv-batch-row-err" style="color:var(--copper);">新代理商，请核对拼写</div>';
+      }
+      return '<tr>' +
+        '<td>' + row.rowNo + '</td>' +
+        '<td>' + (row.data.agent||'—') + '</td>' +
+        '<td>' + (row.data.sku||'—') + '</td>' +
+        '<td>' + (row.data.model||'—') + '</td>' +
+        '<td>' + (row.data.qty!=null?row.data.qty:'—') + '</td>' +
+        '<td>' + (row.data.inventory_date||'—') + '</td>' +
+        '<td>' + status + '</td>' +
+      '</tr>';
+    }).join('');
+    const total = agentInvBatchRows.length;
+    const validCount = agentInvBatchRows.filter(function(r){ return r.errors.length===0 && !r.isDuplicate; }).length;
+    const dupCount = agentInvBatchRows.filter(function(r){ return r.errors.length===0 && r.isDuplicate; }).length;
+    const invalidCount = agentInvBatchRows.filter(function(r){ return r.errors.length>0; }).length;
+    const totalEl = document.getElementById('agentInvBatchTotal'); if (totalEl) totalEl.textContent = total;
+    const validEl = document.getElementById('agentInvBatchValidCount'); if (validEl) validEl.textContent = validCount;
+    const dupEl = document.getElementById('agentInvBatchDupCount'); if (dupEl) dupEl.textContent = dupCount;
+    const invalidEl = document.getElementById('agentInvBatchInvalidCount'); if (invalidEl) invalidEl.textContent = invalidCount;
+    const submitBtn = document.getElementById('agentInvBatchSubmitBtn');
+    if (submitBtn) submitBtn.disabled = validCount === 0;
+  }
+
+  function handleAgentInvBatchFile(file){
+    const nameEl = document.getElementById('agentInvBatchFileName');
+    if (nameEl) nameEl.textContent = file.name;
+    const reader = new FileReader();
+    reader.onload = async function(e){
+      try{
+        const data = new Uint8Array(e.target.result);
+        const wb = XLSX.read(data, { type: 'array', cellDates: true });
+        const wsName = wb.SheetNames[0];
+        const ws = wb.Sheets[wsName];
+        const rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
+        await parseAgentInvBatchRows(rows);
+      }catch(err){
+        console.error('批量导入解析失败', err);
+        const msgEl = document.getElementById('agentInvBatchMsg');
+        if (msgEl){ msgEl.textContent = '文件解析失败：' + err.message; msgEl.className = 'inv-batch-msg inv-batch-msg-error'; }
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  }
+
+  function openAgentInvBatchModal(){
+    agentInvBatchRows = [];
+    renderAgentInvBatchPreview();
+    const fileInput = document.getElementById('agentInvBatchFileInput');
+    if (fileInput) fileInput.value = '';
+    const nameEl = document.getElementById('agentInvBatchFileName');
+    if (nameEl) nameEl.textContent = '';
+    const msgEl = document.getElementById('agentInvBatchMsg');
+    if (msgEl){ msgEl.textContent=''; msgEl.className='inv-batch-msg'; }
+    const overlay = document.getElementById('agentInvBatchOverlay');
+    if (overlay) overlay.classList.add('open');
+  }
+  function closeAgentInvBatchModal(){
+    const overlay = document.getElementById('agentInvBatchOverlay');
+    if (overlay) overlay.classList.remove('open');
+  }
+
+  (function initAgentInvBatchUI(){
+    const importBtn = document.getElementById('agentInvBtnImport');
+    if (importBtn) importBtn.addEventListener('click', openAgentInvBatchModal);
+    const templateBtn = document.getElementById('agentInvBatchTemplateBtn');
+    if (templateBtn) templateBtn.addEventListener('click', agentInvBatchTemplateHandler);
+    const fileInput = document.getElementById('agentInvBatchFileInput');
+    if (fileInput) fileInput.addEventListener('change', function(e){
+      const file = e.target.files && e.target.files[0];
+      if (file) handleAgentInvBatchFile(file);
+    });
+    const dropzone = document.getElementById('agentInvBatchDropzone');
+    if (dropzone){
+      dropzone.addEventListener('dragover', function(e){ e.preventDefault(); dropzone.classList.add('inv-batch-dropzone-drag'); });
+      dropzone.addEventListener('dragleave', function(){ dropzone.classList.remove('inv-batch-dropzone-drag'); });
+      dropzone.addEventListener('drop', function(e){
+        e.preventDefault();
+        dropzone.classList.remove('inv-batch-dropzone-drag');
+        const file = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+        if (file) handleAgentInvBatchFile(file);
+      });
+    }
+    const overlay = document.getElementById('agentInvBatchOverlay');
+    if (overlay) overlay.addEventListener('click', function(e){ if (e.target === overlay) closeAgentInvBatchModal(); });
+    const closeBtn = document.getElementById('agentInvBatchModalClose');
+    if (closeBtn) closeBtn.onclick = closeAgentInvBatchModal;
+    const cancelBtn = document.getElementById('agentInvBatchCancelBtn');
+    if (cancelBtn) cancelBtn.onclick = closeAgentInvBatchModal;
+    const submitBtn = document.getElementById('agentInvBatchSubmitBtn');
+    if (submitBtn) submitBtn.addEventListener('click', async function(){
+      const validRows = agentInvBatchRows.filter(function(r){ return r.errors.length===0 && !r.isDuplicate; });
+      if (!validRows.length) return;
+      submitBtn.disabled = true;
+      const msgEl = document.getElementById('agentInvBatchMsg');
+      try{
+        const payload = validRows.map(function(r){ return r.data; });
+        const res = await sb.from('agent_inventory').insert(payload);
+        if (res.error){
+          if (msgEl){ msgEl.textContent = '批量提交失败：' + res.error.message; msgEl.className = 'inv-batch-msg inv-batch-msg-error'; }
+          submitBtn.disabled = false;
+          return;
+        }
+        if (msgEl){ msgEl.textContent = '批量导入成功，已新增 ' + validRows.length + ' 条记录'; msgEl.className = 'inv-batch-msg inv-batch-msg-ok'; }
+        agentInvBatchRows = [];
+        renderAgentInvBatchPreview();
+        await loadAgentInventory();
+        setTimeout(closeAgentInvBatchModal, 900);
+      }catch(err){
+        if (msgEl){ msgEl.textContent = '批量提交失败：' + err.message; msgEl.className = 'inv-batch-msg inv-batch-msg-error'; }
+        submitBtn.disabled = false;
+      }
+    });
+  })();
+
+
   function refreshAgentInventory(){
     populateAgentInvFilters();
+    populateAgentInvWeekFilter();
     renderAgentInvStats();
     renderAgentInvTable();
   }
 
   async function loadAgentInventory(){
     try{
-      const { data, error } = await sb.from('agent_inventory').select('*').order('agent', {ascending:true}).order('id', {ascending:true});
+      const { data, error } = await sb.from('agent_inventory').select('*').order('inventory_date', {ascending:false}).order('id', {ascending:false});
       if (error){ console.error('loadAgentInventory', error); return; }
       agentInvData = (data || []).map(function(r){ return Object.assign({}, r, { date: r.inventory_date }); });
       refreshAgentInventory();
@@ -9388,6 +9816,7 @@ applyLanguage(currentLang);
 (function(){
   let stData = [];
   let stFilterAgent = '';
+  let stFilterWeek = '';
   let stSearchTerm = '';
 
   function populateStFilters(){
@@ -9401,6 +9830,7 @@ applyLanguage(currentLang);
   function filteredStData(){
     return stData.filter(function(i){
       if (stFilterAgent && i.agent !== stFilterAgent) return false;
+      if (!matchWeekFilter(stFilterWeek, stWeekKey(i))) return false;
       if (stSearchTerm){
         const term = stSearchTerm.toLowerCase();
         const hay = ((i.sku||'') + ' ' + (i.model||'') + ' ' + (i.end_customer_name||'')).toLowerCase();
@@ -9424,7 +9854,7 @@ applyLanguage(currentLang);
     const list = filteredStData();
     document.getElementById('stPageInfo').textContent = '共 ' + list.length + ' 条记录';
     if (!list.length){
-      tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--text-faint);padding:24px;">暂无动销数据</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;color:var(--text-faint);padding:24px;">暂无动销数据</td></tr>';
       return;
     }
     tbody.innerHTML = list.map(function(i){
@@ -9436,14 +9866,241 @@ applyLanguage(currentLang);
         '<td class="inv-qty">' + (i.units_sold||0) + '<span class="inv-unit">台</span></td>' +
         '<td>' + (i.netto_amount!=null ? Number(i.netto_amount).toFixed(2)+' '+(i.currency||'PLN') : '—') + '</td>' +
         '<td>' + (i.transaction_date||'—') + '</td>' +
+        '<td>' + (stWeekLabel(i)) + '</td>' +
         '<td>' + (i.end_customer_name||'—') + '</td>' +
         '<td>' + (i.city||'—') + '</td>' +
       '</tr>';
     }).join('');
   }
 
+  
+  function stWeekKey(i){ const info = isoWeekInfo(i.transaction_date); return info ? info.key : ''; }
+  function stWeekLabel(i){ const info = isoWeekInfo(i.transaction_date); return info ? info.label : '—'; }
+
+  function populateStWeekFilter(){
+    const sel = document.getElementById('stFilterWeek');
+    if (!sel) return;
+    const weekMap = {};
+    stData.forEach(function(i){
+      const info = isoWeekInfo(i.transaction_date);
+      if (info) weekMap[info.key] = info.label;
+    });
+    const keys = Object.keys(weekMap).sort().reverse();
+    let opts = '<option value="">全部周次</option><option value="__this_week">本周</option><option value="__last_week">上周</option>';
+    opts += keys.map(function(k){ return '<option value="'+k+'">'+weekMap[k]+'</option>'; }).join('');
+    sel.innerHTML = opts;
+    sel.value = stFilterWeek;
+  }
+
+  const AGENT_ST_BATCH_FIELDS = [
+    { key:'agent', label:'代理商', required:true },
+    { key:'so_number', label:'销售单号', required:true },
+    { key:'sku', label:'SKU编码', required:true },
+    { key:'model', label:'产品型号' },
+    { key:'units_sold', label:'销量', numeric:true, required:true },
+    { key:'purchase_price', label:'采购单价', numeric:true },
+    { key:'currency', label:'币种' },
+    { key:'transaction_date', label:'交易日期', date:true, required:true },
+    { key:'end_customer_name', label:'终端客户' },
+    { key:'city', label:'城市' },
+    { key:'zip_code', label:'邮编' },
+    { key:'nip', label:'NIP' },
+    { key:'netto_amount', label:'净额', numeric:true }
+  ];
+  let stBatchRows = [];
+
+  function stBatchTemplateHandler(){
+    if (typeof XLSX === 'undefined') return;
+    const headers = AGENT_ST_BATCH_FIELDS.map(function(f){ return f.label; });
+    const ws = XLSX.utils.aoa_to_sheet([headers]);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, '代理商动销导入');
+    XLSX.writeFile(wb, '代理商动销批量导入模板.xlsx');
+  }
+
+  function stKnownAgentSet(){
+    return new Set(stData.map(function(i){ return (i.agent||'').trim(); }).filter(Boolean));
+  }
+
+  async function parseStBatchRows(rawRows){
+    const knownAgents = stKnownAgentSet();
+    const dupSoSet = new Set();
+    try{
+      const resp = await sb.from('agent_sellthrough').select('so_number');
+      if (!resp.error && resp.data){
+        resp.data.forEach(function(r){ if (r.so_number) dupSoSet.add(String(r.so_number).trim().toLowerCase()); });
+      }
+    }catch(e){ console.error('查询已有动销记录失败', e); }
+
+    const seenInBatch = new Set();
+    stBatchRows = rawRows.map(function(raw, idx){
+      const row = { rowNo: idx + 2, errors: [], data: {} };
+      AGENT_ST_BATCH_FIELDS.forEach(function(f){
+        const val = raw[f.label];
+        if (f.numeric){ row.data[f.key] = parseNumericValue(val); }
+        else if (f.date){ row.data[f.key] = normalizeDateValue(val); }
+        else { row.data[f.key] = (val == null) ? '' : String(val).trim(); }
+      });
+      if (!row.data.currency) row.data.currency = 'PLN';
+
+      AGENT_ST_BATCH_FIELDS.forEach(function(f){
+        if (f.required){
+          const v = row.data[f.key];
+          let missing = (v === null || v === undefined || v === '');
+          if (f.numeric && v === 0) missing = false;
+          if (missing) row.errors.push('缺少必填项：' + f.label);
+        }
+      });
+      if (row.data.agent && !knownAgents.has(row.data.agent)){ row.warnNewAgent = true; }
+      const soKey = (row.data.so_number||'').trim().toLowerCase();
+      row.isDuplicate = false;
+      if (row.errors.length === 0 && soKey){
+        if (dupSoSet.has(soKey) || seenInBatch.has(soKey)){ row.isDuplicate = true; }
+        seenInBatch.add(soKey);
+      }
+      return row;
+    });
+    renderStBatchPreview();
+  }
+
+  function renderStBatchPreview(){
+    const wrap = document.getElementById('stBatchPreviewWrap');
+    const tbody = document.getElementById('stBatchPreviewBody');
+    if (!wrap || !tbody) return;
+    if (!stBatchRows.length){
+      wrap.classList.add('hidden');
+      tbody.innerHTML = '';
+      const submitBtn0 = document.getElementById('stBatchSubmitBtn');
+      if (submitBtn0) submitBtn0.disabled = true;
+      return;
+    }
+    wrap.classList.remove('hidden');
+    tbody.innerHTML = stBatchRows.map(function(row){
+      let status = '<span class="inv-batch-badge inv-batch-badge-ok">校验通过</span>';
+      if (row.errors.length){
+        status = '<span class="inv-batch-badge inv-batch-badge-err">校验未通过</span><div class="inv-batch-row-err">' + row.errors.join('；') + '</div>';
+      } else if (row.isDuplicate){
+        status = '<span class="inv-batch-badge inv-batch-badge-dup">已存在</span>';
+      } else if (row.warnNewAgent){
+        status = '<span class="inv-batch-badge inv-batch-badge-ok">校验通过</span><div class="inv-batch-row-err" style="color:var(--copper);">新代理商，请核对拼写</div>';
+      }
+      return '<tr>' +
+        '<td>' + row.rowNo + '</td>' +
+        '<td>' + (row.data.agent||'—') + '</td>' +
+        '<td>' + (row.data.so_number||'—') + '</td>' +
+        '<td>' + (row.data.sku||'—') + '</td>' +
+        '<td>' + (row.data.units_sold!=null?row.data.units_sold:'—') + '</td>' +
+        '<td>' + (row.data.transaction_date||'—') + '</td>' +
+        '<td>' + status + '</td>' +
+      '</tr>';
+    }).join('');
+    const total = stBatchRows.length;
+    const validCount = stBatchRows.filter(function(r){ return r.errors.length===0 && !r.isDuplicate; }).length;
+    const dupCount = stBatchRows.filter(function(r){ return r.errors.length===0 && r.isDuplicate; }).length;
+    const invalidCount = stBatchRows.filter(function(r){ return r.errors.length>0; }).length;
+    const totalEl = document.getElementById('stBatchTotal'); if (totalEl) totalEl.textContent = total;
+    const validEl = document.getElementById('stBatchValidCount'); if (validEl) validEl.textContent = validCount;
+    const dupEl = document.getElementById('stBatchDupCount'); if (dupEl) dupEl.textContent = dupCount;
+    const invalidEl = document.getElementById('stBatchInvalidCount'); if (invalidEl) invalidEl.textContent = invalidCount;
+    const submitBtn = document.getElementById('stBatchSubmitBtn');
+    if (submitBtn) submitBtn.disabled = validCount === 0;
+  }
+
+  function handleStBatchFile(file){
+    const nameEl = document.getElementById('stBatchFileName');
+    if (nameEl) nameEl.textContent = file.name;
+    const reader = new FileReader();
+    reader.onload = async function(e){
+      try{
+        const data = new Uint8Array(e.target.result);
+        const wb = XLSX.read(data, { type: 'array', cellDates: true });
+        const wsName = wb.SheetNames[0];
+        const ws = wb.Sheets[wsName];
+        const rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
+        await parseStBatchRows(rows);
+      }catch(err){
+        console.error('批量导入解析失败', err);
+        const msgEl = document.getElementById('stBatchMsg');
+        if (msgEl){ msgEl.textContent = '文件解析失败：' + err.message; msgEl.className = 'inv-batch-msg inv-batch-msg-error'; }
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  }
+
+  function openStBatchModal(){
+    stBatchRows = [];
+    renderStBatchPreview();
+    const fileInput = document.getElementById('stBatchFileInput');
+    if (fileInput) fileInput.value = '';
+    const nameEl = document.getElementById('stBatchFileName');
+    if (nameEl) nameEl.textContent = '';
+    const msgEl = document.getElementById('stBatchMsg');
+    if (msgEl){ msgEl.textContent=''; msgEl.className='inv-batch-msg'; }
+    const overlay = document.getElementById('stBatchOverlay');
+    if (overlay) overlay.classList.add('open');
+  }
+  function closeStBatchModal(){
+    const overlay = document.getElementById('stBatchOverlay');
+    if (overlay) overlay.classList.remove('open');
+  }
+
+  (function initStBatchUI(){
+    const importBtn = document.getElementById('stBtnImport');
+    if (importBtn) importBtn.addEventListener('click', openStBatchModal);
+    const templateBtn = document.getElementById('stBatchTemplateBtn');
+    if (templateBtn) templateBtn.addEventListener('click', stBatchTemplateHandler);
+    const fileInput = document.getElementById('stBatchFileInput');
+    if (fileInput) fileInput.addEventListener('change', function(e){
+      const file = e.target.files && e.target.files[0];
+      if (file) handleStBatchFile(file);
+    });
+    const dropzone = document.getElementById('stBatchDropzone');
+    if (dropzone){
+      dropzone.addEventListener('dragover', function(e){ e.preventDefault(); dropzone.classList.add('inv-batch-dropzone-drag'); });
+      dropzone.addEventListener('dragleave', function(){ dropzone.classList.remove('inv-batch-dropzone-drag'); });
+      dropzone.addEventListener('drop', function(e){
+        e.preventDefault();
+        dropzone.classList.remove('inv-batch-dropzone-drag');
+        const file = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+        if (file) handleStBatchFile(file);
+      });
+    }
+    const overlay = document.getElementById('stBatchOverlay');
+    if (overlay) overlay.addEventListener('click', function(e){ if (e.target === overlay) closeStBatchModal(); });
+    const closeBtn = document.getElementById('stBatchModalClose');
+    if (closeBtn) closeBtn.onclick = closeStBatchModal;
+    const cancelBtn = document.getElementById('stBatchCancelBtn');
+    if (cancelBtn) cancelBtn.onclick = closeStBatchModal;
+    const submitBtn = document.getElementById('stBatchSubmitBtn');
+    if (submitBtn) submitBtn.addEventListener('click', async function(){
+      const validRows = stBatchRows.filter(function(r){ return r.errors.length===0 && !r.isDuplicate; });
+      if (!validRows.length) return;
+      submitBtn.disabled = true;
+      const msgEl = document.getElementById('stBatchMsg');
+      try{
+        const payload = validRows.map(function(r){ return r.data; });
+        const res = await sb.from('agent_sellthrough').insert(payload);
+        if (res.error){
+          if (msgEl){ msgEl.textContent = '批量提交失败：' + res.error.message; msgEl.className = 'inv-batch-msg inv-batch-msg-error'; }
+          submitBtn.disabled = false;
+          return;
+        }
+        if (msgEl){ msgEl.textContent = '批量导入成功，已新增 ' + validRows.length + ' 条记录'; msgEl.className = 'inv-batch-msg inv-batch-msg-ok'; }
+        stBatchRows = [];
+        renderStBatchPreview();
+        await loadAgentSellthrough();
+        setTimeout(closeStBatchModal, 900);
+      }catch(err){
+        if (msgEl){ msgEl.textContent = '批量提交失败：' + err.message; msgEl.className = 'inv-batch-msg inv-batch-msg-error'; }
+        submitBtn.disabled = false;
+      }
+    });
+  })();
+
+
   function refreshSt(){
     populateStFilters();
+    populateStWeekFilter();
     renderStStats();
     renderStTable();
   }

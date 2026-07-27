@@ -819,6 +819,7 @@
         <div class="navgroup-body">
           <div class="navitem sub" data-view="inventory"><span class="dot"></span>Tenda库存</div>
           <div class="navitem sub" data-view="inventory-agent"><span class="dot"></span>代理商库存</div>
+          <div class="navitem sub" data-view="agent-sellthrough"><span class="dot"></span>代理商动销</div>
         </div>
       </div>
 
@@ -1988,6 +1989,62 @@
         <button class="inv-btn inv-btn-ghost" id="agentInvBtnCancel">取消</button>
         <button class="inv-btn inv-btn-primary" id="agentInvBtnSave">保存</button>
       </div>
+    </div>
+  </div>
+</section>
+
+<section class="view" id="view-agent-sellthrough">
+  <div class="viewhead">
+    <div><h2>库存管理 · 代理商动销</h2><p>代理商向终端客户的销售流水（来自代理商定期提供的销售报表）</p></div>
+  </div>
+
+  <div class="inv-stat-grid" style="grid-template-columns:repeat(3,1fr);">
+    <div class="inv-stat-card">
+      <div class="inv-stat-label">销售笔数</div>
+      <div class="inv-stat-value" id="stStatTotal">0</div>
+    </div>
+    <div class="inv-stat-card">
+      <div class="inv-stat-label">累计销量</div>
+      <div class="inv-stat-value" id="stStatUnits">0</div>
+    </div>
+    <div class="inv-stat-card">
+      <div class="inv-stat-label">累计净额</div>
+      <div class="inv-stat-value" id="stStatNetto">0</div>
+    </div>
+  </div>
+
+  <div class="inv-toolbar">
+    <div class="inv-filters">
+      <select class="inv-field" id="stFilterAgent"><option value="">全部代理商</option></select>
+      <div class="inv-search">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="stSearchInput" placeholder="搜索 SKU / 型号 / 终端客户">
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button class="inv-btn inv-btn-ghost" id="stBtnExport">导出 Excel</button>
+    </div>
+  </div>
+
+  <div class="inv-table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>代理商</th>
+          <th>销售单号</th>
+          <th>SKU 编码</th>
+          <th>产品型号</th>
+          <th>销量</th>
+          <th>净额</th>
+          <th>交易日期</th>
+          <th>终端客户</th>
+          <th>城市</th>
+        </tr>
+      </thead>
+      <tbody id="stTableBody"></tbody>
+    </table>
+    <div class="inv-pagination">
+      <span id="stPageInfo">共 0 条记录</span>
     </div>
   </div>
 </section>
@@ -5283,7 +5340,7 @@ function applyRoleRestrictions(session){
 
   const LIMITED_ACCESS_EMAILS = ['huangxiang@tenda.cn', 'yushisen@tenda.cn'];
   if (LIMITED_ACCESS_EMAILS.includes(userEmail)){
-    const allowedViews = ['returns-admin', 'inventory', 'inventory-agent'];
+    const allowedViews = ['returns-admin', 'inventory', 'inventory-agent', 'agent-sellthrough'];
     document.querySelectorAll('.navitem[data-view]').forEach(function(item){
       if (!allowedViews.includes(item.dataset.view)) item.style.display = 'none';
     });
@@ -5934,7 +5991,8 @@ async function loadAllRemoteData(){
     loadProductDescriptions(),
     loadGtmProducts(),
     loadReturnsAdmin(),
-    (typeof loadAgentInventory === 'function' ? loadAgentInventory() : Promise.resolve())
+    (typeof loadAgentInventory === 'function' ? loadAgentInventory() : Promise.resolve()),
+    (typeof loadAgentSellthrough === 'function' ? loadAgentSellthrough() : Promise.resolve())
   ]);
 }
 
@@ -9224,6 +9282,108 @@ applyLanguage(currentLang);
   };
 
   refreshAgentInventory();
+})();
+(function(){
+  let stData = [];
+  let stFilterAgent = '';
+  let stSearchTerm = '';
+
+  function populateStFilters(){
+    const agentSel = document.getElementById('stFilterAgent');
+    if (!agentSel) return;
+    const usedAgents = Array.from(new Set(stData.map(function(i){ return i.agent; }).filter(Boolean)));
+    agentSel.innerHTML = '<option value="">全部代理商</option>' + usedAgents.map(function(a){ return '<option value="'+a+'">'+a+'</option>'; }).join('');
+    agentSel.value = stFilterAgent;
+  }
+
+  function filteredStData(){
+    return stData.filter(function(i){
+      if (stFilterAgent && i.agent !== stFilterAgent) return false;
+      if (stSearchTerm){
+        const term = stSearchTerm.toLowerCase();
+        const hay = ((i.sku||'') + ' ' + (i.model||'') + ' ' + (i.end_customer_name||'')).toLowerCase();
+        if (hay.indexOf(term) === -1) return false;
+      }
+      return true;
+    });
+  }
+
+  function renderStStats(){
+    const totalEl = document.getElementById('stStatTotal');
+    if (!totalEl) return;
+    totalEl.textContent = stData.length;
+    document.getElementById('stStatUnits').textContent = stData.reduce(function(s,i){ return s + (Number(i.units_sold)||0); }, 0);
+    document.getElementById('stStatNetto').textContent = stData.reduce(function(s,i){ return s + (Number(i.netto_amount)||0); }, 0).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2}) + ' PLN';
+  }
+
+  function renderStTable(){
+    const tbody = document.getElementById('stTableBody');
+    if (!tbody) return;
+    const list = filteredStData();
+    document.getElementById('stPageInfo').textContent = '共 ' + list.length + ' 条记录';
+    if (!list.length){
+      tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--text-faint);padding:24px;">暂无动销数据</td></tr>';
+      return;
+    }
+    tbody.innerHTML = list.map(function(i){
+      return '<tr>' +
+        '<td class="inv-prod-name">' + (i.agent||'—') + '</td>' +
+        '<td class="inv-sku">' + (i.so_number||'—') + '</td>' +
+        '<td class="inv-sku">' + (i.sku||'—') + '</td>' +
+        '<td>' + (i.model||'—') + '</td>' +
+        '<td class="inv-qty">' + (i.units_sold||0) + '<span class="inv-unit">台</span></td>' +
+        '<td>' + (i.netto_amount!=null ? Number(i.netto_amount).toFixed(2)+' '+(i.currency||'PLN') : '—') + '</td>' +
+        '<td>' + (i.transaction_date||'—') + '</td>' +
+        '<td>' + (i.end_customer_name||'—') + '</td>' +
+        '<td>' + (i.city||'—') + '</td>' +
+      '</tr>';
+    }).join('');
+  }
+
+  function refreshSt(){
+    populateStFilters();
+    renderStStats();
+    renderStTable();
+  }
+
+  async function loadAgentSellthrough(){
+    try{
+      const { data, error } = await sb.from('agent_sellthrough').select('*').order('transaction_date', {ascending:false}).order('id', {ascending:false});
+      if (error){ console.error('loadAgentSellthrough', error); return; }
+      stData = data || [];
+      refreshSt();
+    }catch(e){ console.error('loadAgentSellthrough failed', e); }
+  }
+  window.loadAgentSellthrough = loadAgentSellthrough;
+
+  const filterEl = document.getElementById('stFilterAgent');
+  if (filterEl) filterEl.addEventListener('change', function(e){ stFilterAgent = e.target.value; renderStTable(); });
+  const searchEl = document.getElementById('stSearchInput');
+  if (searchEl) searchEl.addEventListener('input', function(e){ stSearchTerm = e.target.value; renderStTable(); });
+
+  const exportBtn = document.getElementById('stBtnExport');
+  if (exportBtn) exportBtn.onclick = function(){
+    if (!stData.length){ alert('暂无数据可导出'); return; }
+    const header = ['代理商','销售单号','SKU编码','产品型号','销量','净额','币种','交易日期','终端客户','城市','邮编','NIP'];
+    const rows = stData.map(function(i){
+      return [i.agent, i.so_number, i.sku, i.model, i.units_sold, i.netto_amount, i.currency, i.transaction_date, i.end_customer_name, i.city, i.zip_code, i.nip].map(function(v){
+        const s = String(v==null?'':v);
+        return '"' + s.replace(/"/g,'""') + '"';
+      }).join(',');
+    });
+    const csv = '\ufeff' + [header.join(',')].concat(rows).join('\n');
+    const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = '代理商动销_' + new Date().toISOString().slice(0,10) + '.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  refreshSt();
 })();
 </script>
 <script>

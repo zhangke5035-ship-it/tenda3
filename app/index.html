@@ -1882,7 +1882,7 @@
   </div>
 
   <div class="inv-note">
-    此表用于记录代理商/分销商自行反馈的库存数据。当前尚无数据文件导入，可通过"＋ 新增库存"手动录入，或后续提供代理商库存表后由我批量导入。
+    此表用于记录代理商/分销商自行反馈的库存数据。支持手动录入，也支持代理商定期提供库存表后批量导入。
   </div>
 
   <div class="inv-stat-grid" style="grid-template-columns:repeat(3,1fr);">
@@ -1926,6 +1926,7 @@
           <th>产品型号</th>
           <th>产品信息</th>
           <th>当前库存</th>
+          <th>采购单价</th>
           <th>更新日期</th>
           <th>备注</th>
           <th>操作</th>
@@ -1965,6 +1966,14 @@
         <div class="inv-form-group">
           <label class="inv-form-label">当前库存</label>
           <input class="inv-field" type="number" id="agentInvFQty" placeholder="0">
+        </div>
+        <div class="inv-form-group">
+          <label class="inv-form-label">采购单价</label>
+          <input class="inv-field" type="number" step="0.01" id="agentInvFPrice" placeholder="选填">
+        </div>
+        <div class="inv-form-group">
+          <label class="inv-form-label">币种</label>
+          <input class="inv-field" id="agentInvFCurrency" placeholder="如 PLN" value="PLN">
         </div>
         <div class="inv-form-group">
           <label class="inv-form-label">更新日期</label>
@@ -5924,7 +5933,8 @@ async function loadAllRemoteData(){
     loadSimRows(),
     loadProductDescriptions(),
     loadGtmProducts(),
-    loadReturnsAdmin()
+    loadReturnsAdmin(),
+    (typeof loadAgentInventory === 'function' ? loadAgentInventory() : Promise.resolve())
   ]);
 }
 
@@ -9039,6 +9049,7 @@ applyLanguage(currentLang);
   let agentInvFilterAgent = '';
   let agentInvSearchTerm = '';
   let agentInvEditIdx = null;
+  let agentInvEditId = null;
 
   function populateAgentInvFilters(){
     const agentSel = document.getElementById('agentInvFilterAgent');
@@ -9074,7 +9085,7 @@ applyLanguage(currentLang);
     const list = filteredAgentInvData();
     document.getElementById('agentInvPageInfo').textContent = '共 ' + list.length + ' 条记录';
     if (!list.length){
-      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text-faint);padding:24px;">暂无代理商库存记录，点击"＋ 新增库存"手动录入</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--text-faint);padding:24px;">暂无代理商库存记录，点击"＋ 新增库存"手动录入</td></tr>';
       return;
     }
     tbody.innerHTML = list.map(function(i, idx){
@@ -9084,6 +9095,7 @@ applyLanguage(currentLang);
         '<td>' + (i.model||'—') + '</td>' +
         '<td>' + (i.name||'—') + '</td>' +
         '<td class="inv-qty">' + (i.qty||0) + '<span class="inv-unit">台</span></td>' +
+        '<td>' + (i.purchase_price!=null && i.purchase_price!=='' ? Number(i.purchase_price).toFixed(2)+' '+(i.currency||'PLN') : '—') + '</td>' +
         '<td>' + (i.date||'—') + '</td>' +
         '<td>' + (i.note||'—') + '</td>' +
         '<td><div class="inv-row-actions"><a data-action="edit" data-idx="' + idx + '">编辑</a><a data-action="del" data-idx="' + idx + '">删除</a></div></td>' +
@@ -9097,15 +9109,28 @@ applyLanguage(currentLang);
     renderAgentInvTable();
   }
 
+  async function loadAgentInventory(){
+    try{
+      const { data, error } = await sb.from('agent_inventory').select('*').order('agent', {ascending:true}).order('id', {ascending:true});
+      if (error){ console.error('loadAgentInventory', error); return; }
+      agentInvData = (data || []).map(function(r){ return Object.assign({}, r, { date: r.inventory_date }); });
+      refreshAgentInventory();
+    }catch(e){ console.error('loadAgentInventory failed', e); }
+  }
+  window.loadAgentInventory = loadAgentInventory;
+
   const agentInvOverlay = document.getElementById('agentInvModalOverlay');
   function openAgentInvModal(mode, item, idx){
     agentInvEditIdx = (mode === 'edit') ? idx : null;
+    agentInvEditId = (mode === 'edit' && item) ? item.id : null;
     document.getElementById('agentInvModalTitle').textContent = mode === 'edit' ? '编辑库存' : '新增库存';
     document.getElementById('agentInvFAgent').value = item ? item.agent : '';
     document.getElementById('agentInvFSku').value = item ? (item.sku||'') : '';
     document.getElementById('agentInvFModel').value = item ? (item.model||'') : '';
     document.getElementById('agentInvFName').value = item ? (item.name||'') : '';
     document.getElementById('agentInvFQty').value = item ? item.qty : '';
+    document.getElementById('agentInvFPrice').value = item ? (item.purchase_price!=null?item.purchase_price:'') : '';
+    document.getElementById('agentInvFCurrency').value = item ? (item.currency||'PLN') : 'PLN';
     document.getElementById('agentInvFDate').value = item ? (item.date||'') : new Date().toISOString().slice(0,10);
     document.getElementById('agentInvFNote').value = item ? (item.note||'') : '';
     agentInvOverlay.classList.add('open');
@@ -9117,21 +9142,39 @@ applyLanguage(currentLang);
   document.getElementById('agentInvBtnCancel').onclick = closeAgentInvModal;
   agentInvOverlay.addEventListener('click', function(e){ if (e.target === agentInvOverlay) closeAgentInvModal(); });
 
-  document.getElementById('agentInvBtnSave').onclick = function(){
+  document.getElementById('agentInvBtnSave').onclick = async function(){
     const agent = document.getElementById('agentInvFAgent').value.trim();
     if (!agent){ alert('请填写代理商名称'); return; }
+    const priceRaw = document.getElementById('agentInvFPrice').value;
     const payload = {
       agent: agent,
       sku: document.getElementById('agentInvFSku').value.trim(),
       model: document.getElementById('agentInvFModel').value.trim(),
       name: document.getElementById('agentInvFName').value.trim(),
       qty: Number(document.getElementById('agentInvFQty').value) || 0,
-      date: document.getElementById('agentInvFDate').value || new Date().toISOString().slice(0,10),
+      purchase_price: priceRaw ? Number(priceRaw) : null,
+      currency: document.getElementById('agentInvFCurrency').value.trim() || 'PLN',
+      inventory_date: document.getElementById('agentInvFDate').value || new Date().toISOString().slice(0,10),
       note: document.getElementById('agentInvFNote').value.trim()
     };
-    if (agentInvEditIdx !== null){ agentInvData[agentInvEditIdx] = payload; } else { agentInvData.push(payload); }
-    closeAgentInvModal();
-    refreshAgentInventory();
+    const btn = this;
+    btn.disabled = true;
+    try{
+      if (agentInvEditId != null){
+        const { error } = await sb.from('agent_inventory').update(payload).eq('id', agentInvEditId);
+        if (error) throw error;
+      } else {
+        const { error } = await sb.from('agent_inventory').insert(payload);
+        if (error) throw error;
+      }
+      closeAgentInvModal();
+      await loadAgentInventory();
+    }catch(e){
+      console.error('save agent_inventory failed', e);
+      alert('保存失败：' + e.message);
+    } finally {
+      btn.disabled = false;
+    }
   };
 
   document.getElementById('agentInvTableBody').addEventListener('click', function(e){
@@ -9145,8 +9188,16 @@ applyLanguage(currentLang);
       openAgentInvModal('edit', item, realIdx);
     } else if (target.dataset.action === 'del'){
       if (confirm('确定删除这条库存记录吗？')){
-        agentInvData.splice(realIdx, 1);
-        refreshAgentInventory();
+        (async function(){
+          try{
+            const { error } = await sb.from('agent_inventory').delete().eq('id', item.id);
+            if (error) throw error;
+            await loadAgentInventory();
+          }catch(e){
+            console.error('delete agent_inventory failed', e);
+            alert('删除失败：' + e.message);
+          }
+        })();
       }
     }
   });
@@ -9156,9 +9207,9 @@ applyLanguage(currentLang);
 
   document.getElementById('agentInvBtnExport').onclick = function(){
     if (!agentInvData.length){ alert('暂无数据可导出'); return; }
-    const header = ['代理商','SKU编码','产品型号','产品信息','当前库存','更新日期','备注'];
+    const header = ['代理商','SKU编码','产品型号','产品信息','当前库存','采购单价','币种','更新日期','备注'];
     const rows = agentInvData.map(function(i){
-      return [i.agent, i.sku, i.model, i.name, i.qty, i.date, i.note].map(function(v){
+      return [i.agent, i.sku, i.model, i.name, i.qty, i.purchase_price, i.currency, i.date, i.note].map(function(v){
         const s = String(v==null?'':v);
         return '"' + s.replace(/"/g,'""') + '"';
       }).join(',');

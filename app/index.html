@@ -1510,6 +1510,7 @@
       </div>
       <div class="form-grid">
         <div class="field"><label>产品型号</label><input id="oi_product" list="modelDatalist" placeholder="例如 W15-Pro"></div>
+        <div class="field mono"><label>EAN</label><input id="oi_ean" placeholder="例如 6932849435344"></div>
         <div class="field mono"><label>数量</label><input id="oi_qty" type="number" placeholder="100"></div>
         <div class="field mono"><label>单价 (PLN)</label><input id="oi_price" type="number" placeholder="199"></div>
       </div>
@@ -1519,7 +1520,7 @@
     <div class="panel">
       <div class="panel-head"><h3>型号明细</h3><div class="desc" id="orderItemCount"></div></div>
       <table>
-        <thead><tr><th>产品型号</th><th>数量</th><th>单价(PLN)</th><th>金额(PLN)</th><th></th></tr></thead>
+        <thead><tr><th>产品型号</th><th>EAN</th><th>数量</th><th>单价(PLN)</th><th>金额(PLN)</th><th></th></tr></thead>
         <tbody id="orderItemTableBody"></tbody>
       </table>
     </div>
@@ -5862,7 +5863,7 @@ async function loadOrdersData(){
     if (ordersRes.error){ console.error('loadOrders', ordersRes.error); }
     if (itemsRes.error){ console.error('loadOrderItems', itemsRes.error); }
     orders = (ordersRes.data||[]).map(r=>({ id: r.id, no: r.order_no, cust: r.cust, date: r.order_date||'', status: r.status }));
-    orderItems = (itemsRes.data||[]).map(r=>({ id: r.id, orderId: r.order_id, product: r.product, qty: Number(r.qty)||0, price: Number(r.price)||0 }));
+    orderItems = (itemsRes.data||[]).map(r=>({ id: r.id, orderId: r.order_id, product: r.product, ean: r.ean||'', qty: Number(r.qty)||0, price: Number(r.price)||0 }));
     if (typeof renderOrders === 'function') renderOrders();
     if (typeof renderSalesOverview === 'function') renderSalesOverview();
   }catch(e){ console.error(e); }
@@ -7079,6 +7080,7 @@ function renderOrderItemTable(){
     const amount = (i.qty*i.price).toFixed(1);
     return `<tr>
       <td class="mono">${i.product}</td>
+      <td class="mono">${i.ean||''}</td>
       <td class="num-cell">${i.qty}</td>
       <td class="num-cell">${i.price}</td>
       <td class="num-cell">${amount}</td>
@@ -7118,15 +7120,17 @@ if (addOrderItemBtn){
   addOrderItemBtn.addEventListener('click', async ()=>{
     if (selectedOrderId===null) return;
     const product = document.getElementById('oi_product').value.trim();
+    const ean = document.getElementById('oi_ean').value.trim();
     const qty = parseFloat(document.getElementById('oi_qty').value) || 0;
     const price = parseFloat(document.getElementById('oi_price').value) || 0;
     if (!product || !qty || !price){ alert('请填写产品型号、数量和单价'); return; }
-    const { data, error } = await sb.from('order_items').insert({ order_id: selectedOrderId, product, qty, price }).select().single();
+    const { data, error } = await sb.from('order_items').insert({ order_id: selectedOrderId, product, ean: ean || null, qty, price }).select().single();
     if (error){ alert('保存型号明细失败：' + error.message); return; }
-    orderItems.push({id: data.id, orderId: data.order_id, product: data.product, qty: Number(data.qty)||0, price: Number(data.price)||0});
+    orderItems.push({id: data.id, orderId: data.order_id, product: data.product, ean: data.ean||'', qty: Number(data.qty)||0, price: Number(data.price)||0});
     renderOrderItemTable();
     renderOrders();
     document.getElementById('oi_product').value = '';
+    document.getElementById('oi_ean').value = '';
     document.getElementById('oi_qty').value = '';
     document.getElementById('oi_price').value = '';
   });

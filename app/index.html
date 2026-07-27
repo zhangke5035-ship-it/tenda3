@@ -518,6 +518,11 @@
   #view-returns-admin .ra-kpi-card-good .ra-kpi-icon{background:#fff;color:var(--good);}
   #view-returns-admin .ra-kpi-card-good .inv-stat-value{color:var(--good);}
   #view-returns-admin .ra-ellipsis{max-width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap!important;cursor:help;}
+  #view-inventory-dashboard th.inv-sortable{cursor:pointer;user-select:none;white-space:nowrap;}
+  #view-inventory-dashboard th.inv-sortable:hover{color:var(--copper);}
+  #view-inventory-dashboard .inv-sort-ind{display:inline-block;margin-left:4px;font-size:10px;opacity:.35;}
+  #view-inventory-dashboard th.inv-sort-asc,#view-inventory-dashboard th.inv-sort-desc{color:var(--copper);}
+  #view-inventory-dashboard th.inv-sort-asc .inv-sort-ind,#view-inventory-dashboard th.inv-sort-desc .inv-sort-ind{opacity:1;}
   #view-inventory-dashboard .wos-ellipsis{max-width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap!important;cursor:help;display:inline-block;vertical-align:bottom;}
   #view-inventory-dashboard .wos-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 11px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap;}
   #view-inventory-dashboard .wos-badge::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor;}
@@ -2243,9 +2248,9 @@
           <th>SKU 编码</th>
           <th>产品型号</th>
           <th>代理商</th>
-          <th>当前库存</th>
-          <th>周期内销量</th>
-          <th>可销周数(WOS)</th>
+          <th class="inv-sortable" data-sort-key="stockQty">当前库存<span class="inv-sort-ind"></span></th>
+          <th class="inv-sortable" data-sort-key="salesQty">周期内销量<span class="inv-sort-ind"></span></th>
+          <th class="inv-sortable" data-sort-key="wos">可销周数(WOS)<span class="inv-sort-ind"></span></th>
           <th>状态</th>
         </tr>
       </thead>
@@ -10223,6 +10228,23 @@ function stWeekKey(i){ const info = isoWeekInfo(i.transaction_date); return info
   let invDashDateFrom = '';
   let invDashDateTo = '';
   let invDashRows = [];
+  let invDashSortKey = null;
+  let invDashSortDir = 'asc';
+
+  function sortDashRows(rows){
+    if (!invDashSortKey) return rows;
+    const key = invDashSortKey;
+    const dir = invDashSortDir === 'asc' ? 1 : -1;
+    return rows.slice().sort(function(a, b){
+      const av = a[key], bv = b[key];
+      const aNull = (av === null || av === undefined);
+      const bNull = (bv === null || bv === undefined);
+      if (aNull && bNull) return 0;
+      if (aNull) return 1;
+      if (bNull) return -1;
+      return (av - bv) * dir;
+    });
+  }
 
   function classifyWos(wos, sales){
     if (!sales || sales <= 0) return 'none';
@@ -10357,7 +10379,7 @@ function stWeekKey(i){ const info = isoWeekInfo(i.transaction_date); return info
   function renderInvDashTable(){
     const tbody = document.getElementById('invDashTableBody');
     if (!tbody) return;
-    const rows = filteredDashRows();
+    const rows = sortDashRows(filteredDashRows());
     if (!rows.length){
       tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-faint);padding:24px;">暂无数据</td></tr>';
     } else {
@@ -10436,6 +10458,34 @@ function stWeekKey(i){ const info = isoWeekInfo(i.transaction_date); return info
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
   };
+
+  function updateInvDashSortIndicators(){
+    const ths = document.querySelectorAll('#view-inventory-dashboard th.inv-sortable');
+    ths.forEach(function(th){
+      th.classList.remove('inv-sort-asc', 'inv-sort-desc');
+      const ind = th.querySelector('.inv-sort-ind');
+      if (ind) ind.textContent = '';
+      if (th.getAttribute('data-sort-key') === invDashSortKey){
+        th.classList.add(invDashSortDir === 'asc' ? 'inv-sort-asc' : 'inv-sort-desc');
+        if (ind) ind.textContent = invDashSortDir === 'asc' ? '▲' : '▼';
+      }
+    });
+  }
+
+  const invDashSortableThs = document.querySelectorAll('#view-inventory-dashboard th.inv-sortable');
+  invDashSortableThs.forEach(function(th){
+    th.addEventListener('click', function(){
+      const key = th.getAttribute('data-sort-key');
+      if (invDashSortKey === key){
+        invDashSortDir = (invDashSortDir === 'asc') ? 'desc' : 'asc';
+      } else {
+        invDashSortKey = key;
+        invDashSortDir = 'asc';
+      }
+      updateInvDashSortIndicators();
+      renderInvDashTable();
+    });
+  });
 })();
 </script>
 <script>

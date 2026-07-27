@@ -490,6 +490,15 @@
   #view-returns-admin .ra-kpi-card-good .ra-kpi-icon{background:#fff;color:var(--good);}
   #view-returns-admin .ra-kpi-card-good .inv-stat-value{color:var(--good);}
   #view-returns-admin .ra-ellipsis{max-width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap!important;cursor:help;}
+  #view-inventory-dashboard .wos-ellipsis{max-width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap!important;cursor:help;display:inline-block;vertical-align:bottom;}
+  #view-inventory-dashboard .wos-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 11px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap;}
+  #view-inventory-dashboard .wos-badge::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor;}
+  #view-inventory-dashboard .wos-badge-danger{background:var(--alert-soft);color:var(--alert);}
+  #view-inventory-dashboard .wos-badge-warn{background:var(--amber-soft);color:var(--amber);}
+  #view-inventory-dashboard .wos-badge-none{background:var(--surface-alt);color:var(--text-dim);}
+  #view-inventory-dashboard .wos-badge-ok{background:var(--good-soft);color:var(--good);}
+  #view-inventory-dashboard .wos-num-danger{color:var(--alert);font-weight:700;}
+  #view-inventory-dashboard .wos-num-warn{color:var(--amber);font-weight:700;}
   .inv-filters{display:flex;gap:8px;flex-wrap:wrap;}
   .inv-field{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:8px 12px;color:var(--text);font-size:13px;min-width:120px;}
   .inv-field:focus{outline:none;border-color:var(--copper);}
@@ -820,6 +829,7 @@
           <div class="navitem sub" data-view="inventory"><span class="dot"></span>Tenda库存</div>
           <div class="navitem sub" data-view="inventory-agent"><span class="dot"></span>代理商库存</div>
           <div class="navitem sub" data-view="agent-sellthrough"><span class="dot"></span>代理商动销</div>
+          <div class="navitem sub" data-view="inventory-dashboard"><span class="dot"></span>库存看板</div>
         </div>
       </div>
 
@@ -2045,6 +2055,82 @@
     </table>
     <div class="inv-pagination">
       <span id="stPageInfo">共 0 条记录</span>
+    </div>
+  </div>
+</section>
+
+<section class="view" id="view-inventory-dashboard">
+  <div class="viewhead">
+    <div><h2>库存管理 · 库存看板</h2><p>自动合并"代理商库存"与"代理商动销"数据，按 SKU 计算滚动可销周数(WOS)，辅助断货/滞销预警</p></div>
+  </div>
+
+  <div class="inv-note">
+    可销周数(WOS) = 当前库存 ÷ 所选周期内销量。WOS &lt; 2 周标记为断货风险，WOS &gt; 10 周或本周无动销标记为滞销风险；库存取每个 SKU 最近一次上报的快照，动销取所选日期区间内的销量总和。
+  </div>
+
+  <div class="inv-stat-grid" style="grid-template-columns:repeat(4,1fr);">
+    <div class="inv-stat-card">
+      <div class="inv-stat-label">覆盖 SKU 数</div>
+      <div class="inv-stat-value" id="invDashStatTotal">0</div>
+      <div class="inv-stat-delta">当前筛选范围内</div>
+    </div>
+    <div class="inv-stat-card">
+      <div class="inv-stat-label">断货风险</div>
+      <div class="inv-stat-value danger" id="invDashStatDanger">0</div>
+      <div class="inv-stat-delta">WOS &lt; 2 周</div>
+    </div>
+    <div class="inv-stat-card">
+      <div class="inv-stat-label">滞销风险</div>
+      <div class="inv-stat-value warn" id="invDashStatWarn">0</div>
+      <div class="inv-stat-delta">WOS &gt; 10 周 / 无动销</div>
+    </div>
+    <div class="inv-stat-card">
+      <div class="inv-stat-label">健康</div>
+      <div class="inv-stat-value" id="invDashStatOk">0</div>
+      <div class="inv-stat-delta">周转正常</div>
+    </div>
+  </div>
+
+  <div class="inv-toolbar">
+    <div class="inv-filters">
+      <select class="inv-field" id="invDashFilterAgent"><option value="">全部代理商</option></select>
+      <select class="inv-field" id="invDashFilterStatus">
+        <option value="">全部状态</option>
+        <option value="danger">断货风险</option>
+        <option value="warn">滞销风险</option>
+        <option value="none">无动销</option>
+        <option value="ok">健康</option>
+      </select>
+      <input type="date" class="inv-field" id="invDashDateFrom">
+      <span style="color:var(--text-faint);font-size:12px;">至</span>
+      <input type="date" class="inv-field" id="invDashDateTo">
+      <div class="inv-search">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="invDashSearchInput" placeholder="搜索 SKU 或产品型号">
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button class="inv-btn inv-btn-ghost" id="invDashBtnExport">导出 Excel</button>
+    </div>
+  </div>
+
+  <div class="inv-table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>SKU 编码</th>
+          <th>产品型号</th>
+          <th>代理商</th>
+          <th>当前库存</th>
+          <th>周期内销量</th>
+          <th>可销周数(WOS)</th>
+          <th>状态</th>
+        </tr>
+      </thead>
+      <tbody id="invDashTableBody"></tbody>
+    </table>
+    <div class="inv-pagination">
+      <span id="invDashPageInfo">共 0 条记录</span>
     </div>
   </div>
 </section>
@@ -5340,7 +5426,7 @@ function applyRoleRestrictions(session){
 
   const LIMITED_ACCESS_EMAILS = ['huangxiang@tenda.cn', 'yushisen@tenda.cn'];
   if (LIMITED_ACCESS_EMAILS.includes(userEmail)){
-    const allowedViews = ['returns-admin', 'inventory', 'inventory-agent', 'agent-sellthrough'];
+    const allowedViews = ['returns-admin', 'inventory', 'inventory-agent', 'agent-sellthrough', 'inventory-dashboard'];
     document.querySelectorAll('.navitem[data-view]').forEach(function(item){
       if (!allowedViews.includes(item.dataset.view)) item.style.display = 'none';
     });
@@ -5992,7 +6078,8 @@ async function loadAllRemoteData(){
     loadGtmProducts(),
     loadReturnsAdmin(),
     (typeof loadAgentInventory === 'function' ? loadAgentInventory() : Promise.resolve()),
-    (typeof loadAgentSellthrough === 'function' ? loadAgentSellthrough() : Promise.resolve())
+    (typeof loadAgentSellthrough === 'function' ? loadAgentSellthrough() : Promise.resolve()),
+    (typeof loadInventoryDashboard === 'function' ? loadInventoryDashboard() : Promise.resolve())
   ]);
 }
 
@@ -8292,7 +8379,22 @@ const I18N_DICT = [
   ["修改已保存","Changes saved","Zmiany zapisane"],
   ["保存中…","Saving…","Zapisywanie…"],
   ["保存失败：","Save failed: ","Zapis nie powiódł się: "],
-  ["保存修改","Save Changes","Zapisz zmiany"]
+  ["保存修改","Save Changes","Zapisz zmiany"],
+  ['库存看板','Inventory Dashboard','Panel zapasów'],
+  ['库存管理 · 库存看板','Inventory · Dashboard','Zarządzanie zapasami · Panel'],
+  ['自动合并"代理商库存"与"代理商动销"数据，按 SKU 计算滚动可销周数(WOS)，辅助断货/滞销预警','Automatically merges "Agent Inventory" and "Agent Sell-through" data, calculates rolling Weeks of Supply (WOS) by SKU to flag stockout/overstock risk','Automatycznie łączy dane "Zapasy agenta" i "Sprzedaż agenta", oblicza rotację zapasów (WOS) wg SKU, aby sygnalizować ryzyko braku towaru lub nadmiaru zapasów'],
+  ['可销周数(WOS) = 当前库存 ÷ 所选周期内销量。WOS < 2 周标记为断货风险，WOS > 10 周或本周无动销标记为滞销风险；库存取每个 SKU 最近一次上报的快照，动销取所选日期区间内的销量总和。','Weeks of Supply (WOS) = current stock ÷ sales in the selected period. WOS < 2 weeks is flagged as stockout risk; WOS > 10 weeks or zero sales is flagged as overstock risk. Stock uses each SKU\'s most recent reported snapshot; sales are summed over the selected date range.','Tygodnie zapasu (WOS) = bieżący stan magazynowy ÷ sprzedaż w wybranym okresie. WOS < 2 tygodnie oznacza ryzyko braku towaru; WOS > 10 tygodni lub brak sprzedaży oznacza ryzyko nadmiaru zapasów. Stan magazynowy to najnowszy zgłoszony stan dla danego SKU; sprzedaż to suma w wybranym zakresie dat.'],
+  ['覆盖 SKU 数','SKUs Covered','Liczba SKU'],
+  ['当前筛选范围内','Within current filter','W bieżącym filtrze'],
+  ['断货风险','Stockout Risk','Ryzyko braku towaru'],
+  ['WOS < 2 周','WOS < 2 weeks','WOS < 2 tygodnie'],
+  ['滞销风险','Overstock Risk','Ryzyko nadmiaru zapasów'],
+  ['WOS > 10 周 / 无动销','WOS > 10 weeks / no sales','WOS > 10 tygodni / brak sprzedaży'],
+  ['健康','Healthy','Zdrowy'],
+  ['周转正常','Healthy Turnover','Prawidłowa rotacja'],
+  ['周期内销量','Sales in Period','Sprzedaż w okresie'],
+  ['可销周数(WOS)','Weeks of Supply (WOS)','Tygodnie zapasu (WOS)'],
+  ['无动销','No Sales','Brak sprzedaży']
 ];
 I18N_DICT.sort((a,b)=>b[0].length-a[0].length);
 
@@ -9384,6 +9486,231 @@ applyLanguage(currentLang);
   };
 
   refreshSt();
+})();
+</script>
+<script>
+(function(){
+  let invDashInvRows = [];
+  let invDashStRows = [];
+  let invDashFilterAgent = '';
+  let invDashFilterStatus = '';
+  let invDashSearchTerm = '';
+  let invDashDateFrom = '';
+  let invDashDateTo = '';
+  let invDashRows = [];
+
+  function classifyWos(wos, sales){
+    if (!sales || sales <= 0) return 'none';
+    if (wos < 2) return 'danger';
+    if (wos > 10) return 'warn';
+    return 'ok';
+  }
+  const STATUS_LABEL = { danger: '断货风险', warn: '滞销风险', none: '无动销', ok: '健康' };
+  const STATUS_ORDER = { danger: 0, warn: 1, none: 2, ok: 3 };
+
+  function populateInvDashFilters(){
+    const agentSel = document.getElementById('invDashFilterAgent');
+    if (!agentSel) return;
+    const agents = new Set();
+    invDashInvRows.forEach(function(r){ if (r.agent) agents.add(r.agent); });
+    invDashStRows.forEach(function(r){ if (r.agent) agents.add(r.agent); });
+    const usedAgents = Array.from(agents).sort();
+    agentSel.innerHTML = '<option value="">全部代理商</option>' + usedAgents.map(function(a){ return '<option value="'+a+'">'+a+'</option>'; }).join('');
+    agentSel.value = invDashFilterAgent;
+  }
+
+  function initDateRangeDefaults(){
+    if (invDashDateFrom && invDashDateTo) return;
+    let maxDate = null;
+    invDashStRows.forEach(function(r){
+      if (!r.transaction_date) return;
+      if (!maxDate || r.transaction_date > maxDate) maxDate = r.transaction_date;
+    });
+    if (!maxDate) maxDate = new Date().toISOString().slice(0,10);
+    const end = new Date(maxDate + 'T00:00:00');
+    const start = new Date(end.getTime() - 6*24*60*60*1000);
+    invDashDateTo = maxDate;
+    invDashDateFrom = start.toISOString().slice(0,10);
+    const fromEl = document.getElementById('invDashDateFrom');
+    const toEl = document.getElementById('invDashDateTo');
+    if (fromEl) fromEl.value = invDashDateFrom;
+    if (toEl) toEl.value = invDashDateTo;
+  }
+
+  function buildDashboardRows(){
+    const agentFilter = invDashFilterAgent;
+    const invFiltered = agentFilter ? invDashInvRows.filter(function(r){ return r.agent === agentFilter; }) : invDashInvRows;
+    const stFiltered = (agentFilter ? invDashStRows.filter(function(r){ return r.agent === agentFilter; }) : invDashStRows)
+      .filter(function(r){
+        if (!r.transaction_date) return false;
+        if (invDashDateFrom && r.transaction_date < invDashDateFrom) return false;
+        if (invDashDateTo && r.transaction_date > invDashDateTo) return false;
+        return true;
+      });
+
+    const latestByAgentSku = new Map();
+    invFiltered.forEach(function(r){
+      if (!r.sku) return;
+      const key = (r.agent||'') + '|' + r.sku;
+      const prev = latestByAgentSku.get(key);
+      if (!prev || (r.inventory_date||'') > (prev.inventory_date||'')) latestByAgentSku.set(key, r);
+    });
+    const stockBySku = new Map();
+    latestByAgentSku.forEach(function(r){
+      const cur = stockBySku.get(r.sku) || { qty: 0, agents: new Set(), model: '' };
+      cur.qty += Number(r.qty) || 0;
+      if (r.agent) cur.agents.add(r.agent);
+      if (!cur.model && r.model) cur.model = r.model;
+      stockBySku.set(r.sku, cur);
+    });
+
+    const salesBySku = new Map();
+    stFiltered.forEach(function(r){
+      if (!r.sku) return;
+      const cur = salesBySku.get(r.sku) || { qty: 0, agents: new Set(), model: '' };
+      cur.qty += Number(r.units_sold) || 0;
+      if (r.agent) cur.agents.add(r.agent);
+      if (!cur.model && r.model) cur.model = r.model;
+      salesBySku.set(r.sku, cur);
+    });
+
+    const allSkus = new Set([].concat(Array.from(stockBySku.keys()), Array.from(salesBySku.keys())));
+    const rows = [];
+    allSkus.forEach(function(sku){
+      const stock = stockBySku.get(sku);
+      const sales = salesBySku.get(sku);
+      const stockQty = stock ? stock.qty : 0;
+      const salesQty = sales ? sales.qty : 0;
+      const agents = new Set();
+      if (stock) stock.agents.forEach(function(a){ agents.add(a); });
+      if (sales) sales.agents.forEach(function(a){ agents.add(a); });
+      const model = (stock && stock.model) || (sales && sales.model) || '';
+      let wos = null;
+      if (salesQty > 0) wos = Math.round((stockQty / salesQty) * 10) / 10;
+      const status = classifyWos(wos, salesQty);
+      rows.push({
+        sku: sku, model: model, agents: Array.from(agents).join(', '),
+        stockQty: stockQty, salesQty: salesQty, wos: wos, status: status
+      });
+    });
+    rows.sort(function(a,b){
+      const d = STATUS_ORDER[a.status] - STATUS_ORDER[b.status];
+      if (d !== 0) return d;
+      return a.sku.localeCompare(b.sku);
+    });
+    invDashRows = rows;
+  }
+
+  function filteredDashRows(){
+    return invDashRows.filter(function(r){
+      if (invDashFilterStatus && r.status !== invDashFilterStatus) return false;
+      if (invDashSearchTerm){
+        const term = invDashSearchTerm.toLowerCase();
+        const hay = (r.sku + ' ' + r.model).toLowerCase();
+        if (hay.indexOf(term) === -1) return false;
+      }
+      return true;
+    });
+  }
+
+  function renderInvDashStats(){
+    const total = invDashRows.length;
+    const counts = { danger:0, warn:0, none:0, ok:0 };
+    invDashRows.forEach(function(r){ counts[r.status]++; });
+    const set = function(id, v){ const el = document.getElementById(id); if (el) el.textContent = v; };
+    set('invDashStatTotal', total);
+    set('invDashStatDanger', counts.danger);
+    set('invDashStatWarn', counts.warn + counts.none);
+    set('invDashStatOk', counts.ok);
+  }
+
+  function badgeHtml(status){
+    const cls = { danger:'wos-badge-danger', warn:'wos-badge-warn', none:'wos-badge-none', ok:'wos-badge-ok' }[status];
+    return '<span class="wos-badge '+cls+'">'+STATUS_LABEL[status]+'</span>';
+  }
+
+  function renderInvDashTable(){
+    const tbody = document.getElementById('invDashTableBody');
+    if (!tbody) return;
+    const rows = filteredDashRows();
+    if (!rows.length){
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-faint);padding:24px;">暂无数据</td></tr>';
+    } else {
+      tbody.innerHTML = rows.map(function(r){
+        const wosText = r.wos === null ? '无动销' : r.wos;
+        const wosCls = r.status === 'danger' ? 'wos-num-danger' : ((r.status === 'warn' || r.status === 'none') ? 'wos-num-warn' : '');
+        return '<tr>'
+          + '<td>'+r.sku+'</td>'
+          + '<td><span class="wos-ellipsis" title="'+(r.model||'')+'">'+(r.model||'-')+'</span></td>'
+          + '<td>'+(r.agents||'-')+'</td>'
+          + '<td>'+r.stockQty+'</td>'
+          + '<td>'+r.salesQty+'</td>'
+          + '<td class="'+wosCls+'">'+wosText+'</td>'
+          + '<td>'+badgeHtml(r.status)+'</td>'
+          + '</tr>';
+      }).join('');
+    }
+    const pageInfo = document.getElementById('invDashPageInfo');
+    if (pageInfo) pageInfo.textContent = '共 ' + rows.length + ' 条记录';
+  }
+
+  function refreshInvDash(){
+    populateInvDashFilters();
+    initDateRangeDefaults();
+    buildDashboardRows();
+    renderInvDashStats();
+    renderInvDashTable();
+  }
+  window.refreshInvDash = refreshInvDash;
+
+  async function loadInventoryDashboard(){
+    try{
+      const [invRes, stRes] = await Promise.all([
+        sb.from('agent_inventory').select('*'),
+        sb.from('agent_sellthrough').select('*')
+      ]);
+      if (invRes.error){ console.error('loadInventoryDashboard(inventory)', invRes.error); return; }
+      if (stRes.error){ console.error('loadInventoryDashboard(sellthrough)', stRes.error); return; }
+      invDashInvRows = invRes.data || [];
+      invDashStRows = stRes.data || [];
+      refreshInvDash();
+    }catch(e){ console.error('loadInventoryDashboard failed', e); }
+  }
+  window.loadInventoryDashboard = loadInventoryDashboard;
+
+  const agentSelEl = document.getElementById('invDashFilterAgent');
+  if (agentSelEl) agentSelEl.addEventListener('change', function(e){ invDashFilterAgent = e.target.value; refreshInvDash(); });
+  const statusSelEl = document.getElementById('invDashFilterStatus');
+  if (statusSelEl) statusSelEl.addEventListener('change', function(e){ invDashFilterStatus = e.target.value; buildDashboardRows(); renderInvDashStats(); renderInvDashTable(); });
+  const searchEl = document.getElementById('invDashSearchInput');
+  if (searchEl) searchEl.addEventListener('input', function(e){ invDashSearchTerm = e.target.value; renderInvDashTable(); });
+  const dateFromEl = document.getElementById('invDashDateFrom');
+  if (dateFromEl) dateFromEl.addEventListener('change', function(e){ invDashDateFrom = e.target.value; buildDashboardRows(); renderInvDashStats(); renderInvDashTable(); });
+  const dateToEl = document.getElementById('invDashDateTo');
+  if (dateToEl) dateToEl.addEventListener('change', function(e){ invDashDateTo = e.target.value; buildDashboardRows(); renderInvDashStats(); renderInvDashTable(); });
+
+  const exportBtn = document.getElementById('invDashBtnExport');
+  if (exportBtn) exportBtn.onclick = function(){
+    const rows = filteredDashRows();
+    if (!rows.length){ alert('暂无数据可导出'); return; }
+    const header = ['SKU编码','产品型号','代理商','当前库存','周期内销量','可销周数(WOS)','状态'];
+    const csvRows = rows.map(function(r){
+      return [r.sku, r.model, r.agents, r.stockQty, r.salesQty, (r.wos===null?'无动销':r.wos), STATUS_LABEL[r.status]].map(function(v){
+        const s = String(v==null?'':v);
+        return '"' + s.replace(/"/g,'""') + '"';
+      }).join(',');
+    });
+    const csv = '\ufeff' + [header.join(',')].concat(csvRows).join('\n');
+    const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = '库存看板_' + new Date().toISOString().slice(0,10) + '.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
 })();
 </script>
 <script>

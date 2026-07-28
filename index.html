@@ -6235,7 +6235,7 @@ async function loadAllRemoteData(){
 
 const RA_BADGE_STORAGE_KEY = 'raNotifLastSeenTs';
 function raGetLastSeenTs(){
-  return localStorage.getItem(RA_BADGE_STORAGE_KEY) || '1970-01-01T00:00:00.000Z';
+  try{ return localStorage.getItem(RA_BADGE_STORAGE_KEY) || '1970-01-01T00:00:00.000Z'; }catch(e){ return '1970-01-01T00:00:00.000Z'; }
 }
 function raSetLastSeenNow(){
   try{ localStorage.setItem(RA_BADGE_STORAGE_KEY, new Date().toISOString()); }catch(e){}
@@ -7661,7 +7661,8 @@ if (addPriceVersionBtn){
 </script>
   <script>
 const I18N_LANG_KEY = 'tenda_lang';
-let currentLang = localStorage.getItem(I18N_LANG_KEY) || 'pl';
+let currentLang = 'pl';
+try { currentLang = localStorage.getItem(I18N_LANG_KEY) || 'pl'; } catch(e) { console.warn('localStorage unavailable, using default language', e); }
 
 // [中文, English, Polski] —— 可以随时往这个数组里加新条目
 const I18N_DICT = [
@@ -8561,7 +8562,7 @@ const I18N_DICT = [
   ['可销周数(WOS)','Weeks of Supply (WOS)','Tygodnie zapasu (WOS)'],
   ['无动销','No Sales','Brak sprzedaży'],
   ['建议补货量(45天)','Suggested Reorder Qty (45d)','Sugerowana ilość uzupełnienia (45 dni)'],
-  [' 建议补货量(45天) = 按所选周期内的日均销量折算至45天的目标库存，减去当前库存后向上取整；若周期内无销量则不建议补货。',' Suggested Reorder Qty (45d) = target stock for 45 days based on the average daily sales in the selected period, minus current stock, rounded up; no reorder is suggested if there were no sales in the period.',' Sugerowana ilość uzupełnienia (45 dni) = docelowy stan na 45 dni na podstawie średniej dziennej sprzedaży w wybranym okresie, pomniejszony o bieżący stan, zaokrąglony w górę; brak sugestii uzupełnienia, jeśli w okresie nie było sprzedaży.']
+  [' 建议补货量(45天) = 按所选周期内的日均销量折算至45天的目标库存，减去当前库存后向上取整；若周期内无销量则不建议补货。',' Suggested Reorder Qty (45d) = target stock for 45 days based on the average daily sales in the selected period, minus current stock, rounded up; no reorder is suggested if there were no sales in the period.',' Sugerowana ilość uzupełnienia (45 dni) = docelowy stan na 45 dni na podstawie średniej dziennej sprzedaży w wybranym okresie, pomniejszony o bieżący stan, zaokrąglony w górę; brak sugestii uzupełnienia, jeśli w okresie nie było sprzedaży.'],
   ['大盘总库存量','Total Stock Volume','Łączny stan magazynowy'],
   ['整体可销周数(WOS)','Overall Weeks of Supply (WOS)','Ogólne tygodnie zapasu (WOS)'],
   ['各代理商库存快照趋势','Stock Snapshot Trend by Agent','Trend stanu magazynowego wg agenta'],
@@ -8619,7 +8620,7 @@ function translatePlaceholders(root){
 
 function applyLanguage(lang){
   currentLang = lang;
-  localStorage.setItem(I18N_LANG_KEY, lang);
+  try { localStorage.setItem(I18N_LANG_KEY, lang); } catch(e) { console.warn('localStorage unavailable, language preference not saved', e); }
   translateTextNodes(document.body);
   translatePlaceholders(document.body);
   document.querySelectorAll('#langSwitcher .lang-btn').forEach(btn=>{

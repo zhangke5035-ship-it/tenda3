@@ -248,6 +248,37 @@
   .gtm-card-meta{display:flex;align-items:center;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--text-dim);margin-bottom:6px;}
   .gtm-card-note{font-size:12.5px;color:var(--text-dim);background:var(--surface-alt);border-radius:var(--radius);padding:8px 10px;margin-top:4px;}
   .gtm-card-actions{flex-shrink:0;padding-top:2px;}
+  .npi-card{display:flex;flex-direction:column;gap:10px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;cursor:pointer;}
+  .npi-card:hover{border-color:var(--text-faint);}
+  .npi-card-top{display:flex;gap:16px;align-items:center;}
+  .npi-card-info{width:200px;flex-shrink:0;}
+  .npi-card-name{font-size:14.5px;font-weight:700;}
+  .npi-card-desc{font-size:12px;color:var(--text-faint);margin-top:2px;}
+  .npi-tag{display:inline-block;margin-top:8px;font-size:11px;font-weight:600;padding:2px 10px;border-radius:20px;}
+  .npi-tag-hot{background:var(--good-soft);color:var(--good);}
+  .npi-tag-lagging{background:var(--alert-soft);color:var(--alert);}
+  .npi-tag-normal{background:var(--copper-soft);color:var(--copper);}
+  .npi-card-main{flex:1;min-width:0;}
+  .npi-card-stat-row{display:flex;justify-content:space-between;font-size:12px;color:var(--text-dim);margin-bottom:4px;}
+  .npi-card-rate{font-weight:700;}
+  .npi-months{display:flex;gap:6px;margin-top:10px;}
+  .npi-month-bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;}
+  .npi-month-bar-track{width:100%;height:30px;background:var(--surface-alt);border-radius:4px;display:flex;align-items:flex-end;overflow:hidden;}
+  .npi-month-bar-fill{width:100%;opacity:.8;}
+  .npi-month-label{font-size:11px;color:var(--text-faint);}
+  .npi-card-arrow{font-size:14px;color:var(--text-faint);width:16px;text-align:center;flex-shrink:0;}
+  .npi-drill{margin-top:4px;padding-top:14px;border-top:1px solid var(--border-soft);}
+  .npi-drill-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+  .npi-drill-head h4{font-size:13px;font-weight:700;color:var(--text-dim);}
+  .npi-drill-actions{display:flex;gap:8px;}
+  .npi-drill-table{width:100%;border-collapse:collapse;}
+  .npi-drill-table th{text-align:right;padding:6px 10px;font-size:12px;color:var(--text-faint);font-weight:500;border-bottom:1px solid var(--border-soft);}
+  .npi-drill-table th:first-child{text-align:left;}
+  .npi-drill-table td{padding:8px 10px;font-size:13px;text-align:right;}
+  .npi-drill-table td:first-child{text-align:left;}
+  .npi-drill-row-zero{background:var(--alert-soft);}
+  .npi-zero-tag{display:inline-block;margin-left:8px;font-size:11px;font-weight:600;background:var(--alert-soft);color:var(--alert);padding:1px 8px;border-radius:20px;}
+
   .gtm-upload-row{display:flex;align-items:center;gap:14px;}
   .gtm-upload-preview{width:72px;height:72px;border-radius:var(--radius);border:1px dashed var(--border);background:var(--surface-alt);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;}
   .gtm-upload-preview img{width:100%;height:100%;object-fit:contain;}
@@ -1421,6 +1452,12 @@
     </div>
     <div class="cust-tabs" id="gtmStageTabs"></div>
     <div class="gtm-card-list" id="gtmTableBody"></div>
+  </div>
+
+  <div class="panel" style="margin-top:20px;">
+    <div class="panel-head"><div><h3>新品接单达成率</h3><div class="desc">对比新品接单量与目标的达成情况，点击卡片可查看客户维度明细</div></div></div>
+    <div class="kpi-row" id="npiKpiRow" style="grid-template-columns:repeat(3,1fr);"></div>
+    <div class="gtm-card-list" id="npiCardList"></div>
   </div>
 </section>
 
@@ -4832,6 +4869,155 @@ function renderGtmAll(){
   renderGtmKpi();
   renderGtmStageTabs();
   renderGtmTable();
+  renderNpiAchievement();
+}
+
+
+// ===== 新品接单达成率 =====
+const NPI_CUSTOMERS = ['Eltrox','Action','Intelek','ALLNET'];
+const NPI_PRODUCTS = [
+  { key:'ax12-v4', name:'AX12 V4.0', desc:'正常爬坡，7月为全季最高月', target:900,
+    months:{'5月':150,'6月':280,'7月':420},
+    customers:{ Eltrox:{'5月':60,'6月':110,'7月':150}, Action:{'5月':30,'6月':60,'7月':90}, Intelek:{'5月':45,'6月':90,'7月':115}, ALLNET:{'5月':15,'6月':20,'7月':65} } },
+  { key:'ax12-pro-v2', name:'AX12 Pro v2.0', desc:'远超预期，爆款态势明显', target:500,
+    months:{'5月':380,'6月':650,'7月':720},
+    customers:{ Eltrox:{'5月':150,'6月':260,'7月':290}, Action:{'5月':100,'6月':180,'7月':170}, Intelek:{'5月':110,'6月':190,'7月':200}, ALLNET:{'5月':20,'6月':20,'7月':60} } },
+  { key:'a33-v2', name:'A33 V2.0', desc:'接单持续低迷，7月仍未起量', target:600,
+    months:{'5月':20,'6月':15,'7月':18},
+    customers:{ Eltrox:{'5月':12,'6月':9,'7月':9}, Action:{'5月':0,'6月':0,'7月':0}, Intelek:{'5月':8,'6月':6,'7月':9}, ALLNET:{'5月':0,'6月':0,'7月':0} } },
+  { key:'4g03-pro', name:'4G03 Pro', desc:'稳步增长，节奏健康', target:700,
+    months:{'5月':140,'6月':190,'7月':240},
+    customers:{ Eltrox:{'5月':50,'6月':65,'7月':85}, Action:{'5月':35,'6月':50,'7月':65}, Intelek:{'5月':35,'6月':50,'7月':55}, ALLNET:{'5月':20,'6月':25,'7月':35} } }
+];
+let npiExpandedKey = null;
+
+function npiSumMonths(m){ return Object.values(m).reduce(function(a,b){return a+b;}, 0); }
+function npiStatus(rate){
+  if (rate > 100) return { cls:'npi-tag-hot', bar:'var(--good)', tag:'🔥 爆款' };
+  if (rate < 40) return { cls:'npi-tag-lagging', bar:'var(--alert)', tag:'⚠️ 滞后' };
+  return { cls:'npi-tag-normal', bar:'var(--copper)', tag:'正常推进' };
+}
+
+function renderNpiKpi(){
+  const box = document.getElementById('npiKpiRow');
+  if (!box) return;
+  let totalQty = 0, hot = 0, lagging = 0;
+  NPI_PRODUCTS.forEach(function(p){
+    const total = npiSumMonths(p.months);
+    const rate = (total / p.target) * 100;
+    totalQty += total;
+    if (rate > 100) hot++;
+    if (rate < 40) lagging++;
+  });
+  box.innerHTML =
+    '<div class="kpi">' +
+      '<div class="label">新品累计接单量（5-7月）</div>' +
+      '<div class="value">' + totalQty.toLocaleString('en-US') + '<span class="unit">件</span></div>' +
+      '<div class="sub">覆盖 ' + NPI_PRODUCTS.length + ' 个新品</div>' +
+    '</div>' +
+    '<div class="kpi">' +
+      '<div class="label">爆款新品数</div>' +
+      '<div class="value">' + hot + '</div>' +
+      '<div class="sub">达成率 > 100%</div>' +
+    '</div>' +
+    '<div class="kpi">' +
+      '<div class="label">滞后新品数（需关注）</div>' +
+      '<div class="value">' + lagging + '</div>' +
+      '<div class="sub">达成率 < 40%</div>' +
+    '</div>';
+}
+
+function toggleNpiCard(key){
+  npiExpandedKey = (npiExpandedKey === key) ? null : key;
+  renderNpiCardList();
+}
+
+function npiExportDetail(key){
+  const p = NPI_PRODUCTS.find(function(x){ return x.key === key; });
+  if (!p) return;
+  alert('已导出 ' + p.name + ' 客户明细（模拟功能，未接入真实导出）');
+}
+function npiRemindSales(key){
+  const p = NPI_PRODUCTS.find(function(x){ return x.key === key; });
+  if (!p) return;
+  const zero = NPI_CUSTOMERS.filter(function(c){ return npiSumMonths(p.customers[c]) === 0; });
+  if (zero.length === 0){
+    alert(p.name + ' 各客户均已破零，无需提醒');
+  } else {
+    alert('已提醒销售跟进 ' + p.name + '：' + zero.join('、') + '（模拟功能，未接入真实通知）');
+  }
+}
+
+function renderNpiDrilldown(p){
+  const rows = NPI_CUSTOMERS.map(function(c){
+    const m = p.customers[c] || {};
+    const total = npiSumMonths(m);
+    return { c: c, m: m, total: total };
+  });
+  const rowsHtml = rows.map(function(r){
+    const zeroTag = r.total === 0 ? '<span class="npi-zero-tag">❌ 未破零（需跟进）</span>' : '';
+    return '<tr class="' + (r.total === 0 ? 'npi-drill-row-zero' : '') + '">' +
+      '<td>' + r.c + zeroTag + '</td>' +
+      '<td>' + (r.m['5月']||0) + '</td>' +
+      '<td>' + (r.m['6月']||0) + '</td>' +
+      '<td>' + (r.m['7月']||0) + '</td>' +
+      '<td><b>' + r.total + '</b></td>' +
+    '</tr>';
+  }).join('');
+  return '<div class="npi-drill" onclick="event.stopPropagation();">' +
+    '<div class="npi-drill-head">' +
+      '<h4>客户维度接单明细</h4>' +
+      '<div class="npi-drill-actions">' +
+        '<button class="inv-btn inv-btn-ghost" onclick="npiExportDetail(\'' + p.key + '\')">导出当前明细</button>' +
+        '<button class="inv-btn inv-btn-primary" onclick="npiRemindSales(\'' + p.key + '\')">一键提醒销售</button>' +
+      '</div>' +
+    '</div>' +
+    '<table class="npi-drill-table"><thead><tr><th>客户</th><th>5月</th><th>6月</th><th>7月</th><th>累计接单量</th></tr></thead>' +
+    '<tbody>' + rowsHtml + '</tbody></table>' +
+  '</div>';
+}
+
+function renderNpiCardList(){
+  const box = document.getElementById('npiCardList');
+  if (!box) return;
+  box.innerHTML = NPI_PRODUCTS.map(function(p){
+    const total = npiSumMonths(p.months);
+    const rate = Math.round((total / p.target) * 1000) / 10;
+    const st = npiStatus(rate);
+    const monthKeys = Object.keys(p.months);
+    const maxQty = Math.max.apply(null, monthKeys.map(function(m){ return p.months[m]; }));
+    const barsHtml = monthKeys.map(function(m){
+      const h = Math.max((p.months[m] / maxQty) * 100, 10);
+      return '<div class="npi-month-bar-wrap">' +
+        '<div class="npi-month-bar-track"><div class="npi-month-bar-fill" style="height:' + h + '%;background:' + st.bar + ';"></div></div>' +
+        '<div class="npi-month-label">' + m + '</div>' +
+      '</div>';
+    }).join('');
+    const expanded = npiExpandedKey === p.key;
+    const overNote = rate > 100 ? ('<div style="font-size:11px;color:var(--good);margin-top:2px;">超出预期 ' + (Math.round((rate-100)*10)/10) + '%</div>') : '';
+    return '<div class="npi-card" onclick="toggleNpiCard(\'' + p.key + '\')">' +
+      '<div class="npi-card-top">' +
+        '<div class="npi-card-info">' +
+          '<div class="npi-card-name">' + p.name + '</div>' +
+          '<div class="npi-card-desc">' + p.desc + '</div>' +
+          '<span class="npi-tag ' + st.cls + '">' + st.tag + '</span>' +
+        '</div>' +
+        '<div class="npi-card-main">' +
+          '<div class="npi-card-stat-row"><span>累计接单量 <b>' + total.toLocaleString('en-US') + '</b> 件 / 目标 ' + p.target.toLocaleString('en-US') + ' 件</span><span class="npi-card-rate" style="color:' + st.bar + ';">' + rate + '%</span></div>' +
+          '<div class="progress-wrap"><div class="progress-bar" style="width:' + Math.min(rate,100) + '%;background:' + st.bar + ';"></div></div>' +
+          overNote +
+          '<div class="npi-months">' + barsHtml + '</div>' +
+        '</div>' +
+        '<div class="npi-card-arrow">' + (expanded ? '\u25B2' : '\u25BC') + '</div>' +
+      '</div>' +
+      (expanded ? renderNpiDrilldown(p) : '') +
+    '</div>';
+  }).join('');
+}
+
+function renderNpiAchievement(){
+  renderNpiKpi();
+  renderNpiCardList();
 }
 
 function openGtmDrawer(){
@@ -7809,6 +7995,25 @@ try { currentLang = localStorage.getItem(I18N_LANG_KEY) || 'pl'; } catch(e) { co
 
 // [中文, English, Polski] —— 可以随时往这个数组里加新条目
 const I18N_DICT = [
+  ['新品累计接单量（5-7月）','Cumulative new product orders (May-Jul)','Łączne zamówienia nowych produktów (maj-lip)'],
+  ['滞后新品数（需关注）','Lagging products (needs attention)','Opóźnione nowości (wymagają uwagi)'],
+  ['客户维度接单明细','Order detail by customer','Szczegóły zamówień wg klienta'],
+  ['未破零（需跟进）','Zero orders (follow up needed)','Zero zamówień (wymaga działania)'],
+  ['一键提醒销售','Remind sales with one click','Przypomnij sprzedawcy jednym kliknięciem'],
+  ['导出当前明细','Export current detail','Eksportuj bieżące szczegóły'],
+  ['累计接单量','Cumulative order qty','Łączna ilość zamówień'],
+  ['累计接单','Cumulative orders','Łączne zamówienia'],
+  ['爆款新品数','Breakout hit count','Liczba przebojowych nowości'],
+  ['新品接单达成率','New Product Order Achievement','Wskaźnik realizacji zamówień nowych produktów'],
+  ['对比新品接单量与目标的达成情况，点击卡片可查看客户维度明细','Compare new product orders against targets; click a card to view customer-level detail','Porównaj zamówienia nowych produktów z celami; kliknij kartę, aby zobaczyć szczegóły wg klienta'],
+  ['🔥 爆款','🔥 Hit','🔥 Hit'],
+  ['⚠️ 滞后','⚠️ Lagging','⚠️ Opóźnienie'],
+  ['正常推进','On track','W realizacji'],
+  ['超出预期','Exceeds target','Powyżej celu'],
+  ['5月','May','maj'],
+  ['6月','Jun','cze'],
+  ['7月','Jul','lip'],
+
   ['批量导入代理商库存','Batch Import Agent Inventory','Import wsadowy stanu magazynowego agentów'],
   ['批量导入代理商动销','Batch Import Agent Sell-Through','Import wsadowy sprzedaży agentów'],
   ['代理商、SKU编码、当前库存、更新日期为必填项；代理商名称请尽量选用下拉建议中已有的名称，避免拼写不一致。','Agent, SKU, current stock and update date are required. Please use an existing agent name from the suggestion list to avoid spelling inconsistencies.','Agent, SKU, aktualny stan i data aktualizacji są wymagane. Użyj istniejącej nazwy agenta z listy podpowiedzi, aby uniknąć błędów pisowni.'],

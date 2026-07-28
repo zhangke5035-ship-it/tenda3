@@ -922,6 +922,14 @@
       </div>
 
       <div class="panel">
+        <div class="panel-head"><div><h3>产品型号维度月环比</h3><div class="desc">各产品型号近3个月订单净额趋势</div></div><button class="btn ghost" id="productMomExportBtn" style="font-size:12px;padding:6px 12px;">导出 Excel</button></div>
+        <table id="productMomTable">
+          <thead><tr id="productMomTableHead"><th>产品型号</th></tr></thead>
+          <tbody id="productMomTableBody"></tbody>
+        </table>
+      </div>
+
+      <div class="panel">
         <div class="panel-head">
           <div><h3>最近订单</h3><div class="desc" id="recentOrdersDesc"></div></div>
         </div>
@@ -5630,6 +5638,7 @@ function renderSalesOverview(){
   if (typeof orders === 'undefined' || typeof invoices === 'undefined') return;
   renderSalesKpi();
   renderCustMomTable();
+  renderProductMomTable();
   renderRecentOrdersTable();
   renderUnpaidInvoicesTable();
 }
@@ -5703,6 +5712,140 @@ function exportCustMomCSV(){
   const a = document.createElement('a');
   a.href = url;
   a.download = '客户维度月环比_' + new Date().toISOString().slice(0,10) + '.csv';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function renderProductMomTable(){
+  const head = document.getElementById('productMomTableHead');
+  const body = document.getElementById('productMomTableBody');
+  if (!head || !body) return;
+  const fmtAmt = n => n.toLocaleString('en-US', {minimumFractionDigits:1, maximumFractionDigits:1});
+  const fmtQty = n => n.toLocaleString('en-US');
+  const months = getRollingMonths(3);
+  const curMonth = months[months.length-1];
+  const ytdYear = curMonth.slice(0,4);
+
+  const theadEl = head.parentElement;
+  head.innerHTML = '<th rowspan="2">产品型号</th>' +
+    '<th colspan="2" class="ytd-col-head" style="text-align:center;">'+ytdYear+' 年累计(YTD)</th>' +
+    months.map(m=>'<th colspan="2" style="text-align:center;">'+m+'</th>').join('');
+  let subHead = document.getElementById('productMomTableSubHead');
+  if (!subHead && theadEl){
+    subHead = document.createElement('tr');
+    subHead.id = 'productMomTableSubHead';
+    theadEl.appendChild(subHead);
+  }
+  if (subHead){
+    subHead.innerHTML = '<th class="ytd-col-sub" style="text-align:right;color:var(--text-dim);font-weight:500;">金额</th><th class="ytd-col-sub" style="text-align:right;color:var(--text-dim);font-weight:500;">数量</th>' +
+      months.map(()=>'<th style="text-align:right;color:var(--text-faint);font-weight:500;">金额</th><th style="text-align:right;color:var(--text-faint);font-weight:500;">数量</th>').join('');
+  }
+
+  const exportBtn = document.getElementById('productMomExportBtn');
+  if (exportBtn) exportBtn.onclick = exportProductMomCSV;
+
+  const orderMonthById = {};
+  orders.forEach(o=>{ orderMonthById[o.id] = (o.date||'').slice(0,7); });
+
+  const byProdMonth = {};
+  const byProdYtd = {};
+  orderItems.forEach(i=>{
+    const m = orderMonthById[i.orderId];
+    if (!m) return;
+    const key = i.product || '(未命名型号)';
+    if (!byProdMonth[key]) byProdMonth[key] = {};
+    if (!byProdMonth[key][m]) byProdMonth[key][m] = {amount:0, qty:0};
+    const amount = i.qty * i.price;
+    byProdMonth[key][m].amount += amount;
+    byProdMonth[key][m].qty += i.qty;
+    if (m.slice(0,4) === ytdYear){
+      if (!byProdYtd[key]) byProdYtd[key] = {amount:0, qty:0};
+      byProdYtd[key].amount += amount;
+      byProdYtd[key].qty += i.qty;
+    }
+  });
+
+  const prodKeys = Object.keys(byProdMonth);
+  const table = body.closest('table');
+  let foot = table ? table.querySelector('tfoot') : null;
+  if (!prodKeys.length){
+    body.innerHTML = '<tr><td colspan="'+(months.length*2+3)+'" style="color:var(--text-faint);">暂无数据</td></tr>';
+    if (foot) foot.innerHTML = '';
+    window.__productMomExportCache = null;
+    return;
+  }
+
+  const rows = prodKeys.map(k=>{
+    const vals = months.map(m=>byProdMonth[k][m] || {amount:0, qty:0});
+    const ytd = byProdYtd[k] || {amount:0, qty:0};
+    const cur = (byProdMonth[k][curMonth] || {amount:0}).amount;
+    return { name: k, vals, ytd, cur };
+  }).sort((a,b)=>b.cur-a.cur);
+
+  body.innerHTML = rows.map(r=>
+    '<tr><td>'+r.name+'</td>' +
+    '<td class="ytd-col-cell" style="text-align:right;font-weight:600;">'+fmtAmt(r.ytd.amount)+'</td><td class="ytd-col-cell" style="text-align:right;color:var(--text-dim);">'+fmtQty(r.ytd.qty)+'</td>' +
+    r.vals.map(v=>'<td style="text-align:right;">'+fmtAmt(v.amount)+'</td><td style="text-align:right;color:var(--text-dim);">'+fmtQty(v.qty)+'</td>').join('') +
+    '</tr>'
+  ).join('');
+
+  let totals = {};
+  let ytdTotal = {amount:0, qty:0};
+  if (table){
+    if (!foot){
+      foot = document.createElement('tfoot');
+      table.appendChild(foot);
+    }
+    months.forEach(m=>{
+      totals[m] = prodKeys.reduce((acc,k)=>{
+        const v = byProdMonth[k][m] || {amount:0, qty:0};
+        acc.amount += v.amount;
+        acc.qty += v.qty;
+        return acc;
+      }, {amount:0, qty:0});
+    });
+    ytdTotal = Object.keys(byProdYtd).reduce((acc,k)=>{
+      acc.amount += byProdYtd[k].amount;
+      acc.qty += byProdYtd[k].qty;
+      return acc;
+    }, {amount:0, qty:0});
+    foot.innerHTML = '<tr style="font-weight:700;background:var(--surface-alt);border-top:2px solid var(--border);">' +
+      '<td>合计</td>' +
+      '<td class="ytd-col-cell" style="text-align:right;">'+fmtAmt(ytdTotal.amount)+'</td><td class="ytd-col-cell" style="text-align:right;color:var(--text-dim);">'+fmtQty(ytdTotal.qty)+'</td>' +
+      months.map(m=>{
+        const t = totals[m] || {amount:0, qty:0};
+        return '<td style="text-align:right;">'+fmtAmt(t.amount)+'</td><td style="text-align:right;color:var(--text-dim);">'+fmtQty(t.qty)+'</td>';
+      }).join('') +
+      '</tr>';
+  }
+
+  window.__productMomExportCache = { months, ytdYear, rows, totals, ytdTotal };
+}
+
+function exportProductMomCSV(){
+  const cache = window.__productMomExportCache;
+  if (!cache) return;
+  const header = ['产品型号', cache.ytdYear+' YTD 金额', cache.ytdYear+' YTD 数量'];
+  cache.months.forEach(m=>{ header.push(m+' 金额', m+' 数量'); });
+  const lines = [header.join(',')];
+  cache.rows.forEach(r=>{
+    const vals = [r.name, r.ytd.amount.toFixed(1), r.ytd.qty];
+    r.vals.forEach(v=>{ vals.push(v.amount.toFixed(1), v.qty); });
+    lines.push(vals.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(','));
+  });
+  const totalVals = ['合计', cache.ytdTotal.amount.toFixed(1), cache.ytdTotal.qty];
+  cache.months.forEach(m=>{
+    const t = cache.totals[m] || {amount:0, qty:0};
+    totalVals.push(t.amount.toFixed(1), t.qty);
+  });
+  lines.push(totalVals.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(','));
+  const blob = new Blob(['\ufeff' + lines.join('\n')], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = '产品型号维度月环比_' + new Date().toISOString().slice(0,10) + '.csv';
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
@@ -8572,6 +8715,8 @@ const I18N_DICT = [
   ['可消耗天数','Days of Supply','Dni zapasu'],
   ['可消耗天数 = 当前库存 ÷ 日均销量（所选周期内销量 ÷ 周期天数）。可消耗天数 &lt; 14 天标记为断货风险，可消耗天数 &gt; 70 天或本周期内无动销标记为滞销风险；库存取每个代理商每个 SKU 最近一次上报的快照，动销取所选日期区间内的销量总和。','Days of Supply = current stock ÷ average daily sales (sales in the selected period ÷ number of days). Below 14 days is flagged as stockout risk; above 70 days or no sales in the period is flagged as slow-moving risk. Stock uses each agent+SKU\'s latest reported snapshot; sales sum all transactions within the selected date range.','Dni zapasu = bieżący stan magazynowy ÷ średnia dzienna sprzedaż (sprzedaż w wybranym okresie ÷ liczba dni). Poniżej 14 dni oznacza ryzyko braku towaru; powyżej 70 dni lub brak sprzedaży w okresie oznacza ryzyko nadmiaru zapasów. Stan magazynowy to najnowszy zgłoszony stan dla każdego agenta i SKU; sprzedaż to suma transakcji w wybranym zakresie dat.'],
   ['自动合并"代理商库存"与"代理商动销"数据，按代理商分组计算滚动可消耗天数，辅助断货/滞销预警','Automatically merges "Agent Inventory" and "Agent Sell-through" data, calculates rolling Days of Supply grouped by agent to flag stockout/overstock risk','Automatycznie łączy dane "Zapasy agenta" i "Sprzedaż agenta", oblicza rotację zapasów w dniach wg agenta, aby oznaczyć ryzyko braku towaru/nadmiaru zapasów'],
+  ['产品型号维度月环比','Product Model MoM Trend','Trend m/m wg modelu produktu'],
+  ['各产品型号近3个月订单净额趋势','Order net amount by product model for the last 3 months','Wartość netto zamówień wg modelu produktu za ostatnie 3 miesiące'],
 ];
 I18N_DICT.sort((a,b)=>b[0].length-a[0].length);
 

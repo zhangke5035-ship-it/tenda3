@@ -5621,13 +5621,15 @@ function renderSalesKpi(){
   const fmtMoney = n => n.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
   const totalNet = orders.reduce((s,o)=>s+orderTotal(o.id),0);
   const invGross = invoices.reduce((s,i)=>s+i.gross,0);
+  const totalQty = orderItems.reduce((s,i)=>s+i.qty,0);
+  const totalSkuCount = new Set(orderItems.map(i=>i.product)).size;
   const unpaidList = invoices.filter(i=>i.status==='待付款');
   const unpaidNet = unpaidList.reduce((s,i)=>s+i.net,0);
   const doneCount = orders.filter(o=>o.status==='已发货'||o.status==='已完成').length;
   const doneRate = orders.length ? Math.round(doneCount/orders.length*100) : 0;
   box.innerHTML = `
     <div class="kpi" style="border-top:3px solid var(--copper);"><div class="label">累计销售净额</div><div class="value copper">${fmtMoney(totalNet)}<span class="unit">zł</span></div><div class="sub">${orders.length} 个订单合计</div></div>
-    <div class="kpi" style="border-top:3px solid var(--text-dim);"><div class="label">发票总额（含税）</div><div class="value">${fmtMoney(invGross)}<span class="unit">zł</span></div><div class="sub">${invoices.length} 张正式发票</div></div>
+    <div class="kpi" style="border-top:3px solid var(--text-dim);"><div class="label">累计销售量</div><div class="value">${totalQty.toLocaleString('en-US')}<span class="unit">件</span></div><div class="sub">涉及 ${totalSkuCount} 个型号</div></div>
     <div class="kpi${unpaidNet>0?' amber-tone':''}" style="border-top:3px solid var(--amber);"><div class="label">待回款金额</div><div class="value ${unpaidNet>0?'amber':''}">${fmtMoney(unpaidNet)}<span class="unit">zł</span></div><div class="sub">${unpaidList.length} 张待付款发票</div></div>
     <div class="kpi" style="border-top:3px solid var(--good);"><div class="label">订单履约率</div><div class="value good">${doneRate}<span class="unit">%</span></div><div class="sub">已发货/已完成 ${doneCount} / ${orders.length}</div></div>
   `;

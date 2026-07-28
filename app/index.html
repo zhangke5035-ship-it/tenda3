@@ -756,6 +756,17 @@
     <span id="cpAnnouncementText"></span>
   </div>
   <div class="cp-main">
+    <div class="cp-card" id="cpPricingCard">
+      <h2>产品价格</h2>
+      <input type="text" id="cpPriceSearchInput" placeholder="搜索产品型号..." oninput="renderCpPricing()" style="width:100%;max-width:320px;margin-bottom:12px;">
+      <div class="cp-table-wrap"><table class="cp-table" id="cpPriceTable">
+        <thead>
+          <tr><th>产品型号</th><th>零售价 (PLN)</th><th>净价 (PLN)</th><th>VAT</th></tr>
+        </thead>
+        <tbody id="cpPriceTbody"></tbody>
+      </table></div>
+    </div>
+
     <div class="cp-card">
       <div class="cp-card-head">
         <h2>提交退货申请</h2>
@@ -6812,7 +6823,29 @@ async function showCustomerApp(session, customerCode){
   renderCpExtraFields(customerCode);
   renderCpProductModelOptions(customerCode);
   loadCpAnnouncement();
+  loadCpPricing();
   await loadCustomerReturns();
+}
+
+let cpPriceRows = [];
+async function loadCpPricing(){
+  const { data, error } = await sb.from('customer_price_list').select('*').order('product');
+  if (error){ console.error('loadCpPricing', error); return; }
+  cpPriceRows = data || [];
+  renderCpPricing();
+}
+function renderCpPricing(){
+  const tbody = document.getElementById('cpPriceTbody');
+  if (!tbody) return;
+  const termEl = document.getElementById('cpPriceSearchInput');
+  const term = (termEl && termEl.value ? termEl.value : '').toLowerCase();
+  const rows = cpPriceRows.filter(function(r){ return !term || (r.product||'').toLowerCase().includes(term); });
+  tbody.innerHTML = rows.map(function(r){
+    const retail = r.retail_pln != null ? Number(r.retail_pln).toFixed(2) : '-';
+    const net = r.net_pln != null ? Number(r.net_pln).toFixed(2) : '-';
+    const vat = r.vat_rate != null ? (Number(r.vat_rate) * 100).toFixed(0) + '%' : '-';
+    return '<tr><td>' + r.product + '</td><td class="num-cell">' + retail + '</td><td class="num-cell">' + net + '</td><td>' + vat + '</td></tr>';
+  }).join('');
 }
 
 async function loadCustomerReturns(){
@@ -7995,6 +8028,11 @@ try { currentLang = localStorage.getItem(I18N_LANG_KEY) || 'pl'; } catch(e) { co
 
 // [中文, English, Polski] —— 可以随时往这个数组里加新条目
 const I18N_DICT = [
+  ['产品价格','Product Pricing','Ceny produktów'],
+  ['零售价 (PLN)','Retail Price (PLN)','Cena detaliczna (PLN)'],
+  ['净价 (PLN)','Net Price (PLN)','Cena netto (PLN)'],
+  ['搜索产品型号...','Search product model...','Szukaj modelu produktu...'],
+
   ['新品累计接单量（5-7月）','Cumulative new product orders (May-Jul)','Łączne zamówienia nowych produktów (maj-lip)'],
   ['滞后新品数（需关注）','Lagging products (needs attention)','Opóźnione nowości (wymagają uwagi)'],
   ['客户维度接单明细','Order detail by customer','Szczegóły zamówień wg klienta'],

@@ -2201,7 +2201,7 @@
 
 <section class="view" id="view-inventory-dashboard">
   <div class="viewhead">
-    <div><h2>库存管理 · 库存看板</h2><p>自动合并"代理商库存"与"代理商动销"数据，按 SKU 计算滚动可销周数(WOS)，辅助断货/滞销预警</p></div>
+    <div><h2>库存管理 · 库存看板</h2><p>自动合并"代理商库存"与"代理商动销"数据，按代理商分组计算滚动可消耗天数，辅助断货/滞销预警</p></div>
   </div>
 
   <div class="inv-note">
@@ -8570,6 +8570,7 @@ const I18N_DICT = [
   ['整体可消耗天数','Overall Days of Supply','Ogólna liczba dni zapasu'],
   ['可消耗天数','Days of Supply','Dni zapasu'],
   ['可消耗天数 = 当前库存 ÷ 日均销量（所选周期内销量 ÷ 周期天数）。可消耗天数 &lt; 14 天标记为断货风险，可消耗天数 &gt; 70 天或本周期内无动销标记为滞销风险；库存取每个代理商每个 SKU 最近一次上报的快照，动销取所选日期区间内的销量总和。','Days of Supply = current stock ÷ average daily sales (sales in the selected period ÷ number of days). Below 14 days is flagged as stockout risk; above 70 days or no sales in the period is flagged as slow-moving risk. Stock uses each agent+SKU\'s latest reported snapshot; sales sum all transactions within the selected date range.','Dni zapasu = bieżący stan magazynowy ÷ średnia dzienna sprzedaż (sprzedaż w wybranym okresie ÷ liczba dni). Poniżej 14 dni oznacza ryzyko braku towaru; powyżej 70 dni lub brak sprzedaży w okresie oznacza ryzyko nadmiaru zapasów. Stan magazynowy to najnowszy zgłoszony stan dla każdego agenta i SKU; sprzedaż to suma transakcji w wybranym zakresie dat.'],
+  ['自动合并"代理商库存"与"代理商动销"数据，按代理商分组计算滚动可消耗天数，辅助断货/滞销预警','Automatically merges "Agent Inventory" and "Agent Sell-through" data, calculates rolling Days of Supply grouped by agent to flag stockout/overstock risk','Automatycznie łączy dane "Zapasy agenta" i "Sprzedaż agenta", oblicza rotację zapasów w dniach wg agenta, aby oznaczyć ryzyko braku towaru/nadmiaru zapasów'],
 ];
 I18N_DICT.sort((a,b)=>b[0].length-a[0].length);
 

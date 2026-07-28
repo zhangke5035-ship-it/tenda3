@@ -2205,7 +2205,7 @@
   </div>
 
   <div class="inv-note">
-    可销周数(WOS) = 当前库存 ÷ 所选周期内销量。WOS &lt; 2 周标记为断货风险，WOS &gt; 10 周或本周无动销标记为滞销风险；库存取每个 SKU 最近一次上报的快照，动销取所选日期区间内的销量总和。
+    可消耗天数 = 当前库存 ÷ 日均销量（所选周期内销量 ÷ 周期天数）。可消耗天数 &lt; 14 天标记为断货风险，可消耗天数 &gt; 70 天或本周期内无动销标记为滞销风险；库存取每个代理商每个 SKU 最近一次上报的快照，动销取所选日期区间内的销量总和。
   </div>
 
   <div class="inv-stat-grid" style="grid-template-columns:repeat(4,1fr);">
@@ -2215,7 +2215,7 @@
       <div class="inv-stat-delta" id="invDashStatSkuCount">覆盖 0 个 SKU</div>
     </div>
     <div class="inv-stat-card">
-      <div class="inv-stat-label">整体可销周数(WOS)</div>
+      <div class="inv-stat-label">整体可消耗天数</div>
       <div class="inv-stat-value" id="invDashStatOverallWos">--</div>
       <div class="inv-stat-delta" id="invDashStatOverallWosNote">周期内综合周转</div>
     </div>
@@ -2270,7 +2270,7 @@
           <th>产品型号</th>
           <th class="inv-sortable" data-sort-key="stockQty">当前库存<span class="inv-sort-ind"></span></th>
           <th class="inv-sortable" data-sort-key="salesQty">周期内销量<span class="inv-sort-ind"></span></th>
-          <th class="inv-sortable" data-sort-key="wos">可销周数(WOS)<span class="inv-sort-ind"></span></th>
+          <th class="inv-sortable" data-sort-key="wos">可消耗天数<span class="inv-sort-ind"></span></th>
           <th>状态</th>
           <th class="inv-sortable" data-sort-key="suggestedQty">建议补货量(45天)<span class="inv-sort-ind"></span></th>
         </tr>
@@ -8567,6 +8567,9 @@ const I18N_DICT = [
   ['各代理商库存快照趋势','Stock Snapshot Trend by Agent','Trend stanu magazynowego wg agenta'],
   ['按历史上报日期展示各代理商总库存变化，可通过下方"代理商"筛选联动','Shows total stock changes by agent over reported dates; linked to the "Agent" filter below','Pokazuje zmiany łącznego stanu magazynowego wg agenta w czasie; powiązane z filtrem "Agent" poniżej'],
   ['代理商 / SKU 编码','Agent / SKU Code','Agent / Kod SKU'],
+  ['整体可消耗天数','Overall Days of Supply','Ogólna liczba dni zapasu'],
+  ['可消耗天数','Days of Supply','Dni zapasu'],
+  ['可消耗天数 = 当前库存 ÷ 日均销量（所选周期内销量 ÷ 周期天数）。可消耗天数 &lt; 14 天标记为断货风险，可消耗天数 &gt; 70 天或本周期内无动销标记为滞销风险；库存取每个代理商每个 SKU 最近一次上报的快照，动销取所选日期区间内的销量总和。','Days of Supply = current stock ÷ average daily sales (sales in the selected period ÷ number of days). Below 14 days is flagged as stockout risk; above 70 days or no sales in the period is flagged as slow-moving risk. Stock uses each agent+SKU\'s latest reported snapshot; sales sum all transactions within the selected date range.','Dni zapasu = bieżący stan magazynowy ÷ średnia dzienna sprzedaż (sprzedaż w wybranym okresie ÷ liczba dni). Poniżej 14 dni oznacza ryzyko braku towaru; powyżej 70 dni lub brak sprzedaży w okresie oznacza ryzyko nadmiaru zapasów. Stan magazynowy to najnowszy zgłoszony stan dla każdego agenta i SKU; sprzedaż to suma transakcji w wybranym zakresie dat.'],
 ];
 I18N_DICT.sort((a,b)=>b[0].length-a[0].length);
 
@@ -10265,6 +10268,7 @@ function stWeekKey(i){ const info = isoWeekInfo(i.transaction_date); return info
   let invDashSortDir = 'asc';
   let invDashCollapsedGroups = new Set();
   let invDashTrendChart = null;
+  let invDashPeriodDays = 7;
 
   function sortDashRows(rows){
     if (!invDashSortKey) return rows;
@@ -10283,8 +10287,8 @@ function stWeekKey(i){ const info = isoWeekInfo(i.transaction_date); return info
 
   function classifyWos(wos, sales){
     if (!sales || sales <= 0) return 'none';
-    if (wos < 2) return 'danger';
-    if (wos > 10) return 'warn';
+    if (wos < 14) return 'danger';
+    if (wos > 70) return 'warn';
     return 'ok';
   }
   const STATUS_LABEL = { danger: '断货风险', warn: '滞销风险', none: '无动销', ok: '健康' };
@@ -10360,6 +10364,7 @@ function stWeekKey(i){ const info = isoWeekInfo(i.transaction_date); return info
       const __diff = Math.round((__d2 - __d1) / 86400000) + 1;
       if (__diff > 0) periodDays = __diff;
     }
+    invDashPeriodDays = periodDays;
 
     const allKeys = new Set([].concat(Array.from(stockByKey.keys()), Array.from(salesByKey.keys())));
     const rows = [];
@@ -10372,7 +10377,7 @@ function stWeekKey(i){ const info = isoWeekInfo(i.transaction_date); return info
       const sku = (stock && stock.sku) || (sales && sales.sku) || key.split('|').slice(1).join('|');
       const model = (stock && stock.model) || (sales && sales.model) || '';
       let wos = null;
-      if (salesQty > 0) wos = Math.round((stockQty / salesQty) * 10) / 10;
+      if (salesQty > 0 && periodDays > 0) wos = Math.round((stockQty * periodDays / salesQty) * 10) / 10;
       const status = classifyWos(wos, salesQty);
       const dailyRate = periodDays > 0 ? (salesQty / periodDays) : 0;
       const suggestedQty = salesQty > 0 ? Math.max(0, Math.ceil(dailyRate * 45 - stockQty)) : 0;
@@ -10417,7 +10422,7 @@ function stWeekKey(i){ const info = isoWeekInfo(i.transaction_date); return info
       const list = groups.get(agent);
       const totalStock = list.reduce(function(s,r){ return s+r.stockQty; }, 0);
       const totalSales = list.reduce(function(s,r){ return s+r.salesQty; }, 0);
-      const wos = totalSales > 0 ? Math.round((totalStock/totalSales)*10)/10 : null;
+      const wos = (totalSales > 0 && invDashPeriodDays > 0) ? Math.round((totalStock*invDashPeriodDays/totalSales)*10)/10 : null;
       const status = classifyWos(wos, totalSales);
       return { agent: agent, rows: list, totalStock: totalStock, totalSales: totalSales, wos: wos, status: status };
     });
@@ -10426,7 +10431,7 @@ function stWeekKey(i){ const info = isoWeekInfo(i.transaction_date); return info
   function renderInvDashStats(){
     const totalStockQty = invDashRows.reduce(function(s,r){ return s+r.stockQty; }, 0);
     const totalSalesQty = invDashRows.reduce(function(s,r){ return s+r.salesQty; }, 0);
-    const overallWos = totalSalesQty > 0 ? Math.round((totalStockQty/totalSalesQty)*10)/10 : null;
+    const overallWos = (totalSalesQty > 0 && invDashPeriodDays > 0) ? Math.round((totalStockQty*invDashPeriodDays/totalSalesQty)*10)/10 : null;
     const skuSet = new Set(invDashRows.map(function(r){ return r.sku; }));
     const counts = { danger:0, warn:0, none:0, ok:0 };
     invDashRows.forEach(function(r){ counts[r.status]++; });
@@ -10436,7 +10441,7 @@ function stWeekKey(i){ const info = isoWeekInfo(i.transaction_date); return info
     set('invDashStatOverallWos', overallWos===null ? '--' : overallWos);
     const wosNoteEl = document.getElementById('invDashStatOverallWosNote');
     if (wosNoteEl){
-      wosNoteEl.textContent = overallWos===null ? '周期内暂无动销' : (overallWos<2 ? '整体偏紧，需关注补货' : (overallWos>10 ? '整体偏高，建议促销' : '整体周转健康'));
+      wosNoteEl.textContent = overallWos===null ? '周期内暂无动销' : (overallWos<14 ? '整体偏紧，需关注补货' : (overallWos>70 ? '整体偏高，建议促销' : '整体周转健康'));
     }
     set('invDashStatDanger', counts.danger);
     set('invDashStatWarn', counts.warn + counts.none);
@@ -10578,7 +10583,7 @@ function stWeekKey(i){ const info = isoWeekInfo(i.transaction_date); return info
   if (exportBtn) exportBtn.onclick = function(){
     const rows = filteredDashRows();
     if (!rows.length){ alert('暂无数据可导出'); return; }
-    const header = ['SKU编码','产品型号','代理商','当前库存','周期内销量','可销周数(WOS)','状态','建议补货量(45天)'];
+    const header = ['SKU编码','产品型号','代理商','当前库存','周期内销量','可消耗天数','状态','建议补货量(45天)'];
     const csvRows = rows.map(function(r){
       return [r.sku, r.model, r.agent, r.stockQty, r.salesQty, (r.wos===null?'无动销':r.wos), STATUS_LABEL[r.status], r.suggestedQty].map(function(v){
         const s = String(v==null?'':v);

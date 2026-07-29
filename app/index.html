@@ -870,7 +870,7 @@
       <h2>我的退货申请记录</h2>
       <div class="cp-table-wrap"><table class="cp-table">
         <thead>
-          <tr><th>提交时间</th><th>产品型号</th><th>数量</th><th>关联订单</th><th>发票号</th><th>序列号</th><th>承运商</th><th>物流单号</th><th>退货原因</th><th>其他信息</th><th>状态</th><th>操作</th></tr>
+          <tr><th>提交时间</th><th>产品型号</th><th>数量</th><th>关联订单</th><th>发票号</th><th>序列号</th><th>承运商</th><th>物流单号</th><th>退货原因</th><th>其他信息</th><th>状态</th><th>拒绝原因</th><th>操作</th></tr>
         </thead>
         <tbody id="cpReturnsTbody"></tbody>
       </table></div>
@@ -6519,7 +6519,7 @@ function renderReturnsAdminTable(){
       '<td>' + escapeHtmlCP(r.oa_no || '-') + '</td>' +
       '<td>' + escapeHtmlCP(r.sap_no || '-') + '</td>' +
       '<td>' + escapeHtmlCP(r.credit_note_no || '-') + '</td>' +
-      '<td><span class="cp-status cp-status-' + raStatusClass(r.status) + '">' + escapeHtmlCP(r.status) + '</span></td>' +
+      '<td><span class="cp-status cp-status-' + raStatusClass(r.status) + '"' + (r.status === '已拒绝' && r.reject_reason ? ' title="' + escapeHtmlCP(r.reject_reason) + '"' : '') + '>' + escapeHtmlCP(r.status) + '</span></td>' +
       '<td><div class="ra-row-actions"><select class="inv-field ra-status-select" data-id="' + r.id + '" style="padding:4px 8px;font-size:12px;">' +
         ['待处理','已受理','已退款','已拒绝'].map(function(s){
           return '<option value="' + s + '"' + (s===r.status?' selected':'') + '>' + s + '</option>';
@@ -6716,13 +6716,24 @@ document.addEventListener('change', function(e){
   if (!sel) return;
   const id = Number(sel.dataset.id);
   const newStatus = sel.value;
+  const row0 = returnsAdminData.find(function(r){ return r.id===id; });
+  const prevStatus = row0 ? row0.status : null;
+  let rejectReason = row0 ? (row0.reject_reason || null) : null;
+  if (newStatus === '已拒绝'){
+    const input = prompt('请输入拒绝原因：', rejectReason || '');
+    if (input === null){ if (prevStatus) sel.value = prevStatus; return; }
+    rejectReason = input.trim() || null;
+  } else {
+    rejectReason = null;
+  }
   sel.disabled = true;
-  sb.from('returns').update({status:newStatus}).eq('id', id).then(function(res){
+  sb.from('returns').update({status:newStatus, reject_reason:rejectReason}).eq('id', id).then(function(res){
     sel.disabled = false;
-    if (res.error){ console.error('update return status', res.error); alert('更新失败：' + res.error.message); return; }
+    if (res.error){ console.error('update return status', res.error); alert('更新失败：' + res.error.message); if (prevStatus) sel.value = prevStatus; return; }
     const row = returnsAdminData.find(function(r){ return r.id===id; });
-    if (row) row.status = newStatus;
+    if (row){ row.status = newStatus; row.reject_reason = rejectReason; }
     renderReturnsAdminStats();
+    renderReturnsAdminTable();
   });
 });
 
@@ -7030,7 +7041,7 @@ async function loadCustomerReturns(){
   if (error){ console.error('loadCustomerReturns', error); return; }
   cpReturnsData = data || [];
   if (!data || !data.length){
-    tbody.innerHTML = '<tr><td colspan="12" style="text-align:center;color:var(--text-faint);padding:20px;">暂无退货申请记录</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="13" style="text-align:center;color:var(--text-faint);padding:20px;">暂无退货申请记录</td></tr>';
     return;
   }
   tbody.innerHTML = data.map(function(r){
@@ -7049,6 +7060,7 @@ async function loadCustomerReturns(){
       '<td>' + escapeHtmlCP(r.reason||'') + '</td>' +
       '<td>' + escapeHtmlCP(formatExtraFields(r.extra_fields)) + '</td>' +
       '<td><span class="cp-status cp-status-' + cpStatusClass(r.status) + '">' + escapeHtmlCP(r.status) + '</span></td>' +
+      '<td>' + (r.status === '已拒绝' ? escapeHtmlCP(r.reject_reason || '-') : '-') + '</td>' +
       '<td>' + actionsHtml + '</td>' +
     '</tr>';
   }).join('');
@@ -9139,6 +9151,7 @@ const I18N_DICT = [
   ['编辑主题名称','Edit theme name','Edytuj nazwę tematu'],
   ['主题名称','Theme Name','Nazwa tematu'],
   ['例如 618大促、Q3渠道让利','e.g. Summer Sale, Q3 Channel Discount','np. Promocja letnia, Rabat kanałowy Q3'],
+  ['拒绝原因','Rejection Reason','Powód odrzucenia'],
 ];
 I18N_DICT.sort((a,b)=>b[0].length-a[0].length);
 

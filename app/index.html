@@ -196,6 +196,22 @@
   .promo-check-td{width:40px;text-align:center;}
   .promo-period-col{min-width:220px;}
 
+  /* ---- 促销管理：促销主题卡片列表 ---- */
+  .promo-campaign-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;}
+  .promo-campaign-card{border:1px solid var(--border);border-radius:8px;padding:16px 18px;cursor:pointer;transition:border-color .12s ease,box-shadow .12s ease;background:var(--surface);}
+  .promo-campaign-card:hover{border-color:var(--copper);box-shadow:0 4px 14px rgba(0,0,0,0.06);}
+  .promo-campaign-card-head{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+  .promo-campaign-card-name{font-weight:700;font-size:15px;color:var(--text);}
+  .promo-campaign-rename{color:var(--text-faint);cursor:pointer;font-size:13px;flex-shrink:0;}
+  .promo-campaign-rename:hover{color:var(--copper);}
+  .promo-campaign-card-meta{margin-top:6px;font-size:12px;color:var(--text-dim);}
+  .promo-campaign-card-badges{margin-top:10px;display:flex;flex-wrap:wrap;gap:6px;}
+  .promo-campaign-header{display:flex;align-items:center;gap:16px;margin-bottom:14px;flex-wrap:wrap;}
+  .promo-campaign-back{cursor:pointer;color:var(--text-dim);font-size:13px;}
+  .promo-campaign-back:hover{color:var(--copper);}
+  .promo-campaign-title-wrap{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:700;color:var(--text);}
+  .promo-campaign-title-wrap .promo-campaign-rename{font-size:14px;}
+
   /* ---- 总部报价模拟测算：隐藏类目/产品信息描述列(仅该模块，客户报价不受影响) ---- */
   #priceDetailTable.sim-hide-cols th:nth-child(2),
   #priceDetailTable.sim-hide-cols td:nth-child(2),
@@ -1608,6 +1624,33 @@
     <div><h2>促销管理</h2><p>管理所有渠道的定价与促销活动</p></div>
   </div>
 
+  <div id="promoCampaignListWrap">
+    <div class="panel">
+      <div class="inv-toolbar" style="margin-bottom:14px;">
+        <div class="inv-filters" style="flex:1;">
+          <div class="inv-search" style="flex:1;max-width:360px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" id="promoCampaignSearchInput" placeholder="搜索促销主题...">
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="inv-btn inv-btn-primary" id="promoCampaignAddBtn">＋ 新建促销主题</button>
+        </div>
+      </div>
+      <div class="promo-campaign-grid" id="promoCampaignGrid"></div>
+    </div>
+  </div>
+
+  <div id="promoDealDetailWrap" style="display:none;">
+    <div class="promo-campaign-header">
+      <a class="promo-campaign-back" id="promoCampaignBackBtn">← 返回主题列表</a>
+      <div class="promo-campaign-title-wrap">
+        <span id="promoCampaignTitleText"></span>
+        <a class="promo-campaign-rename" id="promoCampaignRenameBtn" title="编辑主题名称">✎</a>
+      </div>
+    </div>
+
+
   <div class="kpi-row" id="promoDealKpiRow"></div>
 
   <div class="panel">
@@ -1643,8 +1686,24 @@
       <tbody id="promoDealTableBody"></tbody>
     </table>
   </div>
+  </div>
 </section>
 
+<div class="drawer-overlay" id="promoCampaignDrawerOverlay">
+  <div class="drawer-panel" style="width:380px;">
+    <div class="drawer-header">
+      <div class="drawer-title" id="promoCampaignDrawerTitle">新建促销主题</div>
+      <div class="drawer-close" id="promoCampaignDrawerClose">✕</div>
+    </div>
+    <div class="drawer-body">
+      <div class="field"><label>主题名称</label><input id="pc_name" placeholder="例如 618大促、Q3渠道让利"></div>
+    </div>
+    <div class="drawer-footer">
+      <button class="btn ghost" id="promoCampaignDrawerCancel">取消</button>
+      <button class="btn" id="promoCampaignSaveBtn">保存</button>
+    </div>
+  </div>
+</div>
 <div class="drawer-overlay" id="promoDealDrawerOverlay">
   <div class="drawer-panel">
     <div class="drawer-header">
@@ -4289,6 +4348,131 @@ let promoDealCustSearchTerm = '';
 let promoDealTypeFilter = '全部';
 let promoDealSelectedIds = new Set();
 const PROMO_TYPE_LIST = ['DDP-满减促销(一级客户)','DMP促销(二级客户)','Sell-in价格促销'];
+let promoCampaigns = [];
+let promoCampaignActiveId = null;
+let promoCampaignSearchTerm = '';
+let promoCampaignEditId = null;
+
+function promoDealsInActiveCampaign(){
+  return promoCampaignActiveId==null ? promoDeals : promoDeals.filter(p=>p.campaign_id===promoCampaignActiveId);
+}
+function promoCampaignStats(id){
+  const rows = promoDeals.filter(p=>p.campaign_id===id);
+  const custSet = new Set(rows.map(p=>p.cust));
+  return {
+    count: rows.length,
+    custCount: custSet.size,
+    active: rows.filter(p=>p.status==='进行中').length,
+    notStarted: rows.filter(p=>p.status==='未开始').length,
+    ended: rows.filter(p=>p.status==='已结束').length
+  };
+}
+function renderPromoCampaignGrid(){
+  const grid = document.getElementById('promoCampaignGrid');
+  if (!grid) return;
+  const q = promoCampaignSearchTerm.trim().toLowerCase();
+  const list = promoCampaigns.filter(c=>!q || (c.name||'').toLowerCase().includes(q));
+  if (!list.length){
+    grid.innerHTML = '<div class="ms-empty" style="padding:40px 0;">暂无促销主题，点击右上角新建一个吧</div>';
+    return;
+  }
+  grid.innerHTML = list.map(c=>{
+    const s = promoCampaignStats(c.id);
+    const badges = [
+      s.active ? `<span class="promo-status-tag" style="background:var(--good-soft);color:var(--good);">进行中 ${s.active}</span>` : '',
+      s.notStarted ? `<span class="promo-status-tag" style="background:#E8F1FC;color:#2F6FB3;">未开始 ${s.notStarted}</span>` : '',
+      s.ended ? `<span class="promo-status-tag" style="background:var(--surface-alt);color:var(--text-dim);">已结束 ${s.ended}</span>` : '',
+      (!s.active && !s.notStarted && !s.ended) ? '<span class="promo-status-tag" style="background:var(--surface-alt);color:var(--text-faint);">暂无促销</span>' : ''
+    ].join('');
+    return `<div class="promo-campaign-card" data-id="${c.id}">
+      <div class="promo-campaign-card-head">
+        <div class="promo-campaign-card-name">${c.name}</div>
+        <a class="promo-campaign-rename" data-action="rename" data-id="${c.id}" title="编辑主题名称">✎</a>
+      </div>
+      <div class="promo-campaign-card-meta">${s.count} 个促销型号 · ${s.custCount} 个客户</div>
+      <div class="promo-campaign-card-badges">${badges}</div>
+    </div>`;
+  }).join('');
+  grid.querySelectorAll('.promo-campaign-card').forEach(card=>{
+    card.addEventListener('click', (e)=>{
+      if (e.target.closest('[data-action="rename"]')) return;
+      openPromoCampaign(Number(card.dataset.id));
+    });
+  });
+  grid.querySelectorAll('[data-action="rename"]').forEach(btn=>{
+    btn.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      openPromoCampaignDrawer(Number(btn.dataset.id));
+    });
+  });
+}
+function openPromoCampaign(id){
+  promoCampaignActiveId = id;
+  const c = promoCampaigns.find(x=>x.id===id);
+  document.getElementById('promoCampaignTitleText').textContent = c ? c.name : '';
+  document.getElementById('promoCampaignListWrap').style.display = 'none';
+  document.getElementById('promoDealDetailWrap').style.display = '';
+  promoDealStatusFilter = '全部';
+  promoDealCustFilterSet.clear();
+  promoDealCustSearchTerm = '';
+  promoDealTypeFilter = '全部';
+  promoDealSelectedIds.clear();
+  promoDealSearchTerm = '';
+  const searchInput = document.getElementById('promoDealSearchInput');
+  if (searchInput) searchInput.value = '';
+  renderPromoDealAll();
+}
+function backToPromoCampaignList(){
+  promoCampaignActiveId = null;
+  document.getElementById('promoDealDetailWrap').style.display = 'none';
+  document.getElementById('promoCampaignListWrap').style.display = '';
+  renderPromoCampaignGrid();
+}
+function openPromoCampaignDrawer(editId){
+  promoCampaignEditId = editId || null;
+  const titleEl = document.getElementById('promoCampaignDrawerTitle');
+  const nameInput = document.getElementById('pc_name');
+  if (promoCampaignEditId){
+    const c = promoCampaigns.find(x=>x.id===promoCampaignEditId);
+    titleEl.textContent = '编辑主题名称';
+    nameInput.value = c ? c.name : '';
+  } else {
+    titleEl.textContent = '新建促销主题';
+    nameInput.value = '';
+  }
+  document.getElementById('promoCampaignDrawerOverlay').classList.add('open');
+}
+function closePromoCampaignDrawer(){
+  document.getElementById('promoCampaignDrawerOverlay').classList.remove('open');
+}
+async function savePromoCampaign(){
+  const name = document.getElementById('pc_name').value.trim();
+  if (!name){ alert('请填写主题名称'); return; }
+  if (promoCampaignEditId){
+    const { data, error } = await sb.from('promo_campaigns').update({ name }).eq('id', promoCampaignEditId).select().single();
+    if (error){ alert('保存失败：' + error.message); return; }
+    const c = promoCampaigns.find(x=>x.id===promoCampaignEditId);
+    if (c) c.name = data.name;
+    if (promoCampaignActiveId===promoCampaignEditId){
+      const titleText = document.getElementById('promoCampaignTitleText');
+      if (titleText) titleText.textContent = data.name;
+    }
+  } else {
+    const { data, error } = await sb.from('promo_campaigns').insert({ name }).select().single();
+    if (error){ alert('创建失败：' + error.message); return; }
+    promoCampaigns.push({ id: data.id, name: data.name });
+  }
+  closePromoCampaignDrawer();
+  renderPromoCampaignGrid();
+}
+async function loadPromoCampaigns(){
+  try{
+    const { data, error } = await sb.from('promo_campaigns').select('*').order('id', {ascending:true});
+    if (error){ console.error('loadPromoCampaigns', error); return; }
+    promoCampaigns = (data||[]).map(r=>({ id:r.id, name:r.name }));
+    renderPromoCampaignGrid();
+  }catch(e){ console.error(e); }
+}
 
 function populatePromoDealSelects(){
   const opts = uniqueCustomers().map(c=>`<option value="${c}">${custName(c)}</option>`).join('');
@@ -4340,17 +4524,18 @@ function togglePromoPullDetail(id){
 function renderPromoDealKpi(){
   const box = document.getElementById("promoDealKpiRow");
   if (!box) return;
-  const total = promoDeals.length;
-  const active = promoDeals.filter(function(p){ return p.status === "进行中"; }).length;
-  const discounts = promoDeals.filter(function(p){ return p.original>0; }).map(promoDealDiscountPct);
+  const scoped = promoDealsInActiveCampaign();
+  const total = scoped.length;
+  const active = scoped.filter(function(p){ return p.status === "进行中"; }).length;
+  const discounts = scoped.filter(function(p){ return p.original>0; }).map(promoDealDiscountPct);
   const avgDiscount = discounts.length ? (discounts.reduce(function(a,b){ return a+b; },0)/discounts.length) : 0;
 
-  const withTarget = promoDeals.filter(function(p){ return promoDealTarget(p) > 0; });
-  const totalPull = promoDeals.reduce(function(s,p){ return s + promoDealPullVolume(p); }, 0);
+  const withTarget = scoped.filter(function(p){ return promoDealTarget(p) > 0; });
+  const totalPull = scoped.reduce(function(s,p){ return s + promoDealPullVolume(p); }, 0);
   const totalTarget = withTarget.reduce(function(s,p){ return s + promoDealTarget(p); }, 0);
   const achieveRate = totalTarget>0 ? (totalPull/totalTarget*100) : 0;
 
-  const withBaseline = promoDeals.filter(function(p){ return promoDealBaseline(p) > 0; });
+  const withBaseline = scoped.filter(function(p){ return promoDealBaseline(p) > 0; });
   const liftPull = withBaseline.reduce(function(s,p){ return s + promoDealPullVolume(p); }, 0);
   const liftBaseline = withBaseline.reduce(function(s,p){ return s + promoDealBaseline(p); }, 0);
   const avgLift = liftBaseline>0 ? (liftPull/liftBaseline) : 0;
@@ -4383,9 +4568,10 @@ function renderPromoDealTabs(){
   renderPromoDealCustDropdown();
   const typeBox = document.getElementById('promoDealTypeTabs');
   if (typeBox){
-    const typeKeys = ['全部', ...new Set(promoDeals.map(p=>p.type).filter(Boolean))];
+    const scopedForType = promoDealsInActiveCampaign();
+    const typeKeys = ['全部', ...new Set(scopedForType.map(p=>p.type).filter(Boolean))];
     typeBox.innerHTML = typeKeys.map(t=>{
-      const count = t==='全部' ? promoDeals.length : promoDeals.filter(p=>p.type===t).length;
+      const count = t==='全部' ? scopedForType.length : scopedForType.filter(p=>p.type===t).length;
       return `<div class="cust-tab ${promoDealTypeFilter===t?'active':''}" data-type="${t}">${t}<span class="count">${count}</span></div>`;
     }).join('');
     typeBox.querySelectorAll('.cust-tab').forEach(tab=>{
@@ -4398,9 +4584,10 @@ function renderPromoDealTabs(){
 function renderPromoDealStatusTabBar(){
   const statusBox = document.getElementById('promoDealStatusTabs');
   if (!statusBox) return;
+  const scoped = promoDealsInActiveCampaign();
   const statuses = ['全部','未开始','进行中','已结束','已取消'];
   statusBox.innerHTML = statuses.map(s=>{
-    const count = s==='全部' ? promoDeals.length : promoDeals.filter(p=>p.status===s).length;
+    const count = s==='全部' ? scoped.length : scoped.filter(p=>p.status===s).length;
     return `<div class="ptab-item ${promoDealStatusFilter===s?'active':''}" data-status="${s}">${s}<span class="count">${count}</span></div>`;
   }).join('');
   statusBox.querySelectorAll('.ptab-item').forEach(tab=>{
@@ -4423,6 +4610,7 @@ function renderPromoDealCustDropdown(){
   if (!trigger || !optionsBox) return;
   trigger.textContent = promoDealCustTriggerLabel();
   trigger.classList.toggle('active', promoDealCustFilterSet.size > 0);
+  const scopedForCust = promoDealsInActiveCampaign();
   const q = promoDealCustSearchTerm.trim().toLowerCase();
   const custKeys = uniqueCustomers().filter(k=>!q || custName(k).toLowerCase().includes(q));
   if (!custKeys.length){
@@ -4430,7 +4618,7 @@ function renderPromoDealCustDropdown(){
     return;
   }
   optionsBox.innerHTML = custKeys.map(k=>{
-    const count = promoDeals.filter(p=>p.cust===k).length;
+    const count = scopedForCust.filter(p=>p.cust===k).length;
     const checked = promoDealCustFilterSet.has(k) ? 'checked' : '';
     return `<label class="ms-option"><input type="checkbox" data-cust="${k}" ${checked}><span>${custName(k)}</span><span class="count">${count}</span></label>`;
   }).join('');
@@ -4459,7 +4647,7 @@ function promoStatusTag(status){
   return '<span class="promo-status-tag" style="background:' + c.bg + ';color:' + c.color + ';">' + status + '</span>';
 }
 function invGetFilteredPromoDeals(){
-  let rows = promoDeals;
+  let rows = promoDealsInActiveCampaign();
   if (promoDealStatusFilter !== '全部') rows = rows.filter(p=>p.status===promoDealStatusFilter);
   if (promoDealCustFilterSet.size > 0) rows = rows.filter(p=>promoDealCustFilterSet.has(p.cust));
   if (promoDealTypeFilter !== '全部') rows = rows.filter(p=>p.type===promoDealTypeFilter);
@@ -5422,11 +5610,13 @@ document.getElementById('addPromoDealBtn').addEventListener('click', async ()=>{
 
   const { data, error } = await sb.from('promo_deals').insert({
     name, cust, type, product, original, promo,
-    start_date: start || null, end_date: end || null, status, config
+    start_date: start || null, end_date: end || null, status, config,
+    campaign_id: promoCampaignActiveId
   }).select().single();
   if (error){ alert('保存促销失败：' + error.message); return; }
-  promoDeals.push({ id: data.id, name: data.name, cust: data.cust, type: data.type, product: data.product, original: Number(data.original)||0, promo: Number(data.promo)||0, start: data.start_date||'', end: data.end_date||'', status: data.status, config: data.config||null });
+  promoDeals.push({ id: data.id, name: data.name, cust: data.cust, type: data.type, product: data.product, original: Number(data.original)||0, promo: Number(data.promo)||0, start: data.start_date||'', end: data.end_date||'', status: data.status, config: data.config||null, campaign_id: data.campaign_id });
   renderPromoDealAll();
+  renderPromoCampaignGrid();
   closePromoDealDrawer();
 });
 
@@ -5452,6 +5642,22 @@ const promoDealDrawerCloseEl = document.getElementById('promoDealDrawerClose');
 if (promoDealDrawerCloseEl) promoDealDrawerCloseEl.addEventListener('click', closePromoDealDrawer);
 const promoDealDrawerCancelEl = document.getElementById('promoDealDrawerCancel');
 if (promoDealDrawerCancelEl) promoDealDrawerCancelEl.addEventListener('click', closePromoDealDrawer);
+const promoCampaignAddBtnEl = document.getElementById('promoCampaignAddBtn');
+if (promoCampaignAddBtnEl) promoCampaignAddBtnEl.addEventListener('click', ()=>openPromoCampaignDrawer(null));
+const promoCampaignBackBtnEl = document.getElementById('promoCampaignBackBtn');
+if (promoCampaignBackBtnEl) promoCampaignBackBtnEl.addEventListener('click', backToPromoCampaignList);
+const promoCampaignRenameBtnEl = document.getElementById('promoCampaignRenameBtn');
+if (promoCampaignRenameBtnEl) promoCampaignRenameBtnEl.addEventListener('click', ()=>openPromoCampaignDrawer(promoCampaignActiveId));
+const promoCampaignDrawerCloseEl = document.getElementById('promoCampaignDrawerClose');
+if (promoCampaignDrawerCloseEl) promoCampaignDrawerCloseEl.addEventListener('click', closePromoCampaignDrawer);
+const promoCampaignDrawerCancelEl = document.getElementById('promoCampaignDrawerCancel');
+if (promoCampaignDrawerCancelEl) promoCampaignDrawerCancelEl.addEventListener('click', closePromoCampaignDrawer);
+const promoCampaignSaveBtnEl = document.getElementById('promoCampaignSaveBtn');
+if (promoCampaignSaveBtnEl) promoCampaignSaveBtnEl.addEventListener('click', savePromoCampaign);
+const promoCampaignSearchInputEl = document.getElementById('promoCampaignSearchInput');
+if (promoCampaignSearchInputEl) promoCampaignSearchInputEl.addEventListener('input', function(){ promoCampaignSearchTerm = this.value; renderPromoCampaignGrid(); });
+const promoCampaignDrawerOverlayEl = document.getElementById('promoCampaignDrawerOverlay');
+if (promoCampaignDrawerOverlayEl) promoCampaignDrawerOverlayEl.addEventListener('click', function(e){ if(e.target === promoCampaignDrawerOverlayEl) closePromoCampaignDrawer(); });
 const promoDealDrawerOverlayEl = document.getElementById('promoDealDrawerOverlay');
 if (promoDealDrawerOverlayEl) promoDealDrawerOverlayEl.addEventListener('click', function(e){ if(e.target === promoDealDrawerOverlayEl) closePromoDealDrawer(); });
 const promoDealSearchInputEl = document.getElementById('promoDealSearchInput');
@@ -5802,9 +6008,10 @@ async function loadPromoDeals(){
       id: r.id, name: r.name, cust: r.cust, type: r.type, product: r.product,
       original: Number(r.original)||0, promo: Number(r.promo)||0,
       start: r.start_date||'', end: r.end_date||'', status: r.status,
-      config: r.config || null
+      config: r.config || null, campaign_id: r.campaign_id
     }));
     if (typeof renderPromoDealAll === 'function') renderPromoDealAll();
+    if (typeof renderPromoCampaignGrid === 'function') renderPromoCampaignGrid();
   }catch(e){ console.error(e); }
 }
 
@@ -6548,6 +6755,7 @@ async function loadInvoicesData(){
 async function loadAllRemoteData(){
   await Promise.all([
     loadPromoDeals(),
+    loadPromoCampaigns(),
     loadMarketingActivities(),
     loadOrdersData(),
     loadInvoicesData(),
@@ -8922,6 +9130,15 @@ const I18N_DICT = [
   ['自动合并"代理商库存"与"代理商动销"数据，按代理商分组计算滚动可消耗天数，辅助断货/滞销预警','Automatically merges "Agent Inventory" and "Agent Sell-through" data, calculates rolling Days of Supply grouped by agent to flag stockout/overstock risk','Automatycznie łączy dane "Zapasy agenta" i "Sprzedaż agenta", oblicza rotację zapasów w dniach wg agenta, aby oznaczyć ryzyko braku towaru/nadmiaru zapasów'],
   ['产品型号维度月环比','Product Model MoM Trend','Trend m/m wg modelu produktu'],
   ['各产品型号近3个月订单净额趋势','Order net amount by product model for the last 3 months','Wartość netto zamówień wg modelu produktu za ostatnie 3 miesiące'],
+  ['搜索促销主题...','Search promotion themes...','Szukaj tematów promocji...'],
+  ['← 返回主题列表','← Back to Theme List','← Powrót do listy tematów'],
+  ['暂无促销主题，点击右上角新建一个吧','No promotion themes yet — click the button above to create one','Brak tematów promocji — kliknij powyżej, aby utworzyć nowy'],
+  ['个促销型号','promo models','modeli promo'],
+  ['暂无促销','No promotions','Brak promocji'],
+  ['新建促销主题','New Theme','Nowy temat'],
+  ['编辑主题名称','Edit theme name','Edytuj nazwę tematu'],
+  ['主题名称','Theme Name','Nazwa tematu'],
+  ['例如 618大促、Q3渠道让利','e.g. Summer Sale, Q3 Channel Discount','np. Promocja letnia, Rabat kanałowy Q3'],
 ];
 I18N_DICT.sort((a,b)=>b[0].length-a[0].length);
 

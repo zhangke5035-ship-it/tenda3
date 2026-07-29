@@ -1548,6 +1548,7 @@
       <div class="panel-head"><h3>新增订单</h3></div>
       <div class="form-grid">
         <div class="field"><label>订单号</label><input id="o_no" placeholder="例如 PL-20260714-001"></div>
+        <div class="field"><label>客户订单号</label><input id="o_po_note" placeholder="例如 Note: ZZ000021332"></div>
         <div class="field"><label>客户</label><select id="o_customer"></select></div>
         <div class="field"><label>下单日期</label><input id="o_date" type="date"></div>
         <div class="field"><label>状态</label>
@@ -1568,7 +1569,7 @@
       <div class="cust-tabs" id="orderCustTabs"></div>
       <table>
         <thead><tr>
-          <th>订单号</th><th>下单日期</th><th>客户</th><th>型号数</th><th>订单总额(PLN)</th><th>状态</th><th></th>
+          <th>订单号</th><th>客户订单号</th><th>下单日期</th><th>客户</th><th>型号数</th><th>订单总额(PLN)</th><th>状态</th><th></th>
         </tr></thead>
         <tbody id="orderTableBody"></tbody>
       </table>
@@ -6419,7 +6420,7 @@ async function loadOrdersData(){
     ]);
     if (ordersRes.error){ console.error('loadOrders', ordersRes.error); }
     if (itemsRes.error){ console.error('loadOrderItems', itemsRes.error); }
-    orders = (ordersRes.data||[]).map(r=>({ id: r.id, no: r.order_no, cust: r.cust, date: r.order_date||'', status: r.status }));
+    orders = (ordersRes.data||[]).map(r=>({ id: r.id, no: r.order_no, cust: r.cust, date: r.order_date||'', status: r.status, poNote: r.customer_po_note||'' }));
     orderItems = (itemsRes.data||[]).map(r=>({ id: r.id, orderId: r.order_id, product: r.product, ean: r.ean||'', qty: Number(r.qty)||0, price: Number(r.price)||0 }));
     if (typeof renderOrders === 'function') renderOrders();
     if (typeof renderSalesOverview === 'function') renderSalesOverview();
@@ -7492,6 +7493,15 @@ function renderOrderTabs(){
   });
 }
 
+function escapeAttrOrder(s){
+  return String(s==null?'':s).replace(/[&<>"']/g, function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+  });
+}
+function extractCustomerOrderNo(note){
+  if (!note) return '';
+  return String(note).replace(/^\s*note\s*[:：]\s*/i, '').trim();
+}
 function renderOrderTable(){
   const body = document.getElementById('orderTableBody');
   const countBox = document.getElementById('orderCount');
@@ -7507,6 +7517,7 @@ function renderOrderTable(){
     const amount = orderTotal(o.id).toFixed(1);
     return `<tr class="order-row" data-id="${o.id}" style="cursor:pointer;">
       <td class="mono">${o.no}</td>
+      <td><input class="order-po-input" data-id="${o.id}" value="${escapeAttrOrder(extractCustomerOrderNo(o.poNote))}" placeholder="Note: ..." style="width:100%;border:1px solid var(--border);border-radius:6px;padding:4px 6px;font-size:12px;" /></td>
       <td>${o.date||''}</td>
       <td>${custName}</td>
       <td class="num-cell">${itemCount}</td>
@@ -7676,14 +7687,30 @@ if (addOrderBtn){
     const cust = document.getElementById('o_customer').value;
     const date = document.getElementById('o_date').value;
     const status = document.getElementById('o_status').value;
+    const poNoteInput = document.getElementById('o_po_note');
+    const poNote = poNoteInput ? poNoteInput.value.trim() : '';
     if (!no){ alert('请填写订单号'); return; }
-    const { data, error } = await sb.from('orders').insert({ order_no: no, cust, order_date: date || null, status }).select().single();
+    const { data, error } = await sb.from('orders').insert({ order_no: no, cust, order_date: date || null, status, customer_po_note: poNote || null }).select().single();
     if (error){ alert('保存订单失败：' + error.message); return; }
-    orders.push({id: data.id, no: data.order_no, cust: data.cust, date: data.order_date||'', status: data.status});
+    orders.push({id: data.id, no: data.order_no, cust: data.cust, date: data.order_date||'', status: data.status, poNote: data.customer_po_note||''});
     renderOrders();
     document.getElementById('o_no').value = '';
+    if (poNoteInput) poNoteInput.value = '';
   });
 }
+
+document.addEventListener('blur', function(e){
+  const inp = e.target && e.target.classList && e.target.classList.contains('order-po-input') ? e.target : null;
+  if (!inp) return;
+  const id = Number(inp.dataset.id);
+  const row = orders.find(function(o){ return o.id === id; });
+  const rawVal = inp.value.trim();
+  sb.from('orders').update({ customer_po_note: rawVal || null }).eq('id', id).then(function(res){
+    if (res.error){ console.error('update order po note', res.error); alert('保存客户订单号失败：' + res.error.message); return; }
+    if (row) row.poNote = rawVal;
+    inp.value = extractCustomerOrderNo(rawVal);
+  });
+}, true);
 
 const addOrderItemBtn = document.getElementById('addOrderItemBtn');
 if (addOrderItemBtn){
@@ -9152,6 +9179,7 @@ const I18N_DICT = [
   ['主题名称','Theme Name','Nazwa tematu'],
   ['例如 618大促、Q3渠道让利','e.g. Summer Sale, Q3 Channel Discount','np. Promocja letnia, Rabat kanałowy Q3'],
   ['拒绝原因','Rejection Reason','Powód odrzucenia'],
+  ['客户订单号','Customer Order No.','Nr zamówienia klienta'],
 ];
 I18N_DICT.sort((a,b)=>b[0].length-a[0].length);
 

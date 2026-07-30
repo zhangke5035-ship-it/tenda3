@@ -1541,40 +1541,7 @@
     <div><h2>销售订单</h2><p>记录波兰站点客户的实际销售订单，点击订单查看/新增其中的产品型号明细</p></div>
   </div>
 
-  <div class="kpi-row" id="orderKpiRow"></div>
-
-  <div id="orderListPanelGroup">
-    <div class="panel">
-      <div class="panel-head"><h3>新增订单</h3></div>
-      <div class="form-grid">
-        <div class="field"><label>订单号</label><input id="o_no" placeholder="例如 PL-20260714-001"></div>
-        <div class="field"><label>客户订单号</label><input id="o_po_note" placeholder="例如 Note: ZZ000021332"></div>
-        <div class="field"><label>客户</label><select id="o_customer"></select></div>
-        <div class="field"><label>下单日期</label><input id="o_date" type="date"></div>
-        <div class="field"><label>状态</label>
-          <select id="o_status">
-            <option>待处理</option>
-            <option>已发货</option>
-            <option>已完成</option>
-            <option>已取消</option>
-          </select>
-        </div>
-      </div>
-      <button class="btn" id="addOrderBtn">新增订单</button>
-    </div>
-
-    <div class="panel">
-      <div class="panel-head"><h3>订单列表</h3><div class="desc" id="orderCount"></div></div>
-      <div class="cust-tabs" id="orderStatusTabs"></div>
-      <div class="cust-tabs" id="orderCustTabs"></div>
-      <table>
-        <thead><tr>
-          <th>订单号</th><th>客户订单号</th><th>下单日期</th><th>客户</th><th>型号数</th><th>订单总额(PLN)</th><th>状态</th><th></th>
-        </tr></thead>
-        <tbody id="orderTableBody"></tbody>
-      </table>
-    </div>
-  </div>
+  <div id="orderListPanelGroup"><div id="vueOrderAppRoot"></div></div>
 
   <div id="orderDetailPanelGroup" style="display:none;">
     <div class="panel">
@@ -2454,6 +2421,7 @@ const CUSTOMERS = {
   INTELEK:{name:'Intelek',            type:'direct', country:'捷克/斯洛伐克'},
   PROSPECT_PL:{name:'待开发客户',      type:'prospect', country:'波兰'}
 };
+window.CUSTOMERS = CUSTOMERS;
 
 let priceList = [
   {id:1, product:'TE6L Pro', cust:'INC', quarter:'Q3', retailPLN:379.0, netPLN:214.92, costUSD:46.87, profitUSD:10.3, marginPct:17.21},
@@ -5949,6 +5917,7 @@ refreshAll();
 const SUPABASE_URL = 'https://pbeqpytprjoaqfhalsgj.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBiZXFweXRwcmpvYXFmaGFsc2dqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM5NDkzMzgsImV4cCI6MjA5OTUyNTMzOH0.LaoZ00VH1DrvRA_Wegmk5UZhbNnUsUfP1qMkbFZ12Ds';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+window.sb = sb;
 
 const authGateEl = document.getElementById('authGate');
 const appRootEl = document.getElementById('appRoot');
@@ -11551,6 +11520,7 @@ function stWeekKey(i){ const info = isoWeekInfo(i.transaction_date); return info
   qrbRenderAll();
 })();
 </script>
+<script type="module" src="./orderApp.js"></script>
 </body>
 </html>
 <script>

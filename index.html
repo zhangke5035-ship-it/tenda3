@@ -9180,6 +9180,17 @@ const I18N_DICT = [
   ['例如 618大促、Q3渠道让利','e.g. Summer Sale, Q3 Channel Discount','np. Promocja letnia, Rabat kanałowy Q3'],
   ['拒绝原因','Rejection Reason','Powód odrzucenia'],
   ['客户订单号','Customer Order No.','Nr zamówienia klienta'],
+  ['暂无动销数据','No sell-through data yet','Brak jeszcze danych o sprzedaży'],
+  ['终端客户','End Customer','Klient końcowy'],
+  ['销售笔数','Transactions','Transakcje'],
+  ['累计销量','Total Units Sold','Łączna sprzedana ilość'],
+  ['累计净额','Total Net Amount','Łączna kwota netto'],
+  ['交易日期','Transaction Date','Data transakcji'],
+  ['销售单号','Sales Order No.','Nr zamówienia'],
+  ['动销','Sell-Through','Sprzedaż'],
+  ['销量','Units Sold','Sprzedane szt.'],
+  ['净额','Net Amount','Kwota netto'],
+  ['城市','City','Miasto'],
 ];
 I18N_DICT.sort((a,b)=>b[0].length-a[0].length);
 
@@ -10069,7 +10080,7 @@ applyLanguage(currentLang);
     sunday.setDate(monday.getDate() + 6);
     function pad2(n){ return (n<10?'0':'')+n; }
     function fmt(dt){ return pad2(dt.getMonth()+1) + '/' + pad2(dt.getDate()); }
-    return { year: target.getFullYear(), week: weekNum, key: target.getFullYear() + '-W' + pad2(weekNum), label: '第' + weekNum + '周 · ' + fmt(monday) + '-' + fmt(sunday) };
+    return { year: target.getFullYear(), week: weekNum, key: target.getFullYear() + '-W' + pad2(weekNum), label: (currentLang === 'zh' ? ('第' + weekNum + '周') : (currentLang === 'pl' ? ('Tydz. ' + weekNum) : ('Week ' + weekNum))) + ' · ' + fmt(monday) + '-' + fmt(sunday) };
   }
   function currentWeekKey(offsetWeeks){
     const now = new Date();

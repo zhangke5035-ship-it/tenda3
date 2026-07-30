@@ -4839,7 +4839,6 @@ function showView(name, navName){
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   const view = document.getElementById('view-'+name);
   if (view) view.classList.add('active');
-  if (name === 'returns-admin' && typeof raClearNotificationBadge === 'function') raClearNotificationBadge();
   const nav = document.querySelector('.navitem[data-view="'+(navName||name)+'"]');
   if (nav){
     nav.classList.add('active');
@@ -6478,6 +6477,9 @@ function renderReturnsAdminStats(){
   set('raStatPending', pending);
   set('raStatAccepted', accepted);
   set('raStatDone', done);
+  if (typeof raShowNavBadge === 'function' && typeof raHideNavBadge === 'function') {
+    if (pending > 0) raShowNavBadge(); else raHideNavBadge();
+  }
 }
 
 function renderReturnsAdminFilterOptions(){
@@ -6803,17 +6805,12 @@ function raClearNotificationBadge(){
 }
 async function initReturnsNotificationBadge(){
   try{
-    const lastSeen = raGetLastSeenTs();
-    const { data, error } = await sb.from('message_notification').select('id').gt('created_at', lastSeen).limit(1);
-    if (!error && data && data.length) raShowNavBadge();
-  }catch(e){ console.error('initReturnsNotificationBadge check failed', e); }
-  try{
-    sb.channel('message_notification_channel')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'message_notification' }, function(payload){
-        raShowNavBadge();
+    sb.channel('returns_badge_channel')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'returns' }, function(payload){
+        if (typeof loadReturnsAdmin === 'function') loadReturnsAdmin();
       })
       .subscribe();
-  }catch(e){ console.error('message_notification realtime subscribe failed', e); }
+  }catch(e){ console.error('returns realtime subscribe failed', e); }
 }
 
 async function showApp(session){

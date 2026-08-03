@@ -481,6 +481,30 @@
   .np-tab.active{color:var(--copper);border-bottom-color:var(--copper);}
   .np-tab .count{color:var(--text-faint);margin-left:4px;}
   .np-tab.active .count{color:var(--copper);opacity:.7;}
+  .np-view-toggle{flex:none;display:flex;gap:2px;background:var(--surface-alt);border:1px solid var(--border);border-radius:8px;padding:2px;margin-bottom:9px;}
+  .np-view-btn{background:none;border:none;border-radius:6px;color:var(--text-faint);width:28px;height:26px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .15s,color .15s;}
+  .np-view-btn svg{width:15px;height:15px;}
+  .np-view-btn:hover{color:var(--text-dim);}
+  .np-view-btn.active{background:var(--surface);color:var(--copper);box-shadow:0 1px 2px rgba(0,0,0,.08);}
+  .np-list{display:flex;flex-direction:column;gap:8px;}
+  .np-row{background:var(--surface);border:1px solid var(--border);border-radius:10px;display:flex;align-items:center;gap:14px;padding:8px 14px;transition:border-color .15s;}
+  .np-row:hover{border-color:var(--text-faint);}
+  .np-row .np-row-media{flex:none;width:48px;height:48px;border-radius:7px;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#fff;border:1px solid var(--border-soft);position:relative;}
+  .np-row .np-row-media img{width:100%;height:100%;object-fit:contain;padding:4px;}
+  .np-row .np-row-media.np-icon{background:var(--surface-alt);}
+  .np-row .np-row-media.np-icon svg{width:22px;height:22px;color:var(--text-faint);}
+  .np-row .np-row-main{flex:1;min-width:0;display:flex;align-items:center;gap:16px;}
+  .np-row .np-row-sku{font-family:'IBM Plex Mono',monospace;font-size:12.5px;font-weight:700;color:var(--text);flex:none;width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .np-row .np-row-desc{flex:1;min-width:0;font-size:12px;color:var(--text-dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .np-row .np-row-cat{flex:none;font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.04em;width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .np-row .np-row-price{flex:none;font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--text-dim);width:110px;}
+  .np-row .np-row-price b{color:var(--copper);}
+  .np-row .np-row-booked{flex:none;font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--text-dim);width:100px;}
+  .np-row .np-row-foot{flex:none;display:flex;gap:6px;}
+  .np-row .np-row-foot .btn{font-size:11.5px;padding:5px 10px;}
+  @media (max-width:900px){
+    .np-row .np-row-cat, .np-row .np-row-price, .np-row .np-row-booked{display:none;}
+  }
   .np-catalog-group{margin-bottom:32px;}
   .np-catalog-group-head{display:flex;align-items:baseline;gap:10px;margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid var(--border-soft);}
   .np-catalog-group-head h3{font-size:13.5px;margin:0;text-transform:uppercase;letter-spacing:.06em;color:var(--text);}
@@ -1636,7 +1660,17 @@
       </div>
       <button type="button" class="btn" id="gtmAddProductBtn">+ 添加新产品</button>
     </div>
-    <div class="np-tabs" id="gtmNpTabs" style="border-bottom:1px solid var(--border);margin-bottom:16px;"></div>
+    <div class="np-tabs-row" style="display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border);margin-bottom:16px;">
+      <div class="np-tabs" id="gtmNpTabs" style="border-bottom:none;margin-bottom:0;flex:1;min-width:0;"></div>
+      <div class="np-view-toggle" id="gtmNpViewToggle">
+        <button type="button" class="np-view-btn" data-view="grid" title="卡片视图">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        </button>
+        <button type="button" class="np-view-btn" data-view="list" title="列表视图">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg>
+        </button>
+      </div>
+    </div>
     <div id="gtmNpCatalog"></div>
   </div>
 
@@ -1657,6 +1691,7 @@
           <div class="field" style="grid-column:1/-1;"><label>产品描述</label><input id="gpf_description" placeholder="例如 AX3000 Dual-Band Wi-Fi 6 Router"></div>
           <div class="field"><label>零售参考价 (PLN)</label><input id="gpf_price" type="number" step="0.01" placeholder="例如 189"></div>
           <div class="field"><label>MOQ</label><input id="gpf_moq" type="number" placeholder="例如 100"></div>
+          <div class="field"><label>当前接单台数</label><input id="gpf_booked_qty" type="number" placeholder="例如 500"></div>
           <div class="field"><label>EAN</label><input id="gpf_ean" placeholder="条形码"></div>
           <div class="field"><label>产品官网链接</label><input id="gpf_link" placeholder="https://..."></div>
           <div class="field"><label>毛重</label><input id="gpf_gw" placeholder="例如 303 g"></div>
@@ -12056,6 +12091,8 @@ function npInitEvents(){
 /* =================== GTM VIEW: NEW PRODUCTS CATALOG (staff-facing, no inquiry cart) =================== */
 let gtmNpActiveCat = 'all';
 let gtmNpSearchTerm = '';
+let gtmNpViewMode = 'grid';
+try{ gtmNpViewMode = localStorage.getItem('gtmNpViewMode') || 'grid'; }catch(e){}
 
 function gtmNpMatchesFilter(p){
   const catOk = gtmNpActiveCat==='all' || p.cat===gtmNpActiveCat;
@@ -12096,6 +12133,7 @@ function gtmNpCardHTML(p){
   if(p.price){
     priceBlock = `<p class="np-price-row">\u96f6\u552e\u53c2\u8003\u4ef7 <span class="np-price">PLN ${p.price}</span>${p.moq?` \u00b7 MOQ ${p.moq} pcs`:''}</p>`;
   }
+  const bookedQtyBlock = `<p class="np-price-row np-booked-row">\u5f53\u524d\u63a5\u5355\u53f0\u6570 <span class="np-price">${p.bookedQty||0} \u53f0</span></p>`;
 
   let specBlock = '';
   if(p.specs){
@@ -12132,6 +12170,7 @@ function gtmNpCardHTML(p){
       <h4 class="np-sku">${p.sku}</h4>
       <p class="np-desc">${p.desc}</p>
       ${priceBlock}
+      ${bookedQtyBlock}
       ${specBlock}
       ${packBlock}
       ${linkBlock}
@@ -12139,6 +12178,36 @@ function gtmNpCardHTML(p){
     <div class="np-foot" style="display:flex;gap:8px;">
       <button type="button" class="btn ghost gtm-edit-btn" data-id="${p.id||''}" style="flex:1;font-size:12px;padding:6px 10px;">编辑</button>
       <button type="button" class="btn ghost gtm-delete-btn" data-id="${p.id||''}" data-sku="${p.sku}" style="flex:1;font-size:12px;padding:6px 10px;color:var(--alert);">删除</button>
+    </div>
+  </div>`;
+}
+
+function gtmNpRowHTML(p){
+  let mediaHtm;
+  if(p.image_url){
+    mediaHtm = `<img src="${p.image_url}">${p.isNew?'<span class="np-new-flag" style="font-size:8px;padding:1px 4px;">NEW</span>':''}`;
+  }else{
+    mediaHtm = NP_ICONS[p.cat]||'';
+  }
+  const mediaTag = p.link ? 'a' : 'div';
+  const mediaAttrs = p.link ? ` href="${p.link}" target="_blank" rel="noopener"` : '';
+  const mediaClass = p.image_url ? 'np-row-media' : 'np-row-media np-icon';
+
+  const priceHtm = p.price ? `<b>PLN ${p.price}</b>${p.moq?` \u00b7 MOQ ${p.moq}`:''}` : '\u2014';
+
+  return `
+  <div class="np-row" data-sku="${p.sku}" data-id="${p.id||''}">
+    <${mediaTag} class="${mediaClass}"${mediaAttrs}>${mediaHtm}</${mediaTag}>
+    <div class="np-row-main">
+      <div class="np-row-sku" title="${p.sku}">${p.sku}</div>
+      <div class="np-row-desc" title="${p.desc||''}">${p.desc||''}</div>
+      <div class="np-row-cat">${NP_CATS[p.cat]?NP_CATS[p.cat].label:p.cat}</div>
+      <div class="np-row-price">${priceHtm}</div>
+      <div class="np-row-booked">\u63a5\u5355 ${p.bookedQty||0} \u53f0</div>
+    </div>
+    <div class="np-row-foot">
+      <button type="button" class="btn ghost gtm-edit-btn" data-id="${p.id||''}">\u7f16\u8f91</button>
+      <button type="button" class="btn ghost gtm-delete-btn" data-id="${p.id||''}" data-sku="${p.sku}" style="color:var(--alert);">\u5220\u9664</button>
     </div>
   </div>`;
 }
@@ -12175,9 +12244,12 @@ function gtmNpRenderCatalog(){
     const items = NP_PRODUCTS.filter(p=>p.cat===catKey && gtmNpMatchesFilter(p));
     if(!items.length) return;
     any = true;
+    const bodyHtm = gtmNpViewMode==='list'
+      ? `<div class="np-list">${items.map(gtmNpRowHTML).join('')}</div>`
+      : `<div class="np-grid">${items.map(gtmNpCardHTML).join('')}</div>`;
     htm += `<section class="np-catalog-group">
       <div class="np-catalog-group-head"><h3>${NP_CATS[catKey]?NP_CATS[catKey].label:catKey}</h3><span>${items.length} SKU${items.length>1?'s':''}</span></div>
-      <div class="np-grid">${items.map(gtmNpCardHTML).join('')}</div>
+      ${bodyHtm}
     </section>`;
   });
   if(!any){
@@ -12208,7 +12280,7 @@ function gtmOpenProductModal(product){
   const preview = document.getElementById('gpf_photo_preview');
   const fileInput = document.getElementById('gpf_photo_file');
   if(fileInput) fileInput.value = '';
-  const fieldIds = ['gpf_sku','gpf_category','gpf_description','gpf_price','gpf_moq','gpf_ean','gpf_link','gpf_gw','gpf_nw','gpf_unit_dim','gpf_pkg_dim','gpf_ctn_qty','gpf_ctn_dim','gpf_specs'];
+  const fieldIds = ['gpf_sku','gpf_category','gpf_description','gpf_price','gpf_moq','gpf_booked_qty','gpf_ean','gpf_link','gpf_gw','gpf_nw','gpf_unit_dim','gpf_pkg_dim','gpf_ctn_qty','gpf_ctn_dim','gpf_specs'];
   if(product){
     if(title) title.textContent = '编辑产品 — ' + product.sku;
     idEl.value = product.id || '';
@@ -12218,6 +12290,7 @@ function gtmOpenProductModal(product){
     document.getElementById('gpf_description').value = product.desc || '';
     document.getElementById('gpf_price').value = product.price != null ? product.price : '';
     document.getElementById('gpf_moq').value = product.moq != null ? product.moq : '';
+    document.getElementById('gpf_booked_qty').value = product.bookedQty != null ? product.bookedQty : '';
     document.getElementById('gpf_ean').value = product.ean || '';
     document.getElementById('gpf_link').value = product.link || '';
     document.getElementById('gpf_gw').value = product.gw || '';
@@ -12276,6 +12349,7 @@ async function gtmSaveProduct(){
     const specs = specsRaw.split('\n').map(s=>s.trim()).filter(Boolean);
     const priceVal = document.getElementById('gpf_price').value;
     const moqVal = document.getElementById('gpf_moq').value;
+    const bookedQtyVal = document.getElementById('gpf_booked_qty').value;
     const payload = {
       sku,
       category,
@@ -12289,6 +12363,7 @@ async function gtmSaveProduct(){
       ctn_dim: document.getElementById('gpf_ctn_dim').value.trim() || null,
       price: priceVal !== '' ? Number(priceVal) : null,
       moq: moqVal !== '' ? Number(moqVal) : null,
+      booked_qty: bookedQtyVal !== '' ? Number(bookedQtyVal) : 0,
       link: document.getElementById('gpf_link').value.trim() || null,
       specs: specs,
       is_new: document.getElementById('gpf_is_new').checked,
@@ -12332,6 +12407,12 @@ async function gtmDeleteProduct(id, sku){
   }
 }
 
+function gtmNpSyncViewToggle(){
+  document.querySelectorAll('#gtmNpViewToggle .np-view-btn').forEach(btn=>{
+    btn.classList.toggle('active', btn.dataset.view===gtmNpViewMode);
+  });
+}
+
 function gtmNpInit(){
   const searchInput = document.getElementById('gtmNpSearchInput');
   if(searchInput){
@@ -12347,6 +12428,15 @@ function gtmNpInit(){
   if(saveBtn) saveBtn.addEventListener('click', gtmSaveProduct);
   const modalOverlay = document.getElementById('gtmProductModalOverlay');
   if(modalOverlay) modalOverlay.addEventListener('click', (e)=>{ if(e.target===modalOverlay) gtmCloseProductModal(); });
+  document.querySelectorAll('#gtmNpViewToggle .np-view-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      gtmNpViewMode = btn.dataset.view;
+      try{ localStorage.setItem('gtmNpViewMode', gtmNpViewMode); }catch(e){}
+      gtmNpSyncViewToggle();
+      gtmNpRenderCatalog();
+    });
+  });
+  gtmNpSyncViewToggle();
   gtmNpRenderTabs();
   gtmNpRenderCatalog();
 }
@@ -12369,6 +12459,7 @@ async function loadNpProducts(){
       ctnDim: r.ctn_dim,
       price: r.price,
       moq: r.moq,
+      bookedQty: r.booked_qty != null ? r.booked_qty : 0,
       link: r.link,
       specs: (Array.isArray(r.specs) && r.specs.length) ? r.specs : null,
       isNew: !!r.is_new,

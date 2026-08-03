@@ -1617,95 +1617,27 @@
 
       </section>
 
-    <!-- ===================== 新产品GTM ===================== -->
+    <!-- ===================== 新产品GTM（新品目录） ===================== -->
 <section class="view" id="view-gtm">
   <div class="viewhead">
-    <div><h2>新产品GTM</h2><p>新品上市时间表与阶段状态跟进</p></div>
+    <div><h2>新产品GTM</h2><p>2026 新品目录 — 与客户服务门户「新产品」页数据同源</p></div>
   </div>
-
-  <div class="kpi-row" id="gtmKpiRow"></div>
 
   <div class="panel">
     <div class="inv-toolbar" style="margin-bottom:14px;">
-      <div class="inv-filters" style="flex:1;">
+      <div class="inv-filters" style="flex:1;align-items:center;">
+        <div class="np-stat mono" id="gtmNpStat" style="margin-right:14px;"></div>
         <div class="inv-search" style="flex:1;max-width:360px;">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          <input type="text" id="gtmSearchInput" placeholder="搜索产品型号或名称...">
+          <input type="text" id="gtmNpSearchInput" placeholder="搜索型号或关键词...">
         </div>
       </div>
-      <div style="display:flex;gap:8px;">
-        <button class="inv-btn inv-btn-primary" id="gtmAddBtn">＋ 新增新品</button>
-      </div>
     </div>
-    <div class="cust-tabs" id="gtmStageTabs"></div>
-    <div class="gtm-card-list" id="gtmTableBody"></div>
-  </div>
-
-  <div class="panel" style="margin-top:20px;">
-    <div class="panel-head"><div><h3>新品接单达成率</h3><div class="desc">对比新品接单量与目标的达成情况，点击卡片可查看客户维度明细</div></div></div>
-    <div class="kpi-row" id="npiKpiRow" style="grid-template-columns:repeat(3,1fr);"></div>
-    <div class="gtm-card-list" id="npiCardList"></div>
+    <div class="np-tabs" id="gtmNpTabs" style="border-bottom:1px solid var(--border);margin-bottom:16px;"></div>
+    <div id="gtmNpCatalog"></div>
   </div>
 </section>
 
-<div class="modal-overlay" id="gtmImageLightboxOverlay">
-  <div class="modal-panel" style="width:480px;">
-    <div class="drawer-header">
-      <div class="drawer-title">产品外观图</div>
-      <div class="drawer-close" id="gtmImageLightboxClose">✕</div>
-    </div>
-    <div style="padding:22px;display:flex;align-items:center;justify-content:center;">
-      <img id="gtmImageLightboxImg" style="max-width:100%;max-height:60vh;object-fit:contain;">
-    </div>
-  </div>
-</div>
-
-<div class="drawer-overlay" id="gtmDrawerOverlay">
-  <div class="drawer-panel">
-    <div class="drawer-header">
-      <div class="drawer-title">✨ 新增新品</div>
-      <div class="drawer-close" id="gtmDrawerClose">✕</div>
-    </div>
-    <div class="drawer-body">
-      <div class="field"><label>产品型号</label><input id="gtm_product" list="modelDatalist" placeholder="例如 W15-Pro"></div>
-      <div class="field"><label>产品名称</label><input id="gtm_name" placeholder="例如 Wi-Fi 6 Giga 路由器"></div>
-      <div class="field">
-        <label>产品外观图</label>
-        <div class="gtm-upload-row">
-          <div class="gtm-upload-preview" id="gtmImagePreviewBox">
-            <img id="gtmImagePreviewImg" style="display:none;">
-            <span id="gtmImagePreviewPlaceholder">暂无图片</span>
-          </div>
-          <div class="gtm-upload-actions">
-            <label class="btn ghost gtm-upload-btn" for="gtm_image_file">选择图片</label>
-            <input type="file" id="gtm_image_file" accept="image/*" style="display:none;">
-            <button type="button" class="btn ghost" id="gtmImageRemoveBtn" style="display:none;">移除图片</button>
-          </div>
-        </div>
-      </div>
-      <div class="field"><label>目标市场</label><select id="gtm_market">
-          <option>波兰</option><option>捷克</option><option>斯洛伐克</option><option>乌克兰</option><option>罗马尼亚</option><option>全渠道</option><option>全球</option>
-        </select></div>
-      <div class="field"><label>负责人</label><input id="gtm_owner" placeholder="例如 张三"></div>
-      <div class="field"><label>计划上市日期</label><input id="gtm_launch_date" type="date"></div>
-      <div class="field"><label>当前阶段</label>
-        <select id="gtm_stage">
-          <option>筹备中</option>
-          <option>样品测试</option>
-          <option>定价确认</option>
-          <option>渠道备货</option>
-          <option>已上市</option>
-          <option>已取消</option>
-        </select>
-      </div>
-      <div class="field"><label>备注</label><input id="gtm_note" placeholder="选填"></div>
-    </div>
-    <div class="drawer-footer">
-      <button class="btn ghost" id="gtmDrawerCancel">取消</button>
-      <button class="btn" id="gtmSubmitBtn">提交</button>
-    </div>
-  </div>
-</div>
     <!-- ===================== 销售订单 ===================== -->
 <section class="view" id="view-orders">
   <div class="viewhead">
@@ -12106,12 +12038,140 @@ function npInitEvents(){
   });
 }
 
+/* =================== GTM VIEW: NEW PRODUCTS CATALOG (staff-facing, no inquiry cart) =================== */
+let gtmNpActiveCat = 'all';
+let gtmNpSearchTerm = '';
+
+function gtmNpMatchesFilter(p){
+  const catOk = gtmNpActiveCat==='all' || p.cat===gtmNpActiveCat;
+  if(!catOk) return false;
+  if(!gtmNpSearchTerm) return true;
+  const hay = (p.sku+' '+p.desc+' '+NP_CATS[p.cat].label).toLowerCase();
+  return hay.includes(gtmNpSearchTerm.toLowerCase());
+}
+
+function gtmNpRenderTabs(){
+  const counts = npCatCounts();
+  const order = Object.keys(NP_CATS).filter(k=>counts[k]);
+  let htm = `<button class="np-tab ${gtmNpActiveCat==='all'?'active':''}" data-cat="all">\u5168\u90e8 <span class="count">${NP_PRODUCTS.length}</span></button>`;
+  order.forEach(k=>{
+    htm += `<button class="np-tab ${gtmNpActiveCat===k?'active':''}" data-cat="${k}">${NP_CATS[k].label} <span class="count">${counts[k]}</span></button>`;
+  });
+  const tabsEl = document.getElementById('gtmNpTabs');
+  if(!tabsEl) return;
+  tabsEl.innerHTML = htm;
+  tabsEl.querySelectorAll('.np-tab').forEach(btn=>{
+    btn.addEventListener('click', ()=>{ gtmNpActiveCat = btn.dataset.cat; gtmNpRenderTabs(); gtmNpRenderCatalog(); });
+  });
+  const statEl = document.getElementById('gtmNpStat');
+  if(statEl) statEl.innerHTML = `<b>${NP_PRODUCTS.length}</b> SKUs \u00b7 <b>${order.length}</b> categories`;
+}
+
+function gtmNpCardHTML(p){
+  let mount;
+  if(p.photo && NP_PHOTOS[p.photo]){
+    mount = `<div class="np-media"><img src="${NP_PHOTOS[p.photo]}">${p.isNew?'<span class="np-new-flag">NEW</span>':''}</div>`;
+  }else{
+    mount = `<div class="np-media np-icon">${NP_ICONS[p.cat]||''}</div>`;
+  }
+
+  let priceBlock = '';
+  if(p.price){
+    priceBlock = `<p class="np-price-row">\u96f6\u552e\u53c2\u8003\u4ef7 <span class="np-price">PLN ${p.price}</span>${p.moq?` \u00b7 MOQ ${p.moq} pcs`:''}</p>`;
+  }
+
+  let specBlock = '';
+  if(p.specs){
+    specBlock = `<ul class="np-specs">${p.specs.map(s=>`<li>${s}</li>`).join('')}</ul>`;
+  }
+
+  let packBlock = '';
+  if(p.ean){
+    packBlock = `
+      <p class="np-pack">EAN ${p.ean} \u00b7 ${p.gw} / ${p.nw}</p>
+      <button class="np-toggle-specs" data-sku="gtm-${p.sku}">
+        <span class="np-label">\u5c55\u5f00\u5305\u88c5\u53c2\u6570</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+      <div class="np-pack-table" id="np-spec-gtm-${npCssId(p.sku)}">
+        <div><span>\u5355\u4ef6\u5c3a\u5bf8</span><span>${p.unit}</span></div>
+        <div><span>\u5305\u88c5\u5c3a\u5bf8</span><span>${p.pkg}</span></div>
+        <div><span>\u88c5\u7bb1\u6570\u91cf</span><span>${p.ctnQty}</span></div>
+        <div><span>\u5916\u7bb1\u5c3a\u5bf8</span><span>${p.ctnDim}</span></div>
+      </div>
+    `;
+  }
+
+  let linkBlock = '';
+  if(p.link){
+    linkBlock = `<a class="np-link" href="${p.link}" target="_blank" rel="noopener">\u4ea7\u54c1\u5b98\u7f51 \u2197</a>`;
+  }
+
+  return `
+  <div class="np-card" data-sku="${p.sku}">
+    <div class="np-body-top" style="padding:12px 12px 0;"><span class="np-cat-eyebrow">${NP_CATS[p.cat].label}</span></div>
+    ${mount}
+    <div class="np-body" style="padding-bottom:14px;">
+      <h4 class="np-sku">${p.sku}</h4>
+      <p class="np-desc">${p.desc}</p>
+      ${priceBlock}
+      ${specBlock}
+      ${packBlock}
+      ${linkBlock}
+    </div>
+  </div>`;
+}
+
+function gtmNpBindCardEvents(){
+  document.querySelectorAll('#gtmNpCatalog .np-toggle-specs').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      const sku = btn.dataset.sku;
+      const table = document.getElementById('np-spec-'+npCssId(sku));
+      const open = table.classList.toggle('show');
+      btn.classList.toggle('open', open);
+      btn.querySelector('.np-label').textContent = open ? '\u6536\u8d77\u5305\u88c5\u53c2\u6570' : '\u5c55\u5f00\u5305\u88c5\u53c2\u6570';
+    });
+  });
+}
+
+function gtmNpRenderCatalog(){
+  const order = Object.keys(NP_CATS);
+  let htm = '';
+  let any = false;
+  order.forEach(catKey=>{
+    const items = NP_PRODUCTS.filter(p=>p.cat===catKey && gtmNpMatchesFilter(p));
+    if(!items.length) return;
+    any = true;
+    htm += `<section class="np-catalog-group">
+      <div class="np-catalog-group-head"><h3>${NP_CATS[catKey].label}</h3><span>${items.length} SKU${items.length>1?'s':''}</span></div>
+      <div class="np-grid">${items.map(gtmNpCardHTML).join('')}</div>
+    </section>`;
+  });
+  if(!any){
+    htm = `<div class="np-empty">\u6ca1\u6709\u5339\u914d <b>${gtmNpSearchTerm}</b> \u7684\u578b\u53f7\uff0c\u6362\u4e2a\u5173\u952e\u8bcd\u8bd5\u8bd5\u3002</div>`;
+  }
+  const catalogEl = document.getElementById('gtmNpCatalog');
+  if(!catalogEl) return;
+  catalogEl.innerHTML = htm;
+  gtmNpBindCardEvents();
+}
+
+function gtmNpInit(){
+  const searchInput = document.getElementById('gtmNpSearchInput');
+  if(searchInput){
+    searchInput.addEventListener('input', ()=>{ gtmNpSearchTerm = searchInput.value; gtmNpRenderCatalog(); });
+  }
+  gtmNpRenderTabs();
+  gtmNpRenderCatalog();
+}
+
 function npInit(){
   npRenderTabs();
   npRenderCatalog();
   npRenderCartBadge();
   npRenderCartList();
   npInitEvents();
+  gtmNpInit();
 }
 
 if(document.readyState === 'loading'){

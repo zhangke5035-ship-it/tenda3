@@ -28,6 +28,7 @@
   #priceDetailTable.price-hide-category .price-col-category{display:none;}
   #priceDetailTable.price-hide-brand .price-col-brand{display:none;}
   #priceDetailTable.price-hide-desc .price-col-desc{display:none;}
+  #priceDetailTable.price-hide-version .price-col-version{display:none;}
   #priceDetailTable.price-hide-lifecycle .price-col-lifecycle{display:none;}
   #priceDetailTable.price-hide-cncode .price-col-cncode{display:none;}
   #priceDetailTable.price-hide-splitpay .price-col-splitpay{display:none;}
@@ -130,7 +131,7 @@
   .price-table-scroll table td:nth-child(3){position:sticky;left:0;background:var(--surface);z-index:2;box-shadow:2px 0 4px rgba(0,0,0,0.05);}
   .price-table-scroll table thead th:nth-child(3){z-index:3;}
   .price-table-scroll table tbody tr:hover td:nth-child(3){background:var(--surface-alt);}
-  .price-table-scroll table thead th:nth-child(n+10):nth-child(-n+14){text-align:right;}
+  .price-table-scroll table thead th:nth-child(n+11):nth-child(-n+15){text-align:right;}
   .price-table-scroll table td.num-cell{text-align:right;}
   .price-table-scroll table tfoot td{padding:12px 10px;font-weight:600;background:rgba(0,0,0,0.02);border-top:2px solid var(--border);color:var(--text);}
   .tag{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:500;}
@@ -1631,6 +1632,7 @@
                 <div class="dim-card" data-col-group="brand" role="checkbox" tabindex="0"><span class="dim-card-check">✓</span><span class="dim-card-label">品牌</span></div>
                 <div class="dim-card" data-col-group="desc" role="checkbox" tabindex="0"><span class="dim-card-check">✓</span><span class="dim-card-label">产品信息描述</span></div>
                 <div class="dim-card" data-col-group="lifecycle" role="checkbox" tabindex="0"><span class="dim-card-check">✓</span><span class="dim-card-label">生命周期</span></div>
+                <div class="dim-card" data-col-group="version" role="checkbox" tabindex="0"><span class="dim-card-check">✓</span><span class="dim-card-label">版本号</span></div>
               </div>
             </div>
             <div class="dim-group dim-group--advanced">
@@ -1693,7 +1695,7 @@
         <table id="priceDetailTable">
          <thead><tr>
   <th><input type="checkbox" id="priceSelectAllCheck" title="全选/取消全选当前筛选结果"></th>
-  <th class="price-col-category">类目</th><th class="price-col-brand">品牌</th><th>产品型号</th><th class="price-col-desc">产品信息描述</th><th>EAN</th><th class="price-col-lifecycle">生命周期</th><th data-key="customer">客户</th><th data-key="country">国家</th><th>币种</th><th data-key="retail">含税零售价</th><th data-key="vat">VAT税率</th><th data-key="net">未税净价</th>
+  <th class="price-col-category">类目</th><th class="price-col-brand">品牌</th><th>产品型号</th><th class="price-col-version">版本号</th><th class="price-col-desc">产品信息描述</th><th>EAN</th><th class="price-col-lifecycle">生命周期</th><th data-key="customer">客户</th><th data-key="country">国家</th><th>币种</th><th data-key="retail">含税零售价</th><th data-key="vat">VAT税率</th><th data-key="net">未税净价</th>
   <th>一级报价</th><th>二级报价</th><th>三级报价</th><th>代理商利润点位</th><th>最终采购价</th>
   <th class="price-col-cncode">CN编码</th><th class="price-col-splitpay">Split Payment</th><th class="price-col-pkg">包装尺寸</th><th class="price-col-page">产品页面</th><th></th>
 </tr></thead>
@@ -4555,6 +4557,7 @@ function renderPriceTable(){
       <td class="price-col-category"><span class="cat-badge ${categoryClass(productType(p.product))}">${productType(p.product)}</span></td>
       <td class="price-col-brand">${productBrand(p.product)}</td>
       <td title="${productDescription(p.product)}">${p.product}${p.category?` <span style="color:var(--text-faint);font-size:11px;">(${p.category})</span>`:''}</td>
+      <td class="price-col-version">${p.version || dash}</td>
       <td class="desc price-col-desc" style="max-width:260px;"><div class="desc-edit" contenteditable="true" data-product="${p.product}" onblur="saveProductDescription(this)" onkeydown="invDescKeydown(event,this)">${productDescription(p.product)}</div></td>
       <td class="num-cell">${(p.ean || eanOf(p.product)) || dash}</td>
       <td class="price-col-lifecycle"><span class="lc-badge ${lifecycleClass(lifecycleOf(p.product))}">${lifecycleOf(p.product)}</span></td>
@@ -4579,7 +4582,7 @@ function renderPriceTable(){
     const marginRows = rows.filter(p=>typeof p.marginPct === 'number');
     const avgMargin = marginRows.length ? (marginRows.reduce((s,p)=>s+p.marginPct,0) / marginRows.length) : null;
     const avgText = avgMargin===null ? '暂无净利率数据' : `平均净利率 ${fmt(avgMargin)}%`;
-    footRow.innerHTML = `<td></td><td>总计 (Total)</td><td colspan="20" style="text-align:left;">本页包含 ${rows.length} 条报价，${avgText}</td><td></td>`;
+    footRow.innerHTML = `<td></td><td>总计 (Total)</td><td colspan="21" style="text-align:left;">本页包含 ${rows.length} 条报价，${avgText}</td><td></td>`;
   }
   updateSelectAllCheckboxState(rows);
   if (typeof updatePriceExportBtnLabel === 'function') updatePriceExportBtnLabel();
@@ -5691,6 +5694,7 @@ const PRICE_DIM_CARD_GROUPS = {
   brand: { defaultActive: true, hideClass: 'price-hide-brand' },
   desc: { defaultActive: true, hideClass: 'price-hide-desc' },
   lifecycle: { defaultActive: true, hideClass: 'price-hide-lifecycle' },
+  version: { defaultActive: true, hideClass: 'price-hide-version' },
   cncode: { defaultActive: false, hideClass: 'price-hide-cncode' },
   splitpay: { defaultActive: false, hideClass: 'price-hide-splitpay' },
   pkgdim: { defaultActive: false, hideClass: 'price-hide-pkgdim' },
@@ -8754,6 +8758,7 @@ const I18N_DICT = [
   ['收起包装参数','Hide packing specs','Ukryj dane opakowania'],
   ['单件尺寸','Unit Size','Rozmiar jednostkowy'],
   ['包装尺寸','Package Size','Rozmiar opakowania'],
+  ['版本号','Version','Wersja'],
   ['装箱数量','Carton Qty','Ilo\u015b\u0107 w kartonie'],
   ['外箱尺寸','Carton Size','Rozmiar kartonu'],
   ['产品官网 ↗','Product Page ↗','Strona produktu ↗'],

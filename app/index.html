@@ -4353,8 +4353,18 @@ function renderCatalog(){
 }
 
 
-function uniqueMonths(){
-  return [...new Set(visibleRows().map(p=>p.month).filter(Boolean))].sort().reverse();
+function monthKey(value){
+  if (!value) return '';
+  const text = String(value).trim();
+  const parts = text.split('-');
+  if (parts.length === 2 && /^\d{1,2}$/.test(parts[1])) return parts[1].padStart(2,'0');
+  if (/^\d{1,2}$/.test(text)) return text.padStart(2,'0');
+  return text;
+}
+function monthLabel(key){
+  if (key === 'ALL') return '全部月份';
+  const num = Number(key);
+  return Number.isInteger(num) && num > 0 ? num + '月' : key;
 }
 
 function renderQuarterTabs(){
@@ -4375,14 +4385,12 @@ function renderQuarterTabs(){
 }
 
 function renderMonthTabs(){
-  const months = uniqueMonths();
+  const monthKeys = ['ALL','01','02','03','04','05','06','07','08'];
   const el = document.getElementById('filterMonthSelect');
   if (!el) return;
-  const entries = ['ALL', ...months];
-  el.innerHTML = entries.map(m=>{
-    const label = m === 'ALL' ? '全部月份' : m;
-    const count = m === 'ALL' ? visibleRows().length : visibleRows().filter(p=>p.month===m).length;
-    return `<option value="${m}">${label} (${count})</option>`;
+  el.innerHTML = monthKeys.map(m=>{
+    const count = m === 'ALL' ? visibleRows().length : visibleRows().filter(p=>monthKey(p.month)===m).length;
+    return `<option value="${m}">${monthLabel(m)} (${count})</option>`;
   }).join('');
   el.value = activeMonthFilter;
   el.onchange = ()=>{

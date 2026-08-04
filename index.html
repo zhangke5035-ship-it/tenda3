@@ -5684,8 +5684,9 @@ document.getElementById('addPromoBtn').addEventListener('click', async ()=>{
 });
 
 function findCustomerQuote(cust, product){
-  return priceList.find(p => p.cust === cust && p.product === product && p.quarter === 'Q3')
-      || priceList.find(p => p.cust === cust && p.product === product);
+  const target = (product||'').trim().toLowerCase();
+  return priceList.find(p => p.cust === cust && (p.product||'').trim().toLowerCase() === target && p.quarter === 'Q3')
+      || priceList.find(p => p.cust === cust && (p.product||'').trim().toLowerCase() === target);
 }
 
 function computePurchasePriceFor(cust, product){
@@ -5728,7 +5729,8 @@ const PD_STRATEGY_ALERTS = {
 };
 function pdLookupCostPLN(product){
   if (!product) return null;
-  const entry = priceList.find(p=>p.product===product && typeof p.costUSD === 'number');
+  const target = product.trim().toLowerCase();
+  const entry = priceList.find(p=>(p.product||'').trim().toLowerCase()===target && typeof p.costUSD === 'number');
   if (!entry) return null;
   return entry.costUSD * rate();
 }

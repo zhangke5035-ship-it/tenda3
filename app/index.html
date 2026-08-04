@@ -31,8 +31,8 @@
   #priceDetailTable.price-hide-lifecycle .price-col-lifecycle{display:none;}
   #priceDetailTable.price-hide-cncode .price-col-cncode{display:none;}
   #priceDetailTable.price-hide-splitpay .price-col-splitpay{display:none;}
-  #priceDetailTable.price-hide-pkg .price-col-pkg,
-  #priceDetailTable.price-hide-pkg .price-col-page{display:none;}
+  #priceDetailTable.price-hide-pkgdim .price-col-pkg{display:none;}
+  #priceDetailTable.price-hide-page .price-col-page{display:none;}
   .dim-control-panel{display:flex;flex-direction:column;gap:8px;margin-right:auto;}
   .dim-group{display:flex;align-items:center;flex-wrap:wrap;gap:10px;}
   .dim-group-title{flex-shrink:0;font-size:12px;font-weight:600;color:var(--text-faint);min-width:76px;}
@@ -1629,7 +1629,8 @@
               <div class="dim-card-row">
                 <div class="dim-card" data-col-group="cncode" role="checkbox" tabindex="0"><span class="dim-card-check">✓</span><span class="dim-card-label">CN编码</span></div>
                 <div class="dim-card" data-col-group="splitpay" role="checkbox" tabindex="0"><span class="dim-card-check">✓</span><span class="dim-card-label">Split Payment</span></div>
-                <div class="dim-card" data-col-group="pkg" role="checkbox" tabindex="0"><span class="dim-card-check">✓</span><span class="dim-card-label">包装尺寸/产品页面</span></div>
+                <div class="dim-card" data-col-group="pkgdim" role="checkbox" tabindex="0"><span class="dim-card-check">✓</span><span class="dim-card-label">包装尺寸</span></div>
+                <div class="dim-card" data-col-group="page" role="checkbox" tabindex="0"><span class="dim-card-check">✓</span><span class="dim-card-label">产品页面</span></div>
               </div>
             </div>
           </div>
@@ -5683,7 +5684,8 @@ const PRICE_DIM_CARD_GROUPS = {
   lifecycle: { defaultActive: true, hideClass: 'price-hide-lifecycle' },
   cncode: { defaultActive: false, hideClass: 'price-hide-cncode' },
   splitpay: { defaultActive: false, hideClass: 'price-hide-splitpay' },
-  pkg: { defaultActive: false, hideClass: 'price-hide-pkg' }
+  pkgdim: { defaultActive: false, hideClass: 'price-hide-pkgdim' },
+  page: { defaultActive: false, hideClass: 'price-hide-page' }
 };
 (function initPriceDimCards(){
   const priceDetailTableEl = document.getElementById('priceDetailTable');

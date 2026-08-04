@@ -1599,15 +1599,6 @@
         </div>
       </div>
 
-                  <div class="panel">
-        <div class="panel-head"><h3>报价版本号码</h3><div class="desc">总部每月更新报价表后，在此选择或新增最新版本号，会自动同步到左侧边栏</div></div>
-        <div class="form-grid" style="grid-template-columns:200px 200px auto;">
-          <div class="field"><label>当前报价版本</label><select id="priceVersion"></select></div>
-          <div class="field mono"><label>新增版本号</label><input id="newPriceVersion" placeholder="例如 26M72"></div>
-          <div class="field" style="display:flex;align-items:flex-end;"><button class="btn" type="button" id="addPriceVersionBtn">新增版本</button></div>
-        </div>
-      </div>
-
 <div class="panel">
         <div class="panel-head"><h3>报价明细</h3><div class="desc" id="priceCount"></div></div>
         <div class="filter-bar">
@@ -1618,6 +1609,7 @@
             <select id="filterCustSelect" title="客户"></select>
             <select id="filterCategorySelect" title="类目"></select>
             <select id="filterBrandSelect" title="品牌"></select>
+            <select id="priceVersion" title="报价版本号码" style="max-width:110px;"></select>
             <button type="button" class="filter-reset-btn" id="filterResetBtn">↺ 重置</button>
           </div>
         </div>
@@ -8714,20 +8706,6 @@ syncBrandVer();
 const priceVersionSelectEl = document.getElementById('priceVersion');
 if (priceVersionSelectEl){
   priceVersionSelectEl.addEventListener('change', syncBrandVer);
-}
-const addPriceVersionBtn = document.getElementById('addPriceVersionBtn');
-if (addPriceVersionBtn){
-  addPriceVersionBtn.addEventListener('click', ()=>{
-    const input = document.getElementById('newPriceVersion');
-    const v = input.value.trim();
-    if (!v){ alert('请输入版本号'); return; }
-    if (!priceVersions.includes(v)) priceVersions.push(v);
-    renderPriceVersionOptions();
-    const sel = document.getElementById('priceVersion');
-    if (sel) sel.value = v;
-    syncBrandVer();
-    input.value = '';
-  });
 }
 </script>
   <script>

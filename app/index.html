@@ -1595,6 +1595,7 @@
               </div>
               <div class="field"><label>客户名称 <span style="color:var(--alert);">*</span></label><input id="p_customer" placeholder="例如 Incom / Action / Eltrox"></div>
               <div class="field"><label>国家</label><input id="p_country" placeholder="例如 波兰 / 捷克 / 乌克兰"></div>
+              <div class="field"><label>月份</label><input id="p_month" placeholder="例如 2026-07"></div>
               <div class="field mono"><label>含税零售价 (PLN)</label><input id="p_retail" type="number" placeholder="199"></div>
               <div class="field mono"><label>未税净价 (PLN)</label><input id="p_net" type="number" placeholder="112.8"></div>
               <div class="field mono"><label>出厂成本 (USD)</label><input id="p_cost" type="number" placeholder="21.4"></div>
@@ -1614,6 +1615,7 @@
         <div class="filter-bar">
           <div class="filter-ops" style="flex:1;">
             <select id="quarterSelect" title="报价周期"></select>
+          <select id="filterMonthSelect" title="月份"></select>
             <div class="filter-search"><input id="priceSearch" placeholder="搜索型号/SKU，例如 TE6L、W15-Pro..."></div>
             <select id="filterCountrySelect" title="国家"></select>
             <select id="filterCustSelect" title="客户"></select>
@@ -1695,7 +1697,7 @@
         <table id="priceDetailTable">
          <thead><tr>
   <th><input type="checkbox" id="priceSelectAllCheck" title="全选/取消全选当前筛选结果"></th>
-  <th class="price-col-category">类目</th><th class="price-col-brand">品牌</th><th>产品型号</th><th class="price-col-version">版本号</th><th class="price-col-desc">产品信息描述</th><th>EAN</th><th class="price-col-lifecycle">生命周期</th><th data-key="customer">客户</th><th data-key="country">国家</th><th>币种</th><th data-key="retail">含税零售价</th><th data-key="vat">VAT税率</th><th data-key="net">未税净价</th>
+  <th class="price-col-category">类目</th><th class="price-col-brand">品牌</th><th>产品型号</th><th class="price-col-version">版本号</th><th class="price-col-desc">产品信息描述</th><th>EAN</th><th class="price-col-lifecycle">生命周期</th><th data-key="customer">客户</th><th data-key="country">国家</th><th>月份</th><th>币种</th><th data-key="retail">含税零售价</th><th data-key="vat">VAT税率</th><th data-key="net">未税净价</th>
   <th>一级报价</th><th>二级报价</th><th>三级报价</th><th>代理商利润点位</th><th>最终采购价</th>
   <th class="price-col-cncode">CN编码</th><th class="price-col-splitpay">Split Payment</th><th class="price-col-pkg">包装尺寸</th><th class="price-col-page">产品页面</th><th></th>
 </tr></thead>
@@ -4062,6 +4064,7 @@ let marginThreshold = 10;
 let activeCustFilter = 'ALL';
 let activeCountryFilter = 'ALL';
 let activeQuarterFilter = 'Q3';
+let activeMonthFilter = 'ALL';
 let activeCategoryFilter = 'ALL';
 let activeBrandFilter = 'ALL';
 let priceSearchTerm = '';
@@ -4350,6 +4353,10 @@ function renderCatalog(){
 }
 
 
+function uniqueMonths(){
+  return [...new Set(visibleRows().map(p=>p.month).filter(Boolean))].sort().reverse();
+}
+
 function renderQuarterTabs(){
   const quarters = ['Q4','Q3','Q2','ALL'];
   const labelMap = {Q4:'Q4（待录入）', Q3:'Q3（当前）', Q2:'Q2（上一季度）', ALL:'全部季度'};
@@ -4362,8 +4369,25 @@ function renderQuarterTabs(){
   el.value = activeQuarterFilter;
   el.onchange = ()=>{
     activeQuarterFilter = el.value;
-    activeCountryFilter = 'ALL'; activeCustFilter = 'ALL';
-    renderQuarterTabs(); renderCountryTabs(); renderCustTabs(); renderCategoryTabs(); renderBrandTabs(); renderPriceTable();
+    activeCountryFilter = 'ALL'; activeCustFilter = 'ALL'; activeMonthFilter = 'ALL';
+    renderQuarterTabs(); renderCountryTabs(); renderCustTabs(); renderMonthTabs(); renderCategoryTabs(); renderBrandTabs(); renderPriceTable();
+  };
+}
+
+function renderMonthTabs(){
+  const months = uniqueMonths();
+  const el = document.getElementById('filterMonthSelect');
+  if (!el) return;
+  const entries = ['ALL', ...months];
+  el.innerHTML = entries.map(m=>{
+    const label = m === 'ALL' ? '全部月份' : m;
+    const count = m === 'ALL' ? visibleRows().length : visibleRows().filter(p=>p.month===m).length;
+    return `<option value="${m}">${label} (${count})</option>`;
+  }).join('');
+  el.value = activeMonthFilter;
+  el.onchange = ()=>{
+    activeMonthFilter = el.value;
+    renderMonthTabs(); renderCustTabs(); renderCategoryTabs(); renderBrandTabs(); renderPriceTable();
   };
 }
 
@@ -4436,6 +4460,7 @@ function getFilteredPriceRows(){
   let rows = visibleRows();
   if(activeCountryFilter!=='ALL') rows = rows.filter(p=>custCountry(p.cust)===activeCountryFilter);
   if(activeCustFilter!=='ALL') rows = rows.filter(p=>p.cust===activeCustFilter);
+  if(activeMonthFilter!=='ALL') rows = rows.filter(p=>p.month===activeMonthFilter);
   if(activeCategoryFilter!=='ALL') rows = rows.filter(p=>productType(p.product)===activeCategoryFilter);
   if(activeBrandFilter!=='ALL') rows = rows.filter(p=>productBrand(p.product)===activeBrandFilter);
   if(priceSearchTerm) rows = rows.filter(p=>p.product.toLowerCase().includes(priceSearchTerm.toLowerCase()));
@@ -4563,6 +4588,7 @@ function renderPriceTable(){
       <td class="price-col-lifecycle"><span class="lc-badge ${lifecycleClass(lifecycleOf(p.product))}">${lifecycleOf(p.product)}</span></td>
       <td><span class="tag ${custTypeClass(p.cust)}">${custName(p.cust)}</span></td>
       <td>${custCountry(p.cust)}</td>
+      <td>${p.month || dash}</td>
       <td>${custCurrency(p.cust)}</td>
       <td class="num-cell">${p.retailPLN ? fmt(p.retailPLN)+(currencySymbol(custCurrency(p.cust))?' '+currencySymbol(custCurrency(p.cust)):'') : dash}</td>
       <td class="num-cell">${typeof p.vatRate==='number' ? (p.vatRate*100).toFixed(0)+'%' : (custCountry(p.cust)==='波兰' ? '23%' : dash)}</td>
@@ -5641,7 +5667,7 @@ function renderCharts(){
 
 /* ============ 汇总刷新 ============ */
 function refreshAll(){
-  renderQuarterTabs(); populatePromoSelects(); populatePromoDealSelects(); renderCountryTabs(); renderCustTabs(); renderCategoryTabs(); renderBrandTabs(); populateModelDatalist(); populateHqModelDatalist(); renderCatalog();
+  renderQuarterTabs(); populatePromoSelects(); populatePromoDealSelects(); renderCountryTabs(); renderCustTabs(); renderMonthTabs(); renderCategoryTabs(); renderBrandTabs(); populateModelDatalist(); populateHqModelDatalist(); renderCatalog();
   renderPriceTable(); renderPromoTable(); renderPromoDealAll(); renderHqPriceTable(); renderSimTable();
   if (typeof renderGtmAll === 'function') renderGtmAll();
   if (typeof renderSalesOverview === 'function') renderSalesOverview();
@@ -5680,12 +5706,13 @@ if (filterResetBtnEl){
   filterResetBtnEl.addEventListener('click', ()=>{
     activeCountryFilter = 'ALL';
     activeCustFilter = 'ALL';
+    activeMonthFilter = 'ALL';
     activeCategoryFilter = 'ALL';
     activeBrandFilter = 'ALL';
     priceSearchTerm = '';
     const searchInput = document.getElementById('priceSearch');
     if (searchInput) searchInput.value = '';
-    renderCountryTabs(); renderCustTabs(); renderCategoryTabs(); renderBrandTabs(); renderPriceTable();
+    renderCountryTabs(); renderCustTabs(); renderMonthTabs(); renderCategoryTabs(); renderBrandTabs(); renderPriceTable();
   });
 }
 
@@ -5741,13 +5768,14 @@ document.getElementById('addPriceBtn').addEventListener('click', ()=>{
     id: nextPriceId++,
     product, cust: code,
     ean: document.getElementById('p_ean').value.trim(),
+    month: document.getElementById('p_month').value.trim(),
     retailPLN: parseFloat(document.getElementById('p_retail').value) || 0,
     netPLN: parseFloat(document.getElementById('p_net').value) || 0,
     costUSD: parseFloat(document.getElementById('p_cost').value) || 0,
     profitUSD: parseFloat(document.getElementById('p_profit').value) || 0,
     marginPct: parseFloat(document.getElementById('p_margin').value) || 0
   });
-  ['p_product','p_ean','p_customer','p_country','p_retail','p_net','p_cost','p_profit','p_margin'].forEach(id=>document.getElementById(id).value='');
+  ['p_product','p_ean','p_customer','p_country','p_month','p_retail','p_net','p_cost','p_profit','p_margin'].forEach(id=>document.getElementById(id).value='');
   refreshAll();
   const addOverlay = document.getElementById('addPriceItemModalOverlay');
   if (addOverlay) addOverlay.classList.remove('open');

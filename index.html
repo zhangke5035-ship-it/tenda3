@@ -7268,6 +7268,36 @@ async function showCustomerApp(session, customerCode){
   loadCpAnnouncement();
   await loadCustomerReturns();
   await loadCustomerOrders();
+  applyCustomerAccessRestrictions(session);
+}
+
+const CUSTOMER_LIMITED_ACCESS_EMAILS = {
+  'm.gorecki@eltrox.pl': ['returns'],
+  'aneta.pokos@action.pl': ['returns'],
+  'patryk.niepokoj@incomgroup.pl': ['returns']
+};
+const CP_VIEW_ID_MAP = { newproducts: 'cpViewNewProducts', orders: 'cpViewOrders', returns: 'cpViewReturns' };
+function applyCustomerAccessRestrictions(session){
+  const userEmail = ((session && session.user && session.user.email) || '').toLowerCase();
+  const allowedViews = CUSTOMER_LIMITED_ACCESS_EMAILS[userEmail];
+  if (!allowedViews) return;
+  document.querySelectorAll('#cpNav .navitem[data-cpview]').forEach(function(item){
+    if (!allowedViews.includes(item.dataset.cpview)) item.style.display = 'none';
+  });
+  const isCurrentViewAllowed = document.querySelectorAll('#cpNav .navitem.active[data-cpview]').length &&
+    allowedViews.includes(document.querySelector('#cpNav .navitem.active').dataset.cpview);
+  if (!isCurrentViewAllowed){
+    document.querySelectorAll('#cpNav .navitem').forEach(function(n){ n.classList.remove('active'); });
+    Object.keys(CP_VIEW_ID_MAP).forEach(function(v){
+      const el = document.getElementById(CP_VIEW_ID_MAP[v]);
+      if (el) el.classList.add('hidden');
+    });
+    const firstAllowed = allowedViews[0];
+    const targetNav = document.querySelector('#cpNav .navitem[data-cpview="' + firstAllowed + '"]');
+    if (targetNav) targetNav.classList.add('active');
+    const targetView = document.getElementById(CP_VIEW_ID_MAP[firstAllowed]);
+    if (targetView) targetView.classList.remove('hidden');
+  }
 }
 
 let cpOrdersData = [];

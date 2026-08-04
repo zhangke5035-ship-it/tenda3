@@ -124,6 +124,8 @@
   #custMomTable tbody td:not(:first-child),
   #custMomTable tfoot td:not(:first-child){font-variant-numeric:tabular-nums;font-family:'IBM Plex Mono','IBM Plex Sans SC',sans-serif;}
   .num-cell{font-family:'IBM Plex Mono';}
+  .price-table-scroll{overflow:auto;max-height:640px;border:1px solid var(--border-soft);border-radius:8px;}
+  .price-table-scroll table thead th{position:sticky;top:0;background:var(--surface);z-index:1;box-shadow:0 1px 0 var(--border);}
   .price-table-scroll table th:nth-child(3),
   .price-table-scroll table td:nth-child(3){position:sticky;left:0;background:var(--surface);z-index:2;box-shadow:2px 0 4px rgba(0,0,0,0.05);}
   .price-table-scroll table thead th:nth-child(3){z-index:3;}
@@ -1680,7 +1682,7 @@
             </div>
           </div>
         </div>
-        <div class="price-table-scroll" style="overflow-x:auto;">
+        <div class="price-table-scroll">
         <table id="priceDetailTable">
          <thead><tr>
   <th><input type="checkbox" id="priceSelectAllCheck" title="全选/取消全选当前筛选结果"></th>

@@ -25,6 +25,7 @@
   .mono{font-family:'IBM Plex Mono',monospace;}
   .price-page-link{color:var(--copper);text-decoration:none;font-weight:600;}
   .price-page-link:hover{text-decoration:underline;}
+  #priceDetailTable:not(.price-extra-visible) .price-extra-col{display:none;}
   h1,h2,h3{font-family:'Space Grotesk',sans-serif;margin:0;letter-spacing:0.2px;}
   .app{display:flex;min-height:100vh;}
   .sidebar{width:240px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:22px 0;}
@@ -1596,7 +1597,10 @@
             <button type="button" class="filter-reset-btn" id="filterResetBtn">↺ 重置</button>
           </div>
         </div>
-        <div class="price-export-row" style="display:flex;justify-content:flex-end;gap:10px;margin:0 0 12px 0;">
+        <div class="price-export-row" style="display:flex;align-items:center;justify-content:flex-end;gap:10px;margin:0 0 12px 0;">
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text-dim);cursor:pointer;margin-right:auto;">
+            <input type="checkbox" id="priceExtraColsCheck"> 显示CN编码/Split Payment/包装尺寸/产品页面
+          </label>
           <button type="button" class="btn" id="togglePriceAddBtn">+ 新增报价型号</button>
           <button type="button" class="btn ghost" id="exportCsvBtn">导出当前表格 CSV</button>
         </div>
@@ -1649,7 +1653,7 @@
   <th><input type="checkbox" id="priceSelectAllCheck" title="全选/取消全选当前筛选结果"></th>
   <th>类目</th><th>品牌</th><th>产品型号</th><th>产品信息描述</th><th>EAN</th><th>生命周期</th><th data-key="customer">客户</th><th data-key="country">国家</th><th>币种</th><th data-key="retail">含税零售价</th><th data-key="vat">VAT税率</th><th data-key="net">未税净价</th>
   <th>DMP建议销售价</th><th>代理商利润点位</th><th>最终采购价</th>
-  <th>CN编码</th><th>Split Payment</th><th>包装尺寸</th><th>产品页面</th><th></th>
+  <th class="price-extra-col">CN编码</th><th class="price-extra-col">Split Payment</th><th class="price-extra-col">包装尺寸</th><th class="price-extra-col">产品页面</th><th></th>
 </tr></thead>
           <tbody id="priceTableBody"></tbody>
           <tfoot><tr id="priceTableFootRow"></tr></tfoot>
@@ -4518,10 +4522,10 @@ function renderPriceTable(){
       <td class="num-cell">${p.retailPLN ? fmt(p.retailPLN)+(currencySymbol(custCurrency(p.cust))?' '+currencySymbol(custCurrency(p.cust)):'') : dash}</td>
       <td class="num-cell">${typeof p.vatRate==='number' ? (p.vatRate*100).toFixed(0)+'%' : (custCountry(p.cust)==='波兰' ? '23%' : dash)}</td>
       <td class="num-cell">${p.netPLN ? fmt(p.netPLN)+(currencySymbol(custCurrency(p.cust))?' '+currencySymbol(custCurrency(p.cust)):'') : dash}</td>
-      <td class="mono">${p.cnCode || dash}</td>
-      <td>${p.splitPayment || dash}</td>
-      <td class="mono">${p.packageDim || dash}</td>
-      <td>${p.productPage ? `<a href="${p.productPage}" target="_blank" rel="noopener" class="price-page-link">产品页</a>` : dash}</td>
+      <td class="mono price-extra-col">${p.cnCode || dash}</td>
+      <td class="price-extra-col">${p.splitPayment || dash}</td>
+      <td class="mono price-extra-col">${p.packageDim || dash}</td>
+      <td class="price-extra-col">${p.productPage ? `<a href="${p.productPage}" target="_blank" rel="noopener" class="price-page-link">产品页</a>` : dash}</td>
       <td><button class="del-btn" onclick="deletePrice(${p.id})">✕</button></td>
     </tr>`;
   }).join('');
@@ -5637,6 +5641,20 @@ if (filterResetBtnEl){
     const searchInput = document.getElementById('priceSearch');
     if (searchInput) searchInput.value = '';
     renderCountryTabs(); renderCustTabs(); renderCategoryTabs(); renderBrandTabs(); renderPriceTable();
+  });
+}
+
+const priceExtraColsCheckEl = document.getElementById('priceExtraColsCheck');
+if (priceExtraColsCheckEl){
+  let priceExtraColsVisible = false;
+  try{ priceExtraColsVisible = localStorage.getItem('priceExtraColsVisible') === '1'; }catch(e){}
+  priceExtraColsCheckEl.checked = priceExtraColsVisible;
+  const priceDetailTableEl = document.getElementById('priceDetailTable');
+  if (priceDetailTableEl) priceDetailTableEl.classList.toggle('price-extra-visible', priceExtraColsVisible);
+  priceExtraColsCheckEl.addEventListener('change', ()=>{
+    const checked = priceExtraColsCheckEl.checked;
+    if (priceDetailTableEl) priceDetailTableEl.classList.toggle('price-extra-visible', checked);
+    try{ localStorage.setItem('priceExtraColsVisible', checked ? '1' : '0'); }catch(e){}
   });
 }
 
@@ -8840,6 +8858,7 @@ const I18N_DICT = [
   ['Split Payment','Split Payment','Split Payment'],
   ['产品页面','Product Page','Strona produktu'],
   ['产品页','Product Page','Strona produktu'],
+  ['显示CN编码/Split Payment/包装尺寸/产品页面','Show CN Code/Split Payment/Package Size/Product Page','Pokaż kod CN/Split Payment/rozmiar opakowania/stronę produktu'],
   ['DMP建议销售价','DMP Suggested Price','Sugerowana cena DMP'],
   ['点击产品查看','Click to view','Kliknij, aby zobaczyć'],
   ['收起 ▲','Collapse ▲','Zwiń ▲'],

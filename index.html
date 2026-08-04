@@ -4951,8 +4951,8 @@ function renderPromoDealTable(){
     return `<tr data-id="${p.id}" style="cursor:pointer;">
       <td class="promo-check-td"><input type="checkbox" class="promo-row-check" data-id="${p.id}" ${promoDealSelectedIds.has(p.id)?'checked':''}></td>
       <td>
-        <div class="promo-name-main">${p.name}</div>
-        <div class="promo-name-sub">型号: ${p.product}${p.type ? (' · ' + p.type) : ''}</div>
+        <div class="promo-name-main">${p.product}</div>
+        <div class="promo-name-sub">${p.name}${p.type ? (' · ' + p.type) : ''}</div>
       </td>
       <td><span class="promo-client-tag">${custName(p.cust)}</span></td>
       <td class="promo-num">${retailInfo ? `<div class="promo-price-retail">${retailInfo.value.toFixed(2)} ${retailInfo.symbol}</div>` : '<span style="color:var(--text-faint)">—</span>'}</td>

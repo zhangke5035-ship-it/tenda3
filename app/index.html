@@ -791,6 +791,9 @@
   .inv-page-btn.active{background:var(--copper);border-color:var(--copper);color:#241505;font-weight:700;}
   .inv-page-btn:hover:not(.disabled):not(.active){border-color:var(--text-dim);color:var(--text);}
   .inv-page-btn.disabled{opacity:.35;cursor:default;}
+  .order-po-wrap{position:relative;}
+  .order-po-edit-icon{position:absolute;right:7px;top:50%;transform:translateY(-50%);width:12px;height:12px;color:var(--text-faint);pointer-events:none;}
+  .order-po-wrap:focus-within .order-po-edit-icon{color:var(--copper);}
   .inv-overlay{position:fixed;inset:0;background:rgba(4,8,16,0.6);display:none;align-items:center;justify-content:center;z-index:50;}
   .inv-overlay.open{display:flex;}
   .inv-modal{width:480px;max-width:92vw;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:22px 24px;max-height:88vh;overflow-y:auto;}
@@ -7713,7 +7716,10 @@ function renderOrderTable(){
     const amount = orderTotal(o.id).toFixed(1);
     return `<tr class="order-row" data-id="${o.id}" style="cursor:pointer;">
       <td class="mono">${o.no}</td>
-      <td><input class="order-po-input" data-id="${o.id}" value="${escapeAttrOrder(extractCustomerOrderNo(o.poNote))}" placeholder="Note: ..." style="width:100%;border:1px solid var(--border);border-radius:6px;padding:4px 6px;font-size:12px;" /></td>
+      <td><div class="order-po-wrap">
+        <input class="order-po-input" data-id="${o.id}" value="${escapeAttrOrder(extractCustomerOrderNo(o.poNote))}" placeholder="Note: ..." style="width:100%;border:1px solid var(--border);border-radius:6px;padding:4px 22px 4px 6px;font-size:12px;" />
+        <svg class="order-po-edit-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+      </div></td>
       <td>${o.date||''}</td>
       <td>${custName}</td>
       <td class="num-cell">${itemCount}</td>

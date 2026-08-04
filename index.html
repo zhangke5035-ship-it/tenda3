@@ -1007,17 +1007,17 @@
       </table></div>
     </div>
     </div>
-    <div class="inv-overlay" id="cpOrderDetailOverlay">
-      <div class="inv-modal inv-modal-lg">
-        <div class="inv-modal-header">
-          <div class="inv-modal-title" id="cpOrderDetailTitle">订单明细</div>
-          <div class="inv-modal-close" id="cpOrderDetailClose">✕</div>
-        </div>
-        <div class="cp-table-wrap"><table class="cp-table">
-          <thead><tr><th>产品型号</th><th>EAN</th><th>数量</th></tr></thead>
-          <tbody id="cpOrderItemsTbody"></tbody>
-        </table></div>
+    <div id="cpViewOrderDetail" class="cp-view hidden">
+    <div class="cp-card">
+      <div class="cp-card-head">
+        <h2 id="cpOrderDetailTitle">订单明细</h2>
+        <a class="promo-campaign-back" id="cpOrderDetailBackBtn">← 返回订单列表</a>
       </div>
+      <div class="cp-table-wrap"><table class="cp-table">
+        <thead><tr><th>产品型号</th><th>EAN</th><th>数量</th></tr></thead>
+        <tbody id="cpOrderItemsTbody"></tbody>
+      </table></div>
+    </div>
     </div>
     <div id="cpViewReturns" class="cp-view">
     <div class="cp-card">
@@ -7347,13 +7347,15 @@ function extractCustomerOrderNoCP(note){
 }
 async function cpOpenOrderDetail(orderId){
   const order = cpOrdersData.find(function(o){ return o.id === orderId; });
-  const overlay = document.getElementById('cpOrderDetailOverlay');
+  const listView = document.getElementById('cpViewOrders');
+  const detailView = document.getElementById('cpViewOrderDetail');
   const title = document.getElementById('cpOrderDetailTitle');
   const tbody = document.getElementById('cpOrderItemsTbody');
-  if (!overlay || !tbody) return;
+  if (!detailView || !tbody) return;
   if (title) title.textContent = '订单明细：' + (order ? order.order_no : '');
   tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:var(--text-faint);padding:16px;">加载中…</td></tr>';
-  overlay.classList.add('open');
+  if (listView) listView.classList.add('hidden');
+  detailView.classList.remove('hidden');
   const { data, error } = await sb.from('order_items').select('*').eq('order_id', orderId);
   if (error){ tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:var(--alert);padding:16px;">加载失败：' + escapeHtmlCP(error.message) + '</td></tr>'; return; }
   const items = data || [];
@@ -7371,16 +7373,18 @@ async function cpOpenOrderDetail(orderId){
   }).join('');
   if (typeof translateTextNodes === 'function') translateTextNodes(tbody);
 }
+function cpCloseOrderDetail(){
+  const listView = document.getElementById('cpViewOrders');
+  const detailView = document.getElementById('cpViewOrderDetail');
+  if (detailView) detailView.classList.add('hidden');
+  if (listView) listView.classList.remove('hidden');
+}
 document.addEventListener('click', function(e){
   const viewBtn = e.target.closest ? e.target.closest('.cp-view-order-btn') : null;
   if (viewBtn){ cpOpenOrderDetail(Number(viewBtn.dataset.id)); return; }
-  if (e.target && e.target.id === 'cpOrderDetailClose'){
-    const overlay = document.getElementById('cpOrderDetailOverlay');
-    if (overlay) overlay.classList.remove('open');
+  if (e.target && e.target.id === 'cpOrderDetailBackBtn'){
+    cpCloseOrderDetail();
     return;
-  }
-  if (e.target && e.target.id === 'cpOrderDetailOverlay'){
-    e.target.classList.remove('open');
   }
 });
 
@@ -12788,9 +12792,11 @@ function cpInitNav(){
       const npView = document.getElementById('cpViewNewProducts');
       const ordersView = document.getElementById('cpViewOrders');
       const raView = document.getElementById('cpViewReturns');
+      const detailView = document.getElementById('cpViewOrderDetail');
       if(npView) npView.classList.toggle('hidden', view!=='newproducts');
       if(ordersView) ordersView.classList.toggle('hidden', view!=='orders');
       if(raView) raView.classList.toggle('hidden', view!=='returns');
+      if(detailView) detailView.classList.add('hidden');
     });
   });
 }

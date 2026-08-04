@@ -789,6 +789,8 @@
   .inv-page-btns{display:flex;gap:6px;}
   .inv-page-btn{width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:var(--radius);border:1px solid var(--border);color:var(--text-dim);cursor:pointer;font-size:12.5px;}
   .inv-page-btn.active{background:var(--copper);border-color:var(--copper);color:#241505;font-weight:700;}
+  .inv-page-btn:hover:not(.disabled):not(.active){border-color:var(--text-dim);color:var(--text);}
+  .inv-page-btn.disabled{opacity:.35;cursor:default;}
   .inv-overlay{position:fixed;inset:0;background:rgba(4,8,16,0.6);display:none;align-items:center;justify-content:center;z-index:50;}
   .inv-overlay.open{display:flex;}
   .inv-modal{width:480px;max-width:92vw;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:22px 24px;max-height:88vh;overflow-y:auto;}
@@ -9976,6 +9978,14 @@ applyLanguage(currentLang);
     document.getElementById('invPageInfo').textContent = '共 ' + filtered.length + ' 条记录';
     const pageBtns = document.getElementById('invPageBtns');
     pageBtns.innerHTML = '';
+
+    const prevBtn = document.createElement('div');
+    prevBtn.className = 'inv-page-btn inv-page-nav' + (invCurrentPage<=1 ? ' disabled' : '');
+    prevBtn.textContent = '‹';
+    prevBtn.title = '上一页';
+    if(invCurrentPage>1){ prevBtn.onclick = function(){ invCurrentPage -= 1; renderInventoryTable(); }; }
+    pageBtns.appendChild(prevBtn);
+
     for(let p=1; p<=totalPages; p++){
       const btn = document.createElement('div');
       btn.className = 'inv-page-btn' + (p===invCurrentPage ? ' active' : '');
@@ -9983,6 +9993,13 @@ applyLanguage(currentLang);
       btn.onclick = (function(pp){ return function(){ invCurrentPage = pp; renderInventoryTable(); }; })(p);
       pageBtns.appendChild(btn);
     }
+
+    const nextBtn = document.createElement('div');
+    nextBtn.className = 'inv-page-btn inv-page-nav' + (invCurrentPage>=totalPages ? ' disabled' : '');
+    nextBtn.textContent = '›';
+    nextBtn.title = '下一页';
+    if(invCurrentPage<totalPages){ nextBtn.onclick = function(){ invCurrentPage += 1; renderInventoryTable(); }; }
+    pageBtns.appendChild(nextBtn);
   }
 
   function refreshInventory(){

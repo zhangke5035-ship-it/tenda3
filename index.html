@@ -929,6 +929,9 @@
         <div class="navitem" data-cpview="newproducts">
           <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8l-9-5-9 5 9 5 9-5z"></path><path d="M3 8v8l9 5 9-5V8"></path><path d="M12 13v8"></path></svg></span>新产品
         </div>
+        <div class="navitem" data-cpview="orders">
+          <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg></span>订单管理
+        </div>
         <div class="navitem active" data-cpview="returns">
           <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"></path><path d="M3 4v5h5"></path></svg></span>RMA 退货
         </div>
@@ -990,6 +993,29 @@
         </div>
       </aside>
       <div class="np-toast" id="npToast"></div>
+    </div>
+    <div id="cpViewOrders" class="cp-view hidden">
+    <div class="cp-card">
+      <h2>我的订单</h2>
+      <div class="cp-table-wrap"><table class="cp-table">
+        <thead>
+          <tr><th>订单号</th><th>客户订单号</th><th>下单日期</th><th>状态</th><th>型号数</th><th>订单总额(PLN)</th><th>物流追踪号</th><th>操作</th></tr>
+        </thead>
+        <tbody id="cpOrdersTbody"></tbody>
+      </table></div>
+    </div>
+    </div>
+    <div class="inv-overlay" id="cpOrderDetailOverlay">
+      <div class="inv-modal inv-modal-lg">
+        <div class="inv-modal-header">
+          <div class="inv-modal-title" id="cpOrderDetailTitle">订单明细</div>
+          <div class="inv-modal-close" id="cpOrderDetailClose">✕</div>
+        </div>
+        <div class="cp-table-wrap"><table class="cp-table">
+          <thead><tr><th>产品型号</th><th>EAN</th><th>数量</th><th>单价</th><th>小计</th></tr></thead>
+          <tbody id="cpOrderItemsTbody"></tbody>
+        </table></div>
+      </div>
     </div>
     <div id="cpViewReturns" class="cp-view">
     <div class="cp-card">
@@ -7241,7 +7267,94 @@ async function showCustomerApp(session, customerCode){
   renderCpProductModelOptions(customerCode);
   loadCpAnnouncement();
   await loadCustomerReturns();
+  await loadCustomerOrders();
 }
+
+let cpOrdersData = [];
+function cpOrderStatusClass(status){
+  return status==='待处理' ? 'plan' : (status==='已完成' ? 'done' : 'live');
+}
+async function loadCustomerOrders(){
+  const tbody = document.getElementById('cpOrdersTbody');
+  if (!tbody) return;
+  const { data, error } = await sb.from('orders').select('*').order('order_date', {ascending:false});
+  if (error){ console.error('loadCustomerOrders', error); return; }
+  cpOrdersData = data || [];
+  if (!cpOrdersData.length){
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text-faint);padding:20px;">暂无订单记录</td></tr>';
+    return;
+  }
+  const { data: itemsData, error: itemsError } = await sb.from('order_items').select('order_id, qty, price');
+  const orderStats = {};
+  if (!itemsError && itemsData){
+    itemsData.forEach(function(i){
+      const s = orderStats[i.order_id] || (orderStats[i.order_id] = { count: 0, total: 0 });
+      s.count += 1;
+      s.total += (Number(i.qty)||0) * (Number(i.price)||0);
+    });
+  }
+  tbody.innerHTML = cpOrdersData.map(function(o){
+    const stats = orderStats[o.id] || { count: 0, total: 0 };
+    const poNote = extractCustomerOrderNoCP(o.customer_po_note);
+    return '<tr>' +
+      '<td class="mono">' + escapeHtmlCP(o.order_no||'') + '</td>' +
+      '<td>' + escapeHtmlCP(poNote) + '</td>' +
+      '<td>' + escapeHtmlCP(o.order_date||'') + '</td>' +
+      '<td><span class="status ' + cpOrderStatusClass(o.status) + '"><span class="sdot"></span>' + escapeHtmlCP(o.status||'') + '</span></td>' +
+      '<td class="num-cell">' + stats.count + '</td>' +
+      '<td class="num-cell">' + stats.total.toFixed(1) + '</td>' +
+      '<td>' + escapeHtmlCP(o.tracking_no||'-') + '</td>' +
+      '<td><button type="button" class="cp-action-btn cp-view-order-btn" data-id="' + o.id + '">查看明细</button></td>' +
+    '</tr>';
+  }).join('');
+  if (typeof translateTextNodes === 'function') translateTextNodes(tbody);
+}
+function extractCustomerOrderNoCP(note){
+  if (!note) return '-';
+  const v = String(note).replace(/^\s*note\s*[:：]\s*/i, '').trim();
+  return v || '-';
+}
+async function cpOpenOrderDetail(orderId){
+  const order = cpOrdersData.find(function(o){ return o.id === orderId; });
+  const overlay = document.getElementById('cpOrderDetailOverlay');
+  const title = document.getElementById('cpOrderDetailTitle');
+  const tbody = document.getElementById('cpOrderItemsTbody');
+  if (!overlay || !tbody) return;
+  if (title) title.textContent = '订单明细：' + (order ? order.order_no : '');
+  tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text-faint);padding:16px;">加载中…</td></tr>';
+  overlay.classList.add('open');
+  const { data, error } = await sb.from('order_items').select('*').eq('order_id', orderId);
+  if (error){ tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--alert);padding:16px;">加载失败：' + escapeHtmlCP(error.message) + '</td></tr>'; return; }
+  const items = data || [];
+  if (!items.length){
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text-faint);padding:16px;">暂无型号明细</td></tr>';
+    return;
+  }
+  tbody.innerHTML = items.map(function(i){
+    const qty = Number(i.qty)||0;
+    const price = Number(i.price)||0;
+    return '<tr>' +
+      '<td class="mono">' + escapeHtmlCP(i.product||'') + '</td>' +
+      '<td class="mono">' + escapeHtmlCP(i.ean||'') + '</td>' +
+      '<td class="num-cell">' + qty + '</td>' +
+      '<td class="num-cell">' + price + '</td>' +
+      '<td class="num-cell">' + (qty*price).toFixed(1) + '</td>' +
+    '</tr>';
+  }).join('');
+  if (typeof translateTextNodes === 'function') translateTextNodes(tbody);
+}
+document.addEventListener('click', function(e){
+  const viewBtn = e.target.closest ? e.target.closest('.cp-view-order-btn') : null;
+  if (viewBtn){ cpOpenOrderDetail(Number(viewBtn.dataset.id)); return; }
+  if (e.target && e.target.id === 'cpOrderDetailClose'){
+    const overlay = document.getElementById('cpOrderDetailOverlay');
+    if (overlay) overlay.classList.remove('open');
+    return;
+  }
+  if (e.target && e.target.id === 'cpOrderDetailOverlay'){
+    e.target.classList.remove('open');
+  }
+});
 
 async function loadCustomerReturns(){
   const tbody = document.getElementById('cpReturnsTbody');
@@ -9209,6 +9322,14 @@ const I18N_DICT = [
   ["型号数","Models","Liczba modeli"],
   ["订单总额(PLN)","Order Total (PLN)","Suma zamówienia (PLN)"],
   ["订单明细","Order Line Items","Pozycje zamówienia"],
+  ["订单管理","My Orders","Moje zamówienia"],
+  ["我的订单","My Orders","Moje zamówienia"],
+  ["查看明细","View Details","Zobacz szczegóły"],
+  ["小计","Subtotal","Suma częściowa"],
+  ["暂无订单记录","No orders yet","Brak jeszcze zamówień"],
+  ["加载中…","Loading…","Ładowanie…"],
+  ["暂无型号明细","No line items yet","Brak jeszcze pozycji"],
+  ["加载失败：","Failed to load: ","Nie udało się załadować: "],
   ["← 返回订单列表","← Back to Order List","← Powrót do listy zamówień"],
   ["添加型号","Add Model","Dodaj model"],
   ["型号明细","Model Details","Szczegóły modelu"],
@@ -12637,8 +12758,10 @@ function cpInitNav(){
       btn.classList.add('active');
       const view = btn.dataset.cpview;
       const npView = document.getElementById('cpViewNewProducts');
+      const ordersView = document.getElementById('cpViewOrders');
       const raView = document.getElementById('cpViewReturns');
       if(npView) npView.classList.toggle('hidden', view!=='newproducts');
+      if(ordersView) ordersView.classList.toggle('hidden', view!=='orders');
       if(raView) raView.classList.toggle('hidden', view!=='returns');
     });
   });

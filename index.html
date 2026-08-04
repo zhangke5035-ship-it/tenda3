@@ -370,6 +370,8 @@
   .cp-announcement svg{flex-shrink:0;}
   .cp-row-actions{display:flex;gap:8px;}
   .cp-action-btn{background:none;border:1px solid var(--border);color:var(--text-dim);font-size:11.5px;font-weight:600;padding:4px 10px;border-radius:6px;cursor:pointer;transition:all .15s ease;white-space:nowrap;}
+  .cp-tracking-link{color:var(--copper);text-decoration:none;font-weight:600;}
+  .cp-tracking-link:hover{text-decoration:underline;}
   .cp-edit-btn:hover{border-color:var(--copper);color:var(--copper);}
   .cp-delete-btn:hover{border-color:var(--alert);color:var(--alert);background:var(--alert-soft);}
   .cp-edit-mode-notice{display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--copper-soft);color:var(--copper);border-radius:8px;padding:10px 14px;font-size:12.5px;font-weight:600;margin-bottom:14px;}
@@ -7332,7 +7334,7 @@ async function loadCustomerOrders(){
       '<td>' + escapeHtmlCP(o.order_date||'') + '</td>' +
       '<td><span class="status ' + cpOrderStatusClass(o.status) + '"><span class="sdot"></span>' + escapeHtmlCP(o.status||'') + '</span></td>' +
       '<td class="num-cell">' + stats.count + '</td>' +
-      '<td>' + escapeHtmlCP(o.tracking_no||'-') + '</td>' +
+      '<td>' + (o.tracking_no ? ('<a href="https://www.dsv.com/mydsv/tracking-public/?refNumber=' + encodeURIComponent(o.tracking_no) + '&language_region=en-US_US" target="_blank" rel="noopener" class="cp-tracking-link">' + escapeHtmlCP(o.tracking_no) + '</a>') : '-') + '</td>' +
       '<td><button type="button" class="cp-action-btn cp-view-order-btn" data-id="' + o.id + '">查看明细</button></td>' +
     '</tr>';
   }).join('');

@@ -1574,30 +1574,37 @@
         表中「未税净价」「单位盈亏」「净利率」均为报价表原始计算结果，已包含品牌预留、MDF 预留、风险与指标预留等费用，口径与总部一致。「生命周期」取自《报价型号生命周期_26年6月》清单；「EAN」取自《Q3_Price》价目表。报价明细覆盖 <b>Incom / Action / Eltrox / Intelek / DC-Link</b> 五个客户。Eltrox 同时有 Q2、Q3 两个季度的真实价目表，可以切换"Q3（当前）/ Q2（上一季度）/ 全部季度"查看价格随时间的变化，「环比(QoQ)」列会标出未税净价相对上一季度的涨跌幅。Intelek 的 <b>209 款型号</b> Q3 含税零售价（捷克 Kč）已从最新报价表导入，去税、经销商预留、7% 代理商利润的计算全程用 Kč 进行，仅「最终采购价」按 6.125 汇率换算成 PLN 展示；暂无出厂成本和净利率数据，显示为"—"。DC-Link 暂时只有客户信息，还没有对应的价目表。等你提供其他季度或其他客户的价格表，我可以继续补上。新增行为你手工补充的数据，需要自行核对口径。
       </div>
 
-     <div class="panel" id="addPriceItemPanel" style="display:none;">
-        <div class="panel-head"><h3><span style="display:inline-block;width:4px;height:14px;background:var(--copper);border-radius:2px;margin-right:8px;vertical-align:-1px;"></span>新增报价项</h3></div>
-        <div class="form-grid" style="gap:16px 20px;">
-          <div class="field"><label>产品型号 <span style="color:var(--alert);">*</span></label><input id="p_product" list="modelDatalist" placeholder="例如 W15-Pro"></div>
-          <div class="field mono"><label>EAN（留空则自动匹配型号库）</label><input id="p_ean" placeholder="例如 6932849424515"></div>
-          <datalist id="modelDatalist"></datalist>
-          <datalist id="hqModelDatalist"></datalist>
-          <div class="field"><label>客户</label>
-            <select id="p_customerType">
-              <option value="direct">直接客户</option>
-              <option value="agent">代理商</option>
-            </select>
+     <div class="modal-overlay" id="addPriceItemModalOverlay">
+        <div class="modal-panel inv-modal-lg">
+          <div class="modal-header">
+            <div class="modal-title">新增报价项</div>
+            <div class="modal-close" id="addPriceItemModalClose">✕</div>
           </div>
-          <div class="field"><label>客户名称 <span style="color:var(--alert);">*</span></label><input id="p_customer" placeholder="例如 Incom / Action / Eltrox"></div>
-          <div class="field"><label>国家</label><input id="p_country" placeholder="例如 波兰 / 捷克 / 乌克兰"></div>
-          <div class="field mono"><label>含税零售价 (PLN)</label><input id="p_retail" type="number" placeholder="199"></div>
-          <div class="field mono"><label>未税净价 (PLN)</label><input id="p_net" type="number" placeholder="112.8"></div>
-          <div class="field mono"><label>出厂成本 (USD)</label><input id="p_cost" type="number" placeholder="21.4"></div>
-          <div class="field mono"><label>单位盈亏 (USD)</label><input id="p_profit" type="number" placeholder="8.3"></div>
-          <div class="field mono"><label>净利率 (%)</label><input id="p_margin" type="number" placeholder="26.3"></div>
-        </div>
-        <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:6px;">
-          <button class="btn ghost" type="button" id="resetPriceFormBtn">重置</button>
-          <button class="btn" id="addPriceBtn">+ 新增报价</button>
+          <div class="modal-body">
+            <div class="form-grid" style="gap:16px 20px;">
+              <div class="field"><label>产品型号 <span style="color:var(--alert);">*</span></label><input id="p_product" list="modelDatalist" placeholder="例如 W15-Pro"></div>
+              <div class="field mono"><label>EAN（留空则自动匹配型号库）</label><input id="p_ean" placeholder="例如 6932849424515"></div>
+              <datalist id="modelDatalist"></datalist>
+              <datalist id="hqModelDatalist"></datalist>
+              <div class="field"><label>客户</label>
+                <select id="p_customerType">
+                  <option value="direct">直接客户</option>
+                  <option value="agent">代理商</option>
+                </select>
+              </div>
+              <div class="field"><label>客户名称 <span style="color:var(--alert);">*</span></label><input id="p_customer" placeholder="例如 Incom / Action / Eltrox"></div>
+              <div class="field"><label>国家</label><input id="p_country" placeholder="例如 波兰 / 捷克 / 乌克兰"></div>
+              <div class="field mono"><label>含税零售价 (PLN)</label><input id="p_retail" type="number" placeholder="199"></div>
+              <div class="field mono"><label>未税净价 (PLN)</label><input id="p_net" type="number" placeholder="112.8"></div>
+              <div class="field mono"><label>出厂成本 (USD)</label><input id="p_cost" type="number" placeholder="21.4"></div>
+              <div class="field mono"><label>单位盈亏 (USD)</label><input id="p_profit" type="number" placeholder="8.3"></div>
+              <div class="field mono"><label>净利率 (%)</label><input id="p_margin" type="number" placeholder="26.3"></div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn ghost" type="button" id="resetPriceFormBtn">重置</button>
+            <button class="btn" id="addPriceBtn">+ 新增报价</button>
+          </div>
         </div>
       </div>
 
@@ -5716,6 +5723,10 @@ const PRICE_DIM_CARD_GROUPS = {
   });
 })();
 
+document.getElementById('resetPriceFormBtn').addEventListener('click', ()=>{
+  ['p_product','p_ean','p_customer','p_country','p_retail','p_net','p_cost','p_profit','p_margin'].forEach(id=>document.getElementById(id).value='');
+});
+
 document.getElementById('addPriceBtn').addEventListener('click', ()=>{
   const product = document.getElementById('p_product').value.trim();
   const custName_ = document.getElementById('p_customer').value.trim();
@@ -5732,23 +5743,31 @@ document.getElementById('addPriceBtn').addEventListener('click', ()=>{
     profitUSD: parseFloat(document.getElementById('p_profit').value) || 0,
     marginPct: parseFloat(document.getElementById('p_margin').value) || 0
   });
-
-document.getElementById('resetPriceFormBtn').addEventListener('click', ()=>{
-  ['p_product','p_ean','p_customer','p_country','p_retail','p_net','p_cost','p_profit','p_margin'].forEach(id=>document.getElementById(id).value='');
-});
   ['p_product','p_ean','p_customer','p_country','p_retail','p_net','p_cost','p_profit','p_margin'].forEach(id=>document.getElementById(id).value='');
   refreshAll();
-  const addPanel = document.getElementById('addPriceItemPanel');
-  if (addPanel) addPanel.style.display = 'none';
+  const addOverlay = document.getElementById('addPriceItemModalOverlay');
+  if (addOverlay) addOverlay.classList.remove('open');
 });
 
 document.getElementById('togglePriceAddBtn').addEventListener('click', ()=>{
-  const addPanel = document.getElementById('addPriceItemPanel');
-  if (!addPanel) return;
-  const show = addPanel.style.display === 'none';
-  addPanel.style.display = show ? 'block' : 'none';
-  if (show) addPanel.scrollIntoView({behavior:'smooth', block:'center'});
+  const addOverlay = document.getElementById('addPriceItemModalOverlay');
+  if (!addOverlay) return;
+  addOverlay.classList.add('open');
 });
+
+const addPriceItemModalCloseEl = document.getElementById('addPriceItemModalClose');
+if (addPriceItemModalCloseEl){
+  addPriceItemModalCloseEl.addEventListener('click', ()=>{
+    const addOverlay = document.getElementById('addPriceItemModalOverlay');
+    if (addOverlay) addOverlay.classList.remove('open');
+  });
+}
+const addPriceItemModalOverlayEl = document.getElementById('addPriceItemModalOverlay');
+if (addPriceItemModalOverlayEl){
+  addPriceItemModalOverlayEl.addEventListener('click', (e)=>{
+    if (e.target === addPriceItemModalOverlayEl) addPriceItemModalOverlayEl.classList.remove('open');
+  });
+}
 
 document.getElementById('addPromoBtn').addEventListener('click', async ()=>{
   const name = document.getElementById('m_name').value.trim();

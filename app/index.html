@@ -906,6 +906,12 @@
   .sim-reserve-input:focus{outline:none;border-color:var(--copper);}
   .final-price-input.invalid{border-color:var(--alert);color:var(--alert);background:var(--alert-soft);}
   .final-price-input.locked{background:var(--surface-alt);color:var(--text-dim);cursor:not-allowed;}
+  .tier-price-cell{cursor:pointer;transition:background .12s ease;}
+  .tier-price-cell:hover{background:var(--surface-alt);}
+  .tier-price-cell .tier-price-val{font-weight:600;color:var(--text);}
+  .tier-price-cell:hover .tier-price-val{color:var(--copper);}
+  .tier-price-cell.selected{background:var(--copper-soft);}
+  .tier-price-cell.selected .tier-price-val{color:var(--copper);}
   .final-price-input.locked:focus{border-color:var(--border);}
 </style>
 <div id="authGate">
@@ -1686,7 +1692,7 @@
          <thead><tr>
   <th><input type="checkbox" id="priceSelectAllCheck" title="全选/取消全选当前筛选结果"></th>
   <th class="price-col-category">类目</th><th class="price-col-brand">品牌</th><th>产品型号</th><th class="price-col-desc">产品信息描述</th><th>EAN</th><th class="price-col-lifecycle">生命周期</th><th data-key="customer">客户</th><th data-key="country">国家</th><th>币种</th><th data-key="retail">含税零售价</th><th data-key="vat">VAT税率</th><th data-key="net">未税净价</th>
-  <th>DMP建议销售价</th><th>代理商利润点位</th><th>最终采购价</th>
+  <th>一级报价</th><th>二级报价</th><th>三级报价</th><th>代理商利润点位</th><th>最终采购价</th>
   <th class="price-col-cncode">CN编码</th><th class="price-col-splitpay">Split Payment</th><th class="price-col-pkg">包装尺寸</th><th class="price-col-page">产品页面</th><th></th>
 </tr></thead>
           <tbody id="priceTableBody"></tbody>
@@ -4443,7 +4449,7 @@ function setPriceTableMode(simMode){
       th.id = 'priceThBreakeven';
       th.dataset.key = 'breakeven';
       th.textContent = translateOne('盈亏平衡价 (USD)');
-      theadRow.insertBefore(th, theadRow.lastElementChild || null);
+      theadRow.insertBefore(th, (theadRow.querySelector('.price-col-cncode') || theadRow.lastElementChild) || null);
     } else if (!priceTableSimMode && th){
       th.remove();
     }
@@ -4453,7 +4459,7 @@ function setPriceTableMode(simMode){
       thNetUsd.id = 'priceThNetUsd';
       thNetUsd.dataset.key = 'netUsd';
       thNetUsd.textContent = translateOne('未含税净价（USD）');
-      theadRow.insertBefore(thNetUsd, theadRow.lastElementChild || null);
+      theadRow.insertBefore(thNetUsd, (theadRow.querySelector('.price-col-cncode') || theadRow.lastElementChild) || null);
     } else if (!priceTableSimMode && thNetUsd){
       thNetUsd.remove();
     }
@@ -4463,7 +4469,7 @@ function setPriceTableMode(simMode){
       thBalance.id = 'priceThBalance';
       thBalance.dataset.key = 'balance';
       thBalance.textContent = translateOne('去营销与预留平衡价');
-      theadRow.insertBefore(thBalance, theadRow.lastElementChild || null);
+      theadRow.insertBefore(thBalance, (theadRow.querySelector('.price-col-cncode') || theadRow.lastElementChild) || null);
     } else if (!priceTableSimMode && thBalance){
       thBalance.remove();
     }
@@ -4473,7 +4479,7 @@ function setPriceTableMode(simMode){
       thBrandReserve.id = 'priceThBrandReserve';
       thBrandReserve.dataset.key = 'brandReserve';
       thBrandReserve.textContent = translateOne('品牌预留 (单个)');
-      theadRow.insertBefore(thBrandReserve, theadRow.lastElementChild || null);
+      theadRow.insertBefore(thBrandReserve, (theadRow.querySelector('.price-col-cncode') || theadRow.lastElementChild) || null);
     } else if (!priceTableSimMode && thBrandReserve){
       thBrandReserve.remove();
     }
@@ -4483,7 +4489,7 @@ function setPriceTableMode(simMode){
       thMdfReserve.id = 'priceThMdfReserve';
       thMdfReserve.dataset.key = 'mdfReserve';
       thMdfReserve.textContent = translateOne('MDF预留 (单个)');
-      theadRow.insertBefore(thMdfReserve, theadRow.lastElementChild || null);
+      theadRow.insertBefore(thMdfReserve, (theadRow.querySelector('.price-col-cncode') || theadRow.lastElementChild) || null);
     } else if (!priceTableSimMode && thMdfReserve){
       thMdfReserve.remove();
     }
@@ -4493,7 +4499,7 @@ function setPriceTableMode(simMode){
       thRiskReserve.id = 'priceThRiskReserve';
       thRiskReserve.dataset.key = 'riskReserve';
       thRiskReserve.textContent = translateOne('风险与指标预留');
-      theadRow.insertBefore(thRiskReserve, theadRow.lastElementChild || null);
+      theadRow.insertBefore(thRiskReserve, (theadRow.querySelector('.price-col-cncode') || theadRow.lastElementChild) || null);
     } else if (!priceTableSimMode && thRiskReserve){
       thRiskReserve.remove();
     }
@@ -4503,7 +4509,7 @@ function setPriceTableMode(simMode){
       thUnitPnl.id = 'priceThUnitPnl';
       thUnitPnl.dataset.key = 'unitPnl';
       thUnitPnl.textContent = translateOne('单位盈亏');
-      theadRow.insertBefore(thUnitPnl, theadRow.lastElementChild || null);
+      theadRow.insertBefore(thUnitPnl, (theadRow.querySelector('.price-col-cncode') || theadRow.lastElementChild) || null);
     } else if (!priceTableSimMode && thUnitPnl){
       thUnitPnl.remove();
     }
@@ -4513,7 +4519,7 @@ function setPriceTableMode(simMode){
       thPnlRatio.id = 'priceThPnlRatio';
       thPnlRatio.dataset.key = 'pnlRatio';
       thPnlRatio.textContent = translateOne('盈亏占比');
-      theadRow.insertBefore(thPnlRatio, theadRow.lastElementChild || null);
+      theadRow.insertBefore(thPnlRatio, (theadRow.querySelector('.price-col-cncode') || theadRow.lastElementChild) || null);
     } else if (!priceTableSimMode && thPnlRatio){
       thPnlRatio.remove();
     }
@@ -4523,7 +4529,7 @@ function setPriceTableMode(simMode){
       thProfitRatio.id = 'priceThProfitRatio';
       thProfitRatio.dataset.key = 'profitRatio';
       thProfitRatio.textContent = translateOne('盈利占比');
-      theadRow.insertBefore(thProfitRatio, theadRow.lastElementChild || null);
+      theadRow.insertBefore(thProfitRatio, (theadRow.querySelector('.price-col-cncode') || theadRow.lastElementChild) || null);
     } else if (!priceTableSimMode && thProfitRatio){
       thProfitRatio.remove();
     }
@@ -4571,7 +4577,7 @@ function renderPriceTable(){
     const marginRows = rows.filter(p=>typeof p.marginPct === 'number');
     const avgMargin = marginRows.length ? (marginRows.reduce((s,p)=>s+p.marginPct,0) / marginRows.length) : null;
     const avgText = avgMargin===null ? '暂无净利率数据' : `平均净利率 ${fmt(avgMargin)}%`;
-    footRow.innerHTML = `<td></td><td>总计 (Total)</td><td colspan="18" style="text-align:left;">本页包含 ${rows.length} 条报价，${avgText}</td><td></td>`;
+    footRow.innerHTML = `<td></td><td>总计 (Total)</td><td colspan="20" style="text-align:left;">本页包含 ${rows.length} 条报价，${avgText}</td><td></td>`;
   }
   updateSelectAllCheckboxState(rows);
   if (typeof updatePriceExportBtnLabel === 'function') updatePriceExportBtnLabel();
@@ -8535,12 +8541,11 @@ function injectAgentTiers(){
   if (!tbody.dataset.dmpClickBound){
     tbody.dataset.dmpClickBound = '1';
     tbody.addEventListener('click', (e)=>{
-      const tierEl = e.target.closest('.dmp-pop-tier');
+      const tierEl = e.target.closest('.tier-price-cell');
       if (tierEl){
-        const wrap = tierEl.closest('.dmp-pop-wrap');
         const row = tierEl.closest('tr');
-        if (!wrap || !row) return;
-        wrap.querySelectorAll('.dmp-pop-tier').forEach(t=>t.classList.remove('selected'));
+        if (!row) return;
+        row.querySelectorAll('.tier-price-cell').forEach(t=>t.classList.remove('selected'));
         tierEl.classList.add('selected');
         const input = row.querySelector('.final-price-input');
         if (input){
@@ -8587,23 +8592,18 @@ function injectAgentTiers(){
     const tier2 = convertLocal(retail/(1+effectiveVat)*(1-0.15));
     const tier3 = convertLocal(retail/(1+effectiveVat)*(1-0.25));
 
-    const tdDmp = document.createElement('td');
-    tdDmp.className = 'num-cell';
-    const rangeMin = Math.min(tier1, tier2, tier3);
-    const rangeMax = Math.max(tier1, tier2, tier3);
-    const tiersForPop = [
-      {label: translateOne('一级报价'), value: tier1},
-      {label: translateOne('二级报价'), value: tier2},
-      {label: translateOne('三级报价'), value: tier3}
-    ];
-    tdDmp.innerHTML = '<div class="dmp-pop-wrap">' +
-        '<div class="dmp-range-value">' + fmtMoney(rangeMin, finalSymbol) + ' - ' + fmtMoney(rangeMax, finalSymbol) + '</div>' +
-        '<div class="dmp-range-hint">' + translateOne('查看 3 个梯度') + '</div>' +
-        '<div class="dmp-pop-panel">' +
-          '<div class="dmp-pop-title">' + translateOne('点击价格可直接应用') + '</div>' +
-          tiersForPop.map(t=>'<div class="dmp-pop-tier" data-value="' + t.value.toFixed(2) + '"><span>' + t.label + '</span><span class="val">' + fmtMoney(t.value, finalSymbol) + '</span></div>').join('') +
-        '</div>' +
-      '</div>';
+    const tierCells = [
+      {key: 'tier1', label: translateOne('一级报价'), value: tier1},
+      {key: 'tier2', label: translateOne('二级报价'), value: tier2},
+      {key: 'tier3', label: translateOne('三级报价'), value: tier3}
+    ].map(function(t){
+      const td = document.createElement('td');
+      td.className = 'num-cell tier-price-cell';
+      td.dataset.value = t.value.toFixed(2);
+      td.innerHTML = '<span class="tier-price-val">' + fmtMoney(t.value, finalSymbol) + '</span>';
+      td.title = translateOne('点击价格可直接应用');
+      return td;
+    });
 
     const tdProfit = document.createElement('td');
     tdProfit.className = 'num-cell';
@@ -8614,8 +8614,8 @@ function injectAgentTiers(){
     const finalPriceLocal = convertLocal(computeFinalPurchasePrice(retail, fixedProfit, effectiveVat));
     tdFinal.innerHTML = '<input type="text" class="final-price-input locked" value="' + finalPriceLocal.toFixed(2) + '" readonly>';
 
-    const buttonCell = row.lastElementChild;
-    row.insertBefore(tdDmp, buttonCell);
+    const buttonCell = row.querySelector('.price-col-cncode') || row.lastElementChild;
+    tierCells.forEach(function(td){ row.insertBefore(td, buttonCell); });
     row.insertBefore(tdProfit, buttonCell);
     row.insertBefore(tdFinal, buttonCell);
 

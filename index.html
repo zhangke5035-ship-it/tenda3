@@ -6180,9 +6180,12 @@ function applyRoleRestrictions(session){
   }
 
 
-  const LIMITED_ACCESS_EMAILS = ['huangxiang@tenda.cn', 'yushisen@tenda.cn'];
-  if (LIMITED_ACCESS_EMAILS.includes(userEmail)){
-    const allowedViews = ['returns-admin', 'inventory', 'inventory-agent', 'agent-sellthrough', 'inventory-dashboard'];
+  const LIMITED_ACCESS_VIEWS = {
+    'huangxiang@tenda.cn': ['returns-admin', 'inventory', 'inventory-agent', 'agent-sellthrough', 'inventory-dashboard'],
+    'yushisen@tenda.cn': ['returns-admin', 'inventory', 'inventory-agent', 'agent-sellthrough', 'inventory-dashboard', 'orders', 'invoices']
+  };
+  if (LIMITED_ACCESS_VIEWS[userEmail]){
+    const allowedViews = LIMITED_ACCESS_VIEWS[userEmail];
     document.querySelectorAll('.navitem[data-view]').forEach(function(item){
       if (!allowedViews.includes(item.dataset.view)) item.style.display = 'none';
     });

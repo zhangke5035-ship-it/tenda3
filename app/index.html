@@ -794,6 +794,12 @@
   .order-po-wrap{position:relative;}
   .order-po-edit-icon{position:absolute;right:7px;top:50%;transform:translateY(-50%);width:12px;height:12px;color:var(--text-faint);pointer-events:none;}
   .order-po-wrap:focus-within .order-po-edit-icon{color:var(--copper);}
+  .order-status-wrap{display:flex;align-items:center;gap:6px;}
+  .order-status-wrap .sdot{width:6px;height:6px;border-radius:50%;flex:none;background:var(--text-faint);}
+  .order-status-wrap .sdot[data-status="已发货"]{background:var(--good);}
+  .order-status-wrap .sdot[data-status="已完成"]{background:var(--text-dim);}
+  .order-status-wrap .sdot[data-status="已取消"]{background:var(--alert);}
+  .order-status-select{min-width:0;}
   .inv-overlay{position:fixed;inset:0;background:rgba(4,8,16,0.6);display:none;align-items:center;justify-content:center;z-index:50;}
   .inv-overlay.open{display:flex;}
   .inv-modal{width:480px;max-width:92vw;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:22px 24px;max-height:88vh;overflow-y:auto;}
@@ -1771,7 +1777,7 @@
       <div class="cust-tabs" id="orderCustTabs"></div>
       <table>
         <thead><tr>
-          <th>订单号</th><th>客户订单号</th><th>下单日期</th><th>客户</th><th>型号数</th><th>订单总额(PLN)</th><th>状态</th><th></th>
+          <th>订单号</th><th>客户订单号</th><th>下单日期</th><th>客户</th><th>型号数</th><th>订单总额(PLN)</th><th>状态</th><th>仓库Reference编号</th><th>物流追踪号</th><th>OA流程号</th><th></th>
         </tr></thead>
         <tbody id="orderTableBody"></tbody>
       </table>
@@ -6621,7 +6627,7 @@ async function loadOrdersData(){
     ]);
     if (ordersRes.error){ console.error('loadOrders', ordersRes.error); }
     if (itemsRes.error){ console.error('loadOrderItems', itemsRes.error); }
-    orders = (ordersRes.data||[]).map(r=>({ id: r.id, no: r.order_no, cust: r.cust, date: r.order_date||'', status: r.status, poNote: r.customer_po_note||'' }));
+    orders = (ordersRes.data||[]).map(r=>({ id: r.id, no: r.order_no, cust: r.cust, date: r.order_date||'', status: r.status, poNote: r.customer_po_note||'', warehouseRef: r.warehouse_ref_no||'', trackingNo: r.tracking_no||'', oaNo: r.oa_no||'' }));
     orderItems = (itemsRes.data||[]).map(r=>({ id: r.id, orderId: r.order_id, product: r.product, ean: r.ean||'', qty: Number(r.qty)||0, price: Number(r.price)||0 }));
     if (typeof renderOrders === 'function') renderOrders();
     if (typeof renderSalesOverview === 'function') renderSalesOverview();
@@ -7711,7 +7717,6 @@ function renderOrderTable(){
   if (countBox) countBox.textContent = `共 ${rows.length} 个订单（总 ${orders.length} 个）`;
   body.innerHTML = rows.map(o=>{
     const custName = CUSTOMERS[o.cust] ? CUSTOMERS[o.cust].name : (o.cust||'');
-    const statusClass = o.status==='待处理'?'plan':(o.status==='已完成'?'done':'live');
     const itemCount = orderItems.filter(i=>i.orderId===o.id).length;
     const amount = orderTotal(o.id).toFixed(1);
     return `<tr class="order-row" data-id="${o.id}" style="cursor:pointer;">
@@ -7724,7 +7729,24 @@ function renderOrderTable(){
       <td>${custName}</td>
       <td class="num-cell">${itemCount}</td>
       <td class="num-cell">${amount}</td>
-      <td><span class="status ${statusClass}"><span class="sdot"></span>${o.status}</span></td>
+      <td><div class="order-status-wrap">
+        <span class="sdot" data-status="${o.status}"></span>
+        <select class="inv-field order-status-select" data-id="${o.id}" style="padding:4px 8px;font-size:12px;min-width:0;">
+          ${['待处理','已发货','已完成','已取消'].map(s=>`<option value="${s}"${s===o.status?' selected':''}>${s}</option>`).join('')}
+        </select>
+      </div></td>
+      <td><div class="order-po-wrap">
+        <input class="order-warehouse-input" data-id="${o.id}" value="${escapeAttrOrder(o.warehouseRef)}" placeholder="仓库Reference编号" style="width:100%;border:1px solid var(--border);border-radius:6px;padding:4px 22px 4px 6px;font-size:12px;" />
+        <svg class="order-po-edit-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+      </div></td>
+      <td><div class="order-po-wrap">
+        <input class="order-tracking-input" data-id="${o.id}" value="${escapeAttrOrder(o.trackingNo)}" placeholder="物流追踪号" style="width:100%;border:1px solid var(--border);border-radius:6px;padding:4px 22px 4px 6px;font-size:12px;" />
+        <svg class="order-po-edit-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+      </div></td>
+      <td><div class="order-po-wrap">
+        <input class="order-oa-input" data-id="${o.id}" value="${escapeAttrOrder(o.oaNo)}" placeholder="OA流程号" style="width:100%;border:1px solid var(--border);border-radius:6px;padding:4px 22px 4px 6px;font-size:12px;" />
+        <svg class="order-po-edit-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+      </div></td>
       <td><button class="del-btn" data-id="${o.id}" title="删除">✕</button></td>
     </tr>`;
   }).join('');
@@ -7732,6 +7754,7 @@ function renderOrderTable(){
     row.addEventListener('click', (e)=>{
       if (e.target.closest('.del-btn')) return;
       if (e.target.closest('.order-po-wrap')) return;
+      if (e.target.closest('.order-status-wrap')) return;
       openOrderDetail(Number(row.dataset.id));
     });
   });
@@ -7895,7 +7918,7 @@ if (addOrderBtn){
     if (!no){ alert('请填写订单号'); return; }
     const { data, error } = await sb.from('orders').insert({ order_no: no, cust, order_date: date || null, status, customer_po_note: poNote || null }).select().single();
     if (error){ alert('保存订单失败：' + error.message); return; }
-    orders.push({id: data.id, no: data.order_no, cust: data.cust, date: data.order_date||'', status: data.status, poNote: data.customer_po_note||''});
+    orders.push({id: data.id, no: data.order_no, cust: data.cust, date: data.order_date||'', status: data.status, poNote: data.customer_po_note||'', warehouseRef: data.warehouse_ref_no||'', trackingNo: data.tracking_no||'', oaNo: data.oa_no||''});
     renderOrders();
     document.getElementById('o_no').value = '';
     if (poNoteInput) poNoteInput.value = '';
@@ -7914,6 +7937,44 @@ document.addEventListener('blur', function(e){
     inp.value = extractCustomerOrderNo(rawVal);
   });
 }, true);
+
+const ORDER_EXTRA_FIELD_MAP = {
+  'order-warehouse-input': { col: 'warehouse_ref_no', prop: 'warehouseRef' },
+  'order-tracking-input': { col: 'tracking_no', prop: 'trackingNo' },
+  'order-oa-input': { col: 'oa_no', prop: 'oaNo' }
+};
+document.addEventListener('blur', function(e){
+  const el = e.target;
+  if (!el || !el.classList) return;
+  let fieldInfo = null;
+  for (const cls in ORDER_EXTRA_FIELD_MAP){
+    if (el.classList.contains(cls)){ fieldInfo = ORDER_EXTRA_FIELD_MAP[cls]; break; }
+  }
+  if (!fieldInfo) return;
+  const id = Number(el.dataset.id);
+  const row = orders.find(function(o){ return o.id === id; });
+  const rawVal = el.value.trim();
+  sb.from('orders').update({ [fieldInfo.col]: rawVal || null }).eq('id', id).then(function(res){
+    if (res.error){ console.error('update order ' + fieldInfo.col, res.error); alert('保存失败：' + res.error.message); return; }
+    if (row) row[fieldInfo.prop] = rawVal;
+  });
+}, true);
+
+document.addEventListener('change', function(e){
+  const sel = e.target && e.target.classList && e.target.classList.contains('order-status-select') ? e.target : null;
+  if (!sel) return;
+  const id = Number(sel.dataset.id);
+  const newStatus = sel.value;
+  const row = orders.find(function(o){ return o.id === id; });
+  const prevStatus = row ? row.status : null;
+  sel.disabled = true;
+  sb.from('orders').update({ status: newStatus }).eq('id', id).then(function(res){
+    sel.disabled = false;
+    if (res.error){ console.error('update order status', res.error); alert('更新订单状态失败：' + res.error.message); if (prevStatus) sel.value = prevStatus; return; }
+    if (row) row.status = newStatus;
+    renderOrders();
+  });
+});
 
 const addOrderItemBtn = document.getElementById('addOrderItemBtn');
 if (addOrderItemBtn){
@@ -9420,6 +9481,8 @@ const I18N_DICT = [
   ['例如 618大促、Q3渠道让利','e.g. Summer Sale, Q3 Channel Discount','np. Promocja letnia, Rabat kanałowy Q3'],
   ['拒绝原因','Rejection Reason','Powód odrzucenia'],
   ['客户订单号','Customer Order No.','Nr zamówienia klienta'],
+  ['仓库Reference编号','Warehouse Reference No.','Numer referencyjny magazynu'],
+  ['物流追踪号','Tracking No.','Numer śledzenia przesyłki'],
   ['暂无动销数据','No sell-through data yet','Brak jeszcze danych o sprzedaży'],
   ['终端客户','End Customer','Klient końcowy'],
   ['销售笔数','Transactions','Transakcje'],

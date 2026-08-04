@@ -1012,7 +1012,7 @@
           <div class="inv-modal-close" id="cpOrderDetailClose">✕</div>
         </div>
         <div class="cp-table-wrap"><table class="cp-table">
-          <thead><tr><th>产品型号</th><th>EAN</th><th>数量</th><th>单价</th><th>小计</th></tr></thead>
+          <thead><tr><th>产品型号</th><th>EAN</th><th>数量</th></tr></thead>
           <tbody id="cpOrderItemsTbody"></tbody>
         </table></div>
       </div>
@@ -7350,24 +7350,21 @@ async function cpOpenOrderDetail(orderId){
   const tbody = document.getElementById('cpOrderItemsTbody');
   if (!overlay || !tbody) return;
   if (title) title.textContent = '订单明细：' + (order ? order.order_no : '');
-  tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text-faint);padding:16px;">加载中…</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:var(--text-faint);padding:16px;">加载中…</td></tr>';
   overlay.classList.add('open');
   const { data, error } = await sb.from('order_items').select('*').eq('order_id', orderId);
-  if (error){ tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--alert);padding:16px;">加载失败：' + escapeHtmlCP(error.message) + '</td></tr>'; return; }
+  if (error){ tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:var(--alert);padding:16px;">加载失败：' + escapeHtmlCP(error.message) + '</td></tr>'; return; }
   const items = data || [];
   if (!items.length){
-    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text-faint);padding:16px;">暂无型号明细</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:var(--text-faint);padding:16px;">暂无型号明细</td></tr>';
     return;
   }
   tbody.innerHTML = items.map(function(i){
     const qty = Number(i.qty)||0;
-    const price = Number(i.price)||0;
     return '<tr>' +
       '<td class="mono">' + escapeHtmlCP(i.product||'') + '</td>' +
       '<td class="mono">' + escapeHtmlCP(i.ean||'') + '</td>' +
       '<td class="num-cell">' + qty + '</td>' +
-      '<td class="num-cell">' + price + '</td>' +
-      '<td class="num-cell">' + (qty*price).toFixed(1) + '</td>' +
     '</tr>';
   }).join('');
   if (typeof translateTextNodes === 'function') translateTextNodes(tbody);

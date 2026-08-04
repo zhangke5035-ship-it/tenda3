@@ -7731,6 +7731,7 @@ function renderOrderTable(){
   body.querySelectorAll('.order-row').forEach(row=>{
     row.addEventListener('click', (e)=>{
       if (e.target.closest('.del-btn')) return;
+      if (e.target.closest('.order-po-wrap')) return;
       openOrderDetail(Number(row.dataset.id));
     });
   });

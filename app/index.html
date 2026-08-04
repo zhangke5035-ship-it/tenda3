@@ -497,13 +497,26 @@
   .np-row .np-row-sku{font-family:'IBM Plex Mono',monospace;font-size:12.5px;font-weight:700;color:var(--text);flex:none;width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .np-row .np-row-desc{flex:1;min-width:0;font-size:12px;color:var(--text-dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .np-row .np-row-cat{flex:none;font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.04em;width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-  .np-row .np-row-price{flex:none;font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--text-dim);width:110px;}
+  .np-row .np-row-price{flex:none;font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--text-dim);width:90px;}
   .np-row .np-row-price b{color:var(--copper);}
+  .np-row .np-row-moq{flex:none;font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--text-dim);width:70px;}
   .np-row .np-row-booked{flex:none;font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--text-dim);width:100px;}
   .np-row .np-row-foot{flex:none;display:flex;gap:6px;}
   .np-row .np-row-foot .btn{font-size:11.5px;padding:5px 10px;}
+  .np-list-header{display:flex;align-items:center;gap:14px;padding:0 14px 6px;}
+  .np-list-header .np-row-media-ph{flex:none;width:48px;}
+  .np-list-header .np-row-foot-ph{flex:none;width:146px;}
+  .np-list-header .np-row-main{flex:1;min-width:0;display:flex;align-items:center;gap:16px;}
+  .np-list-header .np-row-main > div{font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.04em;}
+  .np-list-header .np-row-sku{flex:none;width:150px;}
+  .np-list-header .np-row-desc{flex:1;min-width:0;}
+  .np-list-header .np-row-cat{flex:none;width:110px;}
+  .np-list-header .np-row-price{flex:none;width:90px;}
+  .np-list-header .np-row-moq{flex:none;width:70px;}
+  .np-list-header .np-row-booked{flex:none;width:100px;}
   @media (max-width:900px){
-    .np-row .np-row-cat, .np-row .np-row-price, .np-row .np-row-booked{display:none;}
+    .np-row .np-row-cat, .np-row .np-row-price, .np-row .np-row-moq, .np-row .np-row-booked{display:none;}
+    .np-list-header .np-row-cat, .np-list-header .np-row-price, .np-list-header .np-row-moq, .np-list-header .np-row-booked{display:none;}
   }
   .np-catalog-group{margin-bottom:32px;}
   .np-catalog-group-head{display:flex;align-items:baseline;gap:10px;margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid var(--border-soft);}
@@ -8421,6 +8434,10 @@ try { currentLang = localStorage.getItem(I18N_LANG_KEY) || 'pl'; } catch(e) { co
 
 // [中文, English, Polski] —— 可以随时往这个数组里加新条目
 const I18N_DICT = [
+  ['产品描述','Product Description','Opis produktu'],
+  ['建议零售价','Suggested Retail Price','Sugerowana cena detaliczna'],
+  ['最小起订数量','MOQ','MOQ'],
+  ['订单数量','Order Qty','Ilość zamówienia'],
   ['当前接单台数','Current Booked Qty','Aktualna liczba zamówień'],
   ['接单','Booked','Zamówiono'],
   ['添加新产品','Add New Product','Dodaj nowy produkt'],
@@ -11798,11 +11815,11 @@ function stWeekKey(i){ const info = isoWeekInfo(i.transaction_date); return info
 (function(){
 /* =================== NEW PRODUCTS (np-) MODULE =================== */
 const NP_CATS = {
+  router:   {label:'Routers'},
+  extender: {label:'Extenders'},
   switch:   {label:'Switches'},
   converter:{label:'Media Converters'},
-  router:   {label:'Routers'},
   mesh:     {label:'Mesh Systems'},
-  extender: {label:'Extenders'},
   usb:      {label:'USB Adapters'},
   ap:       {label:'Access Points'},
   camera:   {label:'Cameras'},
@@ -12185,6 +12202,22 @@ function gtmNpCardHTML(p){
   </div>`;
 }
 
+function gtmNpListHeaderHTML(){
+  return `
+  <div class="np-list-header">
+    <div class="np-row-media-ph">\u56fe\u7247</div>
+    <div class="np-row-main">
+      <div class="np-row-sku">\u540d\u79f0</div>
+      <div class="np-row-desc">\u4ea7\u54c1\u63cf\u8ff0</div>
+      <div class="np-row-cat">\u7c7b\u76ee</div>
+      <div class="np-row-price">\u5efa\u8bae\u96f6\u552e\u4ef7</div>
+      <div class="np-row-moq">\u6700\u5c0f\u8d77\u8ba2\u6570\u91cf</div>
+      <div class="np-row-booked">\u8ba2\u5355\u6570\u91cf</div>
+    </div>
+    <div class="np-row-foot-ph"></div>
+  </div>`;
+}
+
 function gtmNpRowHTML(p){
   let mediaHtm;
   if(p.image_url){
@@ -12196,7 +12229,8 @@ function gtmNpRowHTML(p){
   const mediaAttrs = p.link ? ` href="${p.link}" target="_blank" rel="noopener"` : '';
   const mediaClass = p.image_url ? 'np-row-media' : 'np-row-media np-icon';
 
-  const priceHtm = p.price ? `<b>PLN ${p.price}</b>${p.moq?` \u00b7 MOQ ${p.moq}`:''}` : '\u2014';
+  const priceHtm = p.price ? `<b>PLN ${p.price}</b>` : '\u2014';
+  const moqHtm = p.moq ? `${p.moq} pcs` : '\u2014';
 
   return `
   <div class="np-row" data-sku="${p.sku}" data-id="${p.id||''}">
@@ -12206,6 +12240,7 @@ function gtmNpRowHTML(p){
       <div class="np-row-desc" title="${p.desc||''}">${p.desc||''}</div>
       <div class="np-row-cat">${NP_CATS[p.cat]?NP_CATS[p.cat].label:p.cat}</div>
       <div class="np-row-price">${priceHtm}</div>
+      <div class="np-row-moq">${moqHtm}</div>
       <div class="np-row-booked">\u63a5\u5355 ${p.bookedQty||0} \u53f0</div>
     </div>
     <div class="np-row-foot">
@@ -12248,7 +12283,7 @@ function gtmNpRenderCatalog(){
     if(!items.length) return;
     any = true;
     const bodyHtm = gtmNpViewMode==='list'
-      ? `<div class="np-list">${items.map(gtmNpRowHTML).join('')}</div>`
+      ? `${gtmNpListHeaderHTML()}<div class="np-list">${items.map(gtmNpRowHTML).join('')}</div>`
       : `<div class="np-grid">${items.map(gtmNpCardHTML).join('')}</div>`;
     htm += `<section class="np-catalog-group">
       <div class="np-catalog-group-head"><h3>${NP_CATS[catKey]?NP_CATS[catKey].label:catKey}</h3><span>${items.length} SKU${items.length>1?'s':''}</span></div>

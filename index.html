@@ -500,6 +500,31 @@
   .np-cart-btn{position:relative;display:flex;align-items:center;gap:8px;padding:9px 16px;border-radius:8px;background:var(--surface);border:1px solid var(--border);cursor:pointer;color:var(--text);font-size:12.5px;font-weight:600;white-space:nowrap;transition:border-color .15s;}
   .np-cart-btn:hover{border-color:var(--copper);}
   .np-cart-badge{background:var(--copper);color:#fff;font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:11px;min-width:18px;height:18px;border-radius:9px;display:flex;align-items:center;justify-content:center;padding:0 5px;}
+  .np-banner{position:relative;height:220px;border-radius:14px;overflow:hidden;margin-bottom:20px;background:var(--surface-alt);border:1px solid var(--border);}
+  .np-banner.hidden{display:none;}
+  .np-banner-track{display:flex;height:100%;transition:transform .5s cubic-bezier(.4,0,.2,1);}
+  .np-banner-slide{flex:none;width:100%;height:100%;position:relative;display:flex;align-items:center;overflow:hidden;background:linear-gradient(120deg,#12181F,#1E2A38);cursor:pointer;}
+  .np-banner-slide .np-banner-img{position:absolute;right:-10px;top:50%;transform:translateY(-50%);height:78%;max-width:46%;object-fit:contain;filter:drop-shadow(0 12px 24px rgba(0,0,0,.35));}
+  .np-banner-slide .np-banner-icon{position:absolute;right:30px;top:50%;transform:translateY(-50%);width:120px;height:120px;color:rgba(255,255,255,.18);}
+  .np-banner-text{position:relative;z-index:1;padding:0 40px;max-width:56%;color:#fff;}
+  .np-banner-eyebrow{font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:#fff;background:var(--copper);display:inline-block;padding:3px 9px;border-radius:5px;margin-bottom:10px;}
+  .np-banner-title{font-family:'Space Grotesk',sans-serif;font-size:26px;font-weight:700;margin:0 0 6px;line-height:1.15;color:#fff;}
+  .np-banner-desc{font-size:12.5px;color:rgba(255,255,255,.72);line-height:1.5;margin:0 0 16px;max-width:420px;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;}
+  .np-banner-desc .np-price{color:#fff;font-weight:700;}
+  .np-banner-cta{display:inline-flex;align-items:center;gap:6px;background:#fff;color:#1A2233;font-size:12.5px;font-weight:600;padding:9px 16px;border-radius:8px;border:none;cursor:pointer;transition:opacity .15s;}
+  .np-banner-cta:hover{opacity:.85;}
+  .np-banner-arrow{position:absolute;top:50%;transform:translateY(-50%);width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.14);border:none;color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:2;transition:background .15s;}
+  .np-banner-arrow:hover{background:rgba(255,255,255,.26);}
+  .np-banner-arrow.prev{left:14px;}
+  .np-banner-arrow.next{right:14px;}
+  .np-banner-dots{position:absolute;bottom:14px;left:40px;display:flex;gap:6px;z-index:2;}
+  .np-banner-dot{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.35);border:none;cursor:pointer;padding:0;transition:background .15s,width .15s;}
+  .np-banner-dot.active{background:#fff;width:18px;border-radius:4px;}
+  @media (max-width:640px){
+    .np-banner{height:auto;min-height:190px;}
+    .np-banner-text{max-width:100%;padding:24px;}
+    .np-banner-slide .np-banner-img,.np-banner-slide .np-banner-icon{display:none;}
+  }
   .np-tabs{display:flex;gap:4px;overflow-x:auto;border-bottom:1px solid var(--border);scrollbar-width:none;}
   .np-tabs::-webkit-scrollbar{display:none;}
   .np-tab{flex:none;font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--text-dim);background:none;border:none;padding:9px 12px 8px;cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent;text-transform:uppercase;letter-spacing:.04em;transition:color .15s;}
@@ -976,6 +1001,7 @@
   </div>
   <div class="cp-main">
     <div id="cpViewNewProducts" class="cp-view hidden">
+      <div class="np-banner hidden" id="npBanner"></div>
       <div class="np-toolbar">
         <div class="np-toolbar-top">
           <div class="np-stat mono" id="npStat"></div>
@@ -8738,6 +8764,8 @@ const I18N_DICT = [
   ['询价单','Inquiry List','Lista zapyta\u0144'],
   ['搜索型号或关键词…','Search model or keyword…','Szukaj modelu lub s\u0142owa kluczowego…'],
   ['零售参考价','Suggested Retail','Cena sugerowana'],
+  ['新品上市','New Arrival','Nowość'],
+  ['查看产品','View Product','Zobacz produkt'],
   ['展开包装参数','Show packing specs','Poka\u017c dane opakowania'],
   ['收起包装参数','Hide packing specs','Ukryj dane opakowania'],
   ['单件尺寸','Unit Size','Rozmiar jednostkowy'],
@@ -12846,11 +12874,132 @@ function npShowLoading(){
   if(c2) c2.innerHTML = '<div class="np-empty">\u52a0\u8f7d\u4e2d...</div>';
 }
 
+/* =================== NEW PRODUCTS BANNER CAROUSEL (customer portal, cp- top) =================== */
+let npBannerSlides = [];
+let npBannerIndex = 0;
+let npBannerTimer = null;
+
+function npBuildBannerSlides(){
+  const withImg = NP_PRODUCTS.filter(p=>p.image_url);
+  let picks = withImg.filter(p=>p.isNew).slice(0,5);
+  if (picks.length < 5){
+    const rest = withImg.filter(p=>picks.indexOf(p)===-1);
+    picks = picks.concat(rest.slice(0, 5 - picks.length));
+  }
+  if (picks.length < 1 && NP_PRODUCTS.length){
+    picks = NP_PRODUCTS.slice(0,5);
+  }
+  npBannerSlides = picks;
+}
+
+function npBannerSlideHTML(p){
+  const catLabel = NP_CATS[p.cat] ? NP_CATS[p.cat].label : (p.cat||'');
+  const media = p.image_url
+    ? `<img class="np-banner-img" src="${p.image_url}">`
+    : `<span class="np-banner-icon">${NP_ICONS[p.cat]||''}</span>`;
+  let descLine = '';
+  if (p.price){
+    descLine = `<p class="np-banner-desc">\u96f6\u552e\u53c2\u8003\u4ef7 <span class="np-price">PLN ${p.price}</span>${p.moq?(' \u00b7 MOQ '+p.moq+' pcs'):''}</p>`;
+  } else if (p.desc){
+    descLine = `<p class="np-banner-desc">${p.desc}</p>`;
+  }
+  return `
+  <div class="np-banner-slide" data-sku="${p.sku}">
+    ${media}
+    <div class="np-banner-text">
+      <span class="np-banner-eyebrow">${p.isNew ? '\u65b0\u54c1\u4e0a\u5e02' : catLabel}</span>
+      <h3 class="np-banner-title">${p.sku}</h3>
+      ${descLine}
+      <button type="button" class="np-banner-cta" data-sku="${p.sku}">\u67e5\u770b\u4ea7\u54c1 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+    </div>
+  </div>`;
+}
+
+function npBannerGoTo(i){
+  if (!npBannerSlides.length) return;
+  npBannerIndex = (i + npBannerSlides.length) % npBannerSlides.length;
+  const track = document.getElementById('npBannerTrack');
+  if (track) track.style.transform = `translateX(-${npBannerIndex * 100}%)`;
+  document.querySelectorAll('#npBannerDots .np-banner-dot').forEach((d,idx)=>{
+    d.classList.toggle('active', idx===npBannerIndex);
+  });
+}
+
+function npBannerStart(){
+  npBannerStop();
+  if (npBannerSlides.length < 2) return;
+  npBannerTimer = setInterval(()=>npBannerGoTo(npBannerIndex+1), 5000);
+}
+function npBannerStop(){
+  if (npBannerTimer){ clearInterval(npBannerTimer); npBannerTimer = null; }
+}
+
+function npBannerGoToCard(sku){
+  npActiveCat = 'all';
+  npSearchTerm = '';
+  const searchInput = document.getElementById('npSearchInput');
+  if (searchInput) searchInput.value = '';
+  npRenderTabs();
+  npRenderCatalog();
+  requestAnimationFrame(()=>{
+    const card = document.querySelector(`.np-card[data-sku="${CSS.escape(sku)}"]`);
+    if (card){
+      card.scrollIntoView({behavior:'smooth', block:'center'});
+      card.classList.add('np-highlight');
+      setTimeout(()=>card.classList.remove('np-highlight'), 1800);
+    }
+  });
+}
+
+function npRenderBanner(){
+  const el = document.getElementById('npBanner');
+  if (!el) return;
+  npBuildBannerSlides();
+  npBannerStop();
+  if (npBannerSlides.length < 1){
+    el.classList.add('hidden');
+    el.innerHTML = '';
+    return;
+  }
+  el.classList.remove('hidden');
+  npBannerIndex = 0;
+  const dots = npBannerSlides.length > 1
+    ? `<div class="np-banner-dots" id="npBannerDots">${npBannerSlides.map((s,i)=>`<button type="button" class="np-banner-dot ${i===0?'active':''}" data-i="${i}"></button>`).join('')}</div>`
+    : '';
+  const arrows = npBannerSlides.length > 1
+    ? `<button type="button" class="np-banner-arrow prev" id="npBannerPrev"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 6l-6 6 6 6"/></svg></button>
+       <button type="button" class="np-banner-arrow next" id="npBannerNext"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M9 6l6 6-6 6"/></svg></button>`
+    : '';
+  el.innerHTML = `
+    <div class="np-banner-track" id="npBannerTrack">${npBannerSlides.map(npBannerSlideHTML).join('')}</div>
+    ${arrows}
+    ${dots}
+  `;
+  el.querySelectorAll('.np-banner-cta').forEach(btn=>{
+    btn.addEventListener('click', (e)=>{ e.stopPropagation(); npBannerGoToCard(btn.dataset.sku); });
+  });
+  el.querySelectorAll('.np-banner-slide').forEach(slide=>{
+    slide.addEventListener('click', ()=>npBannerGoToCard(slide.dataset.sku));
+  });
+  const prevBtn = document.getElementById('npBannerPrev');
+  if (prevBtn) prevBtn.addEventListener('click', (e)=>{ e.stopPropagation(); npBannerGoTo(npBannerIndex-1); npBannerStart(); });
+  const nextBtn = document.getElementById('npBannerNext');
+  if (nextBtn) nextBtn.addEventListener('click', (e)=>{ e.stopPropagation(); npBannerGoTo(npBannerIndex+1); npBannerStart(); });
+  el.querySelectorAll('#npBannerDots .np-banner-dot').forEach(dot=>{
+    dot.addEventListener('click', (e)=>{ e.stopPropagation(); npBannerGoTo(Number(dot.dataset.i)); npBannerStart(); });
+  });
+  el.addEventListener('mouseenter', npBannerStop);
+  el.addEventListener('mouseleave', npBannerStart);
+  npBannerGoTo(0);
+  npBannerStart();
+}
+
 async function npInit(){
   npShowLoading();
   await loadNpProducts();
   npRenderTabs();
   npRenderCatalog();
+  npRenderBanner();
   npRenderCartBadge();
   npRenderCartList();
   npInitEvents();

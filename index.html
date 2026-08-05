@@ -1834,25 +1834,6 @@
 
   <div id="orderListPanelGroup">
     <div class="panel">
-      <div class="panel-head"><h3>新增订单</h3></div>
-      <div class="form-grid">
-        <div class="field"><label>订单号</label><input id="o_no" placeholder="例如 PL-20260714-001"></div>
-        <div class="field"><label>客户订单号</label><input id="o_po_note" placeholder="例如 Note: ZZ000021332"></div>
-        <div class="field"><label>客户</label><select id="o_customer"></select></div>
-        <div class="field"><label>下单日期</label><input id="o_date" type="date"></div>
-        <div class="field"><label>状态</label>
-          <select id="o_status">
-            <option>待处理</option>
-            <option>已发货</option>
-            <option>已完成</option>
-            <option>已取消</option>
-          </select>
-        </div>
-      </div>
-      <button class="btn" id="addOrderBtn">新增订单</button>
-    </div>
-
-    <div class="panel">
       <div class="panel-head"><h3>订单列表</h3><div class="desc" id="orderCount"></div></div>
       <div class="cust-tabs" id="orderStatusTabs"></div>
       <div class="cust-tabs" id="orderCustTabs"></div>
@@ -7937,18 +7918,6 @@ let invoices = [];
 let invoiceStatusFilter = '全部';
 let invoiceCustFilter = '全部';
 
-function populateOrderCustomerSelect(){
-  const sel = document.getElementById('o_customer');
-  if (!sel) return;
-  sel.innerHTML = '';
-  Object.keys(CUSTOMERS).forEach(key=>{
-    const opt = document.createElement('option');
-    opt.value = key;
-    opt.textContent = CUSTOMERS[key].name;
-    sel.appendChild(opt);
-  });
-}
-
 function orderTotal(orderId){
   return orderItems.filter(i=>i.orderId===orderId).reduce((s,i)=>s+i.qty*i.price,0);
 }
@@ -8197,25 +8166,6 @@ function renderOrderItemTable(){
   });
 }
 
-const addOrderBtn = document.getElementById('addOrderBtn');
-if (addOrderBtn){
-  addOrderBtn.addEventListener('click', async ()=>{
-    const no = document.getElementById('o_no').value.trim();
-    const cust = document.getElementById('o_customer').value;
-    const date = document.getElementById('o_date').value;
-    const status = document.getElementById('o_status').value;
-    const poNoteInput = document.getElementById('o_po_note');
-    const poNote = poNoteInput ? poNoteInput.value.trim() : '';
-    if (!no){ alert('请填写订单号'); return; }
-    const { data, error } = await sb.from('orders').insert({ order_no: no, cust, order_date: date || null, status, customer_po_note: poNote || null }).select().single();
-    if (error){ alert('保存订单失败：' + error.message); return; }
-    orders.push({id: data.id, no: data.order_no, cust: data.cust, date: data.order_date||'', status: data.status, poNote: data.customer_po_note||'', warehouseRef: data.warehouse_ref_no||'', trackingNo: data.tracking_no||'', oaNo: data.oa_no||''});
-    renderOrders();
-    document.getElementById('o_no').value = '';
-    if (poNoteInput) poNoteInput.value = '';
-  });
-}
-
 document.addEventListener('blur', function(e){
   const inp = e.target && e.target.classList && e.target.classList.contains('order-po-input') ? e.target : null;
   if (!inp) return;
@@ -8293,7 +8243,6 @@ if (backToOrderListBtn){
   backToOrderListBtn.addEventListener('click', closeOrderDetail);
 }
 
-populateOrderCustomerSelect();
 renderOrders();
 </script>
   <script>

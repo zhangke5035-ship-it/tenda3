@@ -7420,6 +7420,7 @@ async function showCustomerApp(session, customerCode){
   loadCpAnnouncement();
   await loadCustomerReturns();
   await loadCustomerOrders();
+  applyCustomerDefaultView(session);
   applyCustomerAccessRestrictions(session);
 }
 
@@ -7428,7 +7429,24 @@ const CUSTOMER_LIMITED_ACCESS_EMAILS = {
   'aneta.pokos@action.pl': ['returns'],
   'patryk.niepokoj@incomgroup.pl': ['returns']
 };
+const CUSTOMER_DEFAULT_VIEW = {
+  'p.piotrowski@eltrox.pl': 'newproducts'
+};
 const CP_VIEW_ID_MAP = { newproducts: 'cpViewNewProducts', orders: 'cpViewOrders', returns: 'cpViewReturns' };
+function applyCustomerDefaultView(session){
+  const userEmail = ((session && session.user && session.user.email) || '').toLowerCase();
+  const defaultView = CUSTOMER_DEFAULT_VIEW[userEmail];
+  if (!defaultView) return;
+  document.querySelectorAll('#cpNav .navitem').forEach(function(n){ n.classList.remove('active'); });
+  Object.keys(CP_VIEW_ID_MAP).forEach(function(v){
+    const el = document.getElementById(CP_VIEW_ID_MAP[v]);
+    if (el) el.classList.add('hidden');
+  });
+  const targetNav = document.querySelector('#cpNav .navitem[data-cpview="' + defaultView + '"]');
+  if (targetNav) targetNav.classList.add('active');
+  const targetView = document.getElementById(CP_VIEW_ID_MAP[defaultView]);
+  if (targetView) targetView.classList.remove('hidden');
+}
 function applyCustomerAccessRestrictions(session){
   const userEmail = ((session && session.user && session.user.email) || '').toLowerCase();
   const allowedViews = CUSTOMER_LIMITED_ACCESS_EMAILS[userEmail];

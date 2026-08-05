@@ -1697,7 +1697,7 @@
         <table id="priceDetailTable">
          <thead><tr>
   <th><input type="checkbox" id="priceSelectAllCheck" title="全选/取消全选当前筛选结果"></th>
-  <th class="price-col-category">类目</th><th class="price-col-brand">品牌</th><th>产品型号</th><th class="price-col-version">版本号</th><th class="price-col-desc">产品信息描述</th><th>EAN</th><th class="price-col-lifecycle">生命周期</th><th data-key="customer">客户</th><th data-key="country">国家</th><th>月份</th><th>币种</th><th data-key="retail">含税零售价</th><th data-key="vat">VAT税率</th><th data-key="net">未税净价</th>
+  <th class="price-col-category">类目</th><th class="price-col-brand">品牌</th><th>产品型号</th><th class="price-col-version">版本号</th><th class="price-col-desc">产品信息描述</th><th>EAN</th><th class="price-col-lifecycle">生命周期</th><th data-key="customer">客户</th><th data-key="country">国家</th><th>币种</th><th data-key="retail">含税零售价</th><th data-key="vat">VAT税率</th><th data-key="net">未税净价</th>
   <th>一级报价</th><th>二级报价</th><th>三级报价</th><th>代理商利润点位</th><th>最终采购价</th>
   <th class="price-col-cncode">CN编码</th><th class="price-col-splitpay">Split Payment</th><th class="price-col-pkg">包装尺寸</th><th class="price-col-page">产品页面</th><th></th>
 </tr></thead>
@@ -4596,7 +4596,6 @@ function renderPriceTable(){
       <td class="price-col-lifecycle"><span class="lc-badge ${lifecycleClass(lifecycleOf(p.product))}">${lifecycleOf(p.product)}</span></td>
       <td><span class="tag ${custTypeClass(p.cust)}">${custName(p.cust)}</span></td>
       <td>${custCountry(p.cust)}</td>
-      <td>${p.month || dash}</td>
       <td>${custCurrency(p.cust)}</td>
       <td class="num-cell">${p.retailPLN ? fmt(p.retailPLN)+(currencySymbol(custCurrency(p.cust))?' '+currencySymbol(custCurrency(p.cust)):'') : dash}</td>
       <td class="num-cell">${typeof p.vatRate==='number' ? (p.vatRate*100).toFixed(0)+'%' : (custCountry(p.cust)==='波兰' ? '23%' : dash)}</td>

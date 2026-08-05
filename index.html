@@ -11583,22 +11583,24 @@ function stWeekKey(i){ const info = isoWeekInfo(i.transaction_date); return info
 
     const latestByAgentSku = new Map();
     invFiltered.forEach(function(r){
-      if (!r.sku || !r.agent) return;
-      const key = r.agent + '|' + r.sku;
+      const rowKey = r.sku || r.model;
+      if (!rowKey || !r.agent) return;
+      const key = r.agent + '|' + rowKey;
       const prev = latestByAgentSku.get(key);
       if (!prev || (r.inventory_date||'') > (prev.inventory_date||'')) latestByAgentSku.set(key, r);
     });
 
     const stockByKey = new Map();
     latestByAgentSku.forEach(function(r, key){
-      stockByKey.set(key, { qty: Number(r.qty)||0, agent: r.agent, sku: r.sku, model: r.model||'' });
+      stockByKey.set(key, { qty: Number(r.qty)||0, agent: r.agent, sku: r.sku || r.model, model: r.model||'' });
     });
 
     const salesByKey = new Map();
     stFiltered.forEach(function(r){
-      if (!r.sku || !r.agent) return;
-      const key = r.agent + '|' + r.sku;
-      const cur = salesByKey.get(key) || { qty: 0, agent: r.agent, sku: r.sku, model: '' };
+      const rowKey = r.sku || r.model;
+      if (!rowKey || !r.agent) return;
+      const key = r.agent + '|' + rowKey;
+      const cur = salesByKey.get(key) || { qty: 0, agent: r.agent, sku: r.sku || r.model, model: '' };
       cur.qty += Number(r.units_sold) || 0;
       if (!cur.model && r.model) cur.model = r.model;
       salesByKey.set(key, cur);

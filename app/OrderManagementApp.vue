@@ -209,7 +209,7 @@ async function fetchData() {
   loading.value = true
   try {
     const [ordersRes, itemsRes] = await Promise.all([
-      sb.from('orders').select('*').order('id', { ascending: true }),
+      sb.from('orders').select('*').order('order_date', { ascending: false }),
       sb.from('order_items').select('*').order('id', { ascending: true }),
     ])
     if (ordersRes.error) { console.error('fetch orders', ordersRes.error); ElMessage.error('加载订单失败：' + ordersRes.error.message) }

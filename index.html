@@ -428,6 +428,10 @@
   .ra-refund-input-row input{flex:1;padding:8px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface-alt);color:var(--text);font-size:14px;}
   .ra-refund-input-row input:focus{outline:none;border-color:var(--copper);}
   .ra-refund-readonly{flex:1;font-size:14px;color:var(--text);font-weight:600;}
+  .ra-modal-body-item input,.ra-modal-body-item select,.ra-modal-body-item textarea{padding:8px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface-alt);color:var(--text);font-size:13.5px;font-family:inherit;}
+  .ra-modal-body-item input:focus,.ra-modal-body-item select:focus,.ra-modal-body-item textarea:focus{outline:none;border-color:var(--copper);}
+  .ra-modal-body-item textarea{resize:vertical;min-height:60px;}
+  .ra-required{color:var(--alert);}
   .cp-card h2{margin:0 0 16px;font-family:'Space Grotesk',sans-serif;font-size:15px;color:var(--text);}
   .cp-form{display:grid;grid-template-columns:1fr 1fr;gap:14px 16px;}
   .cp-form-row{display:flex;flex-direction:column;gap:6px;}
@@ -1520,6 +1524,7 @@
           </select>
         </div>
         <div style="display:flex;gap:8px;">
+          <button class="inv-btn" id="raBtnAdd">+ 新增退货</button>
           <button class="inv-btn inv-btn-ghost" id="raBtnExport">导出 Excel</button>
         </div>
       </div>
@@ -1551,6 +1556,63 @@
           <tbody id="raTableBody"></tbody>
         </table>
       </div>
+
+    <div class="ra-modal-overlay hidden" id="raAddModal">
+      <div class="ra-modal">
+        <div class="ra-modal-head">
+          <h3>新增退货申请</h3>
+          <button type="button" class="ra-modal-close" id="raAddCloseBtn">&times;</button>
+        </div>
+        <div class="ra-modal-body">
+          <div class="ra-modal-body-item">
+            <label class="ra-label">客户 <span class="ra-required">*</span></label>
+            <select id="raAddCustomer">
+              <option value="">请选择客户</option>
+            </select>
+          </div>
+          <div class="ra-modal-body-item">
+            <label class="ra-label">产品型号 <span class="ra-required">*</span></label>
+            <input type="text" id="raAddProduct" list="modelDatalist" placeholder="例如 TX12L Pro">
+          </div>
+          <div class="ra-modal-body-item">
+            <label class="ra-label">数量 <span class="ra-required">*</span></label>
+            <input type="number" id="raAddQty" min="1" step="1" placeholder="例如 1">
+          </div>
+          <div class="ra-modal-body-item">
+            <label class="ra-label">关联订单号 <span class="ra-required">*</span></label>
+            <input type="text" id="raAddOrderNo" placeholder="例如 FVAT 7/03/2026">
+          </div>
+          <div class="ra-modal-body-item">
+            <label class="ra-label">采购发票号 <span class="ra-required">*</span></label>
+            <input type="text" id="raAddInvoiceNo" placeholder="例如 FVAT 7/03/2026">
+          </div>
+          <div class="ra-modal-body-item">
+            <label class="ra-label">产品序列号 <span class="ra-required">*</span></label>
+            <input type="text" id="raAddSerialNo" placeholder="请输入产品序列号">
+          </div>
+          <div class="ra-modal-body-item">
+            <label class="ra-label">退货物流承运商 <span class="ra-required">*</span></label>
+            <input type="text" id="raAddCarrier" placeholder="例如 GLS、DSV">
+          </div>
+          <div class="ra-modal-body-item">
+            <label class="ra-label">物流单号 <span class="ra-required">*</span></label>
+            <input type="text" id="raAddTrackingNo" placeholder="请输入物流单号">
+          </div>
+          <div class="ra-modal-body-item ra-modal-body-full">
+            <label class="ra-label">退货原因 <span class="ra-required">*</span></label>
+            <textarea id="raAddReason" placeholder="请描述退货原因"></textarea>
+          </div>
+          <div class="ra-modal-body-item ra-modal-body-full">
+            <label class="ra-label">备注</label>
+            <textarea id="raAddNote" placeholder="选填"></textarea>
+          </div>
+        </div>
+        <div class="ra-modal-foot">
+          <div class="cp-field-warn" id="raAddMsg" style="color:var(--alert);font-size:12px;"></div>
+          <button type="button" class="btn" id="raAddSubmitBtn">提交</button>
+        </div>
+      </div>
+    </div>
 
     <div class="ra-modal-overlay hidden" id="raDetailModal">
       <div class="ra-modal">
@@ -7053,6 +7115,103 @@ const raBtnExportEl = document.getElementById('raBtnExport');
 if (raBtnExportEl){
   raBtnExportEl.addEventListener('click', function(){
     exportReturnsAdminCSV();
+  });
+}
+
+function raPopulateAddCustomerOptions(){
+  const sel = document.getElementById('raAddCustomer');
+  if (!sel || sel.dataset.populated) return;
+  const codes = (typeof CUSTOMERS !== 'undefined') ? Object.keys(CUSTOMERS) : [];
+  sel.innerHTML = '<option value="">请选择客户</option>' + codes.map(function(c){
+    return '<option value="' + c + '">' + escapeHtmlCP(raCustomerName(c)) + '</option>';
+  }).join('');
+  sel.dataset.populated = '1';
+}
+
+function raResetAddForm(){
+  ['raAddCustomer','raAddProduct','raAddQty','raAddOrderNo','raAddInvoiceNo','raAddSerialNo','raAddCarrier','raAddTrackingNo','raAddReason','raAddNote'].forEach(function(id){
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  const msg = document.getElementById('raAddMsg');
+  if (msg){ msg.textContent = ''; msg.className = 'cp-field-warn'; }
+}
+
+function raOpenAddModal(){
+  raPopulateAddCustomerOptions();
+  raResetAddForm();
+  const overlay = document.getElementById('raAddModal');
+  if (overlay) overlay.classList.remove('hidden');
+}
+
+function raCloseAddModal(){
+  const overlay = document.getElementById('raAddModal');
+  if (overlay) overlay.classList.add('hidden');
+}
+
+const raBtnAddEl = document.getElementById('raBtnAdd');
+if (raBtnAddEl){
+  raBtnAddEl.addEventListener('click', raOpenAddModal);
+}
+
+const raAddCloseBtnEl = document.getElementById('raAddCloseBtn');
+if (raAddCloseBtnEl){
+  raAddCloseBtnEl.addEventListener('click', raCloseAddModal);
+}
+
+const raAddModalEl = document.getElementById('raAddModal');
+if (raAddModalEl){
+  raAddModalEl.addEventListener('click', function(e){
+    if (e.target === raAddModalEl) raCloseAddModal();
+  });
+}
+
+const raAddSubmitBtnEl = document.getElementById('raAddSubmitBtn');
+if (raAddSubmitBtnEl){
+  raAddSubmitBtnEl.addEventListener('click', async function(){
+    const msg = document.getElementById('raAddMsg');
+    const customerCode = (document.getElementById('raAddCustomer')||{}).value || '';
+    const product = (document.getElementById('raAddProduct')||{}).value.trim();
+    const qty = parseFloat((document.getElementById('raAddQty')||{}).value);
+    const orderNo = (document.getElementById('raAddOrderNo')||{}).value.trim();
+    const invoiceNo = (document.getElementById('raAddInvoiceNo')||{}).value.trim();
+    const serialNo = (document.getElementById('raAddSerialNo')||{}).value.trim();
+    const carrier = (document.getElementById('raAddCarrier')||{}).value.trim();
+    const trackingNo = (document.getElementById('raAddTrackingNo')||{}).value.trim();
+    const reason = (document.getElementById('raAddReason')||{}).value.trim();
+    const note = (document.getElementById('raAddNote')||{}).value.trim();
+    if (!customerCode || !product || !qty || !orderNo || !invoiceNo || !serialNo || !carrier || !trackingNo || !reason){
+      if (msg){ msg.textContent = '请填写必填项'; msg.className = 'cp-field-warn cp-form-msg-error'; }
+      return;
+    }
+    raAddSubmitBtnEl.disabled = true;
+    raAddSubmitBtnEl.textContent = '提交中…';
+    try{
+      const payload = {
+        customer_code: customerCode,
+        product: product,
+        qty: qty,
+        order_no: orderNo,
+        invoice_no: invoiceNo,
+        serial_no: serialNo,
+        carrier: carrier,
+        tracking_no: trackingNo,
+        reason: reason,
+        note: note || null
+      };
+      const { error } = await sb.from('returns').insert(payload);
+      if (error){
+        if (msg){ msg.textContent = '提交失败：' + error.message; msg.className = 'cp-field-warn cp-form-msg-error'; }
+        return;
+      }
+      raCloseAddModal();
+      await loadReturnsAdmin();
+    }catch(err){
+      if (msg){ msg.textContent = '提交失败：请检查网络'; msg.className = 'cp-field-warn cp-form-msg-error'; }
+    }finally{
+      raAddSubmitBtnEl.disabled = false;
+      raAddSubmitBtnEl.textContent = '提交';
+    }
   });
 }
 

@@ -1566,9 +1566,8 @@
         <div class="ra-modal-body">
           <div class="ra-modal-body-item">
             <label class="ra-label">客户 <span class="ra-required">*</span></label>
-            <select id="raAddCustomer">
-              <option value="">请选择客户</option>
-            </select>
+            <input type="text" id="raAddCustomer" list="raAddCustomerDatalist" placeholder="选择已有客户，或直接输入新客户名称">
+            <datalist id="raAddCustomerDatalist"></datalist>
           </div>
           <div class="ra-modal-body-item">
             <label class="ra-label">产品型号 <span class="ra-required">*</span></label>
@@ -7119,13 +7118,25 @@ if (raBtnExportEl){
 }
 
 function raPopulateAddCustomerOptions(){
-  const sel = document.getElementById('raAddCustomer');
-  if (!sel || sel.dataset.populated) return;
+  const dl = document.getElementById('raAddCustomerDatalist');
+  if (!dl || dl.dataset.populated) return;
   const codes = (typeof CUSTOMERS !== 'undefined') ? Object.keys(CUSTOMERS) : [];
-  sel.innerHTML = '<option value="">请选择客户</option>' + codes.map(function(c){
-    return '<option value="' + c + '">' + escapeHtmlCP(raCustomerName(c)) + '</option>';
+  dl.innerHTML = codes.map(function(c){
+    return '<option value="' + escapeHtmlCP(raCustomerName(c)) + '"></option>';
   }).join('');
-  sel.dataset.populated = '1';
+  dl.dataset.populated = '1';
+}
+function raResolveCustomerCode(input){
+  const raw = (input || '').trim();
+  if (!raw) return '';
+  if (typeof CUSTOMERS !== 'undefined' && CUSTOMERS[raw]) return raw;
+  if (typeof CUSTOMERS !== 'undefined'){
+    const match = Object.keys(CUSTOMERS).find(function(code){
+      return CUSTOMERS[code].name.toLowerCase() === raw.toLowerCase();
+    });
+    if (match) return match;
+  }
+  return raw;
 }
 
 function raResetAddForm(){
@@ -7170,7 +7181,7 @@ const raAddSubmitBtnEl = document.getElementById('raAddSubmitBtn');
 if (raAddSubmitBtnEl){
   raAddSubmitBtnEl.addEventListener('click', async function(){
     const msg = document.getElementById('raAddMsg');
-    const customerCode = (document.getElementById('raAddCustomer')||{}).value || '';
+    const customerCode = raResolveCustomerCode((document.getElementById('raAddCustomer')||{}).value);
     const product = (document.getElementById('raAddProduct')||{}).value.trim();
     const qty = parseFloat((document.getElementById('raAddQty')||{}).value);
     const orderNo = (document.getElementById('raAddOrderNo')||{}).value.trim();

@@ -7086,14 +7086,15 @@ if (raDetailSubmitBtnEl){
     const creditNoteNo = creditNoteInputEl ? creditNoteInputEl.value.trim() : '';
     const sapNoInputEl = document.getElementById('raSapNoInput');
     const sapNo = sapNoInputEl ? sapNoInputEl.value.trim() : '';
+    const newStatus = creditNoteNo ? '已退款' : '已受理';
     raDetailSubmitBtnEl.disabled = true;
-    const { error } = await sb.from('returns').update({ status: '已退款', refund_amount: grossAmount, oa_no: oaNo || null, credit_note_no: creditNoteNo || null, sap_no: sapNo || null }).eq('id', raDetailRow.id);
+    const { error } = await sb.from('returns').update({ status: newStatus, refund_amount: grossAmount, oa_no: oaNo || null, credit_note_no: creditNoteNo || null, sap_no: sapNo || null }).eq('id', raDetailRow.id);
     raDetailSubmitBtnEl.disabled = false;
     if (error){
       if (msg) msg.textContent = '提交失败：' + error.message;
       return;
     }
-    raDetailRow.status = '已退款';
+    raDetailRow.status = newStatus;
     raDetailRow.refund_amount = grossAmount;
     raDetailRow.oa_no = oaNo || null;
     raDetailRow.credit_note_no = creditNoteNo || null;

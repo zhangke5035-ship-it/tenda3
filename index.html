@@ -1877,9 +1877,10 @@
             <tr>
               <th>费用类型</th>
               <th>月份</th>
-              <th>金额</th>
+              <th>不含税金额</th>
               <th>币种</th>
               <th>税额</th>
+              <th>总金额</th>
               <th>备注</th>
               <th>提交时间</th>
               <th>操作</th>
@@ -1905,7 +1906,7 @@
               <input type="month" id="aerAddMonth">
             </div>
             <div class="ra-modal-body-item">
-              <label class="ra-label">金额 <span class="ra-required">*</span></label>
+              <label class="ra-label">不含税金额 <span class="ra-required">*</span></label>
               <input type="number" id="aerAddAmount" min="0" step="0.01" placeholder="例如 1500">
             </div>
             <div class="ra-modal-body-item">
@@ -1920,6 +1921,10 @@
             <div class="ra-modal-body-item">
               <label class="ra-label">税额</label>
               <input type="number" id="aerAddTax" min="0" step="0.01" placeholder="选填，例如 120">
+            </div>
+            <div class="ra-modal-body-item">
+              <label class="ra-label">总金额</label>
+              <input type="text" id="aerAddTotalDisplay" readonly disabled placeholder="自动计算">
             </div>
             <div class="ra-modal-body-item ra-modal-body-full">
               <label class="ra-label">发票文件</label>
@@ -7482,11 +7487,15 @@ async function loadAdminExpenses(){
   }catch(e){ console.error(e); }
 }
 
+function aerRowTotal(r){
+  return (Number(r.amount)||0) + (Number(r.tax_amount)||0);
+}
+
 function aerSumByCurrency(rows){
   const sums = {};
   rows.forEach(function(r){
     const cur = r.currency || 'PLN';
-    sums[cur] = (sums[cur]||0) + (Number(r.amount)||0);
+    sums[cur] = (sums[cur]||0) + aerRowTotal(r);
   });
   return sums;
 }
@@ -7522,7 +7531,7 @@ function renderAdminExpensesTable(){
     return true;
   });
   if (!filtered.length){
-    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text-faint);padding:24px;">暂无记录</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--text-faint);padding:24px;">暂无记录</td></tr>';
     return;
   }
   tbody.innerHTML = filtered.map(function(r){
@@ -7532,6 +7541,7 @@ function renderAdminExpensesTable(){
       '<td>' + (Number(r.amount)||0).toLocaleString('en-US',{minimumFractionDigits:2, maximumFractionDigits:2}) + '</td>' +
       '<td>' + escapeHtmlCP(r.currency||'PLN') + '</td>' +
       '<td>' + (r.tax_amount != null ? Number(r.tax_amount).toLocaleString('en-US',{minimumFractionDigits:2, maximumFractionDigits:2}) : '-') + '</td>' +
+      '<td>' + aerRowTotal(r).toLocaleString('en-US',{minimumFractionDigits:2, maximumFractionDigits:2}) + '</td>' +
       '<td>' + escapeHtmlCP(r.note||'-') + '</td>' +
       '<td>' + escapeHtmlCP(r.created_at ? r.created_at.slice(0,16).replace('T',' ') : '') + '</td>' +
       '<td><button type="button" class="inv-btn-ghost aer-edit-btn" data-id="' + r.id + '">编辑</button> <button type="button" class="inv-btn-ghost aer-download-btn" data-id="' + r.id + '">下载报销单</button> <button type="button" class="inv-btn-ghost aer-del-btn" data-id="' + r.id + '">删除</button></td>' +
@@ -7602,6 +7612,17 @@ async function aerUploadInvoiceFile(file){
   return { path: path, name: file.name };
 }
 
+function aerUpdateTotalDisplay(){
+  const amtEl = document.getElementById('aerAddAmount');
+  const taxEl = document.getElementById('aerAddTax');
+  const totalEl = document.getElementById('aerAddTotalDisplay');
+  if (!totalEl) return;
+  const amt = amtEl && amtEl.value !== '' ? parseFloat(amtEl.value) : 0;
+  const tax = taxEl && taxEl.value !== '' ? parseFloat(taxEl.value) : 0;
+  const total = (isNaN(amt) ? 0 : amt) + (isNaN(tax) ? 0 : tax);
+  totalEl.value = total.toLocaleString('en-US',{minimumFractionDigits:2, maximumFractionDigits:2});
+}
+
 function aerResetAddForm(){
   const catSel = document.getElementById('aerAddCategory');
   if (catSel) catSel.value = '';
@@ -7634,6 +7655,7 @@ function aerResetAddForm(){
   if (aerAddSubmitBtnEl) aerAddSubmitBtnEl.textContent = '提交';
   const currentInvoiceEl = document.getElementById('aerCurrentInvoiceInfo');
   if (currentInvoiceEl){ currentInvoiceEl.style.display = 'none'; currentInvoiceEl.textContent = ''; }
+  aerUpdateTotalDisplay();
 }
 
 function aerOpenAddModal(){
@@ -7680,6 +7702,7 @@ function aerOpenEditModal(id){
       currentInvoiceEl.textContent = '';
     }
   }
+  aerUpdateTotalDisplay();
   const overlay = document.getElementById('aerAddModal');
   if (overlay) overlay.classList.remove('hidden');
 }
@@ -7692,6 +7715,16 @@ function aerCloseAddModal(){
 const aerBtnAddEl = document.getElementById('aerBtnAdd');
 if (aerBtnAddEl){
   aerBtnAddEl.addEventListener('click', aerOpenAddModal);
+}
+
+const aerAddAmountEl = document.getElementById('aerAddAmount');
+if (aerAddAmountEl){
+  aerAddAmountEl.addEventListener('input', aerUpdateTotalDisplay);
+}
+
+const aerAddTaxEl = document.getElementById('aerAddTax');
+if (aerAddTaxEl){
+  aerAddTaxEl.addEventListener('input', aerUpdateTotalDisplay);
 }
 
 const aerAddCloseBtnEl = document.getElementById('aerAddCloseBtn');

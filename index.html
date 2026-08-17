@@ -1882,6 +1882,7 @@
               <th>币种</th>
               <th>税额</th>
               <th>总金额</th>
+              <th>发票号码</th>
               <th>备注</th>
               <th>提交时间</th>
               <th>支付状态</th>
@@ -1937,6 +1938,10 @@
               <input type="file" id="aerAddInvoiceFile" accept=".pdf,.png,.jpg,.jpeg">
               <div id="aerCurrentInvoiceInfo" style="display:none;font-size:12px;color:var(--text-faint);margin-top:4px;"></div>
               <div id="aerInvoiceExtractMsg" style="display:none;font-size:12px;margin-top:4px;"></div>
+            </div>
+            <div class="ra-modal-body-item">
+              <label class="ra-label">发票号码</label>
+              <input type="text" id="aerAddInvoiceNo" placeholder="自动识别或手动填写">
             </div>
             <div class="ra-modal-body-item">
               <label class="ra-label">银行名称</label>
@@ -7540,7 +7545,7 @@ function renderAdminExpensesTable(){
     return true;
   });
   if (!filtered.length){
-    tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;color:var(--text-faint);padding:24px;">暂无记录</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;color:var(--text-faint);padding:24px;">暂无记录</td></tr>';
     return;
   }
   tbody.innerHTML = filtered.map(function(r){
@@ -7551,6 +7556,7 @@ function renderAdminExpensesTable(){
       '<td>' + escapeHtmlCP(r.currency||'PLN') + '</td>' +
       '<td>' + (r.tax_amount != null ? Number(r.tax_amount).toLocaleString('en-US',{minimumFractionDigits:2, maximumFractionDigits:2}) : '-') + '</td>' +
       '<td>' + aerRowTotal(r).toLocaleString('en-US',{minimumFractionDigits:2, maximumFractionDigits:2}) + '</td>' +
+      '<td>' + escapeHtmlCP(r.invoice_no||'-') + '</td>' +
       '<td>' + escapeHtmlCP(r.note||'-') + '</td>' +
       '<td>' + escapeHtmlCP(r.created_at ? r.created_at.slice(0,16).replace('T',' ') : '') + '</td>' +
       '<td><select class="inv-field aer-status-select" data-id="' + r.id + '" style="padding:4px 8px;font-size:12px;">' +
@@ -7628,6 +7634,9 @@ function aerParseInvoiceText(rawText){
 
   const curMatch = text.match(/Kod\s+waluty:\s*([A-Z]{3})/);
   if (curMatch) result.currency = curMatch[1];
+
+  const invoiceNoMatch = text.match(/Numer\s+Faktury:\s*([A-Za-z0-9\-\/]+)/);
+  if (invoiceNoMatch) result.invoice_no = invoiceNoMatch[1].trim();
 
   const summaryMatch = text.match(/Kwota\s+brutto([\s\S]*?)(Dodatkowe|Płatność|$)/);
   if (summaryMatch){
@@ -7746,6 +7755,8 @@ function aerResetAddForm(){
   if (bankAccountNameEl) bankAccountNameEl.value = '';
   const bankAccountNoEl = document.getElementById('aerAddBankAccountNo');
   if (bankAccountNoEl) bankAccountNoEl.value = '';
+  const invoiceNoEl = document.getElementById('aerAddInvoiceNo');
+  if (invoiceNoEl) invoiceNoEl.value = '';
   const msg = document.getElementById('aerAddMsg');
   if (msg){ msg.textContent = ''; msg.className = 'cp-field-warn'; }
   aerEditingId = null;
@@ -7795,6 +7806,8 @@ function aerOpenEditModal(id){
   if (bankAccountNameEl) bankAccountNameEl.value = row.bank_account_name || '';
   const bankAccountNoEl = document.getElementById('aerAddBankAccountNo');
   if (bankAccountNoEl) bankAccountNoEl.value = row.bank_account_no || '';
+  const invoiceNoEl = document.getElementById('aerAddInvoiceNo');
+  if (invoiceNoEl) invoiceNoEl.value = row.invoice_no || '';
   const currentInvoiceEl = document.getElementById('aerCurrentInvoiceInfo');
   if (currentInvoiceEl){
     if (row.invoice_file_name){
@@ -7852,6 +7865,7 @@ async function aerHandleInvoiceFileChange(){
     if (d.bank_name){ const el = document.getElementById('aerAddBankName'); if (el) el.value = d.bank_name; }
     if (d.bank_account_name){ const el = document.getElementById('aerAddBankAccountName'); if (el) el.value = d.bank_account_name; }
     if (d.bank_account_no){ const el = document.getElementById('aerAddBankAccountNo'); if (el) el.value = d.bank_account_no; }
+    if (d.invoice_no){ const el = document.getElementById('aerAddInvoiceNo'); if (el) el.value = d.invoice_no; }
     aerUpdateTotalDisplay();
     msgEl.style.color = 'var(--success, #2a9d5c)';
     msgEl.textContent = '已自动识别发票信息，请核对后提交';
@@ -7904,6 +7918,7 @@ if (aerAddSubmitBtnEl){
     const bankName = (document.getElementById('aerAddBankName')||{}).value.trim();
     const bankAccountName = (document.getElementById('aerAddBankAccountName')||{}).value.trim();
     const bankAccountNo = (document.getElementById('aerAddBankAccountNo')||{}).value.trim();
+    const invoiceNo = (document.getElementById('aerAddInvoiceNo')||{}).value.trim();
     const invoiceFileEl = document.getElementById('aerAddInvoiceFile');
     const invoiceFile = (invoiceFileEl && invoiceFileEl.files && invoiceFileEl.files[0]) ? invoiceFileEl.files[0] : null;
 
@@ -7911,7 +7926,7 @@ if (aerAddSubmitBtnEl){
     aerAddSubmitBtnEl.disabled = true;
     aerAddSubmitBtnEl.textContent = wasEditing ? '保存中…' : '提交中…';
     try{
-      const payload = { category: category, period: period, amount: amount, currency: currency, tax_amount: (taxRaw === '' ? null : taxAmount), payment_status: paymentStatus, note: note || null, bank_name: bankName || null, bank_account_name: bankAccountName || null, bank_account_no: bankAccountNo || null };
+      const payload = { category: category, period: period, amount: amount, currency: currency, tax_amount: (taxRaw === '' ? null : taxAmount), payment_status: paymentStatus, invoice_no: invoiceNo || null, note: note || null, bank_name: bankName || null, bank_account_name: bankAccountName || null, bank_account_no: bankAccountNo || null };
       if (invoiceFile){
         try{
           const uploaded = await aerUploadInvoiceFile(invoiceFile);

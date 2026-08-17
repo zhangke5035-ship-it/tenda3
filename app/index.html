@@ -811,6 +811,21 @@
   .inv-table-wrap tbody td:nth-child(4){white-space:normal;overflow-wrap:anywhere;max-width:340px;min-width:220px;}
   .inv-table-wrap tbody tr:last-child td{border-bottom:none;}
   .inv-table-wrap tbody tr:hover{background:rgba(0,0,0,0.025);}
+  #view-expense-reimbursement th.aer-sort-th{cursor:pointer;user-select:none;}
+  #view-expense-reimbursement th.aer-sort-th:hover{color:var(--copper);}
+  #view-expense-reimbursement .aer-sort-ind{display:inline-block;margin-left:4px;font-size:10px;opacity:.35;}
+  #view-expense-reimbursement th.aer-sort-active{color:var(--copper);}
+  #view-expense-reimbursement th.aer-sort-active .aer-sort-ind{opacity:1;}
+  #view-expense-reimbursement .inv-table-wrap td:last-child,
+  #view-expense-reimbursement .inv-table-wrap th:last-child{position:sticky;right:0;background:var(--surface);z-index:2;box-shadow:-2px 0 4px rgba(0,0,0,0.05);}
+  #view-expense-reimbursement .inv-table-wrap thead th:last-child{background:rgba(0,0,0,0.025);}
+  #view-expense-reimbursement .inv-table-wrap tbody td:last-child{white-space:normal;}
+  #view-expense-reimbursement .aer-row-actions{display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
+  #view-expense-reimbursement select.aer-status-select{font-weight:600;transition:background .15s,color .15s;border-color:transparent;}
+  #view-expense-reimbursement select.aer-status-select[data-status="未提交"]{background:var(--surface-alt);color:var(--text-dim);}
+  #view-expense-reimbursement select.aer-status-select[data-status="已提交"]{background:#E8F0FA;color:#2568B8;}
+  #view-expense-reimbursement select.aer-status-select[data-status="未付款"]{background:var(--alert-soft);color:var(--alert);}
+  #view-expense-reimbursement select.aer-status-select[data-status="已付款"]{background:var(--good-soft);color:var(--good);}
   .inv-sku{color:var(--text-dim);font-family:'IBM Plex Mono',monospace;font-size:12.5px;}
   .inv-prod-name{font-weight:600;color:var(--text);overflow-wrap:anywhere;}
   .inv-prod-cat{font-size:12px;color:var(--text-dim);margin-top:2px;}
@@ -1876,16 +1891,16 @@
         <table>
           <thead>
             <tr>
-              <th>费用类型</th>
-              <th>月份</th>
-              <th>不含税金额</th>
-              <th>币种</th>
-              <th>税额</th>
-              <th>总金额</th>
+              <th class="aer-sort-th" data-col="category">费用类型<span class="aer-sort-ind">⇅</span></th>
+              <th class="aer-sort-th" data-col="period">月份<span class="aer-sort-ind">⇅</span></th>
+              <th class="aer-sort-th" data-col="amount">不含税金额<span class="aer-sort-ind">⇅</span></th>
+              <th class="aer-sort-th" data-col="currency">币种<span class="aer-sort-ind">⇅</span></th>
+              <th class="aer-sort-th" data-col="tax_amount">税额<span class="aer-sort-ind">⇅</span></th>
+              <th class="aer-sort-th" data-col="total">总金额<span class="aer-sort-ind">⇅</span></th>
               <th>发票号码</th>
               <th>备注</th>
-              <th>提交时间</th>
-              <th>支付状态</th>
+              <th class="aer-sort-th" data-col="created_at">提交时间<span class="aer-sort-ind">⇅</span></th>
+              <th class="aer-sort-th" data-col="payment_status">支付状态<span class="aer-sort-ind">⇅</span></th>
               <th>操作</th>
             </tr>
           </thead>
@@ -7473,6 +7488,8 @@ const AER_PAYMENT_STATUSES = ['未提交','已提交','未付款','已付款'];
 let adminExpensesData = [];
 let aerFilterCategory = '';
 let aerFilterMonth = '';
+let aerSortCol = 'period';
+let aerSortDir = 'desc';
 let aerEditingId = null;
 
 function aerPopulateCategoryOptions(){
@@ -7536,13 +7553,52 @@ function renderAdminExpensesStats(){
   setHtml('aerStatAllTotal', aerFormatCurrencySums(allSums));
 }
 
+function aerSortValue(r, col){
+  switch(col){
+    case 'category': return r.category || '';
+    case 'period': return r.period || '';
+    case 'amount': return Number(r.amount)||0;
+    case 'currency': return r.currency || '';
+    case 'tax_amount': return r.tax_amount != null ? Number(r.tax_amount) : -1;
+    case 'total': return aerRowTotal(r);
+    case 'created_at': return r.created_at || '';
+    case 'payment_status': return r.payment_status || '未提交';
+    default: return '';
+  }
+}
+
+function aerUpdateSortHeaderUI(){
+  const ths = document.querySelectorAll('#view-expense-reimbursement th.aer-sort-th');
+  ths.forEach(function(th){
+    const col = th.getAttribute('data-col');
+    const ind = th.querySelector('.aer-sort-ind');
+    if (!ind) return;
+    if (col === aerSortCol){
+      th.classList.add('aer-sort-active');
+      ind.textContent = aerSortDir === 'asc' ? '▲' : '▼';
+    } else {
+      th.classList.remove('aer-sort-active');
+      ind.textContent = '⇅';
+    }
+  });
+}
+
 function renderAdminExpensesTable(){
   const tbody = document.getElementById('aerTableBody');
   if (!tbody) return;
+  aerUpdateSortHeaderUI();
   const filtered = adminExpensesData.filter(function(r){
     if (aerFilterCategory && r.category !== aerFilterCategory) return false;
     if (aerFilterMonth && r.period !== aerFilterMonth) return false;
     return true;
+  });
+  filtered.sort(function(a,b){
+    const va = aerSortValue(a, aerSortCol);
+    const vb = aerSortValue(b, aerSortCol);
+    let cmp;
+    if (typeof va === 'number' && typeof vb === 'number'){ cmp = va - vb; }
+    else { cmp = String(va).localeCompare(String(vb)); }
+    return aerSortDir === 'asc' ? cmp : -cmp;
   });
   if (!filtered.length){
     tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;color:var(--text-faint);padding:24px;">暂无记录</td></tr>';
@@ -7559,12 +7615,12 @@ function renderAdminExpensesTable(){
       '<td>' + escapeHtmlCP(r.invoice_no||'-') + '</td>' +
       '<td>' + escapeHtmlCP(r.note||'-') + '</td>' +
       '<td>' + escapeHtmlCP(r.created_at ? r.created_at.slice(0,16).replace('T',' ') : '') + '</td>' +
-      '<td><select class="inv-field aer-status-select" data-id="' + r.id + '" style="padding:4px 8px;font-size:12px;">' +
+      '<td><select class="inv-field aer-status-select" data-id="' + r.id + '" data-status="' + (r.payment_status||'未提交') + '" style="padding:4px 8px;font-size:12px;">' +
         AER_PAYMENT_STATUSES.map(function(s){
           return '<option value="' + s + '"' + (s === (r.payment_status||'未提交') ? ' selected' : '') + '>' + s + '</option>';
         }).join('') +
       '</select></td>' +
-      '<td><button type="button" class="inv-btn-ghost aer-edit-btn" data-id="' + r.id + '">编辑</button> <button type="button" class="inv-btn-ghost aer-download-btn" data-id="' + r.id + '">下载报销单</button> <button type="button" class="inv-btn-ghost aer-del-btn" data-id="' + r.id + '">删除</button></td>' +
+      '<td><div class="aer-row-actions"><button type="button" class="inv-btn-ghost aer-edit-btn" data-id="' + r.id + '">编辑</button> <button type="button" class="inv-btn-ghost aer-download-btn" data-id="' + r.id + '">下载报销单</button> <button type="button" class="inv-btn-ghost aer-del-btn" data-id="' + r.id + '">删除</button></div></td>' +
       '</tr>';
   }).join('');
 }
@@ -7985,6 +8041,22 @@ if (aerTableBodyEl){
   });
 }
 
+const aerTableHeadEl = document.querySelector('#view-expense-reimbursement .inv-table-wrap thead');
+if (aerTableHeadEl){
+  aerTableHeadEl.addEventListener('click', function(e){
+    const th = e.target.closest('th.aer-sort-th');
+    if (!th) return;
+    const col = th.getAttribute('data-col');
+    if (aerSortCol === col){
+      aerSortDir = aerSortDir === 'asc' ? 'desc' : 'asc';
+    } else {
+      aerSortCol = col;
+      aerSortDir = 'asc';
+    }
+    renderAdminExpensesTable();
+  });
+}
+
 document.addEventListener('change', function(e){
   const sel = e.target && e.target.classList && e.target.classList.contains('aer-status-select') ? e.target : null;
   if (!sel) return;
@@ -7997,6 +8069,7 @@ document.addEventListener('change', function(e){
     sel.disabled = false;
     if (res.error){ console.error('update payment status', res.error); alert('更新支付状态失败：' + res.error.message); if (prevStatus) sel.value = prevStatus; return; }
     if (row) row.payment_status = newStatus;
+    sel.dataset.status = newStatus;
   });
 });
 

@@ -1850,12 +1850,12 @@
           <div class="inv-stat-value" id="aerStatTotal">--</div>
         </div>
         <div class="inv-stat-card">
-          <div class="inv-stat-label">本月合计 (PLN)</div>
-          <div class="inv-stat-value" id="aerStatMonthTotal">--</div>
+          <div class="inv-stat-label">本月合计</div>
+          <div class="inv-stat-value" id="aerStatMonthTotal" style="font-size:15px;line-height:1.6;">--</div>
         </div>
         <div class="inv-stat-card">
-          <div class="inv-stat-label">累计总金额 (PLN)</div>
-          <div class="inv-stat-value" id="aerStatAllTotal">--</div>
+          <div class="inv-stat-label">累计总金额</div>
+          <div class="inv-stat-value" id="aerStatAllTotal" style="font-size:15px;line-height:1.6;">--</div>
         </div>
       </div>
 
@@ -1877,7 +1877,9 @@
             <tr>
               <th>费用类型</th>
               <th>月份</th>
-              <th>金额 (PLN)</th>
+              <th>金额</th>
+              <th>币种</th>
+              <th>税额</th>
               <th>备注</th>
               <th>提交时间</th>
               <th>操作</th>
@@ -1903,8 +1905,21 @@
               <input type="month" id="aerAddMonth">
             </div>
             <div class="ra-modal-body-item">
-              <label class="ra-label">金额 (PLN) <span class="ra-required">*</span></label>
+              <label class="ra-label">金额 <span class="ra-required">*</span></label>
               <input type="number" id="aerAddAmount" min="0" step="0.01" placeholder="例如 1500">
+            </div>
+            <div class="ra-modal-body-item">
+              <label class="ra-label">币种 <span class="ra-required">*</span></label>
+              <select id="aerAddCurrency">
+                <option value="PLN">PLN</option>
+                <option value="USD">USD</option>
+                <option value="EUR">EUR</option>
+                <option value="UAH">UAH</option>
+              </select>
+            </div>
+            <div class="ra-modal-body-item">
+              <label class="ra-label">税额</label>
+              <input type="number" id="aerAddTax" min="0" step="0.01" placeholder="选填，例如 120">
             </div>
             <div class="ra-modal-body-item ra-modal-body-full">
               <label class="ra-label">备注</label>
@@ -7448,16 +7463,35 @@ async function loadAdminExpenses(){
   }catch(e){ console.error(e); }
 }
 
+function aerSumByCurrency(rows){
+  const sums = {};
+  rows.forEach(function(r){
+    const cur = r.currency || 'PLN';
+    sums[cur] = (sums[cur]||0) + (Number(r.amount)||0);
+  });
+  return sums;
+}
+
+function aerFormatCurrencySums(sums){
+  const keys = Object.keys(sums);
+  if (!keys.length) return '--';
+  return keys.sort().map(function(cur){
+    return cur + ' ' + sums[cur].toLocaleString('en-US',{minimumFractionDigits:2, maximumFractionDigits:2});
+  }).join('<br>');
+}
+
 function renderAdminExpensesStats(){
   const total = adminExpensesData.length;
   const now = new Date();
   const curMonth = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0');
-  const monthTotal = adminExpensesData.filter(function(r){ return r.period === curMonth; }).reduce(function(sum,r){ return sum + (Number(r.amount)||0); }, 0);
-  const allTotal = adminExpensesData.reduce(function(sum,r){ return sum + (Number(r.amount)||0); }, 0);
+  const monthRows = adminExpensesData.filter(function(r){ return r.period === curMonth; });
+  const monthSums = aerSumByCurrency(monthRows);
+  const allSums = aerSumByCurrency(adminExpensesData);
   const set = function(id,v){ const el=document.getElementById(id); if(el) el.textContent=v; };
+  const setHtml = function(id,v){ const el=document.getElementById(id); if(el) el.innerHTML=v; };
   set('aerStatTotal', total);
-  set('aerStatMonthTotal', monthTotal.toLocaleString('en-US',{minimumFractionDigits:2, maximumFractionDigits:2}));
-  set('aerStatAllTotal', allTotal.toLocaleString('en-US',{minimumFractionDigits:2, maximumFractionDigits:2}));
+  setHtml('aerStatMonthTotal', aerFormatCurrencySums(monthSums));
+  setHtml('aerStatAllTotal', aerFormatCurrencySums(allSums));
 }
 
 function renderAdminExpensesTable(){
@@ -7469,7 +7503,7 @@ function renderAdminExpensesTable(){
     return true;
   });
   if (!filtered.length){
-    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-faint);padding:24px;">暂无记录</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text-faint);padding:24px;">暂无记录</td></tr>';
     return;
   }
   tbody.innerHTML = filtered.map(function(r){
@@ -7477,6 +7511,8 @@ function renderAdminExpensesTable(){
       '<td>' + escapeHtmlCP(r.category) + '</td>' +
       '<td>' + escapeHtmlCP(r.period||'-') + '</td>' +
       '<td>' + (Number(r.amount)||0).toLocaleString('en-US',{minimumFractionDigits:2, maximumFractionDigits:2}) + '</td>' +
+      '<td>' + escapeHtmlCP(r.currency||'PLN') + '</td>' +
+      '<td>' + (r.tax_amount != null ? Number(r.tax_amount).toLocaleString('en-US',{minimumFractionDigits:2, maximumFractionDigits:2}) : '-') + '</td>' +
       '<td>' + escapeHtmlCP(r.note||'-') + '</td>' +
       '<td>' + escapeHtmlCP(r.created_at ? r.created_at.slice(0,16).replace('T',' ') : '') + '</td>' +
       '<td><button type="button" class="inv-btn-ghost aer-del-btn" data-id="' + r.id + '">删除</button></td>' +
@@ -7509,6 +7545,10 @@ function aerResetAddForm(){
   }
   const amtEl = document.getElementById('aerAddAmount');
   if (amtEl) amtEl.value = '';
+  const curEl = document.getElementById('aerAddCurrency');
+  if (curEl) curEl.value = 'PLN';
+  const taxEl = document.getElementById('aerAddTax');
+  if (taxEl) taxEl.value = '';
   const noteEl = document.getElementById('aerAddNote');
   if (noteEl) noteEl.value = '';
   const msg = document.getElementById('aerAddMsg');
@@ -7551,15 +7591,22 @@ if (aerAddSubmitBtnEl){
     const category = (document.getElementById('aerAddCategory')||{}).value;
     const period = (document.getElementById('aerAddMonth')||{}).value;
     const amount = parseFloat((document.getElementById('aerAddAmount')||{}).value);
+    const currency = (document.getElementById('aerAddCurrency')||{}).value || 'PLN';
+    const taxRaw = (document.getElementById('aerAddTax')||{}).value;
+    const taxAmount = taxRaw === '' ? null : parseFloat(taxRaw);
     const note = (document.getElementById('aerAddNote')||{}).value.trim();
-    if (!category || !period || !amount || isNaN(amount) || amount <= 0){
+    if (!category || !period || !amount || isNaN(amount) || amount <= 0 || !currency){
       if (msg){ msg.textContent = '请填写必填项'; msg.className = 'cp-field-warn cp-form-msg-error'; }
+      return;
+    }
+    if (taxRaw !== '' && (isNaN(taxAmount) || taxAmount < 0)){
+      if (msg){ msg.textContent = '税额格式不正确'; msg.className = 'cp-field-warn cp-form-msg-error'; }
       return;
     }
     aerAddSubmitBtnEl.disabled = true;
     aerAddSubmitBtnEl.textContent = '提交中…';
     try{
-      const payload = { category: category, period: period, amount: amount, note: note || null };
+      const payload = { category: category, period: period, amount: amount, currency: currency, tax_amount: (taxRaw === '' ? null : taxAmount), note: note || null };
       const { error } = await sb.from('admin_expenses').insert(payload);
       if (error){
         if (msg){ msg.textContent = '提交失败：' + error.message; msg.className = 'cp-field-warn cp-form-msg-error'; }

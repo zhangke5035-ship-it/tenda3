@@ -1884,6 +1884,7 @@
               <th>总金额</th>
               <th>备注</th>
               <th>提交时间</th>
+              <th>支付状态</th>
               <th>操作</th>
             </tr>
           </thead>
@@ -1926,6 +1927,10 @@
             <div class="ra-modal-body-item">
               <label class="ra-label">总金额</label>
               <input type="text" id="aerAddTotalDisplay" readonly disabled placeholder="自动计算">
+            </div>
+            <div class="ra-modal-body-item">
+              <label class="ra-label">支付状态</label>
+              <select id="aerAddPaymentStatus"><option value="未提交">未提交</option><option value="已提交">已提交</option><option value="未付款">未付款</option></select>
             </div>
             <div class="ra-modal-body-item ra-modal-body-full">
               <label class="ra-label">发票文件</label>
@@ -7459,6 +7464,7 @@ async function loadInvoicesData(){
 }
 
 const AER_CATEGORIES = ['办公室租金','桶装水','租车费用','办公室网络','乌克兰月固定费用','Fixit月固定费用','Coface费用','宿舍房租','办公室电费'];
+const AER_PAYMENT_STATUSES = ['未提交','已提交','未付款'];
 let adminExpensesData = [];
 let aerFilterCategory = '';
 let aerFilterMonth = '';
@@ -7534,7 +7540,7 @@ function renderAdminExpensesTable(){
     return true;
   });
   if (!filtered.length){
-    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--text-faint);padding:24px;">暂无记录</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;color:var(--text-faint);padding:24px;">暂无记录</td></tr>';
     return;
   }
   tbody.innerHTML = filtered.map(function(r){
@@ -7547,6 +7553,11 @@ function renderAdminExpensesTable(){
       '<td>' + aerRowTotal(r).toLocaleString('en-US',{minimumFractionDigits:2, maximumFractionDigits:2}) + '</td>' +
       '<td>' + escapeHtmlCP(r.note||'-') + '</td>' +
       '<td>' + escapeHtmlCP(r.created_at ? r.created_at.slice(0,16).replace('T',' ') : '') + '</td>' +
+      '<td><select class="inv-field aer-status-select" data-id="' + r.id + '" style="padding:4px 8px;font-size:12px;">' +
+        AER_PAYMENT_STATUSES.map(function(s){
+          return '<option value="' + s + '"' + (s === (r.payment_status||'未提交') ? ' selected' : '') + '>' + s + '</option>';
+        }).join('') +
+      '</select></td>' +
       '<td><button type="button" class="inv-btn-ghost aer-edit-btn" data-id="' + r.id + '">编辑</button> <button type="button" class="inv-btn-ghost aer-download-btn" data-id="' + r.id + '">下载报销单</button> <button type="button" class="inv-btn-ghost aer-del-btn" data-id="' + r.id + '">删除</button></td>' +
       '</tr>';
   }).join('');
@@ -7721,6 +7732,8 @@ function aerResetAddForm(){
   if (amtEl) amtEl.value = '';
   const curEl = document.getElementById('aerAddCurrency');
   if (curEl) curEl.value = 'PLN';
+  const paymentStatusEl = document.getElementById('aerAddPaymentStatus');
+  if (paymentStatusEl) paymentStatusEl.value = '未提交';
   const taxEl = document.getElementById('aerAddTax');
   if (taxEl) taxEl.value = '';
   const noteEl = document.getElementById('aerAddNote');
@@ -7770,6 +7783,8 @@ function aerOpenEditModal(id){
   if (amtEl) amtEl.value = (row.amount != null ? row.amount : '');
   const curEl = document.getElementById('aerAddCurrency');
   if (curEl) curEl.value = row.currency || 'PLN';
+  const paymentStatusEl = document.getElementById('aerAddPaymentStatus');
+  if (paymentStatusEl) paymentStatusEl.value = row.payment_status || '未提交';
   const taxEl = document.getElementById('aerAddTax');
   if (taxEl) taxEl.value = (row.tax_amount != null ? row.tax_amount : '');
   const noteEl = document.getElementById('aerAddNote');
@@ -7885,6 +7900,7 @@ if (aerAddSubmitBtnEl){
       if (msg){ msg.textContent = '税额格式不正确'; msg.className = 'cp-field-warn cp-form-msg-error'; }
       return;
     }
+    const paymentStatus = (document.getElementById('aerAddPaymentStatus')||{}).value || '未提交';
     const bankName = (document.getElementById('aerAddBankName')||{}).value.trim();
     const bankAccountName = (document.getElementById('aerAddBankAccountName')||{}).value.trim();
     const bankAccountNo = (document.getElementById('aerAddBankAccountNo')||{}).value.trim();
@@ -7895,7 +7911,7 @@ if (aerAddSubmitBtnEl){
     aerAddSubmitBtnEl.disabled = true;
     aerAddSubmitBtnEl.textContent = wasEditing ? '保存中…' : '提交中…';
     try{
-      const payload = { category: category, period: period, amount: amount, currency: currency, tax_amount: (taxRaw === '' ? null : taxAmount), note: note || null, bank_name: bankName || null, bank_account_name: bankAccountName || null, bank_account_no: bankAccountNo || null };
+      const payload = { category: category, period: period, amount: amount, currency: currency, tax_amount: (taxRaw === '' ? null : taxAmount), payment_status: paymentStatus, note: note || null, bank_name: bankName || null, bank_account_name: bankAccountName || null, bank_account_no: bankAccountNo || null };
       if (invoiceFile){
         try{
           const uploaded = await aerUploadInvoiceFile(invoiceFile);
@@ -7953,6 +7969,21 @@ if (aerTableBodyEl){
     if (editBtn){ aerOpenEditModal(editBtn.dataset.id); return; }
   });
 }
+
+document.addEventListener('change', function(e){
+  const sel = e.target && e.target.classList && e.target.classList.contains('aer-status-select') ? e.target : null;
+  if (!sel) return;
+  const id = Number(sel.dataset.id);
+  const newStatus = sel.value;
+  const row = adminExpensesData.find(function(r){ return Number(r.id) === id; });
+  const prevStatus = row ? row.payment_status : null;
+  sel.disabled = true;
+  sb.from('admin_expenses').update({ payment_status: newStatus }).eq('id', id).then(function(res){
+    sel.disabled = false;
+    if (res.error){ console.error('update payment status', res.error); alert('更新支付状态失败：' + res.error.message); if (prevStatus) sel.value = prevStatus; return; }
+    if (row) row.payment_status = newStatus;
+  });
+});
 
 async function loadAllRemoteData(){
   await Promise.all([

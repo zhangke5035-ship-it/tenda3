@@ -9,6 +9,7 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
 <style>
   :root{
     --bg:#F5F7FA; --surface:#FFFFFF; --surface-alt:#F0F3F7; --surface-raise:#E8ECF1;
@@ -1930,6 +1931,7 @@
               <label class="ra-label">发票文件</label>
               <input type="file" id="aerAddInvoiceFile" accept=".pdf,.png,.jpg,.jpeg">
               <div id="aerCurrentInvoiceInfo" style="display:none;font-size:12px;color:var(--text-faint);margin-top:4px;"></div>
+              <div id="aerInvoiceExtractMsg" style="display:none;font-size:12px;margin-top:4px;"></div>
             </div>
             <div class="ra-modal-body-item">
               <label class="ra-label">银行名称</label>
@@ -6515,6 +6517,7 @@ const SUPABASE_URL = 'https://pbeqpytprjoaqfhalsgj.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBiZXFweXRwcmpvYXFmaGFsc2dqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM5NDkzMzgsImV4cCI6MjA5OTUyNTMzOH0.LaoZ00VH1DrvRA_Wegmk5UZhbNnUsUfP1qMkbFZ12Ds';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const AER_EDGE_FUNCTION_URL = SUPABASE_URL + '/functions/v1/generate-expense-form';
+if (typeof pdfjsLib !== 'undefined'){ pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js'; }
 
 const authGateEl = document.getElementById('authGate');
 const appRootEl = document.getElementById('appRoot');
@@ -7602,6 +7605,89 @@ async function aerDownloadForm(id, btn){
   }
 }
 
+function aerParseInvoiceText(rawText){
+  const text = String(rawText || '').replace(/\s+/g, ' ').trim();
+  const result = {};
+
+  function toNumber(polishNum){
+    const cleaned = polishNum.replace(/\s/g, '').replace(',', '.');
+    const n = parseFloat(cleaned);
+    return isNaN(n) ? null : n;
+  }
+
+  const curMatch = text.match(/Kod\s+waluty:\s*([A-Z]{3})/);
+  if (curMatch) result.currency = curMatch[1];
+
+  const summaryMatch = text.match(/Kwota\s+brutto([\s\S]*?)(Dodatkowe|Płatność|$)/);
+  if (summaryMatch){
+    const nums = summaryMatch[1].match(/\d[\d ]*,\d{2}/g);
+    if (nums && nums.length >= 3){
+      const lastThree = nums.slice(-3);
+      const net = toNumber(lastThree[0]);
+      const tax = toNumber(lastThree[1]);
+      const gross = toNumber(lastThree[2]);
+      if (net != null) result.amount = net;
+      if (tax != null) result.tax_amount = tax;
+      if (gross != null) result.total = gross;
+    }
+  }
+
+  if (result.total == null){
+    const totalMatch = text.match(/Kwota\s+należności\s+ogółem:\s*(\d[\d ]*,\d{2})/);
+    if (totalMatch){
+      const t = toNumber(totalMatch[1]);
+      if (t != null) result.total = t;
+    }
+  }
+
+  const acctMatch = text.match(/Pełny\s+numer\s+rachunku\s+([A-Z0-9 ]+?)\s+Kod\s+SWIFT/);
+  if (acctMatch){
+    result.bank_account_no = acctMatch[1].replace(/\s+/g, ' ').trim();
+  } else {
+    const ibanMatch = text.match(/\b([A-Z]{2}\d{2}(?:[ ]?\d{4}){3,7}\b)/);
+    if (ibanMatch) result.bank_account_no = ibanMatch[1].replace(/\s+/g, ' ').trim();
+  }
+
+  const bankNameMatch = text.match(/(?<!Pełna\s)Nazwa\s+banku\s+([^\d]+?)\s+(Opis\s+rachunku|Rejestry|$)/);
+  if (bankNameMatch){
+    result.bank_name = bankNameMatch[1].replace(/\s+/g, ' ').trim();
+  }
+
+  const sellerSection = text.match(/Sprzedawca([\s\S]*?)Nabywca/);
+  if (sellerSection){
+    const nameMatch = sellerSection[1].match(/Nazwa:\s*([^\d]+?)\s+Adres/);
+    if (nameMatch){
+      result.bank_account_name = nameMatch[1].replace(/\s+/g, ' ').trim();
+    }
+  }
+
+  return result;
+}
+
+async function aerExtractInvoiceFromFile(file){
+  if (!file || file.type !== 'application/pdf'){
+    return { ok: false, reason: 'not-pdf' };
+  }
+  if (typeof pdfjsLib === 'undefined'){
+    return { ok: false, reason: 'lib-unavailable' };
+  }
+  try{
+    const buf = await file.arrayBuffer();
+    const doc = await pdfjsLib.getDocument({ data: buf }).promise;
+    let fullText = '';
+    for (let i = 1; i <= doc.numPages; i++){
+      const page = await doc.getPage(i);
+      const content = await page.getTextContent();
+      fullText += content.items.map(function(it){ return it.str; }).join(' ') + ' ';
+    }
+    const parsed = aerParseInvoiceText(fullText);
+    const hasAnyField = Object.keys(parsed).length > 0;
+    return { ok: hasAnyField, reason: hasAnyField ? null : 'no-match', data: parsed };
+  }catch(e){
+    return { ok: false, reason: 'parse-error', error: String(e) };
+  }
+}
+
 async function aerUploadInvoiceFile(file){
   const extMatch = /\.([a-zA-Z0-9]+)$/.exec(file.name || '');
   const ext = extMatch ? extMatch[1].toLowerCase() : 'bin';
@@ -7655,6 +7741,8 @@ function aerResetAddForm(){
   if (aerAddSubmitBtnEl) aerAddSubmitBtnEl.textContent = '提交';
   const currentInvoiceEl = document.getElementById('aerCurrentInvoiceInfo');
   if (currentInvoiceEl){ currentInvoiceEl.style.display = 'none'; currentInvoiceEl.textContent = ''; }
+  const extractMsgEl = document.getElementById('aerInvoiceExtractMsg');
+  if (extractMsgEl){ extractMsgEl.style.display = 'none'; extractMsgEl.textContent = ''; }
   aerUpdateTotalDisplay();
 }
 
@@ -7725,6 +7813,45 @@ if (aerAddAmountEl){
 const aerAddTaxEl = document.getElementById('aerAddTax');
 if (aerAddTaxEl){
   aerAddTaxEl.addEventListener('input', aerUpdateTotalDisplay);
+}
+
+async function aerHandleInvoiceFileChange(){
+  const msgEl = document.getElementById('aerInvoiceExtractMsg');
+  const fileEl = document.getElementById('aerAddInvoiceFile');
+  const file = (fileEl && fileEl.files && fileEl.files[0]) ? fileEl.files[0] : null;
+  if (!msgEl) return;
+  if (!file){
+    msgEl.style.display = 'none';
+    msgEl.textContent = '';
+    return;
+  }
+  msgEl.style.display = 'block';
+  msgEl.style.color = 'var(--text-faint)';
+  msgEl.textContent = '正在识别发票信息…';
+  const result = await aerExtractInvoiceFromFile(file);
+  if (result.ok && result.data){
+    const d = result.data;
+    if (d.amount != null){ const el = document.getElementById('aerAddAmount'); if (el) el.value = d.amount; }
+    if (d.tax_amount != null){ const el = document.getElementById('aerAddTax'); if (el) el.value = d.tax_amount; }
+    if (d.currency){ const el = document.getElementById('aerAddCurrency'); if (el && Array.from(el.options).some(function(o){ return o.value === d.currency; })) el.value = d.currency; }
+    if (d.bank_name){ const el = document.getElementById('aerAddBankName'); if (el) el.value = d.bank_name; }
+    if (d.bank_account_name){ const el = document.getElementById('aerAddBankAccountName'); if (el) el.value = d.bank_account_name; }
+    if (d.bank_account_no){ const el = document.getElementById('aerAddBankAccountNo'); if (el) el.value = d.bank_account_no; }
+    aerUpdateTotalDisplay();
+    msgEl.style.color = 'var(--success, #2a9d5c)';
+    msgEl.textContent = '已自动识别发票信息，请核对后提交';
+  } else if (result.reason === 'not-pdf'){
+    msgEl.style.color = 'var(--text-faint)';
+    msgEl.textContent = '图片格式发票暂不支持自动识别，请手动填写';
+  } else {
+    msgEl.style.color = 'var(--text-faint)';
+    msgEl.textContent = '未能自动识别发票信息，请手动填写';
+  }
+}
+
+const aerAddInvoiceFileEl = document.getElementById('aerAddInvoiceFile');
+if (aerAddInvoiceFileEl){
+  aerAddInvoiceFileEl.addEventListener('change', aerHandleInvoiceFileChange);
 }
 
 const aerAddCloseBtnEl = document.getElementById('aerAddCloseBtn');

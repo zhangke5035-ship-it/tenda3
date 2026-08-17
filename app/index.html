@@ -1922,6 +1922,22 @@
               <input type="number" id="aerAddTax" min="0" step="0.01" placeholder="选填，例如 120">
             </div>
             <div class="ra-modal-body-item ra-modal-body-full">
+              <label class="ra-label">发票文件</label>
+              <input type="file" id="aerAddInvoiceFile" accept=".pdf,.png,.jpg,.jpeg">
+            </div>
+            <div class="ra-modal-body-item">
+              <label class="ra-label">银行名称</label>
+              <input type="text" id="aerAddBankName" placeholder="选填，例如 PKO BP">
+            </div>
+            <div class="ra-modal-body-item">
+              <label class="ra-label">收款户名</label>
+              <input type="text" id="aerAddBankAccountName" placeholder="选填">
+            </div>
+            <div class="ra-modal-body-item ra-modal-body-full">
+              <label class="ra-label">银行账户号码</label>
+              <input type="text" id="aerAddBankAccountNo" placeholder="选填">
+            </div>
+            <div class="ra-modal-body-item ra-modal-body-full">
               <label class="ra-label">备注</label>
               <textarea id="aerAddNote" placeholder="选填"></textarea>
             </div>
@@ -6492,6 +6508,7 @@ refreshAll();
 const SUPABASE_URL = 'https://pbeqpytprjoaqfhalsgj.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBiZXFweXRwcmpvYXFmaGFsc2dqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM5NDkzMzgsImV4cCI6MjA5OTUyNTMzOH0.LaoZ00VH1DrvRA_Wegmk5UZhbNnUsUfP1qMkbFZ12Ds';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const AER_EDGE_FUNCTION_URL = SUPABASE_URL + '/functions/v1/generate-expense-form';
 
 const authGateEl = document.getElementById('authGate');
 const appRootEl = document.getElementById('appRoot');
@@ -7515,7 +7532,7 @@ function renderAdminExpensesTable(){
       '<td>' + (r.tax_amount != null ? Number(r.tax_amount).toLocaleString('en-US',{minimumFractionDigits:2, maximumFractionDigits:2}) : '-') + '</td>' +
       '<td>' + escapeHtmlCP(r.note||'-') + '</td>' +
       '<td>' + escapeHtmlCP(r.created_at ? r.created_at.slice(0,16).replace('T',' ') : '') + '</td>' +
-      '<td><button type="button" class="inv-btn-ghost aer-del-btn" data-id="' + r.id + '">删除</button></td>' +
+      '<td><button type="button" class="inv-btn-ghost aer-download-btn" data-id="' + r.id + '">下载报销单</button> <button type="button" class="inv-btn-ghost aer-del-btn" data-id="' + r.id + '">删除</button></td>' +
       '</tr>';
   }).join('');
 }
@@ -7535,6 +7552,54 @@ async function aerDeleteExpense(id){
   }catch(e){ alert('删除失败：请检查网络'); }
 }
 
+async function aerDownloadForm(id, btn){
+  const originalText = btn ? btn.textContent : '';
+  if (btn){ btn.disabled = true; btn.textContent = '生成中…'; }
+  try{
+    const { data: sessionData } = await sb.auth.getSession();
+    const session = sessionData && sessionData.session;
+    if (!session){ alert('登录状态已失效，请重新登录'); return; }
+    const resp = await fetch(AER_EDGE_FUNCTION_URL, {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + session.access_token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: id })
+    });
+    if (!resp.ok){
+      let errMsg = '生成失败';
+      try{ const j = await resp.json(); errMsg = j.error || errMsg; }catch(e){}
+      alert('生成报销单失败：' + errMsg);
+      return;
+    }
+    const blob = await resp.blob();
+    const cd = resp.headers.get('content-disposition') || '';
+    let fileName = '报销单.xlsx';
+    const m = /filename\*=UTF-8''([^;]+)/.exec(cd);
+    if (m) fileName = decodeURIComponent(m[1]);
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+  }catch(e){
+    alert('生成报销单失败：请检查网络');
+  }finally{
+    if (btn){ btn.disabled = false; btn.textContent = originalText || '下载报销单'; }
+  }
+}
+
+async function aerUploadInvoiceFile(file){
+  const extMatch = /\.([a-zA-Z0-9]+)$/.exec(file.name || '');
+  const ext = extMatch ? extMatch[1].toLowerCase() : 'bin';
+  const randomPart = (Date.now().toString(36) + Math.random().toString(36).slice(2, 10));
+  const path = 'invoices/' + randomPart + '.' + ext;
+  const { error } = await sb.storage.from('admin-expense-files').upload(path, file, { upsert: false, contentType: file.type || undefined });
+  if (error) throw error;
+  return { path: path, name: file.name };
+}
+
 function aerResetAddForm(){
   const catSel = document.getElementById('aerAddCategory');
   if (catSel) catSel.value = '';
@@ -7551,6 +7616,14 @@ function aerResetAddForm(){
   if (taxEl) taxEl.value = '';
   const noteEl = document.getElementById('aerAddNote');
   if (noteEl) noteEl.value = '';
+  const invoiceFileEl = document.getElementById('aerAddInvoiceFile');
+  if (invoiceFileEl) invoiceFileEl.value = '';
+  const bankNameEl = document.getElementById('aerAddBankName');
+  if (bankNameEl) bankNameEl.value = '';
+  const bankAccountNameEl = document.getElementById('aerAddBankAccountName');
+  if (bankAccountNameEl) bankAccountNameEl.value = '';
+  const bankAccountNoEl = document.getElementById('aerAddBankAccountNo');
+  if (bankAccountNoEl) bankAccountNoEl.value = '';
   const msg = document.getElementById('aerAddMsg');
   if (msg){ msg.textContent = ''; msg.className = 'cp-field-warn'; }
 }
@@ -7603,10 +7676,26 @@ if (aerAddSubmitBtnEl){
       if (msg){ msg.textContent = '税额格式不正确'; msg.className = 'cp-field-warn cp-form-msg-error'; }
       return;
     }
+    const bankName = (document.getElementById('aerAddBankName')||{}).value.trim();
+    const bankAccountName = (document.getElementById('aerAddBankAccountName')||{}).value.trim();
+    const bankAccountNo = (document.getElementById('aerAddBankAccountNo')||{}).value.trim();
+    const invoiceFileEl = document.getElementById('aerAddInvoiceFile');
+    const invoiceFile = (invoiceFileEl && invoiceFileEl.files && invoiceFileEl.files[0]) ? invoiceFileEl.files[0] : null;
+
     aerAddSubmitBtnEl.disabled = true;
     aerAddSubmitBtnEl.textContent = '提交中…';
     try{
-      const payload = { category: category, period: period, amount: amount, currency: currency, tax_amount: (taxRaw === '' ? null : taxAmount), note: note || null };
+      const payload = { category: category, period: period, amount: amount, currency: currency, tax_amount: (taxRaw === '' ? null : taxAmount), note: note || null, bank_name: bankName || null, bank_account_name: bankAccountName || null, bank_account_no: bankAccountNo || null };
+      if (invoiceFile){
+        try{
+          const uploaded = await aerUploadInvoiceFile(invoiceFile);
+          payload.invoice_file_path = uploaded.path;
+          payload.invoice_file_name = uploaded.name;
+        }catch(uploadErr){
+          if (msg){ msg.textContent = '发票上传失败：' + (uploadErr && uploadErr.message ? uploadErr.message : '请检查网络'); msg.className = 'cp-field-warn cp-form-msg-error'; }
+          return;
+        }
+      }
       const { error } = await sb.from('admin_expenses').insert(payload);
       if (error){
         if (msg){ msg.textContent = '提交失败：' + error.message; msg.className = 'cp-field-warn cp-form-msg-error'; }
@@ -7642,9 +7731,10 @@ if (aerFilterMonthEl){
 const aerTableBodyEl = document.getElementById('aerTableBody');
 if (aerTableBodyEl){
   aerTableBodyEl.addEventListener('click', function(e){
-    const btn = e.target.closest('.aer-del-btn');
-    if (!btn) return;
-    aerDeleteExpense(btn.dataset.id);
+    const delBtn = e.target.closest('.aer-del-btn');
+    if (delBtn){ aerDeleteExpense(delBtn.dataset.id); return; }
+    const dlBtn = e.target.closest('.aer-download-btn');
+    if (dlBtn){ aerDownloadForm(dlBtn.dataset.id, dlBtn); return; }
   });
 }
 

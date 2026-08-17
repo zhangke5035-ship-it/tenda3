@@ -1930,7 +1930,7 @@
             </div>
             <div class="ra-modal-body-item">
               <label class="ra-label">支付状态</label>
-              <select id="aerAddPaymentStatus"><option value="未提交">未提交</option><option value="已提交">已提交</option><option value="未付款">未付款</option></select>
+              <select id="aerAddPaymentStatus"><option value="未提交">未提交</option><option value="已提交">已提交</option><option value="未付款">未付款</option><option value="已付款">已付款</option></select>
             </div>
             <div class="ra-modal-body-item ra-modal-body-full">
               <label class="ra-label">发票文件</label>
@@ -7464,7 +7464,7 @@ async function loadInvoicesData(){
 }
 
 const AER_CATEGORIES = ['办公室租金','桶装水','租车费用','办公室网络','乌克兰月固定费用','Fixit月固定费用','Coface费用','宿舍房租','办公室电费'];
-const AER_PAYMENT_STATUSES = ['未提交','已提交','未付款'];
+const AER_PAYMENT_STATUSES = ['未提交','已提交','未付款','已付款'];
 let adminExpensesData = [];
 let aerFilterCategory = '';
 let aerFilterMonth = '';

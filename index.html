@@ -6487,8 +6487,17 @@ const userBadgeEl = document.getElementById('userBadge');
 const logoutBtnEl = document.getElementById('logoutBtn');
 
 const RESTRICTED_HQ_PRICING_EMAILS = ['gajowski@tenda.cn', 'piotr.kowalski@tenda.cn', 'roman.danko@tenda.cn', 'mirek.mietka@tenda.cn'];
+const EXPENSE_REIMBURSEMENT_ALLOWED_EMAIL = 'zhangke2@tenda.cn';
 function applyRoleRestrictions(session){
   const userEmail = ((session && session.user && session.user.email) || '').toLowerCase();
+
+  if (userEmail !== EXPENSE_REIMBURSEMENT_ALLOWED_EMAIL){
+    const aerNavItem = document.querySelector('.navitem[data-view="expense-reimbursement"]');
+    if (aerNavItem) aerNavItem.style.display = 'none';
+    const aerView = document.getElementById('view-expense-reimbursement');
+    if (aerView) aerView.remove();
+  }
+
   if (RESTRICTED_HQ_PRICING_EMAILS.includes(userEmail)){
     const hqNavItem = document.querySelector('.navitem[data-view="pricing-hq"]');
     if (hqNavItem) hqNavItem.style.display = 'none';

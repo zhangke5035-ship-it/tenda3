@@ -1841,10 +1841,81 @@
 
     <section class="view" id="view-expense-reimbursement">
       <div class="viewhead">
-        <div><h2>行政费用报销</h2><p>员工行政费用报销申请与审批</p></div>
+        <div><h2>行政费用报销</h2><p>行政类固定/报销费用记录与管理</p></div>
       </div>
-      <div class="notebox">
-        行政费用报销模块框架已搭建，具体字段与流程（如报销类型、金额、附件、审批流等）将在后续录入。
+
+      <div class="inv-stat-grid" style="grid-template-columns:repeat(3,1fr);">
+        <div class="inv-stat-card">
+          <div class="inv-stat-label">记录总数</div>
+          <div class="inv-stat-value" id="aerStatTotal">--</div>
+        </div>
+        <div class="inv-stat-card">
+          <div class="inv-stat-label">本月合计 (PLN)</div>
+          <div class="inv-stat-value" id="aerStatMonthTotal">--</div>
+        </div>
+        <div class="inv-stat-card">
+          <div class="inv-stat-label">累计总金额 (PLN)</div>
+          <div class="inv-stat-value" id="aerStatAllTotal">--</div>
+        </div>
+      </div>
+
+      <div class="inv-toolbar">
+        <div class="inv-filters">
+          <select class="inv-field" id="aerFilterCategory">
+            <option value="">全部类型</option>
+          </select>
+          <input type="month" class="inv-field" id="aerFilterMonth">
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="inv-btn" id="aerBtnAdd">+ 新增费用</button>
+        </div>
+      </div>
+
+      <div class="inv-table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>费用类型</th>
+              <th>月份</th>
+              <th>金额 (PLN)</th>
+              <th>备注</th>
+              <th>提交时间</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="aerTableBody"></tbody>
+        </table>
+      </div>
+
+      <div class="ra-modal-overlay hidden" id="aerAddModal">
+        <div class="ra-modal">
+          <div class="ra-modal-head">
+            <h3>新增费用记录</h3>
+            <button type="button" class="ra-modal-close" id="aerAddCloseBtn">&times;</button>
+          </div>
+          <div class="ra-modal-body">
+            <div class="ra-modal-body-item">
+              <label class="ra-label">费用类型 <span class="ra-required">*</span></label>
+              <select id="aerAddCategory"><option value="">请选择费用类型</option></select>
+            </div>
+            <div class="ra-modal-body-item">
+              <label class="ra-label">月份 <span class="ra-required">*</span></label>
+              <input type="month" id="aerAddMonth">
+            </div>
+            <div class="ra-modal-body-item">
+              <label class="ra-label">金额 (PLN) <span class="ra-required">*</span></label>
+              <input type="number" id="aerAddAmount" min="0" step="0.01" placeholder="例如 1500">
+            </div>
+            <div class="ra-modal-body-item ra-modal-body-full">
+              <label class="ra-label">备注</label>
+              <textarea id="aerAddNote" placeholder="选填"></textarea>
+            </div>
+          </div>
+          <div class="ra-modal-foot">
+            <div class="cp-field-warn" id="aerAddMsg" style="color:var(--alert);font-size:12px;"></div>
+            <button type="button" class="btn" id="aerAddSubmitBtn">提交</button>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -7337,6 +7408,190 @@ async function loadInvoicesData(){
   }catch(e){ console.error(e); }
 }
 
+const AER_CATEGORIES = ['办公室租金','桶装水','租车费用','办公室网络','乌克兰月固定费用','Fixit月固定费用','Coface费用','宿舍房租','办公室电费'];
+let adminExpensesData = [];
+let aerFilterCategory = '';
+let aerFilterMonth = '';
+
+function aerPopulateCategoryOptions(){
+  const filterSel = document.getElementById('aerFilterCategory');
+  if (filterSel && !filterSel.dataset.populated){
+    filterSel.innerHTML = '<option value="">全部类型</option>' + AER_CATEGORIES.map(function(c){
+      return '<option value="' + escapeHtmlCP(c) + '">' + escapeHtmlCP(c) + '</option>';
+    }).join('');
+    filterSel.dataset.populated = '1';
+  }
+  const addSel = document.getElementById('aerAddCategory');
+  if (addSel && !addSel.dataset.populated){
+    addSel.innerHTML = '<option value="">请选择费用类型</option>' + AER_CATEGORIES.map(function(c){
+      return '<option value="' + escapeHtmlCP(c) + '">' + escapeHtmlCP(c) + '</option>';
+    }).join('');
+    addSel.dataset.populated = '1';
+  }
+}
+
+async function loadAdminExpenses(){
+  try{
+    const { data, error } = await sb.from('admin_expenses').select('*').order('period', {ascending:false}).order('created_at', {ascending:false});
+    if (error){ console.error('loadAdminExpenses', error); return; }
+    adminExpensesData = data||[];
+    renderAdminExpensesAll();
+  }catch(e){ console.error(e); }
+}
+
+function renderAdminExpensesStats(){
+  const total = adminExpensesData.length;
+  const now = new Date();
+  const curMonth = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0');
+  const monthTotal = adminExpensesData.filter(function(r){ return r.period === curMonth; }).reduce(function(sum,r){ return sum + (Number(r.amount)||0); }, 0);
+  const allTotal = adminExpensesData.reduce(function(sum,r){ return sum + (Number(r.amount)||0); }, 0);
+  const set = function(id,v){ const el=document.getElementById(id); if(el) el.textContent=v; };
+  set('aerStatTotal', total);
+  set('aerStatMonthTotal', monthTotal.toLocaleString('en-US',{minimumFractionDigits:2, maximumFractionDigits:2}));
+  set('aerStatAllTotal', allTotal.toLocaleString('en-US',{minimumFractionDigits:2, maximumFractionDigits:2}));
+}
+
+function renderAdminExpensesTable(){
+  const tbody = document.getElementById('aerTableBody');
+  if (!tbody) return;
+  const filtered = adminExpensesData.filter(function(r){
+    if (aerFilterCategory && r.category !== aerFilterCategory) return false;
+    if (aerFilterMonth && r.period !== aerFilterMonth) return false;
+    return true;
+  });
+  if (!filtered.length){
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-faint);padding:24px;">暂无记录</td></tr>';
+    return;
+  }
+  tbody.innerHTML = filtered.map(function(r){
+    return '<tr>' +
+      '<td>' + escapeHtmlCP(r.category) + '</td>' +
+      '<td>' + escapeHtmlCP(r.period||'-') + '</td>' +
+      '<td>' + (Number(r.amount)||0).toLocaleString('en-US',{minimumFractionDigits:2, maximumFractionDigits:2}) + '</td>' +
+      '<td>' + escapeHtmlCP(r.note||'-') + '</td>' +
+      '<td>' + escapeHtmlCP(r.created_at ? r.created_at.slice(0,16).replace('T',' ') : '') + '</td>' +
+      '<td><button type="button" class="inv-btn-ghost aer-del-btn" data-id="' + r.id + '">删除</button></td>' +
+      '</tr>';
+  }).join('');
+}
+
+function renderAdminExpensesAll(){
+  aerPopulateCategoryOptions();
+  renderAdminExpensesStats();
+  renderAdminExpensesTable();
+}
+
+async function aerDeleteExpense(id){
+  if (!confirm('确定删除这条费用记录吗？')) return;
+  try{
+    const { error } = await sb.from('admin_expenses').delete().eq('id', id);
+    if (error){ alert('删除失败：' + error.message); return; }
+    await loadAdminExpenses();
+  }catch(e){ alert('删除失败：请检查网络'); }
+}
+
+function aerResetAddForm(){
+  const catSel = document.getElementById('aerAddCategory');
+  if (catSel) catSel.value = '';
+  const monthEl = document.getElementById('aerAddMonth');
+  if (monthEl){
+    const now = new Date();
+    monthEl.value = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0');
+  }
+  const amtEl = document.getElementById('aerAddAmount');
+  if (amtEl) amtEl.value = '';
+  const noteEl = document.getElementById('aerAddNote');
+  if (noteEl) noteEl.value = '';
+  const msg = document.getElementById('aerAddMsg');
+  if (msg){ msg.textContent = ''; msg.className = 'cp-field-warn'; }
+}
+
+function aerOpenAddModal(){
+  aerPopulateCategoryOptions();
+  aerResetAddForm();
+  const overlay = document.getElementById('aerAddModal');
+  if (overlay) overlay.classList.remove('hidden');
+}
+
+function aerCloseAddModal(){
+  const overlay = document.getElementById('aerAddModal');
+  if (overlay) overlay.classList.add('hidden');
+}
+
+const aerBtnAddEl = document.getElementById('aerBtnAdd');
+if (aerBtnAddEl){
+  aerBtnAddEl.addEventListener('click', aerOpenAddModal);
+}
+
+const aerAddCloseBtnEl = document.getElementById('aerAddCloseBtn');
+if (aerAddCloseBtnEl){
+  aerAddCloseBtnEl.addEventListener('click', aerCloseAddModal);
+}
+
+const aerAddModalEl = document.getElementById('aerAddModal');
+if (aerAddModalEl){
+  aerAddModalEl.addEventListener('click', function(e){
+    if (e.target === aerAddModalEl) aerCloseAddModal();
+  });
+}
+
+const aerAddSubmitBtnEl = document.getElementById('aerAddSubmitBtn');
+if (aerAddSubmitBtnEl){
+  aerAddSubmitBtnEl.addEventListener('click', async function(){
+    const msg = document.getElementById('aerAddMsg');
+    const category = (document.getElementById('aerAddCategory')||{}).value;
+    const period = (document.getElementById('aerAddMonth')||{}).value;
+    const amount = parseFloat((document.getElementById('aerAddAmount')||{}).value);
+    const note = (document.getElementById('aerAddNote')||{}).value.trim();
+    if (!category || !period || !amount || isNaN(amount) || amount <= 0){
+      if (msg){ msg.textContent = '请填写必填项'; msg.className = 'cp-field-warn cp-form-msg-error'; }
+      return;
+    }
+    aerAddSubmitBtnEl.disabled = true;
+    aerAddSubmitBtnEl.textContent = '提交中…';
+    try{
+      const payload = { category: category, period: period, amount: amount, note: note || null };
+      const { error } = await sb.from('admin_expenses').insert(payload);
+      if (error){
+        if (msg){ msg.textContent = '提交失败：' + error.message; msg.className = 'cp-field-warn cp-form-msg-error'; }
+        return;
+      }
+      aerCloseAddModal();
+      await loadAdminExpenses();
+    }catch(err){
+      if (msg){ msg.textContent = '提交失败：请检查网络'; msg.className = 'cp-field-warn cp-form-msg-error'; }
+    }finally{
+      aerAddSubmitBtnEl.disabled = false;
+      aerAddSubmitBtnEl.textContent = '提交';
+    }
+  });
+}
+
+const aerFilterCategoryEl = document.getElementById('aerFilterCategory');
+if (aerFilterCategoryEl){
+  aerFilterCategoryEl.addEventListener('change', function(){
+    aerFilterCategory = this.value;
+    renderAdminExpensesTable();
+  });
+}
+
+const aerFilterMonthEl = document.getElementById('aerFilterMonth');
+if (aerFilterMonthEl){
+  aerFilterMonthEl.addEventListener('change', function(){
+    aerFilterMonth = this.value;
+    renderAdminExpensesTable();
+  });
+}
+
+const aerTableBodyEl = document.getElementById('aerTableBody');
+if (aerTableBodyEl){
+  aerTableBodyEl.addEventListener('click', function(e){
+    const btn = e.target.closest('.aer-del-btn');
+    if (!btn) return;
+    aerDeleteExpense(btn.dataset.id);
+  });
+}
+
 async function loadAllRemoteData(){
   await Promise.all([
     loadPromoDeals(),
@@ -7349,6 +7604,7 @@ async function loadAllRemoteData(){
     loadProductDescriptions(),
     loadGtmProducts(),
     loadReturnsAdmin(),
+    (typeof loadAdminExpenses === 'function' ? loadAdminExpenses() : Promise.resolve()),
     (typeof loadAgentInventory === 'function' ? loadAgentInventory() : Promise.resolve()),
     (typeof loadAgentSellthrough === 'function' ? loadAgentSellthrough() : Promise.resolve()),
     (typeof loadInventoryDashboard === 'function' ? loadInventoryDashboard() : Promise.resolve())

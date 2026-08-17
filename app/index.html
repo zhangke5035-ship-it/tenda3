@@ -1892,7 +1892,7 @@
       <div class="ra-modal-overlay hidden" id="aerAddModal">
         <div class="ra-modal">
           <div class="ra-modal-head">
-            <h3>新增费用记录</h3>
+            <h3 id="aerModalTitle">新增费用记录</h3>
             <button type="button" class="ra-modal-close" id="aerAddCloseBtn">&times;</button>
           </div>
           <div class="ra-modal-body">
@@ -1924,6 +1924,7 @@
             <div class="ra-modal-body-item ra-modal-body-full">
               <label class="ra-label">发票文件</label>
               <input type="file" id="aerAddInvoiceFile" accept=".pdf,.png,.jpg,.jpeg">
+              <div id="aerCurrentInvoiceInfo" style="display:none;font-size:12px;color:var(--text-faint);margin-top:4px;"></div>
             </div>
             <div class="ra-modal-body-item">
               <label class="ra-label">银行名称</label>
@@ -7453,6 +7454,7 @@ const AER_CATEGORIES = ['办公室租金','桶装水','租车费用','办公室�
 let adminExpensesData = [];
 let aerFilterCategory = '';
 let aerFilterMonth = '';
+let aerEditingId = null;
 
 function aerPopulateCategoryOptions(){
   const filterSel = document.getElementById('aerFilterCategory');
@@ -7532,7 +7534,7 @@ function renderAdminExpensesTable(){
       '<td>' + (r.tax_amount != null ? Number(r.tax_amount).toLocaleString('en-US',{minimumFractionDigits:2, maximumFractionDigits:2}) : '-') + '</td>' +
       '<td>' + escapeHtmlCP(r.note||'-') + '</td>' +
       '<td>' + escapeHtmlCP(r.created_at ? r.created_at.slice(0,16).replace('T',' ') : '') + '</td>' +
-      '<td><button type="button" class="inv-btn-ghost aer-download-btn" data-id="' + r.id + '">下载报销单</button> <button type="button" class="inv-btn-ghost aer-del-btn" data-id="' + r.id + '">删除</button></td>' +
+      '<td><button type="button" class="inv-btn-ghost aer-edit-btn" data-id="' + r.id + '">编辑</button> <button type="button" class="inv-btn-ghost aer-download-btn" data-id="' + r.id + '">下载报销单</button> <button type="button" class="inv-btn-ghost aer-del-btn" data-id="' + r.id + '">删除</button></td>' +
       '</tr>';
   }).join('');
 }
@@ -7626,11 +7628,58 @@ function aerResetAddForm(){
   if (bankAccountNoEl) bankAccountNoEl.value = '';
   const msg = document.getElementById('aerAddMsg');
   if (msg){ msg.textContent = ''; msg.className = 'cp-field-warn'; }
+  aerEditingId = null;
+  const titleEl = document.getElementById('aerModalTitle');
+  if (titleEl) titleEl.textContent = '新增费用记录';
+  if (aerAddSubmitBtnEl) aerAddSubmitBtnEl.textContent = '提交';
+  const currentInvoiceEl = document.getElementById('aerCurrentInvoiceInfo');
+  if (currentInvoiceEl){ currentInvoiceEl.style.display = 'none'; currentInvoiceEl.textContent = ''; }
 }
 
 function aerOpenAddModal(){
   aerPopulateCategoryOptions();
   aerResetAddForm();
+  const overlay = document.getElementById('aerAddModal');
+  if (overlay) overlay.classList.remove('hidden');
+}
+
+function aerOpenEditModal(id){
+  const row = adminExpensesData.find(function(r){ return String(r.id) === String(id); });
+  if (!row) return;
+  aerPopulateCategoryOptions();
+  aerResetAddForm();
+  aerEditingId = row.id;
+  const titleEl = document.getElementById('aerModalTitle');
+  if (titleEl) titleEl.textContent = '编辑费用记录';
+  if (aerAddSubmitBtnEl) aerAddSubmitBtnEl.textContent = '保存';
+  const catSel = document.getElementById('aerAddCategory');
+  if (catSel) catSel.value = row.category || '';
+  const monthEl = document.getElementById('aerAddMonth');
+  if (monthEl) monthEl.value = row.period || '';
+  const amtEl = document.getElementById('aerAddAmount');
+  if (amtEl) amtEl.value = (row.amount != null ? row.amount : '');
+  const curEl = document.getElementById('aerAddCurrency');
+  if (curEl) curEl.value = row.currency || 'PLN';
+  const taxEl = document.getElementById('aerAddTax');
+  if (taxEl) taxEl.value = (row.tax_amount != null ? row.tax_amount : '');
+  const noteEl = document.getElementById('aerAddNote');
+  if (noteEl) noteEl.value = row.note || '';
+  const bankNameEl = document.getElementById('aerAddBankName');
+  if (bankNameEl) bankNameEl.value = row.bank_name || '';
+  const bankAccountNameEl = document.getElementById('aerAddBankAccountName');
+  if (bankAccountNameEl) bankAccountNameEl.value = row.bank_account_name || '';
+  const bankAccountNoEl = document.getElementById('aerAddBankAccountNo');
+  if (bankAccountNoEl) bankAccountNoEl.value = row.bank_account_no || '';
+  const currentInvoiceEl = document.getElementById('aerCurrentInvoiceInfo');
+  if (currentInvoiceEl){
+    if (row.invoice_file_name){
+      currentInvoiceEl.textContent = '当前发票：' + row.invoice_file_name + '（如需替换请重新选择文件）';
+      currentInvoiceEl.style.display = 'block';
+    } else {
+      currentInvoiceEl.style.display = 'none';
+      currentInvoiceEl.textContent = '';
+    }
+  }
   const overlay = document.getElementById('aerAddModal');
   if (overlay) overlay.classList.remove('hidden');
 }
@@ -7682,8 +7731,9 @@ if (aerAddSubmitBtnEl){
     const invoiceFileEl = document.getElementById('aerAddInvoiceFile');
     const invoiceFile = (invoiceFileEl && invoiceFileEl.files && invoiceFileEl.files[0]) ? invoiceFileEl.files[0] : null;
 
+    const wasEditing = !!aerEditingId;
     aerAddSubmitBtnEl.disabled = true;
-    aerAddSubmitBtnEl.textContent = '提交中…';
+    aerAddSubmitBtnEl.textContent = wasEditing ? '保存中…' : '提交中…';
     try{
       const payload = { category: category, period: period, amount: amount, currency: currency, tax_amount: (taxRaw === '' ? null : taxAmount), note: note || null, bank_name: bankName || null, bank_account_name: bankAccountName || null, bank_account_no: bankAccountNo || null };
       if (invoiceFile){
@@ -7696,18 +7746,22 @@ if (aerAddSubmitBtnEl){
           return;
         }
       }
-      const { error } = await sb.from('admin_expenses').insert(payload);
+      const isEditing = !!aerEditingId;
+      const { error } = isEditing
+        ? await sb.from('admin_expenses').update(payload).eq('id', aerEditingId)
+        : await sb.from('admin_expenses').insert(payload);
       if (error){
         if (msg){ msg.textContent = '提交失败：' + error.message; msg.className = 'cp-field-warn cp-form-msg-error'; }
         return;
       }
+      aerEditingId = null;
       aerCloseAddModal();
       await loadAdminExpenses();
     }catch(err){
       if (msg){ msg.textContent = '提交失败：请检查网络'; msg.className = 'cp-field-warn cp-form-msg-error'; }
     }finally{
       aerAddSubmitBtnEl.disabled = false;
-      aerAddSubmitBtnEl.textContent = '提交';
+      aerAddSubmitBtnEl.textContent = wasEditing ? '保存' : '提交';
     }
   });
 }
@@ -7735,6 +7789,8 @@ if (aerTableBodyEl){
     if (delBtn){ aerDeleteExpense(delBtn.dataset.id); return; }
     const dlBtn = e.target.closest('.aer-download-btn');
     if (dlBtn){ aerDownloadForm(dlBtn.dataset.id, dlBtn); return; }
+    const editBtn = e.target.closest('.aer-edit-btn');
+    if (editBtn){ aerOpenEditModal(editBtn.dataset.id); return; }
   });
 }
 

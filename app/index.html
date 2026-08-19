@@ -359,6 +359,33 @@
   .cust-tab:hover{color:var(--text);border-color:var(--text-faint);}
   .cust-tab.active{background:var(--copper-soft);color:var(--copper);border-color:var(--copper);}
   .cust-tab .count{opacity:0.7;font-size:11px;margin-left:4px;}
+  #view-orders .ofb-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:10px;}
+  #view-orders .ofb-tabs{display:flex;background:var(--surface-alt);padding:4px;border-radius:8px;gap:4px;flex-wrap:wrap;}
+  #view-orders .ofb-tab{padding:6px 14px;font-size:12.5px;font-weight:500;border-radius:6px;cursor:pointer;background:transparent;color:var(--text-dim);white-space:nowrap;}
+  #view-orders .ofb-tab.active{background:var(--surface);color:var(--copper);box-shadow:0 1px 2px rgba(0,0,0,0.06);}
+  #view-orders .ofb-tab .count{margin-left:6px;font-size:11px;border-radius:999px;padding:1px 7px;background:var(--surface-raise);color:var(--text-faint);}
+  #view-orders .ofb-tab.active .count{background:var(--copper-soft);color:var(--copper);}
+  #view-orders .ofb-reset-btn{display:flex;align-items:center;gap:6px;background:transparent;border:none;font-size:12.5px;color:var(--text-dim);cursor:pointer;white-space:nowrap;}
+  #view-orders .ofb-reset-btn:hover{color:var(--copper);}
+  #view-orders .ofb-row{display:grid;grid-template-columns:repeat(4,minmax(150px,1fr));gap:10px;margin-bottom:10px;}
+  #view-orders .ofb-row input[type=text],#view-orders .ofb-row input[type=date],#view-orders .ofb-row input[type=number]{width:100%;box-sizing:border-box;padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius);font-size:12.5px;background:var(--surface);color:var(--text);}
+  #view-orders .ofb-amount{display:flex;align-items:center;gap:6px;}
+  #view-orders .ofb-amount span{color:var(--text-faint);}
+  #view-orders .ofb-cust{position:relative;}
+  #view-orders .ofb-cust-btn{width:100%;display:flex;align-items:center;justify-content:space-between;padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);color:var(--text);font-size:12.5px;cursor:pointer;box-sizing:border-box;}
+  #view-orders .ofb-cust-btn:hover{border-color:var(--text-faint);}
+  #view-orders .ofb-chevron{color:var(--text-faint);font-size:11px;}
+  #view-orders .ofb-cust-panel{position:absolute;z-index:20;margin-top:4px;width:100%;min-width:220px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:0 8px 24px rgba(0,0,0,0.12);max-height:220px;overflow-y:auto;padding:4px;}
+  #view-orders .ofb-cust-panel.hidden{display:none;}
+  #view-orders .ofb-cust-row{display:flex;align-items:center;justify-content:space-between;padding:7px 8px;border-radius:6px;cursor:pointer;font-size:12.5px;}
+  #view-orders .ofb-cust-row:hover{background:var(--surface-alt);}
+  #view-orders .ofb-cust-row .name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px;}
+  #view-orders .ofb-cust-row .count{font-size:11px;color:var(--text-faint);}
+  #view-orders .ofb-tags{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:12px;}
+  #view-orders .ofb-tags.hidden{display:none;}
+  #view-orders .ofb-tags .label{font-size:11.5px;color:var(--text-faint);}
+  #view-orders .ofb-tag{display:inline-flex;align-items:center;gap:5px;background:var(--copper-soft);color:var(--copper);padding:4px 8px;border-radius:6px;font-size:11.5px;font-weight:500;}
+  #view-orders .ofb-tag button{background:none;border:none;cursor:pointer;color:inherit;display:flex;padding:0;font-size:12px;line-height:1;}
   .filter-bar{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;border-bottom:1px solid var(--border);margin-bottom:16px;}
   .filter-tabs{display:flex;gap:0;flex-wrap:wrap;}
   .filter-tab{padding:9px 4px;margin-right:22px;font-size:13px;font-weight:500;color:var(--text-dim);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:color .12s ease,border-color .12s ease;}
@@ -2067,8 +2094,20 @@
   <div id="orderListPanelGroup">
     <div class="panel">
       <div class="panel-head"><h3>订单列表</h3><div class="desc" id="orderCount"></div></div>
-      <div class="cust-tabs" id="orderStatusTabs"></div>
-      <div class="cust-tabs" id="orderCustTabs"></div>
+      <div class="ofb-top">
+        <div class="ofb-tabs" id="orderStatusTabs"></div>
+        <button type="button" class="ofb-reset-btn" id="orderFilterResetBtn">↺ 重置筛选</button>
+      </div>
+      <div class="ofb-row">
+        <div class="ofb-search"><input type="text" id="orderSearchInput" placeholder="输入订单号、客户订单号..."></div>
+        <div class="ofb-cust" id="orderCustFilterWrap">
+          <button type="button" class="ofb-cust-btn" id="orderCustFilterBtn"><span id="orderCustFilterLabel">全部客户</span><span class="ofb-chevron">⌄</span></button>
+          <div class="ofb-cust-panel hidden" id="orderCustFilterPanel"></div>
+        </div>
+        <div class="ofb-date"><input type="date" id="orderDateFilterInput"></div>
+        <div class="ofb-amount"><input type="number" id="orderMinAmountInput" placeholder="最小金额(PLN)"><span>-</span><input type="number" id="orderMaxAmountInput" placeholder="最大金额(PLN)"></div>
+      </div>
+      <div class="ofb-tags hidden" id="orderFilterTags"></div>
       <table>
         <thead><tr>
           <th>订单号</th><th>客户订单号</th><th>下单日期</th><th>客户</th><th>型号数</th><th>订单总额(PLN)</th><th>状态</th><th>仓库Reference编号</th><th>物流追踪号</th><th>OA流程号</th><th></th>
@@ -8874,7 +8913,12 @@ let nextOrderItemId = 9000;
 let orders = [];
 let orderItems = [];
 let orderStatusFilter = '全部';
-let orderCustFilter = '全部';
+let orderCustFilters = [];
+let orderSearchQuery = '';
+let orderDateFilter = '';
+let orderMinAmount = null;
+let orderMaxAmount = null;
+let orderCustPanelOpen = false;
 let selectedOrderId = null;
 let invoices = [];
 let invoiceStatusFilter = '全部';
@@ -8897,26 +8941,106 @@ function renderOrderKpi(){
   `;
 }
 
-function renderOrderTabs(){
+function renderOrderFilterBar(){
   const statusBox = document.getElementById('orderStatusTabs');
-  const custBox = document.getElementById('orderCustTabs');
-  if (!statusBox || !custBox) return;
+  if (!statusBox) return;
   const statuses = ['全部','待处理','已发货','已完成','已取消'];
   statusBox.innerHTML = statuses.map(s=>{
     const count = s==='全部' ? orders.length : orders.filter(o=>o.status===s).length;
-    return `<div class="cust-tab ${orderStatusFilter===s?'active':''}" data-status="${s}">${s}<span class="count">${count}</span></div>`;
+    return `<div class="ofb-tab ${orderStatusFilter===s?'active':''}" data-status="${s}">${s}<span class="count">${count}</span></div>`;
   }).join('');
-  const custKeys = ['全部', ...Object.keys(CUSTOMERS)];
-  custBox.innerHTML = custKeys.map(k=>{
-    const label = k==='全部' ? '全部客户' : CUSTOMERS[k].name;
-    const count = k==='全部' ? orders.length : orders.filter(o=>o.cust===k).length;
-    return `<div class="cust-tab ${orderCustFilter===k?'active':''}" data-cust="${k}">${label}<span class="count">${count}</span></div>`;
-  }).join('');
-  statusBox.querySelectorAll('.cust-tab').forEach(tab=>{
+  statusBox.querySelectorAll('.ofb-tab').forEach(tab=>{
     tab.addEventListener('click', ()=>{ orderStatusFilter = tab.dataset.status; renderOrders(); });
   });
-  custBox.querySelectorAll('.cust-tab').forEach(tab=>{
-    tab.addEventListener('click', ()=>{ orderCustFilter = tab.dataset.cust; renderOrders(); });
+  renderOrderCustPanel();
+  renderOrderFilterTags();
+  const custLabelEl = document.getElementById('orderCustFilterLabel');
+  if (custLabelEl) custLabelEl.textContent = orderCustFilters.length ? `已选客户 (${orderCustFilters.length})` : '全部客户';
+}
+
+function renderOrderCustPanel(){
+  const panel = document.getElementById('orderCustFilterPanel');
+  if (!panel) return;
+  const custKeys = Object.keys(CUSTOMERS);
+  panel.innerHTML = custKeys.map(k=>{
+    const count = orders.filter(o=>o.cust===k).length;
+    const checked = orderCustFilters.includes(k) ? 'checked' : '';
+    return `<label class="ofb-cust-row"><span style="display:flex;align-items:center;gap:8px;overflow:hidden;"><input type="checkbox" data-cust="${k}" ${checked}><span class="name">${CUSTOMERS[k].name}</span></span><span class="count">(${count})</span></label>`;
+  }).join('');
+  panel.querySelectorAll('input[type=checkbox]').forEach(cb=>{
+    cb.addEventListener('change', ()=>{
+      const k = cb.dataset.cust;
+      const idx = orderCustFilters.indexOf(k);
+      if (idx === -1) orderCustFilters.push(k); else orderCustFilters.splice(idx,1);
+      renderOrders();
+    });
+  });
+}
+
+function renderOrderFilterTags(){
+  const wrap = document.getElementById('orderFilterTags');
+  if (!wrap) return;
+  if (!orderCustFilters.length){ wrap.classList.add('hidden'); wrap.innerHTML=''; return; }
+  wrap.classList.remove('hidden');
+  wrap.innerHTML = '<span class="label">当前筛选：</span>' + orderCustFilters.map(k=>{
+    const name = CUSTOMERS[k] ? CUSTOMERS[k].name : k;
+    return `<span class="ofb-tag" data-cust="${k}">${escapeAttrOrder(name)}<button type="button" data-cust="${k}">×</button></span>`;
+  }).join('');
+  wrap.querySelectorAll('button[data-cust]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const k = btn.dataset.cust;
+      const idx = orderCustFilters.indexOf(k);
+      if (idx !== -1) orderCustFilters.splice(idx,1);
+      renderOrders();
+    });
+  });
+}
+
+const orderSearchInputEl = document.getElementById('orderSearchInput');
+if (orderSearchInputEl){
+  orderSearchInputEl.addEventListener('input', function(){ orderSearchQuery = this.value; renderOrderTable(); });
+}
+const orderDateFilterInputEl = document.getElementById('orderDateFilterInput');
+if (orderDateFilterInputEl){
+  orderDateFilterInputEl.addEventListener('change', function(){ orderDateFilter = this.value; renderOrderTable(); });
+}
+const orderMinAmountInputEl = document.getElementById('orderMinAmountInput');
+if (orderMinAmountInputEl){
+  orderMinAmountInputEl.addEventListener('input', function(){ const v = this.value; orderMinAmount = v === '' ? null : parseFloat(v); renderOrderTable(); });
+}
+const orderMaxAmountInputEl = document.getElementById('orderMaxAmountInput');
+if (orderMaxAmountInputEl){
+  orderMaxAmountInputEl.addEventListener('input', function(){ const v = this.value; orderMaxAmount = v === '' ? null : parseFloat(v); renderOrderTable(); });
+}
+const orderCustFilterBtnEl = document.getElementById('orderCustFilterBtn');
+const orderCustFilterPanelEl = document.getElementById('orderCustFilterPanel');
+if (orderCustFilterBtnEl && orderCustFilterPanelEl){
+  orderCustFilterBtnEl.addEventListener('click', function(e){
+    e.stopPropagation();
+    orderCustPanelOpen = !orderCustPanelOpen;
+    orderCustFilterPanelEl.classList.toggle('hidden', !orderCustPanelOpen);
+  });
+  document.addEventListener('click', function(e){
+    if (!orderCustPanelOpen) return;
+    if (e.target.closest('#orderCustFilterWrap')) return;
+    orderCustPanelOpen = false;
+    orderCustFilterPanelEl.classList.add('hidden');
+  });
+}
+const orderFilterResetBtnEl = document.getElementById('orderFilterResetBtn');
+if (orderFilterResetBtnEl){
+  orderFilterResetBtnEl.addEventListener('click', function(){
+    orderStatusFilter = '全部';
+    orderCustFilters = [];
+    orderSearchQuery = '';
+    orderDateFilter = '';
+    orderMinAmount = null;
+    orderMaxAmount = null;
+    if (orderSearchInputEl) orderSearchInputEl.value = '';
+    if (orderDateFilterInputEl) orderDateFilterInputEl.value = '';
+    if (orderMinAmountInputEl) orderMinAmountInputEl.value = '';
+    if (orderMaxAmountInputEl) orderMaxAmountInputEl.value = '';
+    renderOrders();
   });
 }
 
@@ -8935,7 +9059,14 @@ function renderOrderTable(){
   if (!body) return;
   let rows = orders;
   if (orderStatusFilter !== '全部') rows = rows.filter(o=>o.status===orderStatusFilter);
-  if (orderCustFilter !== '全部') rows = rows.filter(o=>o.cust===orderCustFilter);
+  if (orderCustFilters.length) rows = rows.filter(o=>orderCustFilters.includes(o.cust));
+  if (orderSearchQuery && orderSearchQuery.trim()){
+    const q = orderSearchQuery.trim().toLowerCase();
+    rows = rows.filter(o => (o.no||'').toLowerCase().includes(q) || extractCustomerOrderNo(o.poNote).toLowerCase().includes(q));
+  }
+  if (orderDateFilter) rows = rows.filter(o => o.date === orderDateFilter);
+  if (orderMinAmount != null && !isNaN(orderMinAmount)) rows = rows.filter(o => orderTotal(o.id) >= orderMinAmount);
+  if (orderMaxAmount != null && !isNaN(orderMaxAmount)) rows = rows.filter(o => orderTotal(o.id) <= orderMaxAmount);
   if (countBox) countBox.textContent = `共 ${rows.length} 个订单（总 ${orders.length} 个）`;
   body.innerHTML = rows.map(o=>{
     const custName = CUSTOMERS[o.cust] ? CUSTOMERS[o.cust].name : (o.cust||'');
@@ -8995,7 +9126,7 @@ function renderOrderTable(){
 
 function renderOrders(){
   renderOrderKpi();
-  renderOrderTabs();
+  renderOrderFilterBar();
   renderOrderTable();
 }
 

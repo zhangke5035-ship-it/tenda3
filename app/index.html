@@ -793,6 +793,14 @@
   #view-returns-admin .ra-kpi-card-good .ra-kpi-icon{background:#fff;color:var(--good);}
   #view-returns-admin .ra-kpi-card-good .inv-stat-value{color:var(--good);}
   #view-returns-admin .ra-ellipsis{max-width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap!important;cursor:help;}
+  #view-returns-admin .ra-search-wrap{position:relative;}
+  #view-returns-admin .ra-search-wrap svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--text-faint);pointer-events:none;}
+  #view-returns-admin .ra-search-wrap input{padding-left:32px;min-width:200px;}
+  #view-returns-admin .ra-select-wrap{position:relative;}
+  #view-returns-admin .ra-select-prefix{position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:12px;font-weight:500;color:var(--text-faint);pointer-events:none;}
+  #view-returns-admin .ra-select-wrap select{padding-left:46px;}
+  #view-returns-admin .ra-reset-btn{display:flex;align-items:center;gap:6px;}
+  #view-returns-admin .ra-reset-btn.hidden{display:none;}
   #view-inventory-dashboard th.inv-sortable{cursor:pointer;user-select:none;white-space:nowrap;}
   #view-inventory-dashboard th.inv-sortable:hover{color:var(--copper);}
   #view-inventory-dashboard .inv-sort-ind{display:inline-block;margin-left:4px;font-size:10px;opacity:.35;}
@@ -1556,16 +1564,27 @@
 
       <div class="inv-toolbar">
         <div class="inv-filters">
-          <select class="inv-field" id="raFilterCustomer">
-            <option value="">全部客户</option>
-          </select>
-          <select class="inv-field" id="raFilterStatus">
-            <option value="">全部状态</option>
-            <option value="待处理">待处理</option>
-            <option value="已受理">已受理</option>
-            <option value="已退款">已退款</option>
-            <option value="已拒绝">已拒绝</option>
-          </select>
+          <div class="ra-search-wrap">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
+            <input type="text" class="inv-field" id="raFilterSearch" placeholder="搜索产品型号/订单号/序列号...">
+          </div>
+          <div class="ra-select-wrap">
+            <span class="ra-select-prefix">客户:</span>
+            <select class="inv-field" id="raFilterCustomer">
+              <option value="">全部客户</option>
+            </select>
+          </div>
+          <div class="ra-select-wrap">
+            <span class="ra-select-prefix">状态:</span>
+            <select class="inv-field" id="raFilterStatus">
+              <option value="">全部状态</option>
+              <option value="待处理">待处理</option>
+              <option value="已受理">已受理</option>
+              <option value="已退款">已退款</option>
+              <option value="已拒绝">已拒绝</option>
+            </select>
+          </div>
+          <button type="button" class="inv-btn-ghost ra-reset-btn hidden" id="raFilterResetBtn">↺ 重置</button>
         </div>
         <div style="display:flex;gap:8px;">
           <button class="inv-btn" id="raBtnAdd">+ 新增退货</button>
@@ -1577,6 +1596,7 @@
         <table>
           <thead>
             <tr>
+              <th>状态</th>
               <th>提交时间</th>
               <th>客户</th>
               <th>产品型号</th>
@@ -1593,7 +1613,6 @@
               <th>OA流程号</th>
               <th>SAP号码</th>
               <th>Credit Note号码</th>
-              <th>状态</th>
               <th>操作</th>
             </tr>
           </thead>
@@ -7094,6 +7113,7 @@ async function loadSimRows(){
 let returnsAdminData = [];
 let raFilterCust = '';
 let raFilterStatus = '';
+let raFilterSearch = '';
 
 function raCustomerName(code){
   return (typeof CUSTOMERS !== 'undefined' && CUSTOMERS[code] && CUSTOMERS[code].name) || code;
@@ -7137,12 +7157,24 @@ function renderReturnsAdminFilterOptions(){
   sel.dataset.populated = '1';
 }
 
+function raUpdateResetVisibility(){
+  const btn = document.getElementById('raFilterResetBtn');
+  if (!btn) return;
+  const active = !!(raFilterCust || raFilterStatus || (raFilterSearch && raFilterSearch.trim()));
+  btn.classList.toggle('hidden', !active);
+}
+
 function renderReturnsAdminTable(){
   const tbody = document.getElementById('raTableBody');
   if (!tbody) return;
   const filtered = returnsAdminData.filter(function(r){
     if (raFilterCust && r.customer_code !== raFilterCust) return false;
     if (raFilterStatus && r.status !== raFilterStatus) return false;
+    if (raFilterSearch && raFilterSearch.trim()){
+      const q = raFilterSearch.trim().toLowerCase();
+      const hay = [r.product, r.order_no, r.serial_no].map(function(v){ return (v||'').toLowerCase(); });
+      if (!hay.some(function(v){ return v.includes(q); })) return false;
+    }
     return true;
   });
   if (!filtered.length){
@@ -7151,6 +7183,7 @@ function renderReturnsAdminTable(){
   }
   tbody.innerHTML = filtered.map(function(r){
     return '<tr>' +
+      '<td><span class="cp-status cp-status-' + raStatusClass(r.status) + '"' + (r.status === '已拒绝' && r.reject_reason ? ' title="' + escapeHtmlCP(r.reject_reason) + '"' : '') + '>' + escapeHtmlCP(r.status) + '</span></td>' +
       '<td>' + escapeHtmlCP(r.created_at ? r.created_at.slice(0,16).replace('T',' ') : '') + '</td>' +
       '<td>' + escapeHtmlCP(raCustomerName(r.customer_code)) + '</td>' +
       '<td class="ra-ellipsis" title="' + escapeHtmlCP(r.product) + '">' + escapeHtmlCP(r.product) + '</td>' +
@@ -7167,7 +7200,6 @@ function renderReturnsAdminTable(){
       '<td>' + escapeHtmlCP(r.oa_no || '-') + '</td>' +
       '<td>' + escapeHtmlCP(r.sap_no || '-') + '</td>' +
       '<td>' + escapeHtmlCP(r.credit_note_no || '-') + '</td>' +
-      '<td><span class="cp-status cp-status-' + raStatusClass(r.status) + '"' + (r.status === '已拒绝' && r.reject_reason ? ' title="' + escapeHtmlCP(r.reject_reason) + '"' : '') + '>' + escapeHtmlCP(r.status) + '</span></td>' +
       '<td><div class="ra-row-actions"><select class="inv-field ra-status-select" data-id="' + r.id + '" style="padding:4px 8px;font-size:12px;">' +
         ['待处理','已受理','已退款','已拒绝'].map(function(s){
           return '<option value="' + s + '"' + (s===r.status?' selected':'') + '>' + s + '</option>';
@@ -7497,9 +7529,22 @@ document.addEventListener('change', function(e){
 
 (function(){
   const custSel = document.getElementById('raFilterCustomer');
-  if (custSel) custSel.addEventListener('change', function(e){ raFilterCust = e.target.value; renderReturnsAdminTable(); });
+  if (custSel) custSel.addEventListener('change', function(e){ raFilterCust = e.target.value; renderReturnsAdminTable(); raUpdateResetVisibility(); });
   const statusSel = document.getElementById('raFilterStatus');
-  if (statusSel) statusSel.addEventListener('change', function(e){ raFilterStatus = e.target.value; renderReturnsAdminTable(); });
+  if (statusSel) statusSel.addEventListener('change', function(e){ raFilterStatus = e.target.value; renderReturnsAdminTable(); raUpdateResetVisibility(); });
+  const searchInput = document.getElementById('raFilterSearch');
+  if (searchInput) searchInput.addEventListener('input', function(e){ raFilterSearch = e.target.value; renderReturnsAdminTable(); raUpdateResetVisibility(); });
+  const resetBtn = document.getElementById('raFilterResetBtn');
+  if (resetBtn) resetBtn.addEventListener('click', function(){
+    raFilterCust = '';
+    raFilterStatus = '';
+    raFilterSearch = '';
+    if (custSel) custSel.value = '';
+    if (statusSel) statusSel.value = '';
+    if (searchInput) searchInput.value = '';
+    renderReturnsAdminTable();
+    raUpdateResetVisibility();
+  });
 })();
 
 async function loadGtmProducts(){

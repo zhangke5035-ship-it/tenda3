@@ -2191,16 +2191,13 @@
   </div>
 
   <div id="promoCampaignListWrap">
-    <div class="panel">
+    <div class="panel" style="display:none;">
       <div class="inv-toolbar" style="margin-bottom:14px;">
         <div class="inv-filters" style="flex:1;">
           <div class="inv-search" style="flex:1;max-width:360px;">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
             <input type="text" id="promoCampaignSearchInput" placeholder="搜索促销主题...">
           </div>
-        </div>
-        <div style="display:flex;gap:8px;">
-          <button class="inv-btn inv-btn-primary" id="promoCampaignAddBtn">＋ 新建促销主题</button>
         </div>
       </div>
       <div class="promo-campaign-grid" id="promoCampaignGrid"></div>
@@ -2210,10 +2207,13 @@
         <div class="inv-filters" style="flex:1;">
           <h3 style="margin:0;font-size:14px;font-weight:700;color:var(--text);">全部促销型号一览</h3>
         </div>
+        <div style="display:flex;gap:8px;">
+          <button class="inv-btn inv-btn-primary" id="promoCampaignAddBtn">＋ 新建促销主题</button>
+        </div>
       </div>
       <table>
         <thead><tr>
-          <th>产品型号</th><th>所属促销主题</th><th>客户</th><th class="promo-num">DDP促销价格 (PLN)</th><th class="promo-period-col">活动周期</th><th class="promo-center">状态</th>
+          <th>产品型号</th><th>所属促销主题</th><th>客户</th><th class="promo-num">DDP促销价格 (PLN)</th><th class="promo-num">分销商最低起订量</th><th class="promo-period-col">活动周期</th><th class="promo-center">状态</th>
         </tr></thead>
         <tbody id="promoAllDealsTableBody"></tbody>
       </table>
@@ -2391,6 +2391,7 @@
           </div>
         </div>
         <div class="field mono"><label>拉货目标 (台，选填)</label><input id="pd_target" type="number" placeholder="留空则不追踪拉货进度对比"></div>
+        <div class="field mono"><label>分销商最低起订量 (台，选填)</label><input id="pd_moq" type="number" placeholder="留空则不设置起订量"></div>
       </div>
     </div>
     <div class="drawer-footer">
@@ -2429,6 +2430,7 @@
         </select>
       </div>
       <div class="field mono"><label>拉货目标 (台，选填)</label><input id="pdd_target" type="number" placeholder="留空则不追踪拉货进度对比"></div>
+      <div class="field mono"><label>分销商最低起订量 (台，选填)</label><input id="pdd_moq" type="number" placeholder="留空则不设置起订量"></div>
     </div>
     <button class="btn" id="promoDealDetailSaveBtn">保存修改</button>
     <button class="btn ghost" id="promoDealDetailDeleteBtn" style="margin-left:8px;color:var(--alert);">删除该促销</button>
@@ -5006,6 +5008,7 @@ function renderPromoAllDealsTable(){
       '<td>' + (campaign ? campaign.name : '—') + '</td>' +
       '<td><span class="promo-client-tag">' + custName(p.cust) + '</span></td>' +
       '<td class="promo-num"><div class="promo-price-main">' + p.promo.toFixed(2) + ' PLN</div><div class="promo-price-sub">原价: <span class="strike">' + p.original.toFixed(2) + '</span>' + (hasDiscount ? (' · 省 ' + discount) : '') + '</div></td>' +
+      '<td class="promo-num">' + ((p.config && p.config.moq) ? (p.config.moq + ' 台') : '<span style="color:var(--text-faint)">—</span>') + '</td>' +
       '<td class="promo-period-col"><div class="promo-date-cell"><div>' + (p.start||'—') + '</div><div class="promo-date-divider">至</div><div>' + (p.end||'—') + '</div></div></td>' +
       '<td class="promo-center">' + promoStatusTag(p.status) + '</td>' +
     '</tr>';
@@ -5514,6 +5517,7 @@ function openPromoDealDetail(id){
   document.getElementById('pdd_end').value = p.end || '';
   document.getElementById('pdd_status').value = p.status || '未开始';
   document.getElementById('pdd_target').value = (p.config && p.config.target) || '';
+  document.getElementById('pdd_moq').value = (p.config && p.config.moq) || '';
   showView('promodeal-detail', 'promodeals');
 }
 function editPromoDeal(id){ openPromoDealDetail(id); }
@@ -6314,6 +6318,7 @@ document.getElementById('addPromoDealBtn').addEventListener('click', async ()=>{
   }
 
   config.target = parseFloat(document.getElementById('pd_target').value) || 0;
+  config.moq = parseFloat(document.getElementById('pd_moq').value) || 0;
 
   const { data, error } = await sb.from('promo_deals').insert({
     name, cust, type, product, original, promo,
@@ -6328,7 +6333,7 @@ document.getElementById('addPromoDealBtn').addEventListener('click', async ()=>{
 });
 
 function openPromoDealDrawer(){
-  ['pd_name','pd_product','pd_original','pd_tier3ref','pd_promo','pd_extra','pd_batch','pd_tier2_price','pd_tier3_price','pd_start','pd_end','pd_target'].forEach(id=>{
+  ['pd_name','pd_product','pd_original','pd_tier3ref','pd_promo','pd_extra','pd_batch','pd_tier2_price','pd_tier3_price','pd_start','pd_end','pd_target','pd_moq'].forEach(id=>{
     const el = document.getElementById(id); if (el) el.value='';
   });
   document.getElementById('pd_tier2_qty').value = 1000;
@@ -6428,6 +6433,7 @@ document.getElementById('promoDealDetailSaveBtn').addEventListener('click', asyn
   if (!promoDealDetailId) return;
   const existingDeal = promoDeals.find(x=>x.id===promoDealDetailId);
   const pullTarget = parseFloat(document.getElementById('pdd_target').value) || 0;
+  const moqVal = parseFloat(document.getElementById('pdd_moq').value) || 0;
   const name = document.getElementById('pdd_name').value.trim();
   const product = document.getElementById('pdd_product').value.trim();
   const original = parseFloat(document.getElementById('pdd_original').value) || 0;
@@ -6441,7 +6447,7 @@ document.getElementById('promoDealDetailSaveBtn').addEventListener('click', asyn
   const { data, error } = await sb.from('promo_deals').update({
     name, cust, type, product, original, promo,
     start_date: start || null, end_date: end || null, status,
-    config: Object.assign({}, (existingDeal && existingDeal.config) || {}, { target: pullTarget })
+    config: Object.assign({}, (existingDeal && existingDeal.config) || {}, { target: pullTarget, moq: moqVal })
   }).eq('id', promoDealDetailId).select().single();
   if (error){ alert('更新促销失败：' + error.message); return; }
   const idx = promoDeals.findIndex(p=>p.id===promoDealDetailId);

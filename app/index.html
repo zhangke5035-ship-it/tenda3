@@ -6013,6 +6013,24 @@ function refreshAll(){
 }
 
 /* ============ 事件绑定 ============ */
+function restoreViewFromHash(){
+  const raw = (location.hash || '').replace('#','').trim();
+  if (!raw) return false;
+  const target = document.querySelector('#nav .navitem[data-view="'+raw+'"]');
+  const view = document.getElementById('view-'+raw);
+  if (!target || !view) return false;
+  if (getComputedStyle(target).display === 'none') return false;
+  document.querySelectorAll('.navitem').forEach(function(n){ n.classList.remove('active'); });
+  target.classList.add('active');
+  document.querySelectorAll('.view').forEach(function(v){ v.classList.remove('active'); });
+  view.classList.add('active');
+  const grp = target.closest('.navgroup');
+  if (grp) grp.classList.add('open');
+  if (raw === 'pricing-customer' && typeof setPriceTableMode === 'function'){
+    setPriceTableMode(target.dataset.simMode === '1');
+  }
+  return true;
+}
 document.getElementById('nav').addEventListener('click', e=>{
   const head = e.target.closest('.navgroup-head');
   if (head){
@@ -6030,6 +6048,7 @@ document.getElementById('nav').addEventListener('click', e=>{
   if (item.dataset.view === 'pricing-customer' && typeof setPriceTableMode === 'function'){
     setPriceTableMode(item.dataset.simMode === '1');
   }
+  try{ history.replaceState(null, '', '#' + item.dataset.view); }catch(e){}
 });
 document.getElementById('fxRate').addEventListener('input', refreshAll);
 document.getElementById('catalogSearch').addEventListener('input', e=>{
@@ -8293,6 +8312,7 @@ async function showApp(session){
   if(userBadgeEl) userBadgeEl.textContent = (session && session.user && session.user.email) || '';
   applyRoleRestrictions(session);
   applyDefaultLanguageForUser(session);
+  restoreViewFromHash();
   try{
     if(typeof refreshAll === 'function'){
       refreshAll();

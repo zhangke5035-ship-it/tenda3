@@ -1611,6 +1611,7 @@
               <th>其他信息</th>
               <th>退款金额</th>
               <th>OA流程号</th>
+              <th>客诉流程号</th>
               <th>SAP号码</th>
               <th>Credit Note号码</th>
               <th>操作</th>
@@ -1687,6 +1688,10 @@
           <div class="ra-refund-input-row">
             <label for="raOaNoInput">OA流程号</label>
             <input type="text" id="raOaNoInput" placeholder="请输入OA审批流程号" />
+          </div>
+          <div class="ra-refund-input-row">
+            <label for="raComplaintNoInput">客诉流程号</label>
+            <input type="text" id="raComplaintNoInput" placeholder="请输入客诉流程号" />
           </div>
           <div class="ra-refund-input-row">
             <label for="raCreditNoteInput">Credit Note号码</label>
@@ -7178,7 +7183,7 @@ function renderReturnsAdminTable(){
     return true;
   });
   if (!filtered.length){
-    tbody.innerHTML = '<tr><td colspan="18" style="text-align:center;color:var(--text-faint);padding:24px;">暂无退货申请记录</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="19" style="text-align:center;color:var(--text-faint);padding:24px;">暂无退货申请记录</td></tr>';
     return;
   }
   tbody.innerHTML = filtered.map(function(r){
@@ -7198,6 +7203,7 @@ function renderReturnsAdminTable(){
       '<td>' + escapeHtmlCP(formatExtraFields(r.extra_fields)) + '</td>' +
       '<td>' + (r.refund_amount !== null && r.refund_amount !== undefined ? Number(r.refund_amount).toFixed(2) : '-') + '</td>' +
       '<td>' + escapeHtmlCP(r.oa_no || '-') + '</td>' +
+      '<td>' + escapeHtmlCP(r.complaint_no || '-') + '</td>' +
       '<td>' + escapeHtmlCP(r.sap_no || '-') + '</td>' +
       '<td>' + escapeHtmlCP(r.credit_note_no || '-') + '</td>' +
       '<td><div class="ra-row-actions"><select class="inv-field ra-status-select" data-id="' + r.id + '" style="padding:4px 8px;font-size:12px;">' +
@@ -7222,7 +7228,7 @@ function exportReturnsAdminCSV(){
     if (raFilterStatus && r.status !== raFilterStatus) return false;
     return true;
   });
-  const header = ['提交时间','客户','产品型号','数量','关联订单','发票号','序列号','承运商','物流单号','退货原因','备注','其他信息','退款金额','OA流程号','SAP号码','Credit Note号码','状态'];
+  const header = ['提交时间','客户','产品型号','数量','关联订单','发票号','序列号','承运商','物流单号','退货原因','备注','其他信息','退款金额','OA流程号','客诉流程号','SAP号码','Credit Note号码','状态'];
   const lines = [header.join(',')];
   rows.forEach(function(r){
     const rowVals = [
@@ -7239,6 +7245,7 @@ function exportReturnsAdminCSV(){
       formatExtraFields(r.extra_fields),
       (r.refund_amount !== null && r.refund_amount !== undefined) ? Number(r.refund_amount).toFixed(2) : '',
       r.oa_no || '',
+      r.complaint_no || '',
       r.sap_no || '',
       r.credit_note_no || '',
       r.status || ''
@@ -7305,6 +7312,8 @@ function raOpenDetail(id){
   }
   const oaInput = document.getElementById('raOaNoInput');
   if (oaInput) oaInput.value = row.oa_no || '';
+  const complaintNoInput = document.getElementById('raComplaintNoInput');
+  if (complaintNoInput) complaintNoInput.value = row.complaint_no || '';
   const creditNoteInput = document.getElementById('raCreditNoteInput');
   if (creditNoteInput) creditNoteInput.value = row.credit_note_no || '';
   const sapNoInput = document.getElementById('raSapNoInput');
@@ -7479,13 +7488,15 @@ if (raDetailSubmitBtnEl){
     const grossAmount = Number((net * (1 + RA_VAT_RATE)).toFixed(2));
     const oaInputEl = document.getElementById('raOaNoInput');
     const oaNo = oaInputEl ? oaInputEl.value.trim() : '';
+    const complaintNoInputEl = document.getElementById('raComplaintNoInput');
+    const complaintNo = complaintNoInputEl ? complaintNoInputEl.value.trim() : '';
     const creditNoteInputEl = document.getElementById('raCreditNoteInput');
     const creditNoteNo = creditNoteInputEl ? creditNoteInputEl.value.trim() : '';
     const sapNoInputEl = document.getElementById('raSapNoInput');
     const sapNo = sapNoInputEl ? sapNoInputEl.value.trim() : '';
     const newStatus = creditNoteNo ? '已退款' : '已受理';
     raDetailSubmitBtnEl.disabled = true;
-    const { error } = await sb.from('returns').update({ status: newStatus, refund_amount: grossAmount, oa_no: oaNo || null, credit_note_no: creditNoteNo || null, sap_no: sapNo || null }).eq('id', raDetailRow.id);
+    const { error } = await sb.from('returns').update({ status: newStatus, refund_amount: grossAmount, oa_no: oaNo || null, complaint_no: complaintNo || null, credit_note_no: creditNoteNo || null, sap_no: sapNo || null }).eq('id', raDetailRow.id);
     raDetailSubmitBtnEl.disabled = false;
     if (error){
       if (msg) msg.textContent = '提交失败：' + error.message;
@@ -7494,6 +7505,7 @@ if (raDetailSubmitBtnEl){
     raDetailRow.status = newStatus;
     raDetailRow.refund_amount = grossAmount;
     raDetailRow.oa_no = oaNo || null;
+    raDetailRow.complaint_no = complaintNo || null;
     raDetailRow.credit_note_no = creditNoteNo || null;
     raDetailRow.sap_no = sapNo || null;
     raCloseDetail();
@@ -10603,6 +10615,8 @@ const I18N_DICT = [
   ["退款金额（含税）","Refund Amount (incl. VAT)","Kwota zwrotu (z VAT)"],
   ["OA流程号","OA Process No.","Numer procesu OA"],
   ["请输入OA审批流程号","Enter OA approval process number","Wprowadź numer procesu zatwierdzania OA"],
+  ["客诉流程号","Complaint Process No.","Numer procesu reklamacji"],
+  ["请输入客诉流程号","Enter complaint process number","Wprowadź numer procesu reklamacji"],
   ["Credit Note号码","Credit Note No.","Numer noty kredytowej"],
   ["请输入退货Credit Note号码","Enter return credit note number","Wprowadź numer noty kredytowej zwrotu"],
   ["SAP号码","SAP No.","Numer SAP"],

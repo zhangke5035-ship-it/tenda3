@@ -2205,6 +2205,19 @@
       </div>
       <div class="promo-campaign-grid" id="promoCampaignGrid"></div>
     </div>
+    <div class="panel" style="margin-top:16px;">
+      <div class="inv-toolbar" style="margin-bottom:14px;">
+        <div class="inv-filters" style="flex:1;">
+          <h3 style="margin:0;font-size:14px;font-weight:700;color:var(--text);">全部促销型号一览</h3>
+        </div>
+      </div>
+      <table>
+        <thead><tr>
+          <th>产品型号</th><th>所属促销主题</th><th>客户</th><th class="promo-num">DDP促销价格 (PLN)</th><th class="promo-period-col">活动周期</th><th class="promo-center">状态</th>
+        </tr></thead>
+        <tbody id="promoAllDealsTableBody"></tbody>
+      </table>
+    </div>
   </div>
 
   <div id="promoDealDetailWrap" style="display:none;">
@@ -4969,7 +4982,46 @@ function promoCampaignStats(id){
     ended: rows.filter(p=>p.status==='已结束').length
   };
 }
+function renderPromoAllDealsTable(){
+  const tbody = document.getElementById('promoAllDealsTableBody');
+  if (!tbody) return;
+  const rows = promoDeals.slice().sort(function(a,b){
+    const ca = promoCampaigns.find(function(c){ return c.id===a.campaign_id; });
+    const cb = promoCampaigns.find(function(c){ return c.id===b.campaign_id; });
+    const na = ca ? ca.name : '';
+    const nb = cb ? cb.name : '';
+    if (na !== nb) return na.localeCompare(nb);
+    return (a.product||'').localeCompare(b.product||'');
+  });
+  if (!rows.length){
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-faint);padding:24px;">暂无促销型号记录</td></tr>';
+    return;
+  }
+  tbody.innerHTML = rows.map(function(p){
+    const campaign = promoCampaigns.find(function(c){ return c.id===p.campaign_id; });
+    const discount = p.original>0 ? promoDealDiscountPct(p).toFixed(1)+'%' : '—';
+    const hasDiscount = discount !== '—';
+    return '<tr data-campaign-id="' + p.campaign_id + '" style="cursor:pointer;">' +
+      '<td><div class="promo-name-main">' + p.product + '</div><div class="promo-name-sub">' + p.name + (p.type ? (' · ' + p.type) : '') + '</div></td>' +
+      '<td>' + (campaign ? campaign.name : '—') + '</td>' +
+      '<td><span class="promo-client-tag">' + custName(p.cust) + '</span></td>' +
+      '<td class="promo-num"><div class="promo-price-main">' + p.promo.toFixed(2) + ' PLN</div><div class="promo-price-sub">原价: <span class="strike">' + p.original.toFixed(2) + '</span>' + (hasDiscount ? (' · 省 ' + discount) : '') + '</div></td>' +
+      '<td class="promo-period-col"><div class="promo-date-cell"><div>' + (p.start||'—') + '</div><div class="promo-date-divider">至</div><div>' + (p.end||'—') + '</div></div></td>' +
+      '<td class="promo-center">' + promoStatusTag(p.status) + '</td>' +
+    '</tr>';
+  }).join('');
+  if (!tbody.dataset.rowClickBound){
+    tbody.dataset.rowClickBound = '1';
+    tbody.addEventListener('click', function(e){
+      const tr = e.target.closest('tr[data-campaign-id]');
+      if (!tr) return;
+      const cid = Number(tr.dataset.campaignId);
+      if (!isNaN(cid)) openPromoCampaign(cid);
+    });
+  }
+}
 function renderPromoCampaignGrid(){
+  renderPromoAllDealsTable();
   const grid = document.getElementById('promoCampaignGrid');
   if (!grid) return;
   const q = promoCampaignSearchTerm.trim().toLowerCase();

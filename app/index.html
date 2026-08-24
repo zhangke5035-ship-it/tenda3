@@ -801,6 +801,10 @@
   #view-returns-admin .ra-select-wrap select{padding-left:46px;}
   #view-returns-admin .ra-reset-btn{display:flex;align-items:center;gap:6px;}
   #view-returns-admin .ra-reset-btn.hidden{display:none;}
+  #view-returns-admin .ra-table-scroll{overflow:auto;max-height:640px;}
+  #view-returns-admin .ra-table-scroll table thead th{position:sticky;top:0;background:var(--surface);z-index:1;box-shadow:0 1px 0 var(--border);}
+  #view-returns-admin .ra-page-size-wrap{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--text-dim);}
+  #view-returns-admin .ra-page-size-wrap select{padding:6px 26px 6px 10px;min-width:auto;}
   #view-inventory-dashboard th.inv-sortable{cursor:pointer;user-select:none;white-space:nowrap;}
   #view-inventory-dashboard th.inv-sortable:hover{color:var(--copper);}
   #view-inventory-dashboard .inv-sort-ind{display:inline-block;margin-left:4px;font-size:10px;opacity:.35;}
@@ -1593,6 +1597,7 @@
       </div>
 
       <div class="inv-table-wrap">
+        <div class="ra-table-scroll">
         <table>
           <thead>
             <tr>
@@ -1619,6 +1624,21 @@
           </thead>
           <tbody id="raTableBody"></tbody>
         </table>
+        </div>
+        <div class="inv-pagination">
+          <span id="raPageInfo">共 0 条记录</span>
+          <div style="display:flex;align-items:center;gap:16px;">
+            <div class="ra-page-size-wrap">
+              <span>每页显示:</span>
+              <select class="inv-field" id="raPageSizeSelect">
+                <option value="20">20</option>
+                <option value="30">30</option>
+                <option value="50">50</option>
+              </select>
+            </div>
+            <div class="inv-page-btns" id="raPageBtns"></div>
+          </div>
+        </div>
       </div>
 
     <div class="ra-modal-overlay hidden" id="raAddModal">
@@ -7201,6 +7221,8 @@ let returnsAdminData = [];
 let raFilterCust = '';
 let raFilterStatus = '';
 let raFilterSearch = '';
+let raPageSize = 20;
+let raCurrentPage = 1;
 
 function raCustomerName(code){
   return (typeof CUSTOMERS !== 'undefined' && CUSTOMERS[code] && CUSTOMERS[code].name) || code;
@@ -7264,11 +7286,17 @@ function renderReturnsAdminTable(){
     }
     return true;
   });
+  const raTotalPages = Math.max(1, Math.ceil(filtered.length / raPageSize));
+  if (raCurrentPage > raTotalPages) raCurrentPage = raTotalPages;
+  if (raCurrentPage < 1) raCurrentPage = 1;
+  const raStart = (raCurrentPage - 1) * raPageSize;
+  const pageItems = filtered.slice(raStart, raStart + raPageSize);
   if (!filtered.length){
     tbody.innerHTML = '<tr><td colspan="19" style="text-align:center;color:var(--text-faint);padding:24px;">暂无退货申请记录</td></tr>';
+    renderReturnsAdminPagination(filtered.length, raTotalPages);
     return;
   }
-  tbody.innerHTML = filtered.map(function(r){
+  tbody.innerHTML = pageItems.map(function(r){
     return '<tr>' +
       '<td><span class="cp-status cp-status-' + raStatusClass(r.status) + '"' + (r.status === '已拒绝' && r.reject_reason ? ' title="' + escapeHtmlCP(r.reject_reason) + '"' : '') + '>' + escapeHtmlCP(r.status) + '</span></td>' +
       '<td>' + escapeHtmlCP(r.created_at ? r.created_at.slice(0,16).replace('T',' ') : '') + '</td>' +
@@ -7296,6 +7324,34 @@ function renderReturnsAdminTable(){
     '</tr>';
   }).join('');
   if (typeof translateTextNodes === 'function') translateTextNodes(tbody);
+  renderReturnsAdminPagination(filtered.length, raTotalPages);
+}
+
+function renderReturnsAdminPagination(totalCount, totalPages){
+  const infoEl = document.getElementById('raPageInfo');
+  if (infoEl) infoEl.textContent = '共 ' + totalCount + ' 条记录';
+  const pageBtns = document.getElementById('raPageBtns');
+  if (!pageBtns) return;
+  pageBtns.innerHTML = '';
+  const prevBtn = document.createElement('div');
+  prevBtn.className = 'inv-page-btn inv-page-nav' + (raCurrentPage<=1 ? ' disabled' : '');
+  prevBtn.textContent = '‹';
+  prevBtn.title = '上一页';
+  if (raCurrentPage>1){ prevBtn.onclick = function(){ raCurrentPage -= 1; renderReturnsAdminTable(); }; }
+  pageBtns.appendChild(prevBtn);
+  for (let p=1; p<=totalPages; p++){
+    const btn = document.createElement('div');
+    btn.className = 'inv-page-btn' + (p===raCurrentPage ? ' active' : '');
+    btn.textContent = String(p);
+    btn.onclick = (function(pp){ return function(){ raCurrentPage = pp; renderReturnsAdminTable(); }; })(p);
+    pageBtns.appendChild(btn);
+  }
+  const nextBtn = document.createElement('div');
+  nextBtn.className = 'inv-page-btn inv-page-nav' + (raCurrentPage>=totalPages ? ' disabled' : '');
+  nextBtn.textContent = '›';
+  nextBtn.title = '下一页';
+  if (raCurrentPage<totalPages){ nextBtn.onclick = function(){ raCurrentPage += 1; renderReturnsAdminTable(); }; }
+  pageBtns.appendChild(nextBtn);
 }
 
 function renderReturnsAdminAll(){
@@ -7623,22 +7679,32 @@ document.addEventListener('change', function(e){
 
 (function(){
   const custSel = document.getElementById('raFilterCustomer');
-  if (custSel) custSel.addEventListener('change', function(e){ raFilterCust = e.target.value; renderReturnsAdminTable(); raUpdateResetVisibility(); });
+  if (custSel) custSel.addEventListener('change', function(e){ raFilterCust = e.target.value; raCurrentPage = 1; renderReturnsAdminTable(); raUpdateResetVisibility(); });
   const statusSel = document.getElementById('raFilterStatus');
-  if (statusSel) statusSel.addEventListener('change', function(e){ raFilterStatus = e.target.value; renderReturnsAdminTable(); raUpdateResetVisibility(); });
+  if (statusSel) statusSel.addEventListener('change', function(e){ raFilterStatus = e.target.value; raCurrentPage = 1; renderReturnsAdminTable(); raUpdateResetVisibility(); });
   const searchInput = document.getElementById('raFilterSearch');
-  if (searchInput) searchInput.addEventListener('input', function(e){ raFilterSearch = e.target.value; renderReturnsAdminTable(); raUpdateResetVisibility(); });
+  if (searchInput) searchInput.addEventListener('input', function(e){ raFilterSearch = e.target.value; raCurrentPage = 1; renderReturnsAdminTable(); raUpdateResetVisibility(); });
   const resetBtn = document.getElementById('raFilterResetBtn');
   if (resetBtn) resetBtn.addEventListener('click', function(){
     raFilterCust = '';
     raFilterStatus = '';
     raFilterSearch = '';
+    raCurrentPage = 1;
     if (custSel) custSel.value = '';
     if (statusSel) statusSel.value = '';
     if (searchInput) searchInput.value = '';
     renderReturnsAdminTable();
     raUpdateResetVisibility();
   });
+  const pageSizeSel = document.getElementById('raPageSizeSelect');
+  if (pageSizeSel){
+    pageSizeSel.value = String(raPageSize);
+    pageSizeSel.addEventListener('change', function(e){
+      raPageSize = parseInt(e.target.value, 10) || 20;
+      raCurrentPage = 1;
+      renderReturnsAdminTable();
+    });
+  }
 })();
 
 async function loadGtmProducts(){

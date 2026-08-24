@@ -1945,6 +1945,7 @@
               <th class="aer-sort-th" data-col="period">月份<span class="aer-sort-ind">⇅</span></th>
               <th class="aer-sort-th" data-col="amount">不含税金额<span class="aer-sort-ind">⇅</span></th>
               <th class="aer-sort-th" data-col="currency">币种<span class="aer-sort-ind">⇅</span></th>
+              <th>费控流程号</th>
               <th class="aer-sort-th" data-col="tax_amount">税额<span class="aer-sort-ind">⇅</span></th>
               <th class="aer-sort-th" data-col="total">总金额<span class="aer-sort-ind">⇅</span></th>
               <th>发票号码</th>
@@ -1985,6 +1986,10 @@
                 <option value="EUR">EUR</option>
                 <option value="UAH">UAH</option>
               </select>
+            </div>
+            <div class="ra-modal-body-item">
+              <label class="ra-label">费控流程号</label>
+              <input type="text" id="aerAddControlNo" placeholder="选填，例如费控系统单号">
             </div>
             <div class="ra-modal-body-item">
               <label class="ra-label">税额</label>
@@ -7773,7 +7778,7 @@ function renderAdminExpensesTable(){
     return aerSortDir === 'asc' ? cmp : -cmp;
   });
   if (!filtered.length){
-    tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;color:var(--text-faint);padding:24px;">暂无记录</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="12" style="text-align:center;color:var(--text-faint);padding:24px;">暂无记录</td></tr>';
     return;
   }
   tbody.innerHTML = filtered.map(function(r){
@@ -7782,6 +7787,7 @@ function renderAdminExpensesTable(){
       '<td>' + escapeHtmlCP(r.period||'-') + '</td>' +
       '<td>' + (Number(r.amount)||0).toLocaleString('en-US',{minimumFractionDigits:2, maximumFractionDigits:2}) + '</td>' +
       '<td>' + escapeHtmlCP(r.currency||'PLN') + '</td>' +
+      '<td>' + escapeHtmlCP(r.expense_control_no||'-') + '</td>' +
       '<td>' + (r.tax_amount != null ? Number(r.tax_amount).toLocaleString('en-US',{minimumFractionDigits:2, maximumFractionDigits:2}) : '-') + '</td>' +
       '<td>' + aerRowTotal(r).toLocaleString('en-US',{minimumFractionDigits:2, maximumFractionDigits:2}) + '</td>' +
       '<td>' + escapeHtmlCP(r.invoice_no||'-') + '</td>' +
@@ -7985,6 +7991,8 @@ function aerResetAddForm(){
   if (bankAccountNoEl) bankAccountNoEl.value = '';
   const invoiceNoEl = document.getElementById('aerAddInvoiceNo');
   if (invoiceNoEl) invoiceNoEl.value = '';
+  const controlNoEl = document.getElementById('aerAddControlNo');
+  if (controlNoEl) controlNoEl.value = '';
   const msg = document.getElementById('aerAddMsg');
   if (msg){ msg.textContent = ''; msg.className = 'cp-field-warn'; }
   aerEditingId = null;
@@ -8036,6 +8044,8 @@ function aerOpenEditModal(id){
   if (bankAccountNoEl) bankAccountNoEl.value = row.bank_account_no || '';
   const invoiceNoEl = document.getElementById('aerAddInvoiceNo');
   if (invoiceNoEl) invoiceNoEl.value = row.invoice_no || '';
+  const controlNoEl = document.getElementById('aerAddControlNo');
+  if (controlNoEl) controlNoEl.value = row.expense_control_no || '';
   const currentInvoiceEl = document.getElementById('aerCurrentInvoiceInfo');
   if (currentInvoiceEl){
     if (row.invoice_file_name){
@@ -8147,6 +8157,7 @@ if (aerAddSubmitBtnEl){
     const bankAccountName = (document.getElementById('aerAddBankAccountName')||{}).value.trim();
     const bankAccountNo = (document.getElementById('aerAddBankAccountNo')||{}).value.trim();
     const invoiceNo = (document.getElementById('aerAddInvoiceNo')||{}).value.trim();
+    const controlNo = (document.getElementById('aerAddControlNo')||{}).value.trim();
     const invoiceFileEl = document.getElementById('aerAddInvoiceFile');
     const invoiceFile = (invoiceFileEl && invoiceFileEl.files && invoiceFileEl.files[0]) ? invoiceFileEl.files[0] : null;
 
@@ -8154,7 +8165,7 @@ if (aerAddSubmitBtnEl){
     aerAddSubmitBtnEl.disabled = true;
     aerAddSubmitBtnEl.textContent = wasEditing ? '保存中…' : '提交中…';
     try{
-      const payload = { category: category, period: period, amount: amount, currency: currency, tax_amount: (taxRaw === '' ? null : taxAmount), payment_status: paymentStatus, invoice_no: invoiceNo || null, note: note || null, bank_name: bankName || null, bank_account_name: bankAccountName || null, bank_account_no: bankAccountNo || null };
+      const payload = { category: category, period: period, amount: amount, currency: currency, tax_amount: (taxRaw === '' ? null : taxAmount), payment_status: paymentStatus, invoice_no: invoiceNo || null, expense_control_no: controlNo || null, note: note || null, bank_name: bankName || null, bank_account_name: bankAccountName || null, bank_account_no: bankAccountNo || null };
       if (invoiceFile){
         try{
           const uploaded = await aerUploadInvoiceFile(invoiceFile);

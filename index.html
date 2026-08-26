@@ -127,6 +127,8 @@
   #custMomTable tfoot td:not(:first-child){font-variant-numeric:tabular-nums;font-family:'IBM Plex Mono','IBM Plex Sans SC',sans-serif;}
   .num-cell{font-family:'IBM Plex Mono';}
   .price-table-scroll{overflow:auto;max-height:640px;border:1px solid var(--border-soft);border-radius:8px;}
+  .mom-table-scroll{overflow-x:auto;}
+  .mom-table-scroll table{min-width:max-content;}
   .price-table-scroll table thead th{position:sticky;top:0;background:var(--surface);z-index:1;box-shadow:0 1px 0 var(--border);}
   .price-table-scroll table th:nth-child(3),
   .price-table-scroll table td:nth-child(3){position:sticky;left:0;background:var(--surface);z-index:2;box-shadow:2px 0 4px rgba(0,0,0,0.05);}
@@ -1328,11 +1330,13 @@
       <div class="kpi-row" id="salesKpiRow"></div>
 
       <div class="panel">
-        <div class="panel-head"><div><h3>客户维度月环比</h3><div class="desc">各客户近3个月订单净额趋势</div></div><button class="btn ghost" id="custMomExportBtn" style="font-size:12px;padding:6px 12px;">导出 Excel</button></div>
+        <div class="panel-head"><div><h3>客户维度月环比</h3><div class="desc">各客户本年度月度订单净额趋势</div></div><button class="btn ghost" id="custMomExportBtn" style="font-size:12px;padding:6px 12px;">导出 Excel</button></div>
+        <div class="mom-table-scroll">
         <table id="custMomTable">
           <thead><tr id="custMomTableHead"><th>客户</th></tr></thead>
           <tbody id="custMomTableBody"></tbody>
         </table>
+        </div>
       </div>
 
       <div class="panel">
@@ -6846,6 +6850,24 @@ function getRollingMonths(n){
   return result;
 }
 
+function getYearMonths(year){
+  const seen = {};
+  orders.forEach(o=>{ const m=(o.date||'').slice(0,7); if (m) seen[m]=1; });
+  const keys = Object.keys(seen).sort();
+  let endMonth = keys.length ? keys[keys.length-1] : null;
+  const today = new Date();
+  const curMonth = today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0');
+  if (!endMonth || curMonth > endMonth) endMonth = curMonth;
+  const targetYear = year || Number(endMonth.slice(0,4));
+  const endParts = endMonth.split('-').map(Number);
+  const lastMonthNum = (endParts[0] === Number(targetYear)) ? endParts[1] : 12;
+  const result = [];
+  for (let m=1; m<=lastMonthNum; m++){
+    result.push(targetYear + '-' + String(m).padStart(2,'0'));
+  }
+  return result;
+}
+
 function renderMomBadge(momText, momColor){
   if (momText === '—') return '<span class="mom-badge flat">'+momText+'</span>';
   const isUp = momColor === 'var(--good)';
@@ -7022,7 +7044,7 @@ function renderCustMomTable(){
   if (!head || !body) return;
   const fmtAmt = n => n.toLocaleString('en-US', {minimumFractionDigits:1, maximumFractionDigits:1});
   const fmtQty = n => n.toLocaleString('en-US');
-  const months = getRollingMonths(3);
+  const months = getYearMonths();
   const curMonth = months[months.length-1];
   const prevMonth = months.length>1 ? months[months.length-2] : null;
   const ytdYear = curMonth.slice(0,4);
@@ -10695,7 +10717,7 @@ const I18N_DICT = [
   ['确认添加','Confirm Add','Potwierdź dodanie']
 ,
   ['客户维度月环比','Customer MoM Trend','Trend m/m wg klienta'],
-  ['各客户近3个月订单净额趋势','Order net amount by customer for the last 3 months','Wartość netto zamówień wg klienta za ostatnie 3 miesiące'],
+  ['各客户本年度月度订单净额趋势','Monthly order net amount by customer for this year','Miesięczna wartość netto zamówień wg klienta w tym roku'],
   ['暂无数据','No data yet','Brak danych']
 ,
   ["Tenda 波兰价格与利润管理台 · 26M71","Tenda Poland Pricing & Profit Console · 26M71","Tenda Polska - konsola cen i zysków · 26M71"],

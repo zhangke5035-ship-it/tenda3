@@ -1623,7 +1623,8 @@
               <th>退货原因</th>
               <th>备注</th>
               <th>其他信息</th>
-              <th>退款金额</th>
+              <th>退款单价</th>
+              <th>退款总金额</th>
               <th>OA流程号</th>
               <th>客诉流程号</th>
               <th>SAP号码</th>
@@ -7319,7 +7320,7 @@ function renderReturnsAdminTable(){
   const raStart = (raCurrentPage - 1) * raPageSize;
   const pageItems = filtered.slice(raStart, raStart + raPageSize);
   if (!filtered.length){
-    tbody.innerHTML = '<tr><td colspan="19" style="text-align:center;color:var(--text-faint);padding:24px;">暂无退货申请记录</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="20" style="text-align:center;color:var(--text-faint);padding:24px;">暂无退货申请记录</td></tr>';
     renderReturnsAdminPagination(filtered.length, raTotalPages);
     return;
   }
@@ -7339,6 +7340,7 @@ function renderReturnsAdminTable(){
       '<td>' + escapeHtmlCP(r.note||'-') + '</td>' +
       '<td>' + escapeHtmlCP(formatExtraFields(r.extra_fields)) + '</td>' +
       '<td>' + (r.refund_amount !== null && r.refund_amount !== undefined ? Number(r.refund_amount).toFixed(2) : '-') + '</td>' +
+      '<td>' + (r.refund_amount !== null && r.refund_amount !== undefined ? (Number(r.refund_amount) * (Number(r.qty)||0)).toFixed(2) : '-') + '</td>' +
       '<td>' + escapeHtmlCP(r.oa_no || '-') + '</td>' +
       '<td>' + escapeHtmlCP(r.complaint_no || '-') + '</td>' +
       '<td>' + escapeHtmlCP(r.sap_no || '-') + '</td>' +
@@ -7393,7 +7395,7 @@ function exportReturnsAdminCSV(){
     if (raFilterStatus && r.status !== raFilterStatus) return false;
     return true;
   });
-  const header = ['提交时间','客户','产品型号','数量','关联订单','发票号','序列号','承运商','物流单号','退货原因','备注','其他信息','退款金额','OA流程号','客诉流程号','SAP号码','Credit Note号码','状态'];
+  const header = ['提交时间','客户','产品型号','数量','关联订单','发票号','序列号','承运商','物流单号','退货原因','备注','其他信息','退款单价','退款总金额','OA流程号','客诉流程号','SAP号码','Credit Note号码','状态'];
   const lines = [header.join(',')];
   rows.forEach(function(r){
     const rowVals = [
@@ -7409,6 +7411,7 @@ function exportReturnsAdminCSV(){
       r.note || '',
       formatExtraFields(r.extra_fields),
       (r.refund_amount !== null && r.refund_amount !== undefined) ? Number(r.refund_amount).toFixed(2) : '',
+      (r.refund_amount !== null && r.refund_amount !== undefined) ? (Number(r.refund_amount) * (Number(r.qty)||0)).toFixed(2) : '',
       r.oa_no || '',
       r.complaint_no || '',
       r.sap_no || '',
@@ -10792,6 +10795,8 @@ const I18N_DICT = [
   ["保存修改","Save Changes","Zapisz zmiany"],
   ["退货详情 / 人工退款审批","Return Detail / Manual Refund Approval","Szczegóły zwrotu / Ręczna akceptacja zwrotu"],
   ["退款金额","Refund Amount","Kwota zwrotu"],
+  ["退款单价","Refund Unit Price","Cena zwrotu (jedn.)"],
+  ["退款总金额","Total Refund Amount","Łączna kwota zwrotu"],
   ["退款金额（不含税）","Refund Amount (excl. VAT)","Kwota zwrotu (bez VAT)"],
   ["VAT税额（23%）","VAT Amount (23%)","Kwota VAT (23%)"],
   ["退款金额（含税）","Refund Amount (incl. VAT)","Kwota zwrotu (z VAT)"],

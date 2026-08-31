@@ -155,7 +155,33 @@
   .mom-badge.flat{color:var(--text-faint);font-weight:400;}
   .status{display:inline-flex;align-items:center;gap:6px;font-size:12px;}
   .status .sdot{width:6px;height:6px;border-radius:50%;}
-  .status.plan .sdot{background:var(--text-faint);} .status.live .sdot{background:var(--good);} .status.done .sdot{background:var(--text-dim);}
+  .status.plan .sdot{background:var(--text-faint);} .status.live .sdot{background:var(--good);} .status.done .sdot{background:var(--text-dim);} .status.submit .sdot{background:var(--text-faint);} .status.review .sdot{background:var(--amber);} .status.rejected .sdot{background:var(--alert);} .status.approved .sdot{background:var(--teal);} .status.settled .sdot{background:var(--good);}
+  .promo-split{display:grid;grid-template-columns:1fr;gap:16px;align-items:start;}
+  .promo-split.drawer-open{grid-template-columns:minmax(0,1fr) 420px;}
+  .promo-drawer{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);display:flex;flex-direction:column;max-height:calc(100vh - 140px);position:sticky;top:16px;}
+  .promo-drawer-head{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid var(--border);}
+  .promo-drawer-head h3{margin:0;font-size:15px;}
+  .promo-drawer-body{padding:16px 18px;overflow-y:auto;flex:1;}
+  .promo-drawer-footer{padding:14px 18px;border-top:1px solid var(--border);background:var(--surface-alt);}
+  .drawer-group{margin-bottom:20px;}
+  .drawer-group-title{font-size:12.5px;font-weight:600;color:var(--text-dim);border-left:3px solid var(--copper);padding-left:8px;margin-bottom:10px;}
+  .drawer-group .field{margin-bottom:10px;}
+  .mea-card{border:1px solid var(--border);border-radius:6px;padding:10px 12px;margin-bottom:10px;background:var(--surface-alt);}
+  .mea-card-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-size:12.5px;color:var(--text-dim);}
+  .mea-card-row{display:flex;gap:8px;margin-bottom:6px;}
+  .mea-card-row .field{flex:1;margin-bottom:0;}
+  .mea-card-total{font-size:12.5px;color:var(--text-dim);margin-top:4px;}
+  .mea-card-total strong{color:var(--copper);}
+  .subsidy-mini-list{display:flex;flex-direction:column;gap:2px;}
+  .subsidy-mini-row{display:flex;justify-content:space-between;gap:8px;font-size:12px;}
+  .subsidy-mini-model{color:var(--text);}
+  .subsidy-mini-qty{color:var(--text-dim);}
+  .subsidy-mini-amount{font-variant-numeric:tabular-nums;color:var(--text-dim);}
+  .subsidy-mini-summary{margin-top:4px;padding-top:4px;border-top:1px dashed var(--border);font-size:11.5px;color:var(--text-faint);}
+  .promo-row-clickable{cursor:pointer;}
+  .promo-row-clickable:hover{background:var(--surface-alt);}
+  .promo-row-selected{background:var(--copper-soft) !important;}
+  .readonly-value{padding:8px 10px;background:var(--surface-alt);border-radius:4px;font-size:13px;color:var(--text);}
   .healthy{color:var(--good);} .warn{color:var(--alert);font-weight:600;}
   .rowwarn{background:var(--alert-soft) !important;}
   .progress-wrap{width:100%;background:var(--surface-alt);border-radius:20px;height:6px;overflow:hidden;}
@@ -3005,19 +3031,45 @@
 
     <!-- ===================== 营销费用 ===================== -->
     <section class="view" id="view-promo">
-      <div class="viewhead">
-        <div><h2>营销费用</h2><p>按总部活动分类（品牌营销 / 渠道营销 / 渠道激励）登记月度费用</p></div>
-      </div>
-      <div class="notebox">
-        活动类型沿用总部《费用-活动》表的分类口径。下方两条为示例数据，帮助你理解格式；请替换为当月实际数字。
-      </div>
+  <div class="viewhead">
+    <div><h2>营销费用</h2><p>按总部活动分类（品牌营销 / 渠道营销 / 渠道激励）登记月度费用</p></div>
+    <button type="button" class="btn" id="promoAddToggleBtn">+ 新增活动</button>
+  </div>
+  <div class="notebox">
+    活动类型沿用总部《费用-活动》表的分类口径。每个客户仅保留一条活动记录（一客一动），点击列表行可查看或编辑详情。
+  </div>
 
-      <button type="button" class="btn ghost" id="promoAddToggleBtn" style="margin-bottom:12px;">+ 新增活动</button>
-      <div class="panel" id="promoAddPanel" style="display:none;">
-        <div class="panel-head"><h3>新增活动</h3></div>
-        <div class="form-grid">
+  <div class="promo-split" id="promoSplit">
+    <div class="promo-list-col">
+      <div class="panel">
+        <div class="panel-head"><h3>活动列表</h3></div>
+        <table>
+          <thead>
+            <tr>
+              <th>客户</th>
+              <th>活动名称</th>
+              <th>补贴明细</th>
+              <th>活动总预算</th>
+              <th>报销状态</th>
+              <th style="width:44px;"></th>
+            </tr>
+          </thead>
+          <tbody id="promoTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="promo-drawer" id="promoAddPanel" style="display:none;">
+      <div class="promo-drawer-head">
+        <h3 id="promoDrawerTitle">新增活动</h3>
+        <button type="button" id="promoDrawerCloseBtn" style="border:none;background:none;cursor:pointer;font-size:16px;color:var(--text-dim);">✕</button>
+      </div>
+      <div class="promo-drawer-body">
+        <div class="drawer-group">
+          <div class="drawer-group-title">基本信息</div>
+          <div class="field" id="m_customer_select_wrap"><label>客户</label><select id="m_customer"></select></div>
+          <div class="field" id="m_customer_readonly_wrap" style="display:none;"><label>客户</label><div class="readonly-value" id="m_customer_readonly"></div></div>
           <div class="field"><label>活动名称</label><input id="m_name" placeholder="例如 Incom 社群媒体推广"></div>
-          <div class="field"><label>客户</label><select id="m_customer"></select></div>
           <div class="field"><label>活动类型</label>
             <select id="m_type">
               <option>品牌营销 - 媒体软文</option>
@@ -3028,51 +3080,42 @@
               <option>渠道营销 - 线下营销</option>
               <option>渠道激励 - SI激励</option>
               <option>渠道激励 - 一次性投入</option>
-                          <option>降价促销</option>
+              <option>降价促销</option>
               <option>营销活动</option>
             </select>
           </div>
-          <div class="field"><label>月份</label><input id="m_month" type="month"></div><div class="field"><label>活动开始时间</label><input id="m_start_date" type="date"></div><div class="field"><label>活动结束时间</label><input id="m_end_date" type="date"></div>
+          <div class="field"><label>月份</label><input id="m_month" type="month"></div>
+          <div class="field"><label>活动开始时间</label><input id="m_start_date" type="date"></div>
+          <div class="field"><label>活动结束时间</label><input id="m_end_date" type="date"></div>
           <div class="field mono"><label>实际使用 (PLN)</label><input id="m_actual" type="number" placeholder="6200"></div>
-          <div class="field"><label>状态</label><select id="m_status"><option>计划中</option><option>进行中</option><option>已结束</option></select></div>
         </div>
 
-        <div style="margin-top:18px;">
-          <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:8px;">产品补贴明细</div>
-          <table>
-            <thead>
-              <tr>
-                <th style="width:34px;">#</th>
-                <th>产品型号</th>
-                <th>单个型号促销补贴 (PLN)</th>
-                <th>预估补贴台数 (台)</th>
-                <th>结算金额 (PLN)</th>
-                <th>税率 (%)</th>
-                <th>含税结算金额 (PLN)</th>
-                <th style="width:44px;"></th>
-              </tr>
-            </thead>
-            <tbody id="meaItemsBody"></tbody>
-          </table>
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;">
-            <button type="button" class="btn ghost" id="meaAddRowBtn" style="font-size:12px;padding:6px 12px;">＋ 添加一行型号</button>
-            <div style="font-size:13.5px;color:var(--text-dim);">
-              活动总金额（预算汇总）：<strong id="meaGrandTotal" style="font-size:16px;color:var(--copper);">0.00 PLN</strong><br><span style="font-size:12px;">含税总金额：<strong id="meaGrandTotalTax" style="font-size:14px;color:var(--copper);">0.00 PLN</strong></span>
-            </div>
-          </div>
+        <div class="drawer-group">
+          <div class="drawer-group-title">产品补贴明细</div>
+          <div id="meaItemsBody"></div>
+          <button type="button" class="btn ghost" id="meaAddRowBtn" style="font-size:12px;padding:6px 12px;">+ 添加型号</button>
         </div>
-
-        <button class="btn" id="addPromoBtn" style="margin-top:16px;">新增活动</button>
       </div>
-
-      <div class="panel">
-        <div class="panel-head"><h3>活动列表</h3></div>
-        <table>
-          <thead><tr><th>活动名称</th><th>客户</th><th>类型</th><th>月份</th><th>补贴明细</th><th>预留执行</th><th>状态</th><th></th></tr></thead>
-          <tbody id="promoTableBody"></tbody>
-        </table>
+      <div class="promo-drawer-footer">
+        <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px;"><span>预算汇总</span><strong id="meaGrandTotal" style="color:var(--copper);">0.00 PLN</strong></div>
+        <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-dim);margin-bottom:10px;"><span>含税总金额</span><strong id="meaGrandTotalTax">0.00 PLN</strong></div>
+        <div class="field"><label>报销状态</label>
+          <select id="m_status">
+            <option value="待提交">待提交</option>
+            <option value="审批中">审批中</option>
+            <option value="已驳回">已驳回</option>
+            <option value="已批准待付款">已批准待付款</option>
+            <option value="已结清">已结清</option>
+          </select>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:12px;">
+          <button type="button" class="btn ghost" id="promoDrawerCancelBtn" style="flex:1;">取消</button>
+          <button class="btn" id="addPromoBtn" style="flex:1;">保存活动</button>
+        </div>
       </div>
-    </section>
+    </div>
+  </div>
+</section>
 
   </main>
 </div>
@@ -4999,38 +5042,47 @@ function populatePromoSelects(){
   if (dmp.length) html += '<optgroup label="二级客户 (DMP)">' + optHtml(dmp) + '</optgroup>';
   chSel.innerHTML = html;
 }
-function statusClass(s){ return s==='进行中'?'live':(s==='已结束'?'done':'plan'); }
+function statusClass(s){
+  const map = { '待提交':'submit', '审批中':'review', '已驳回':'rejected', '已批准待付款':'approved', '已结清':'settled' };
+  return map[s] || 'submit';
+}
 
 function renderPromoTable(){
   const tbody = document.getElementById('promoTableBody');
-  tbody.innerHTML = promotions.map(m=>{
-    const pct = m.budget>0 ? Math.min(200,(m.actual/m.budget*100)) : 0;
-    const over = m.actual > m.budget;
-    const meaItemsList = marketingActivityItemsByActivity[m.id]||[];
-    const itemsHtml = meaItemsList.length ? ('<ul style="margin:0;padding-left:16px;">' + meaItemsList.map(function(it){
-      return '<li style="margin-bottom:2px;">' + it.product + ' × ' + it.qty + ' (' + fmt(it.amount) + ' PLN)</li>';
-    }).join('') + '</ul>') : '-';
-    return `
-    <tr>
-      <td>${m.name}</td>
-      <td>${custName(m.cust)}</td>
-      <td>${m.type}</td>
-      <td class="num-cell">${m.month||'-'}</td>
-      <td style="font-size:12px;">${itemsHtml}</td>
-      <td>
-        <div class="progress-wrap"><div class="progress-bar ${over?'over':''}" style="width:${Math.min(100,pct)}%"></div></div>
-        <div class="num-cell" style="font-size:11px;color:var(--text-faint);margin-top:4px;">${fmt(m.actual)} zł / ${fmt(m.budget)} zł (${fmt(pct)}%)</div>
-      </td>
-      <td><span class="status ${statusClass(m.status)}"><span class="sdot"></span>${m.status}</span></td>
-      <td><button class="del-btn" onclick="deletePromo(${m.id})">✕</button></td>
-    </tr>`;
+  if (!tbody) return;
+  tbody.innerHTML = promotions.map(function(m){
+    const meaItemsList = marketingActivityItemsByActivity[m.id] || [];
+    const miniListHtml = meaItemsList.length ? ('<div class="subsidy-mini-list">' + meaItemsList.map(function(it){
+      return '<div class="subsidy-mini-row"><span class="subsidy-mini-model">' + escapeHtmlCP(it.product || '-') + '</span><span class="subsidy-mini-qty">x' + (it.qty || 0) + '</span><span class="subsidy-mini-amount">' + Number(it.amount || 0).toFixed(2) + ' PLN</span></div>';
+    }).join('') + '</div>') : '<span style="font-size:12px;color:var(--text-dim);">暂无明细</span>';
+    return '' +
+      '<tr class="promo-row-clickable" data-activity-id="' + m.id + '">' +
+      '<td>' + escapeHtmlCP(custName(m.cust)) + '</td>' +
+      '<td>' + escapeHtmlCP(m.name) + '</td>' +
+      '<td>' + miniListHtml + '</td>' +
+      '<td class="mono"><strong>' + Number(m.budget || 0).toFixed(2) + ' PLN</strong></td>' +
+      '<td><span class="status ' + statusClass(m.status) + '"><span class="sdot"></span>' + escapeHtmlCP(m.status || '待提交') + '</span></td>' +
+      '<td><button type="button" class="btn ghost" data-del-id="' + m.id + '" style="padding:4px 8px;font-size:12px;">删除</button></td>' +
+      '</tr>';
   }).join('');
+  Array.from(tbody.querySelectorAll('tr[data-activity-id]')).forEach(function(tr){
+    tr.addEventListener('click', function(){
+      openPromoDrawer('edit', Number(tr.dataset.activityId));
+    });
+  });
+  Array.from(tbody.querySelectorAll('button[data-del-id]')).forEach(function(btn){
+    btn.addEventListener('click', function(e){
+      e.stopPropagation();
+      if (confirm('确定删除该活动吗？')) deletePromo(Number(btn.dataset.delId));
+    });
+  });
 }
 async function deletePromo(id){
   const { error } = await sb.from('marketing_activities').delete().eq('id', id);
   if (error){ alert('删除失败：' + error.message); return; }
-  promotions = promotions.filter(m=>m.id!==id);
+  promotions = promotions.filter(function(m){ return m.id !== id; });
   delete marketingActivityItemsByActivity[id];
+  if (promoDrawerEditId === id) closePromoDrawer();
   refreshAll();
 }
 
@@ -6267,19 +6319,23 @@ function meaGrandTotalWithTaxValue(){
 }
 
 function renderMeaItems(){
-  const tbody = document.getElementById('meaItemsBody');
-  if (!tbody) return;
-  tbody.innerHTML = meaItems.map(function(item, idx){
-    return '<tr>' +
-      '<td>' + (idx+1) + '</td>' +
-      '<td><input type="text" list="modelDatalist" class="inv-field mea-item-product" data-id="' + item.id + '" value="' + meaEsc(item.product) + '" placeholder="例如 TX12L Pro" style="width:100%;min-width:120px;"></td>' +
-      '<td><input type="number" class="inv-field mea-item-subsidy" data-id="' + item.id + '" value="' + meaEsc(item.subsidy) + '" placeholder="0.00" style="width:100%;min-width:100px;"></td>' +
-      '<td><input type="number" class="inv-field mea-item-count" data-id="' + item.id + '" value="' + meaEsc(item.count) + '" placeholder="0" style="width:100%;min-width:80px;"></td>' +
-      '<td style="font-weight:600;" id="meaTotal-' + item.id + '">' + meaRowTotal(item).toFixed(2) + '</td>' +
-      '<td><input type="number" class="inv-field mea-item-vat" data-id="' + item.id + '" value="' + meaEsc(item.vat) + '" placeholder="23" style="width:100%;min-width:70px;"></td>' +
-      '<td style="font-weight:600;" id="meaTotalTax-' + item.id + '">' + meaRowTotalWithTax(item).toFixed(2) + '</td>' +
-      '<td><button type="button" class="mea-item-del" data-id="' + item.id + '" title="删除" style="border:none;background:none;color:var(--alert);cursor:pointer;font-size:15px;"' + (meaItems.length===1?' disabled':'') + '>✕</button></td>' +
-    '</tr>';
+  const body = document.getElementById('meaItemsBody');
+  if (!body) return;
+  body.innerHTML = meaItems.map(function(item, idx){
+    return '<div class="mea-card">' +
+      '<div class="mea-card-head"><span>型号 ' + (idx+1) + '</span>' +
+        '<button type="button" class="mea-item-del" data-id="' + item.id + '" title="删除" style="border:none;background:none;color:var(--alert);cursor:pointer;font-size:12px;"' + (meaItems.length===1?' disabled':'') + '>✕ 删除</button></div>' +
+      '<div class="field"><label>产品型号</label><input type="text" list="modelDatalist" class="inv-field mea-item-product" data-id="' + item.id + '" value="' + meaEsc(item.product) + '" placeholder="例如 TX12L Pro"></div>' +
+      '<div class="mea-card-row">' +
+        '<div class="field"><label>单个型号促销补贴 (PLN)</label><input type="number" class="inv-field mea-item-subsidy" data-id="' + item.id + '" value="' + meaEsc(item.subsidy) + '" placeholder="0.00"></div>' +
+        '<div class="field"><label>预估补贴台数 (台)</label><input type="number" class="inv-field mea-item-count" data-id="' + item.id + '" value="' + meaEsc(item.count) + '" placeholder="0"></div>' +
+      '</div>' +
+      '<div class="mea-card-row">' +
+        '<div class="field"><label>税率 (%)</label><input type="number" class="inv-field mea-item-vat" data-id="' + item.id + '" value="' + meaEsc(item.vat) + '" placeholder="23"></div>' +
+        '<div class="field"><label>含税结算金额 (PLN)</label><div class="readonly-value" id="meaTotalTax-' + item.id + '">' + meaRowTotalWithTax(item).toFixed(2) + '</div></div>' +
+      '</div>' +
+      '<div class="mea-card-total">结算金额：<strong id="meaTotal-' + item.id + '">' + meaRowTotal(item).toFixed(2) + '</strong> PLN</div>' +
+    '</div>';
   }).join('');
   meaUpdateGrandTotal();
 }
@@ -6306,10 +6362,17 @@ function meaResetItems(){
   renderMeaItems();
 }
 
+function meaLoadItems(items){
+  meaItems = (items && items.length) ? items.map(function(it){
+    return { id: meaNextId++, product: it.product || '', subsidy: it.subsidy != null ? String(it.subsidy) : '', count: it.qty != null ? String(it.qty) : '', vat: it.vat_rate != null ? Math.round(it.vat_rate*100) : 23 };
+  }) : [{ id: meaNextId++, product: '', subsidy: '', count: '', vat: 23 }];
+  renderMeaItems();
+}
+
 (function(){
-  const tbody = document.getElementById('meaItemsBody');
-  if (!tbody) return;
-  tbody.addEventListener('input', function(e){
+  const body = document.getElementById('meaItemsBody');
+  if (!body) return;
+  body.addEventListener('input', function(e){
     const id = Number(e.target.dataset.id);
     const item = meaItems.find(function(it){ return it.id === id; });
     if (!item) return;
@@ -6319,7 +6382,7 @@ function meaResetItems(){
     else if (e.target.classList.contains('mea-item-vat')) item.vat = e.target.value;
     meaUpdateRowTotal(id);
   });
-  tbody.addEventListener('click', function(e){
+  body.addEventListener('click', function(e){
     const btn = e.target.closest('.mea-item-del');
     if (!btn) return;
     const id = Number(btn.dataset.id);
@@ -6335,54 +6398,127 @@ function meaResetItems(){
   renderMeaItems();
 })();
 
-const promoAddToggleBtn = document.getElementById('promoAddToggleBtn');
-if (promoAddToggleBtn){
-  promoAddToggleBtn.addEventListener('click', function(){
-    const panel = document.getElementById('promoAddPanel');
-    if (!panel) return;
-    const isHidden = panel.style.display === 'none';
-    panel.style.display = isHidden ? '' : 'none';
-    promoAddToggleBtn.textContent = isHidden ? '− 收起表单' : '+ 新增活动';
+let promoDrawerMode = null;
+let promoDrawerEditId = null;
+let promoDrawerCust = null;
+
+function openPromoDrawer(mode, id){
+  promoDrawerMode = mode;
+  promoDrawerEditId = id || null;
+  const panel = document.getElementById('promoAddPanel');
+  const split = document.getElementById('promoSplit');
+  const title = document.getElementById('promoDrawerTitle');
+  const selWrap = document.getElementById('m_customer_select_wrap');
+  const roWrap = document.getElementById('m_customer_readonly_wrap');
+  const roVal = document.getElementById('m_customer_readonly');
+  if (mode === 'edit'){
+    const m = promotions.find(function(p){ return p.id === id; });
+    if (!m) return;
+    promoDrawerCust = m.cust;
+    title.textContent = '编辑活动 · ' + custName(m.cust);
+    selWrap.style.display = 'none';
+    roWrap.style.display = '';
+    roVal.textContent = custName(m.cust);
+    document.getElementById('m_name').value = m.name || '';
+    document.getElementById('m_type').value = m.type || '';
+    document.getElementById('m_month').value = (m.month && m.month !== '-') ? m.month : '';
+    document.getElementById('m_start_date').value = m.start_date || '';
+    document.getElementById('m_end_date').value = m.end_date || '';
+    document.getElementById('m_actual').value = m.actual || '';
+    document.getElementById('m_status').value = m.status || '待提交';
+    meaLoadItems(marketingActivityItemsByActivity[id]);
+  } else {
+    promoDrawerCust = null;
+    title.textContent = '新增活动';
+    selWrap.style.display = '';
+    roWrap.style.display = 'none';
+    if (typeof populatePromoSelects === 'function') populatePromoSelects();
+    document.getElementById('m_customer').value = '';
+    document.getElementById('m_name').value = '';
+    document.getElementById('m_type').selectedIndex = 0;
+    document.getElementById('m_month').value = '';
+    document.getElementById('m_start_date').value = '';
+    document.getElementById('m_end_date').value = '';
+    document.getElementById('m_actual').value = '';
+    document.getElementById('m_status').value = '待提交';
+    meaResetItems();
+  }
+  panel.style.display = '';
+  if (split) split.classList.add('drawer-open');
+  Array.from(document.querySelectorAll('#promoTableBody tr')).forEach(function(tr){
+    tr.classList.toggle('promo-row-selected', mode === 'edit' && Number(tr.dataset.activityId) === id);
   });
 }
+
+function closePromoDrawer(){
+  promoDrawerMode = null;
+  promoDrawerEditId = null;
+  promoDrawerCust = null;
+  const panel = document.getElementById('promoAddPanel');
+  const split = document.getElementById('promoSplit');
+  if (panel) panel.style.display = 'none';
+  if (split) split.classList.remove('drawer-open');
+  Array.from(document.querySelectorAll('#promoTableBody tr')).forEach(function(tr){ tr.classList.remove('promo-row-selected'); });
+}
+
+const promoAddToggleBtn = document.getElementById('promoAddToggleBtn');
+if (promoAddToggleBtn) promoAddToggleBtn.addEventListener('click', function(){ openPromoDrawer('create', null); });
+const promoDrawerCloseBtn = document.getElementById('promoDrawerCloseBtn');
+if (promoDrawerCloseBtn) promoDrawerCloseBtn.addEventListener('click', closePromoDrawer);
+const promoDrawerCancelBtn = document.getElementById('promoDrawerCancelBtn');
+if (promoDrawerCancelBtn) promoDrawerCancelBtn.addEventListener('click', closePromoDrawer);
 document.getElementById('addPromoBtn').addEventListener('click', async ()=>{
   const name = document.getElementById('m_name').value.trim();
   if(!name){ alert('请填写活动名称'); return; }
+  const cust = promoDrawerMode === 'edit' ? promoDrawerCust : document.getElementById('m_customer').value;
+  if(!cust){ alert('请选择客户'); return; }
+  if (promoDrawerMode === 'create' && promotions.some(function(p){ return p.cust === cust; })){
+    alert('该客户已存在一条活动记录（一客一动），请编辑现有活动。');
+    return;
+  }
   const validItems = meaItems.filter(function(it){ return it.product && it.product.trim(); });
   if (!validItems.length){ alert('请至少填写一行产品补贴明细（产品型号）'); return; }
-  const cust = document.getElementById('m_customer').value;
   const type = document.getElementById('m_type').value;
   const month = document.getElementById('m_month').value || '-';
   const startDate = document.getElementById('m_start_date').value || null;
   const endDate = document.getElementById('m_end_date').value || null;
-  const budget = meaGrandTotalValue();
   const actual = parseFloat(document.getElementById('m_actual').value) || 0;
   const status = document.getElementById('m_status').value;
-  const { data, error } = await sb.from('marketing_activities').insert({ name, cust, type, month, start_date: startDate, end_date: endDate, budget, actual, status }).select().single();
-  if (error){ alert('保存活动失败：' + error.message); return; }
+  const budget = meaGrandTotalValue();
+  const payload = { name: name, cust: cust, type: type, month: month, start_date: startDate, end_date: endDate, budget: budget, actual: actual, status: status };
+
+  let activityId;
+  if (promoDrawerMode === 'edit'){
+    activityId = promoDrawerEditId;
+    const { error } = await sb.from('marketing_activities').update(payload).eq('id', activityId);
+    if (error){ alert('保存活动失败：' + error.message); return; }
+    const { error: delErr } = await sb.from('marketing_activity_items').delete().eq('activity_id', activityId);
+    if (delErr){ alert('更新补贴明细失败：' + delErr.message); return; }
+  } else {
+    const { data, error } = await sb.from('marketing_activities').insert(payload).select().single();
+    if (error){ alert('保存活动失败：' + error.message); return; }
+    activityId = data.id;
+  }
+
   const itemsPayload = validItems.map(function(it){
+    const vat = parseFloat(it.vat) || 0;
     return {
-      activity_id: data.id,
+      activity_id: activityId,
       product: it.product.trim(),
       subsidy: parseFloat(it.subsidy) || 0,
       qty: parseInt(it.count) || 0,
       amount: meaRowTotal(it),
-      vat_rate: (parseFloat(it.vat) || 0) / 100,
+      vat_rate: vat / 100,
       amount_with_tax: meaRowTotalWithTax(it),
       status: '计划中'
     };
   });
   const { error: itemsError } = await sb.from('marketing_activity_items').insert(itemsPayload);
-  if (itemsError){ console.error('save marketing_activity_items', itemsError); alert('活动已保存，但补贴明细保存失败：' + itemsError.message); }
-  promotions.push({ id: data.id, name: data.name, cust: data.cust, type: data.type, month: data.month, budget: Number(data.budget)||0, actual: Number(data.actual)||0, status: data.status });
-  marketingActivityItemsByActivity[data.id] = validItems.map(function(it){ return { product: it.product.trim(), subsidy: parseFloat(it.subsidy)||0, qty: parseInt(it.count)||0, amount: meaRowTotal(it) }; });
-  ['m_name','m_month','m_actual','m_start_date','m_end_date'].forEach(id=>document.getElementById(id).value='');
-  meaResetItems();
-  refreshAll();
-  const promoPanelAfterSave = document.getElementById('promoAddPanel');
-  if (promoPanelAfterSave) promoPanelAfterSave.style.display = 'none';
-  const promoToggleBtnAfterSave = document.getElementById('promoAddToggleBtn');
-  if (promoToggleBtnAfterSave) promoToggleBtnAfterSave.textContent = '+ 新增活动';
+  if (itemsError){ alert('保存补贴明细失败：' + itemsError.message); return; }
+
+  closePromoDrawer();
+  if (typeof loadMarketingActivities === 'function') await loadMarketingActivities();
+  if (typeof renderPromoTable === 'function') renderPromoTable();
 });
 
 function findCustomerQuote(cust, product){

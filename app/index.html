@@ -5006,9 +5006,10 @@ function renderPromoTable(){
   tbody.innerHTML = promotions.map(m=>{
     const pct = m.budget>0 ? Math.min(200,(m.actual/m.budget*100)) : 0;
     const over = m.actual > m.budget;
-    const itemsHtml = (marketingActivityItemsByActivity[m.id]||[]).map(function(it){
-      return it.product + ' × ' + it.qty + ' (' + fmt(it.amount) + ' PLN)';
-    }).join('<br>') || '-';
+    const meaItemsList = marketingActivityItemsByActivity[m.id]||[];
+    const itemsHtml = meaItemsList.length ? ('<ul style="margin:0;padding-left:16px;">' + meaItemsList.map(function(it){
+      return '<li style="margin-bottom:2px;">' + it.product + ' × ' + it.qty + ' (' + fmt(it.amount) + ' PLN)</li>';
+    }).join('') + '</ul>') : '-';
     return `
     <tr>
       <td>${m.name}</td>

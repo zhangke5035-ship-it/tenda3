@@ -6577,7 +6577,7 @@ function openPromoDetail(id){
   const statusEl = document.getElementById('promoDetailStatus');
   statusEl.innerHTML = '<span class="status ' + statusClass(m.status) + '"><span class="sdot"></span>' + escapeHtmlCP(m.status || '待提交') + '</span>';
   document.getElementById('promoDetailActual').textContent = Number(m.actual || 0).toFixed(2) + ' PLN';
-  document.getElementById('promoDetailQty').textContent = items.reduce(function(sum, it){ return sum + Number(it.qty || 0); }, 0);
+  document.getElementById('promoDetailQty').textContent = (marketingActivityItemsByActivity[id] || []).reduce(function(sum, it){ return sum + Number(it.qty || 0); }, 0);
   document.getElementById('promoDetailBudgetFlowNo').textContent = m.budget_flow_no || '-';
   document.getElementById('promoDetailReimburseFlowNo').textContent = m.reimburse_flow_no || '-';
   document.getElementById('promoDetailDocs').textContent = (m.reimburse_docs && m.reimburse_docs.length) ? m.reimburse_docs.join(' / ') : '-';

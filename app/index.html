@@ -3116,6 +3116,48 @@
       </div>
     </div>
   </div>
+
+        <div class="panel" id="promoDetailPanel" style="display:none;">
+          <div class="panel-head" style="display:flex;justify-content:space-between;align-items:center;">
+            <div>
+              <button type="button" id="promoDetailBackBtn" class="btn ghost" style="margin-bottom:10px;font-size:12px;padding:6px 12px;">&larr; 返回列表</button>
+              <h3 id="promoDetailTitle" style="margin:0;">活动详情</h3>
+              <div id="promoDetailSub" style="color:var(--text-dim);font-size:13px;margin-top:4px;"></div>
+            </div>
+            <div style="display:flex;gap:8px;">
+              <button type="button" id="promoDetailEditBtn" class="btn">编辑</button>
+              <button type="button" id="promoDetailDeleteBtn" class="btn ghost" style="color:var(--alert);border-color:var(--alert-soft);">删除</button>
+            </div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin:16px 0;padding:16px;background:var(--surface-alt);border-radius:var(--radius);">
+            <div><div style="font-size:12px;color:var(--text-dim);">客户</div><div id="promoDetailCust" style="font-weight:600;margin-top:4px;"></div></div>
+            <div><div style="font-size:12px;color:var(--text-dim);">活动类型</div><div id="promoDetailType" style="margin-top:4px;"></div></div>
+            <div><div style="font-size:12px;color:var(--text-dim);">月份 / 起止时间</div><div id="promoDetailPeriod" style="margin-top:4px;"></div></div>
+            <div><div style="font-size:12px;color:var(--text-dim);">报销状态</div><div id="promoDetailStatus" style="margin-top:4px;"></div></div>
+          </div>
+
+          <h4 style="margin:16px 0 8px;">产品补贴明细</h4>
+          <table>
+            <thead>
+              <tr>
+                <th>产品型号</th>
+                <th>单个补贴 (PLN)</th>
+                <th>数量</th>
+                <th>结算金额 (PLN)</th>
+                <th>税率 (%)</th>
+                <th>含税结算金额 (PLN)</th>
+              </tr>
+            </thead>
+            <tbody id="promoDetailItemsBody"></tbody>
+          </table>
+
+          <div style="display:flex;justify-content:flex-end;gap:32px;margin-top:16px;padding-top:16px;border-top:1px solid var(--border-soft);">
+            <div style="text-align:right;"><div style="font-size:12px;color:var(--text-dim);">实际使用</div><div id="promoDetailActual" style="font-weight:600;"></div></div>
+            <div style="text-align:right;"><div style="font-size:12px;color:var(--text-dim);">活动总预算</div><div id="promoDetailBudget" style="font-weight:600;color:var(--copper);font-size:15px;"></div></div>
+            <div style="text-align:right;"><div style="font-size:12px;color:var(--text-dim);">含税总金额</div><div id="promoDetailBudgetTax" style="font-weight:600;"></div></div>
+          </div>
+        </div>
 </section>
 
   </main>
@@ -5074,7 +5116,7 @@ function renderPromoTable(){
   }).join('');
   Array.from(tbody.querySelectorAll('tr[data-activity-id]')).forEach(function(tr){
     tr.addEventListener('click', function(){
-      openPromoDrawer('edit', Number(tr.dataset.activityId));
+      openPromoDetail(Number(tr.dataset.activityId));
     });
   });
   Array.from(tbody.querySelectorAll('button[data-del-id]')).forEach(function(btn){
@@ -5090,6 +5132,7 @@ async function deletePromo(id){
   promotions = promotions.filter(function(m){ return m.id !== id; });
   delete marketingActivityItemsByActivity[id];
   if (promoDrawerEditId === id) closePromoDrawer();
+  if (promoDetailId === id) closePromoDetail();
   refreshAll();
 }
 
@@ -6474,6 +6517,81 @@ const promoDrawerCloseBtn = document.getElementById('promoDrawerCloseBtn');
 if (promoDrawerCloseBtn) promoDrawerCloseBtn.addEventListener('click', closePromoDrawer);
 const promoDrawerCancelBtn = document.getElementById('promoDrawerCancelBtn');
 if (promoDrawerCancelBtn) promoDrawerCancelBtn.addEventListener('click', closePromoDrawer);
+
+let promoDetailId = null;
+
+function openPromoDetail(id){
+  const m = promotions.find(function(p){ return p.id === id; });
+  if (!m) return;
+  promoDetailId = id;
+  closePromoDrawer();
+  const listGroup = document.getElementById('promoSplit');
+  const detailPanel = document.getElementById('promoDetailPanel');
+  if (listGroup) listGroup.style.display = 'none';
+  if (detailPanel) detailPanel.style.display = '';
+
+  document.getElementById('promoDetailTitle').textContent = m.name || '活动详情';
+  document.getElementById('promoDetailSub').textContent = custName(m.cust) + ' · ' + (m.type || '-');
+  document.getElementById('promoDetailCust').textContent = custName(m.cust);
+  document.getElementById('promoDetailType').textContent = m.type || '-';
+  const periodParts = [];
+  if (m.month && m.month !== '-') periodParts.push(m.month);
+  if (m.start_date || m.end_date) periodParts.push((m.start_date || '?') + ' ~ ' + (m.end_date || '?'));
+  document.getElementById('promoDetailPeriod').textContent = periodParts.length ? periodParts.join(' / ') : '-';
+  const statusEl = document.getElementById('promoDetailStatus');
+  statusEl.innerHTML = '<span class="status ' + statusClass(m.status) + '"><span class="sdot"></span>' + escapeHtmlCP(m.status || '待提交') + '</span>';
+  document.getElementById('promoDetailActual').textContent = Number(m.actual || 0).toFixed(2) + ' PLN';
+
+  const items = marketingActivityItemsByActivity[id] || [];
+  const tbody = document.getElementById('promoDetailItemsBody');
+  tbody.innerHTML = items.length ? items.map(function(it){
+    const net = Number(it.amount || 0);
+    const vatPct = it.vat_rate != null ? Number(it.vat_rate) * 100 : 23;
+    const withTax = it.amount_with_tax != null ? Number(it.amount_with_tax) : net * (1 + vatPct / 100);
+    return '' +
+      '<tr>' +
+      '<td>' + escapeHtmlCP(it.product || '-') + '</td>' +
+      '<td class="mono">' + Number(it.subsidy || 0).toFixed(2) + '</td>' +
+      '<td class="mono">' + (it.qty || 0) + '</td>' +
+      '<td class="mono">' + net.toFixed(2) + '</td>' +
+      '<td class="mono">' + vatPct.toFixed(0) + '%</td>' +
+      '<td class="mono">' + withTax.toFixed(2) + '</td>' +
+      '</tr>';
+  }).join('') : '<tr><td colspan="6" style="text-align:center;color:var(--text-dim);">暂无补贴明细</td></tr>';
+
+  document.getElementById('promoDetailBudget').textContent = Number(m.budget || 0).toFixed(2) + ' PLN';
+  const budgetWithTax = items.length ? items.reduce(function(sum, it){
+    const net = Number(it.amount || 0);
+    const withTax = it.amount_with_tax != null ? Number(it.amount_with_tax) : net * (1 + (it.vat_rate != null ? Number(it.vat_rate) : 0.23));
+    return sum + withTax;
+  }, 0) : Number(m.budget || 0) * 1.23;
+  document.getElementById('promoDetailBudgetTax').textContent = budgetWithTax.toFixed(2) + ' PLN';
+}
+
+function closePromoDetail(){
+  promoDetailId = null;
+  const listGroup = document.getElementById('promoSplit');
+  const detailPanel = document.getElementById('promoDetailPanel');
+  if (detailPanel) detailPanel.style.display = 'none';
+  if (listGroup) listGroup.style.display = '';
+  renderPromoTable();
+}
+
+const promoDetailBackBtn = document.getElementById('promoDetailBackBtn');
+if (promoDetailBackBtn) promoDetailBackBtn.addEventListener('click', closePromoDetail);
+const promoDetailEditBtn = document.getElementById('promoDetailEditBtn');
+if (promoDetailEditBtn) promoDetailEditBtn.addEventListener('click', function(){
+  const id = promoDetailId;
+  if (id == null) return;
+  closePromoDetail();
+  openPromoDrawer('edit', id);
+});
+const promoDetailDeleteBtn = document.getElementById('promoDetailDeleteBtn');
+if (promoDetailDeleteBtn) promoDetailDeleteBtn.addEventListener('click', function(){
+  const id = promoDetailId;
+  if (id == null) return;
+  if (confirm('确定删除该活动吗？')) deletePromo(id);
+});
 document.getElementById('addPromoBtn').addEventListener('click', async ()=>{
   const name = document.getElementById('m_name').value.trim();
   if(!name){ alert('请填写活动名称'); return; }

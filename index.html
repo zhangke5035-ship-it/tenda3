@@ -1904,7 +1904,7 @@
               <div class="pe-section">
                 <div class="pe-section-title">3. 文件格式</div>
                 <div style="display:flex;gap:10px;">
-                  <button type="button" class="btn ghost pe-format-btn active" data-format="csv">Excel 表格 (CSV)</button>
+                  <button type="button" class="btn ghost pe-format-btn active" data-format="xlsx">Excel 表格 (.xlsx)</button>
                   <button type="button" class="btn ghost pe-format-btn" data-format="pdf">PDF 正式文档</button>
                 </div>
               </div>
@@ -10194,6 +10194,118 @@ function csvEscape(value){
   return str;
 }
 
+function buildPriceExportRows(){
+  let rows = getFilteredPriceRows();
+  if (priceSelectedIds.size > 0) rows = rows.filter(p=>priceSelectedIds.has(p.id));
+  return rows;
+}
+
+function exportPriceWorkbookXLSX(mode, filename){
+  const rows = buildPriceExportRows();
+  if (!rows.length){ alert('当前没有可导出的报价数据'); return; }
+  const prevQuarterMap = {Q1:'Q4', Q2:'Q1', Q3:'Q2', Q4:'Q3'};
+  const includeProfit = mode !== 'customer';
+  const colKeys = ['category','brand','product','version','desc','ean','lifecycle','cust','country','currency','retail','vat','net','prevNet','qoqAbs','qoqPct','tier1','tier2','tier3'];
+  if (includeProfit) colKeys.push('profitPct');
+  colKeys.push('final','cnCode','splitPayment','pkg','page');
+  const headerMap = {
+    category:'类目', brand:'品牌', product:'产品型号', version:'版本号', desc:'产品信息描述', ean:'EAN',
+    lifecycle:'生命周期', cust:'客户', country:'国家', currency:'币种', retail:'含税零售价', vat:'VAT税率',
+    net:'未税净价', prevNet:'上季度未税净价（参考）', qoqAbs:'环比涨跌额 QoQ (PLN)', qoqPct:'环比涨跌幅 QoQ (%)',
+    tier1:'一级报价', tier2:'二级报价', tier3:'三级报价', profitPct:'代理商利润点位 (%)', final:'最终采购价',
+    cnCode:'CN编码', splitPayment:'Split Payment', pkg:'包装尺寸', page:'产品页面'
+  };
+  const colIdx = {};
+  colKeys.forEach(function(k,i){ colIdx[k] = i; });
+  const colLetter = function(k){ return XLSX.utils.encode_col(colIdx[k]); };
+
+  const records = rows.map(function(p){
+    const country = custCountry(p.cust);
+    const currency = custCurrency(p.cust);
+    const isCzk = currency === 'CZK';
+    const vatRate = computeVat(country);
+    const effectiveVat = vatRate !== null ? vatRate : 0.23;
+    const prevQ = prevQuarterMap[p.quarter];
+    const prevRow = prevQ ? priceList.find(function(r){ return r.product===p.product && r.cust===p.cust && r.quarter===prevQ; }) : null;
+    const retail = (typeof p.retailPLN === 'number') ? p.retailPLN : null;
+    const net = (retail!==null) ? retail/(1+effectiveVat) : ((typeof p.netPLN==='number') ? p.netPLN : null);
+    const prevNet = (prevRow && typeof prevRow.netPLN==='number') ? prevRow.netPLN : null;
+    const qoqAbs = (net!==null && prevNet) ? net-prevNet : null;
+    const qoqPct = (net!==null && prevNet) ? (net-prevNet)/prevNet : null;
+    const tier1raw = (net!==null) ? net*0.95 : null;
+    const tier2raw = (net!==null) ? net*0.85 : null;
+    const tier3raw = (net!==null) ? net*0.75 : null;
+    const conv = function(v){ return v===null ? null : (isCzk ? v/CZK_TO_PLN_RATE : v); };
+    const tier1 = conv(tier1raw), tier2 = conv(tier2raw), tier3 = conv(tier3raw);
+    const profitPct = custName(p.cust).indexOf('Eltrox')!==-1 ? 11 : 7;
+    const final = (tier3!==null) ? tier3*(1-profitPct/100) : null;
+    const rec = {
+      category: productType(p.product), brand: productBrand(p.product), product: p.product,
+      version: p.version || '', desc: productDescription(p.product), ean: (p.ean || eanOf(p.product) || ''),
+      lifecycle: lifecycleOf(p.product), cust: custName(p.cust), country: country, currency: currency,
+      retail: retail, vat: effectiveVat, net: net, prevNet: prevNet, qoqAbs: qoqAbs, qoqPct: qoqPct,
+      tier1: tier1, tier2: tier2, tier3: tier3, final: final,
+      cnCode: p.cnCode || '', splitPayment: p.splitPayment || '', pkg: p.packageDim || '', page: p.productPage || ''
+    };
+    if (includeProfit) rec.profitPct = profitPct;
+    return rec;
+  });
+
+  const aoa = [colKeys.map(function(k){ return headerMap[k]; })];
+  records.forEach(function(rec){ aoa.push(colKeys.map(function(k){ return (rec[k]===null||rec[k]===undefined) ? '' : rec[k]; })); });
+
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+
+  records.forEach(function(rec, i){
+    const r = i + 2;
+    const retailAddr = colLetter('retail')+r;
+    const vatAddr = colLetter('vat')+r;
+    const netAddr = colLetter('net')+r;
+    const prevNetAddr = colLetter('prevNet')+r;
+    const currencyAddr = colLetter('currency')+r;
+    const custAddr = colLetter('cust')+r;
+    const tier1Addr = colLetter('tier1')+r;
+    const tier2Addr = colLetter('tier2')+r;
+    const tier3Addr = colLetter('tier3')+r;
+    const finalAddr = colLetter('final')+r;
+    const netCellAddr = colLetter('net')+r;
+    if (rec.retail!==null && ws[netCellAddr]){
+      ws[netCellAddr].f = retailAddr+'/(1+'+vatAddr+')';
+    }
+    const qoqAbsAddr = colLetter('qoqAbs')+r;
+    if (rec.qoqAbs!==null && ws[qoqAbsAddr]){
+      ws[qoqAbsAddr].f = netAddr+'-'+prevNetAddr;
+    }
+    const qoqPctAddr = colLetter('qoqPct')+r;
+    if (rec.qoqPct!==null && ws[qoqPctAddr]){
+      ws[qoqPctAddr].f = '('+netAddr+'-'+prevNetAddr+')/'+prevNetAddr;
+      ws[qoqPctAddr].z = '0.00%';
+    }
+    if (rec.tier1!==null && ws[tier1Addr]) ws[tier1Addr].f = 'IF('+currencyAddr+'="CZK",'+netAddr+'*0.95/'+CZK_TO_PLN_RATE+','+netAddr+'*0.95)';
+    if (rec.tier2!==null && ws[tier2Addr]) ws[tier2Addr].f = 'IF('+currencyAddr+'="CZK",'+netAddr+'*0.85/'+CZK_TO_PLN_RATE+','+netAddr+'*0.85)';
+    if (rec.tier3!==null && ws[tier3Addr]) ws[tier3Addr].f = 'IF('+currencyAddr+'="CZK",'+netAddr+'*0.75/'+CZK_TO_PLN_RATE+','+netAddr+'*0.75)';
+    if (includeProfit){
+      const profitAddr = colLetter('profitPct')+r;
+      if (ws[profitAddr]){
+        ws[profitAddr].f = 'IF(ISNUMBER(SEARCH("Eltrox",'+custAddr+')),11,7)';
+        ws[profitAddr].z = '0"%"';
+      }
+    }
+    if (rec.final!==null && ws[finalAddr]){
+      ws[finalAddr].f = tier3Addr+'*(1-IF(ISNUMBER(SEARCH("Eltrox",'+custAddr+')),11,7)/100)';
+    }
+    if (ws[vatAddr]) ws[vatAddr].z = '0%';
+    ['retail','net','prevNet','qoqAbs','tier1','tier2','tier3','final'].forEach(function(k){
+      const addr = colLetter(k)+r;
+      if (ws[addr] && ws[addr].t==='n') ws[addr].z = '#,##0.00';
+    });
+  });
+
+  ws['!cols'] = colKeys.map(function(k){ return {wch: Math.max(10, headerMap[k].length+2)}; });
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, mode==='customer' ? '客户报价单' : '内部报价明细');
+  XLSX.writeFile(wb, filename);
+}
 function exportTableToCSV(table, filename){
   if (!table){ alert('当前页面没有可导出的表格'); return; }
   const rows = table.querySelectorAll('tr');
@@ -10238,7 +10350,7 @@ if (exportCsvBtn){
 
 /* ============ 客户报价 · 导出弹窗（范围确认 + 对内/对外脱敏） ============ */
 let peMode = 'customer';
-let peFormat = 'csv';
+let peFormat = 'xlsx';
 
 function openPriceExportModal(){
   const overlay = document.getElementById('priceExportModalOverlay');
@@ -10340,14 +10452,15 @@ function printSanitizedPriceTable(clone){
 const priceExportConfirmBtnEl = document.getElementById('priceExportConfirmBtn');
 if (priceExportConfirmBtnEl){
   priceExportConfirmBtnEl.addEventListener('click', ()=>{
+    if (peFormat === 'xlsx'){
+      const filename = (peMode==='customer' ? 'Tenda波兰客户报价单_对外' : 'Tenda波兰报价明细_内部') + '_' + new Date().toISOString().slice(0,10) + '.xlsx';
+      exportPriceWorkbookXLSX(peMode, filename);
+      closePriceExportModal();
+      return;
+    }
     const clone = sanitizePriceTableClone();
     if (!clone){ closePriceExportModal(); return; }
-    if (peFormat === 'csv'){
-      const filename = (peMode==='customer' ? 'Tenda波兰客户报价单_对外' : 'Tenda波兰报价明细_内部') + '_' + new Date().toISOString().slice(0,10) + '.csv';
-      exportTableToCSV(clone, filename);
-    } else {
-      printSanitizedPriceTable(clone);
-    }
+    printSanitizedPriceTable(clone);
     closePriceExportModal();
   });
 }

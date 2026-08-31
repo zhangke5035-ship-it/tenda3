@@ -3027,9 +3027,11 @@
               <option>渠道营销 - 线下营销</option>
               <option>渠道激励 - SI激励</option>
               <option>渠道激励 - 一次性投入</option>
+                          <option>降价促销</option>
+              <option>营销活动</option>
             </select>
           </div>
-          <div class="field"><label>月份</label><input id="m_month" type="month"></div>
+          <div class="field"><label>月份</label><input id="m_month" type="month"></div><div class="field"><label>活动开始时间</label><input id="m_start_date" type="date"></div><div class="field"><label>活动结束时间</label><input id="m_end_date" type="date"></div>
           <div class="field mono"><label>实际使用 (PLN)</label><input id="m_actual" type="number" placeholder="6200"></div>
           <div class="field"><label>状态</label><select id="m_status"><option>计划中</option><option>进行中</option><option>已结束</option></select></div>
         </div>
@@ -3044,6 +3046,8 @@
                 <th>单个型号促销补贴 (PLN)</th>
                 <th>预估补贴台数 (台)</th>
                 <th>结算金额 (PLN)</th>
+                <th>税率 (%)</th>
+                <th>含税结算金额 (PLN)</th>
                 <th style="width:44px;"></th>
               </tr>
             </thead>
@@ -3052,7 +3056,7 @@
           <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;">
             <button type="button" class="btn ghost" id="meaAddRowBtn" style="font-size:12px;padding:6px 12px;">＋ 添加一行型号</button>
             <div style="font-size:13.5px;color:var(--text-dim);">
-              活动总金额（预算汇总）：<strong id="meaGrandTotal" style="font-size:16px;color:var(--copper);">0.00 PLN</strong>
+              活动总金额（预算汇总）：<strong id="meaGrandTotal" style="font-size:16px;color:var(--copper);">0.00 PLN</strong><br><span style="font-size:12px;">含税总金额：<strong id="meaGrandTotalTax" style="font-size:14px;color:var(--copper);">0.00 PLN</strong></span>
             </div>
           </div>
         </div>
@@ -3084,12 +3088,13 @@ const LIFECYCLE_MAP = {'M20-PoE':'成熟期','M20-8G-PoE':'成熟期','M30':'衰
 const EAN_MAP = {'TEG2210P-8-120W':'6932849450040','TE6L Pro':'6932849424515','TE3L':'6932849424676','TX12 PRO':'6932849426984','TX12L Pro':'6932849424317','TX2L Pro':'6932849424201','N301':'6932849406894','Nova MX21 Pro(3-pack)':'6932849425710','Nova MX21 Pro(2-pack)':'6932849425901','Nova MX21 Pro(1-pack)':'6932849425956','Nova EX12(2-pack)':'6932849426854','nova EX3(3-pack)':'6932849425574','nova EX3(2-pack)':'6932849425581','W311MI':'6932849424027','U2':'6932849424065','U11':'6932849424416','U11 Pro':'6932849424539','A23':'6932849425673','U10':'6932849428445','RP3':'6932849438611','RP7':'6932849438635','RH3-WCA':'6932849438673','RH7-WCAV1.1':'6932849438710','RH9-WCA':'6932849438475','RT3-WCA':'6932849438734','TEF1109D':'6932849431636','SG108M':'6932849436365','TEG1005M':'6932849436853','TEG1005DV5.0':'6932849431261','TEG1008MV4.0':'6932849436228','TEG1016M':'6932849431919','TEG1016D':'6932849403312','TEG1016G':'6932849403442','TEG1024D':'6932849403305','TEG1024G':'6932849403459','SG105M':'6932849436389','SM105V1.0':'6932849436730','SM108':'6932849436778','TEM2007X':'6932849436532','TEM2010X':'6932849436518','TEG1050F':'6932849431889','TEF1118P-16-150W':'6932849431315','TEG1105PD':'6932849431827','TEG1105P-4-63W':'6932849431308','TEF1110P-8-63W':'6932849431704','TEG1110PF-8-120W':'6932849436693','TEG1120P-16-250W':'6932849436556','TEG1128P-24-410W':'6932849436495','TEG1120P-16-150W':'6932849436617','TEG1128P-24-250W':'6932849436594','TEG2205D':'6932849436648','TEG2208D':'6932849436662','TEG2216D':'6932849436969','TEG2224D':'6932849436983','TEG2226F':'6932849450019','TEG2220P-16-250W':'6932849436921','TEG2228P-24-410W':'6932849436945','PoE30G-AT':'6932849415445','4G185':'6932849430974','4G180':'6932849430882','4G03':'6932849430370','4G06':'6932849430417','5G01':'6932849430868','G0-5G-PoE':'6932849429916','G0-8G-PoE':'6932849426489','G1':'6932849429220','W12':'6932849429923','W15-Pro':'6932849435153','TM5':'6932849430639','i27':'6932849429855','i26':'6932849435580','i29':'6932849435221','OAP1200':'6932849435344','O1':'6932849429473','O1-5G':'6932849435191','O1-5G Kit':'6932849435405','OS3':'6932849429879','OS3 kit':'6932849435313','O4':'6932849429701','O4 kit':'6932849435078','O6':'6932849429206','O8':'6932849435023','O3':'6932849429015','G300-F':'6932849435559','TFC300A':'6932849431476','TFC300B':'6932849431483','SG04E':'6932849430967','SG04':'6932849430981','4G08':'6932849460032','TC3B24C(4MM)':'6932849439274','TC3T24C(4MM)':'6932849439311','TN3108':'6932849438918','TN3116':'6932849438932','TN3104-4P':'6932849438925','TN3108-8P':'6932849438949','EE3 Pro(3-pack)':'6932849423105','EE3 Pro(2-pack)':'6932849423112','TC3B24C(6MM)':'6932849439298','TC3T24C(2.8MM)':'6932849439335','A33V2.0':'6932849423761','CH10':'6932849439380','5G06':'6932849460094','i36':'6932849435696','OAP3000':'6932849435719','nova MW3(2-pack)':'6932849427844','i24':'6932849429626','TEF1106P-4-63W':'6932849431698','A15':'6932849427745','MW5G(2-pack)':'6932849428490','ANT12-5G360':'6932849429756','BE12 Pro':'6932849423570','TEF1109P-8-63W':'6932849431247','S108':'6932849431056','IC7-PRS-4':'6932849434736','N6P-4H':'6932849434583','N6P-8H':'6932849434934','TEF1005D':'6932849431278','IT7-PRS-4':'6932849434798','K4P-4TR':'6932849438048','K4P-4CR':'6932849434996','AX12 Prov3.0':'6932849423662','PH6':'6932849433364','Pro-6-LR':'6932392828631','K4W-3TC':'6932849434545','TEF1109P-8-102W':'6932849431612','TEG5328P-24-410W':'6932849431742','IT7-PCS-4':'6932849434835','X5308F':'6932392835332','G1005V4.0':'6932392835561','PSE30G-AT':'6932392831433','G1008MV3.0':'6932392836148','iLBE-5AC':'6932392828259','G1016D':'6932392831471','G311SM':'6932392835103','G1110PF-8-120W':'6932392835837','Pro-6-Mini':'6932392818182','nova MW6(3-pack)':'6932849427561','HG21':'6932849460018','HG15':'6932849430714','HG10':'6932849430790','HG10C':'6932849430813','HG3':'6932849430615','HG6':'6932849430460','HG1':'6932849430479','HG7':'6932849430523','TES7001':'6932849430929','TES7002':'6932849430936','V15':'6932849460087','A21':'6932849426403','A18 Pro':'6932849424546','TK4P-4BC':'6932849439601','TK8P-4BC':'6932849439625','TK8P-4BTC':'6932849439649','TEG1116M':'6932849436570','TEG2206P-4-63W':'6932849450095','TEG216E':'6932849450132','TEG208E':'6932849436891','SE105':'6932849436754','SE108':'6932849436792','PoE15F':'6932849431469','MW5G(3-pack)':'6932849428513','MW12(2-pack)':'6932849428599','MW12(3-pack)':'6932849428476','ME3 Pro(3-pack)V2.0':'6932849424973','ME3 Pro(2-pack)V2.0':'6932849423020','ME3 Pro(1-pack)V2.0':'6932849423068','ME6 Pro(3-pack)':'6932849423211','ME6 Pro(2-pack)':'6932849423242','ME6 Pro(1-pack)':'6932849423273','M50-F':'6932392818205','W37AP':'6932392828969','W39AP':'6932392818113','Pro-6-IW':'6932392828853','W63AP':'6932392828013','iUAP-AC-LITE':'6932392828341','Pro-6-MINI':'6932392818182','iUAP-AC-M':'6932392828396','CPE3':'6932392829829','CPE5':'6932392828877','CPE5 Kit':'6932392818212','CPE6S':'6932392828303','CPE6S Kit':'6932392828952','CPE9':'6932392829874','CPE12':'6932392828761','CPE12 Kit':'6932392828754','CPE13':'6932392828693','iLBE-M5':'6932392828419','BS9':'6932392828709','G1016G':'6932392831235','G1024D':'6932392831501','G1024G':'6932392831181','G1050F':'6932392831952','G1105P-4-63W':'6932392831457','G1120P-16-150W':'6932392835714','G1128P-24-250W':'6932392835691','G1120P-16-250W':'6932392835646','G2210P-8-120W':'6932392835936','AC10':'6932849427547','G3310P-8-150W':'6932392835165','G3318P-16-250W':'6932392835158','G3326P-24-410W':'6932392835134','G3328F':'6932392831945','G3350F':'6932392835240','G3310F':'6932392835141','G5328P-24-410W':'6932392831815','G5328F':'6932392831846','G5324-16F':'6932392831976','G5328X':'6932392831914','G5328XP-24-410W':'6932392835394','4G03 Prov2.0':'6932849460148','F3':'6932849427141','MF6':'6932849435634','AC8':'6932849428308','nova MX3(3-pack)':'6932849425451','nova MX3(2-pack)':'6932849425468','nova MX12(2-pack)V3.0':'6932849426656','nova MX12(3-pack)V3.0':'6932849425062','TFC100A':'6932849431339','TFC100B':'6932849431346','TFC304B':'6932849431773 '};
 
 const CUSTOMERS = {
-  INC:    {name:'Incom Group S.A.',   type:'direct', country:'波兰'},
-  ACT:    {name:'Action S.A.',        type:'direct', country:'波兰'},
-  ALLNET: {name:'ALLNET Sp. z o.o. Sp.k.', type:'direct', country:'波兰'},
-  ELTROX: {name:'Eltrox Sp. z o.o.',  type:'direct', country:'波兰'},
-  DCLINK: {name:'DC-Link',            type:'direct', country:'乌克兰'},
-  INTELEK:{name:'Intelek',            type:'direct', country:'捷克/斯洛伐克'},
+  INC:    {name:'Incom Group S.A.',   type:'direct', country:'波兰', tier:'DDP'},
+  ACT:    {name:'Action S.A.',        type:'direct', country:'波兰', tier:'DDP'},
+  ALLNET: {name:'ALLNET Sp. z o.o. Sp.k.', type:'direct', country:'波兰', tier:'DDP'},
+  ELTROX: {name:'Eltrox Sp. z o.o.',  type:'direct', country:'波兰', tier:'DDP'},
+  DCLINK: {name:'DC-Link',            type:'direct', country:'乌克兰', tier:'DDP'},
+  INTELEK:{name:'Intelek',            type:'direct', country:'捷克/斯洛伐克', tier:'DDP'},
+  TEDSOFT:{name:'Tedsoft',            type:'direct', country:'波兰', tier:'DDP'},
   PROSPECT_PL:{name:'待开发客户',      type:'prospect', country:'波兰'}
 };
 
@@ -4983,7 +4988,14 @@ function deletePrice(id){ priceList = priceList.filter(p=>p.id!==id); refreshAll
 /* ============ 营销费用表 ============ */
 function populatePromoSelects(){
   const chSel = document.getElementById('m_customer');
-  chSel.innerHTML = uniqueCustomers().map(c=>`<option value="${c}">${custName(c)}</option>`).join('');
+  const codes = Object.keys(CUSTOMERS).filter(function(k){ return CUSTOMERS[k].tier; });
+  const ddp = codes.filter(function(k){ return CUSTOMERS[k].tier === 'DDP'; });
+  const dmp = codes.filter(function(k){ return CUSTOMERS[k].tier === 'DMP'; });
+  function optHtml(list){ return list.map(function(k){ return '<option value="'+k+'">'+CUSTOMERS[k].name+'</option>'; }).join(''); }
+  let html = '';
+  if (ddp.length) html += '<optgroup label="一级客户 (DDP)">' + optHtml(ddp) + '</optgroup>';
+  if (dmp.length) html += '<optgroup label="二级客户 (DMP)">' + optHtml(dmp) + '</optgroup>';
+  chSel.innerHTML = html;
 }
 function statusClass(s){ return s==='进行中'?'live':(s==='已结束'?'done':'plan'); }
 
@@ -6217,7 +6229,7 @@ if (addPriceItemModalOverlayEl){
   });
 }
 
-let meaItems = [{ id: 1, product: '', subsidy: '', count: '' }];
+let meaItems = [{ id: 1, product: '', subsidy: '', count: '', vat: 23 }];
 let meaNextId = 2;
 
 function meaEsc(s){
@@ -6232,8 +6244,18 @@ function meaRowTotal(item){
   return s * c;
 }
 
+function meaRowTotalWithTax(item){
+  const vat = parseFloat(item.vat);
+  const rate = isNaN(vat) ? 0 : vat / 100;
+  return meaRowTotal(item) * (1 + rate);
+}
+
 function meaGrandTotalValue(){
   return meaItems.reduce(function(sum, it){ return sum + meaRowTotal(it); }, 0);
+}
+
+function meaGrandTotalWithTaxValue(){
+  return meaItems.reduce(function(sum, it){ return sum + meaRowTotalWithTax(it); }, 0);
 }
 
 function renderMeaItems(){
@@ -6246,6 +6268,8 @@ function renderMeaItems(){
       '<td><input type="number" class="inv-field mea-item-subsidy" data-id="' + item.id + '" value="' + meaEsc(item.subsidy) + '" placeholder="0.00" style="width:100%;min-width:100px;"></td>' +
       '<td><input type="number" class="inv-field mea-item-count" data-id="' + item.id + '" value="' + meaEsc(item.count) + '" placeholder="0" style="width:100%;min-width:80px;"></td>' +
       '<td style="font-weight:600;" id="meaTotal-' + item.id + '">' + meaRowTotal(item).toFixed(2) + '</td>' +
+      '<td><input type="number" class="inv-field mea-item-vat" data-id="' + item.id + '" value="' + meaEsc(item.vat) + '" placeholder="23" style="width:100%;min-width:70px;"></td>' +
+      '<td style="font-weight:600;" id="meaTotalTax-' + item.id + '">' + meaRowTotalWithTax(item).toFixed(2) + '</td>' +
       '<td><button type="button" class="mea-item-del" data-id="' + item.id + '" title="删除" style="border:none;background:none;color:var(--alert);cursor:pointer;font-size:15px;"' + (meaItems.length===1?' disabled':'') + '>✕</button></td>' +
     '</tr>';
   }).join('');
@@ -6255,6 +6279,8 @@ function renderMeaItems(){
 function meaUpdateGrandTotal(){
   const gt = document.getElementById('meaGrandTotal');
   if (gt) gt.textContent = meaGrandTotalValue().toFixed(2) + ' PLN';
+  const gtTax = document.getElementById('meaGrandTotalTax');
+  if (gtTax) gtTax.textContent = meaGrandTotalWithTaxValue().toFixed(2) + ' PLN';
 }
 
 function meaUpdateRowTotal(id){
@@ -6262,11 +6288,13 @@ function meaUpdateRowTotal(id){
   if (!item) return;
   const cell = document.getElementById('meaTotal-' + id);
   if (cell) cell.textContent = meaRowTotal(item).toFixed(2);
+  const cellTax = document.getElementById('meaTotalTax-' + id);
+  if (cellTax) cellTax.textContent = meaRowTotalWithTax(item).toFixed(2);
   meaUpdateGrandTotal();
 }
 
 function meaResetItems(){
-  meaItems = [{ id: meaNextId++, product: '', subsidy: '', count: '' }];
+  meaItems = [{ id: meaNextId++, product: '', subsidy: '', count: '', vat: 23 }];
   renderMeaItems();
 }
 
@@ -6280,6 +6308,7 @@ function meaResetItems(){
     if (e.target.classList.contains('mea-item-product')) item.product = e.target.value;
     else if (e.target.classList.contains('mea-item-subsidy')) item.subsidy = e.target.value;
     else if (e.target.classList.contains('mea-item-count')) item.count = e.target.value;
+    else if (e.target.classList.contains('mea-item-vat')) item.vat = e.target.value;
     meaUpdateRowTotal(id);
   });
   tbody.addEventListener('click', function(e){
@@ -6292,7 +6321,7 @@ function meaResetItems(){
   });
   const addBtn = document.getElementById('meaAddRowBtn');
   if (addBtn) addBtn.addEventListener('click', function(){
-    meaItems.push({ id: meaNextId++, product: '', subsidy: '', count: '' });
+    meaItems.push({ id: meaNextId++, product: '', subsidy: '', count: '', vat: 23 });
     renderMeaItems();
   });
   renderMeaItems();
@@ -6306,10 +6335,12 @@ document.getElementById('addPromoBtn').addEventListener('click', async ()=>{
   const cust = document.getElementById('m_customer').value;
   const type = document.getElementById('m_type').value;
   const month = document.getElementById('m_month').value || '-';
+  const startDate = document.getElementById('m_start_date').value || null;
+  const endDate = document.getElementById('m_end_date').value || null;
   const budget = meaGrandTotalValue();
   const actual = parseFloat(document.getElementById('m_actual').value) || 0;
   const status = document.getElementById('m_status').value;
-  const { data, error } = await sb.from('marketing_activities').insert({ name, cust, type, month, budget, actual, status }).select().single();
+  const { data, error } = await sb.from('marketing_activities').insert({ name, cust, type, month, start_date: startDate, end_date: endDate, budget, actual, status }).select().single();
   if (error){ alert('保存活动失败：' + error.message); return; }
   const itemsPayload = validItems.map(function(it){
     return {
@@ -6318,13 +6349,15 @@ document.getElementById('addPromoBtn').addEventListener('click', async ()=>{
       subsidy: parseFloat(it.subsidy) || 0,
       qty: parseInt(it.count) || 0,
       amount: meaRowTotal(it),
+      vat_rate: (parseFloat(it.vat) || 0) / 100,
+      amount_with_tax: meaRowTotalWithTax(it),
       status: '计划中'
     };
   });
   const { error: itemsError } = await sb.from('marketing_activity_items').insert(itemsPayload);
   if (itemsError){ console.error('save marketing_activity_items', itemsError); alert('活动已保存，但补贴明细保存失败：' + itemsError.message); }
   promotions.push({ id: data.id, name: data.name, cust: data.cust, type: data.type, month: data.month, budget: Number(data.budget)||0, actual: Number(data.actual)||0, status: data.status });
-  ['m_name','m_month','m_actual'].forEach(id=>document.getElementById(id).value='');
+  ['m_name','m_month','m_actual','m_start_date','m_end_date'].forEach(id=>document.getElementById(id).value='');
   meaResetItems();
   refreshAll();
 });

@@ -3050,6 +3050,7 @@
               <th>活动名称</th>
               <th>补贴明细</th>
               <th>活动总预算</th>
+                    <th>含税总金额</th>
               <th>报销状态</th>
               <th style="width:44px;"></th>
             </tr>
@@ -5052,6 +5053,11 @@ function renderPromoTable(){
   if (!tbody) return;
   tbody.innerHTML = promotions.map(function(m){
     const meaItemsList = marketingActivityItemsByActivity[m.id] || [];
+    const budgetWithTax = meaItemsList.length ? meaItemsList.reduce(function(sum, it){
+      const net = Number(it.amount || 0);
+      const withTax = (it.amount_with_tax != null) ? Number(it.amount_with_tax) : net * (1 + (it.vat_rate != null ? Number(it.vat_rate) : 0.23));
+      return sum + withTax;
+    }, 0) : Number(m.budget || 0) * 1.23;
     const miniListHtml = meaItemsList.length ? ('<div class="subsidy-mini-list">' + meaItemsList.map(function(it){
       return '<div class="subsidy-mini-row"><span class="subsidy-mini-model">' + escapeHtmlCP(it.product || '-') + '</span><span class="subsidy-mini-qty">x' + (it.qty || 0) + '</span><span class="subsidy-mini-amount">' + Number(it.amount || 0).toFixed(2) + ' PLN</span></div>';
     }).join('') + '</div>') : '<span style="font-size:12px;color:var(--text-dim);">暂无明细</span>';
@@ -5061,6 +5067,7 @@ function renderPromoTable(){
       '<td>' + escapeHtmlCP(m.name) + '</td>' +
       '<td>' + miniListHtml + '</td>' +
       '<td class="mono"><strong>' + Number(m.budget || 0).toFixed(2) + ' PLN</strong></td>' +
+      '<td class="mono">' + Number(budgetWithTax || 0).toFixed(2) + ' PLN</td>' +
       '<td><span class="status ' + statusClass(m.status) + '"><span class="sdot"></span>' + escapeHtmlCP(m.status || '待提交') + '</span></td>' +
       '<td><button type="button" class="btn ghost" data-del-id="' + m.id + '" style="padding:4px 8px;font-size:12px;">删除</button></td>' +
       '</tr>';

@@ -6220,6 +6220,12 @@ if (addPriceItemModalOverlayEl){
 let meaItems = [{ id: 1, product: '', subsidy: '', count: '' }];
 let meaNextId = 2;
 
+function meaEsc(s){
+  return String(s==null?'':s).replace(/[&<>"']/g, function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+  });
+}
+
 function meaRowTotal(item){
   const s = parseFloat(item.subsidy) || 0;
   const c = parseInt(item.count) || 0;
@@ -6236,9 +6242,9 @@ function renderMeaItems(){
   tbody.innerHTML = meaItems.map(function(item, idx){
     return '<tr>' +
       '<td>' + (idx+1) + '</td>' +
-      '<td><input type="text" list="modelDatalist" class="inv-field mea-item-product" data-id="' + item.id + '" value="' + escapeHtmlCP(item.product) + '" placeholder="例如 TX12L Pro" style="width:100%;min-width:120px;"></td>' +
-      '<td><input type="number" class="inv-field mea-item-subsidy" data-id="' + item.id + '" value="' + escapeHtmlCP(item.subsidy) + '" placeholder="0.00" style="width:100%;min-width:100px;"></td>' +
-      '<td><input type="number" class="inv-field mea-item-count" data-id="' + item.id + '" value="' + escapeHtmlCP(item.count) + '" placeholder="0" style="width:100%;min-width:80px;"></td>' +
+      '<td><input type="text" list="modelDatalist" class="inv-field mea-item-product" data-id="' + item.id + '" value="' + meaEsc(item.product) + '" placeholder="例如 TX12L Pro" style="width:100%;min-width:120px;"></td>' +
+      '<td><input type="number" class="inv-field mea-item-subsidy" data-id="' + item.id + '" value="' + meaEsc(item.subsidy) + '" placeholder="0.00" style="width:100%;min-width:100px;"></td>' +
+      '<td><input type="number" class="inv-field mea-item-count" data-id="' + item.id + '" value="' + meaEsc(item.count) + '" placeholder="0" style="width:100%;min-width:80px;"></td>' +
       '<td style="font-weight:600;" id="meaTotal-' + item.id + '">' + meaRowTotal(item).toFixed(2) + '</td>' +
       '<td><button type="button" class="mea-item-del" data-id="' + item.id + '" title="删除" style="border:none;background:none;color:var(--alert);cursor:pointer;font-size:15px;"' + (meaItems.length===1?' disabled':'') + '>✕</button></td>' +
     '</tr>';

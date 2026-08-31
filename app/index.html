@@ -4515,6 +4515,25 @@ let priceList = [
   {id:9199, product:'G5328X', cust:'ELTROX', quarter:'Q3', retailPLN:999, vatRate:0.23, netPLN:506, costUSD:null, profitUSD:null, marginPct:null, ean:'6932392831914', cnCode:'8517 18 00', splitPayment:'N'},
   {id:9200, product:'G5328XP-24-410W', cust:'ELTROX', quarter:'Q3', retailPLN:1799, vatRate:0.23, netPLN:911.21, costUSD:null, profitUSD:null, marginPct:null, ean:'6932392835394', cnCode:'8517 18 00', splitPayment:'N'},
 ];
+(function(){
+  var PL_CUSTS = ['INC','ACT','ELTROX','PROSPECT_PL'];
+  var maxId = 0;
+  for (var i = 0; i < priceList.length; i++) { if (priceList[i].id > maxId) maxId = priceList[i].id; }
+  var nextId = maxId + 1;
+  var novRows = [];
+  for (var j = 0; j < priceList.length; j++) {
+    var r = priceList[j];
+    if (r.quarter === 'Q3' && PL_CUSTS.indexOf(r.cust) !== -1) {
+      if (!r.month) r.month = '08';
+      var dup = {};
+      for (var k in r) { if (Object.prototype.hasOwnProperty.call(r, k)) dup[k] = r[k]; }
+      dup.id = nextId++;
+      dup.month = '09';
+      novRows.push(dup);
+    }
+  }
+  priceList = priceList.concat(novRows);
+})();
 
 let marketingActivityItemsByActivity = {};
 let promotions = [
@@ -4847,7 +4866,7 @@ function renderQuarterTabs(){
 }
 
 function renderMonthTabs(){
-  const monthKeys = ['ALL','01','02','03','04','05','06','07','08'];
+  const monthKeys = ['ALL','01','02','03','04','05','06','07','08','09'];
   const el = document.getElementById('filterMonthSelect');
   if (!el) return;
   el.innerHTML = monthKeys.map(m=>{

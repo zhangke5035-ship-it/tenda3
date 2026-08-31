@@ -3049,7 +3049,6 @@
                     <th>客户</th>
                     <th>活动名称</th>
                     <th>促销时间</th>
-                    <th>补贴明细</th>
                     <th>活动总预算</th>
                     <th>含税总金额</th>
                     <th>报销状态</th>
@@ -5132,7 +5131,6 @@ function renderPromoTable(){
       '<td>' + escapeHtmlCP(custName(m.cust)) + '</td>' +
       '<td>' + escapeHtmlCP(m.name) + '</td>' +
       '<td>' + escapeHtmlCP(periodText) + '</td>' +
-      '<td>' + miniListHtml + '</td>' +
       '<td class="mono"><strong>' + Number(m.budget || 0).toFixed(2) + ' PLN</strong></td>' +
       '<td class="mono">' + Number(budgetWithTax || 0).toFixed(2) + ' PLN</td>' +
       '<td><span class="status ' + statusClass(m.status) + '"><span class="sdot"></span>' + escapeHtmlCP(m.status || '待提交') + '</span></td>' +
@@ -7283,7 +7281,9 @@ async function loadMarketingActivities(){
     if (error){ console.error('loadMarketingActivities', error); return; }
     promotions = (data||[]).map(r=>({
       id: r.id, name: r.name, cust: r.cust, type: r.type, month: r.month,
-      budget: Number(r.budget)||0, actual: Number(r.actual)||0, status: r.status
+      start_date: r.start_date, end_date: r.end_date,
+      budget: Number(r.budget)||0, actual: Number(r.actual)||0, status: r.status,
+      budget_flow_no: r.budget_flow_no, reimburse_flow_no: r.reimburse_flow_no, reimburse_docs: r.reimburse_docs||[]
     }));
     const { data: itemsData, error: itemsError } = await sb.from('marketing_activity_items').select('*').order('id', {ascending:true});
     if (itemsError){ console.error('loadMarketingActivityItems', itemsError); }

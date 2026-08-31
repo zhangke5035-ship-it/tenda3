@@ -3030,11 +3030,34 @@
             </select>
           </div>
           <div class="field"><label>月份</label><input id="m_month" type="month"></div>
-          <div class="field mono"><label>预留金额 (PLN)</label><input id="m_budget" type="number" placeholder="8000"></div>
           <div class="field mono"><label>实际使用 (PLN)</label><input id="m_actual" type="number" placeholder="6200"></div>
           <div class="field"><label>状态</label><select id="m_status"><option>计划中</option><option>进行中</option><option>已结束</option></select></div>
         </div>
-        <button class="btn" id="addPromoBtn">新增活动</button>
+
+        <div style="margin-top:18px;">
+          <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:8px;">产品补贴明细</div>
+          <table>
+            <thead>
+              <tr>
+                <th style="width:34px;">#</th>
+                <th>产品型号</th>
+                <th>单个型号促销补贴 (PLN)</th>
+                <th>预估补贴台数 (台)</th>
+                <th>结算金额 (PLN)</th>
+                <th style="width:44px;"></th>
+              </tr>
+            </thead>
+            <tbody id="meaItemsBody"></tbody>
+          </table>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;">
+            <button type="button" class="btn ghost" id="meaAddRowBtn" style="font-size:12px;padding:6px 12px;">＋ 添加一行型号</button>
+            <div style="font-size:13.5px;color:var(--text-dim);">
+              活动总金额（预算汇总）：<strong id="meaGrandTotal" style="font-size:16px;color:var(--copper);">0.00 PLN</strong>
+            </div>
+          </div>
+        </div>
+
+        <button class="btn" id="addPromoBtn" style="margin-top:16px;">新增活动</button>
       </div>
 
       <div class="panel">
@@ -6194,19 +6217,109 @@ if (addPriceItemModalOverlayEl){
   });
 }
 
+let meaItems = [{ id: 1, product: '', subsidy: '', count: '' }];
+let meaNextId = 2;
+
+function meaRowTotal(item){
+  const s = parseFloat(item.subsidy) || 0;
+  const c = parseInt(item.count) || 0;
+  return s * c;
+}
+
+function meaGrandTotalValue(){
+  return meaItems.reduce(function(sum, it){ return sum + meaRowTotal(it); }, 0);
+}
+
+function renderMeaItems(){
+  const tbody = document.getElementById('meaItemsBody');
+  if (!tbody) return;
+  tbody.innerHTML = meaItems.map(function(item, idx){
+    return '<tr>' +
+      '<td>' + (idx+1) + '</td>' +
+      '<td><input type="text" list="modelDatalist" class="inv-field mea-item-product" data-id="' + item.id + '" value="' + escapeHtmlCP(item.product) + '" placeholder="例如 TX12L Pro" style="width:100%;min-width:120px;"></td>' +
+      '<td><input type="number" class="inv-field mea-item-subsidy" data-id="' + item.id + '" value="' + escapeHtmlCP(item.subsidy) + '" placeholder="0.00" style="width:100%;min-width:100px;"></td>' +
+      '<td><input type="number" class="inv-field mea-item-count" data-id="' + item.id + '" value="' + escapeHtmlCP(item.count) + '" placeholder="0" style="width:100%;min-width:80px;"></td>' +
+      '<td style="font-weight:600;" id="meaTotal-' + item.id + '">' + meaRowTotal(item).toFixed(2) + '</td>' +
+      '<td><button type="button" class="mea-item-del" data-id="' + item.id + '" title="删除" style="border:none;background:none;color:var(--alert);cursor:pointer;font-size:15px;"' + (meaItems.length===1?' disabled':'') + '>✕</button></td>' +
+    '</tr>';
+  }).join('');
+  meaUpdateGrandTotal();
+}
+
+function meaUpdateGrandTotal(){
+  const gt = document.getElementById('meaGrandTotal');
+  if (gt) gt.textContent = meaGrandTotalValue().toFixed(2) + ' PLN';
+}
+
+function meaUpdateRowTotal(id){
+  const item = meaItems.find(function(it){ return it.id === id; });
+  if (!item) return;
+  const cell = document.getElementById('meaTotal-' + id);
+  if (cell) cell.textContent = meaRowTotal(item).toFixed(2);
+  meaUpdateGrandTotal();
+}
+
+function meaResetItems(){
+  meaItems = [{ id: meaNextId++, product: '', subsidy: '', count: '' }];
+  renderMeaItems();
+}
+
+(function(){
+  const tbody = document.getElementById('meaItemsBody');
+  if (!tbody) return;
+  tbody.addEventListener('input', function(e){
+    const id = Number(e.target.dataset.id);
+    const item = meaItems.find(function(it){ return it.id === id; });
+    if (!item) return;
+    if (e.target.classList.contains('mea-item-product')) item.product = e.target.value;
+    else if (e.target.classList.contains('mea-item-subsidy')) item.subsidy = e.target.value;
+    else if (e.target.classList.contains('mea-item-count')) item.count = e.target.value;
+    meaUpdateRowTotal(id);
+  });
+  tbody.addEventListener('click', function(e){
+    const btn = e.target.closest('.mea-item-del');
+    if (!btn) return;
+    const id = Number(btn.dataset.id);
+    if (meaItems.length === 1) return;
+    meaItems = meaItems.filter(function(it){ return it.id !== id; });
+    renderMeaItems();
+  });
+  const addBtn = document.getElementById('meaAddRowBtn');
+  if (addBtn) addBtn.addEventListener('click', function(){
+    meaItems.push({ id: meaNextId++, product: '', subsidy: '', count: '' });
+    renderMeaItems();
+  });
+  renderMeaItems();
+})();
+
 document.getElementById('addPromoBtn').addEventListener('click', async ()=>{
   const name = document.getElementById('m_name').value.trim();
   if(!name){ alert('请填写活动名称'); return; }
+  const validItems = meaItems.filter(function(it){ return it.product && it.product.trim(); });
+  if (!validItems.length){ alert('请至少填写一行产品补贴明细（产品型号）'); return; }
   const cust = document.getElementById('m_customer').value;
   const type = document.getElementById('m_type').value;
   const month = document.getElementById('m_month').value || '-';
-  const budget = parseFloat(document.getElementById('m_budget').value) || 0;
+  const budget = meaGrandTotalValue();
   const actual = parseFloat(document.getElementById('m_actual').value) || 0;
   const status = document.getElementById('m_status').value;
   const { data, error } = await sb.from('marketing_activities').insert({ name, cust, type, month, budget, actual, status }).select().single();
   if (error){ alert('保存活动失败：' + error.message); return; }
+  const itemsPayload = validItems.map(function(it){
+    return {
+      activity_id: data.id,
+      product: it.product.trim(),
+      subsidy: parseFloat(it.subsidy) || 0,
+      qty: parseInt(it.count) || 0,
+      amount: meaRowTotal(it),
+      status: '计划中'
+    };
+  });
+  const { error: itemsError } = await sb.from('marketing_activity_items').insert(itemsPayload);
+  if (itemsError){ console.error('save marketing_activity_items', itemsError); alert('活动已保存，但补贴明细保存失败：' + itemsError.message); }
   promotions.push({ id: data.id, name: data.name, cust: data.cust, type: data.type, month: data.month, budget: Number(data.budget)||0, actual: Number(data.actual)||0, status: data.status });
-  ['m_name','m_month','m_budget','m_actual'].forEach(id=>document.getElementById(id).value='');
+  ['m_name','m_month','m_actual'].forEach(id=>document.getElementById(id).value='');
+  meaResetItems();
   refreshAll();
 });
 

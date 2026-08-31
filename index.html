@@ -1840,7 +1840,7 @@
           <select id="filterMonthSelect" title="月份"></select>
             <div class="filter-search"><input id="priceSearch" placeholder="搜索型号/SKU，例如 TE6L、W15-Pro..."></div>
             <div class="ms-dd" id="filterCountryWrap"><button type="button" class="ms-dd-btn" id="filterCountryBtn" title="国家"><span id="filterCountryBtnLabel">全部国家</span><span class="ms-dd-chevron">⌄</span></button><div class="ms-dd-panel hidden" id="filterCountryPanel"></div></div>
-            <select id="filterCustSelect" title="客户"></select>
+            <div class="ms-dd" id="filterCustWrap"><button type="button" class="ms-dd-btn" id="filterCustBtn" title="客户"><span id="filterCustBtnLabel">全部客户</span><span class="ms-dd-chevron">⌄</span></button><div class="ms-dd-panel hidden" id="filterCustPanel"></div></div>
             <select id="filterCategorySelect" title="类目"></select>
             <select id="filterBrandSelect" title="品牌"></select>
             <select id="priceVersion" title="报价版本号码" style="max-width:110px;"></select>
@@ -4553,7 +4553,8 @@ let promotions = [
 ];
 
 let marginThreshold = 10;
-let activeCustFilter = 'ALL';
+let activeCustFilter = [];
+let filterCustPanelOpen = false;
 let activeCountryFilter = [];
 let filterCountryPanelOpen = false;
 let activeQuarterFilter = 'Q3';
@@ -4872,7 +4873,7 @@ function renderQuarterTabs(){
   el.value = activeQuarterFilter;
   el.onchange = ()=>{
     activeQuarterFilter = el.value;
-    activeCountryFilter = []; activeCustFilter = 'ALL'; activeMonthFilter = 'ALL';
+    activeCountryFilter = []; activeCustFilter = []; activeMonthFilter = 'ALL';
     renderQuarterTabs(); renderCountryTabs(); renderCustTabs(); renderMonthTabs(); renderCategoryTabs(); renderBrandTabs(); renderPriceTable();
   };
 }
@@ -4909,7 +4910,7 @@ function renderCountryTabs(){
   const allCb = document.getElementById('filterCountryAllCb');
   if (allCb) allCb.addEventListener('change', () => {
     activeCountryFilter = [];
-    activeCustFilter = 'ALL';
+    activeCustFilter = [];
     renderCountryTabs(); renderCustTabs(); renderCategoryTabs(); renderPriceTable();
   });
   panel.querySelectorAll('input[data-country]').forEach(cb=>{
@@ -4917,7 +4918,7 @@ function renderCountryTabs(){
       const c = cb.dataset.country;
       const idx = activeCountryFilter.indexOf(c);
       if (idx === -1) activeCountryFilter.push(c); else activeCountryFilter.splice(idx,1);
-      activeCustFilter = 'ALL';
+      activeCustFilter = [];
       renderCountryTabs(); renderCustTabs(); renderCategoryTabs(); renderPriceTable();
     });
   });
@@ -4941,17 +4942,47 @@ if (filterCountryBtnEl && filterCountryPanelEl){
 
 function renderCustTabs(){
   const codesInCountry = uniqueCustomers().filter(c => !activeCountryFilter.length || activeCountryFilter.includes(custCountry(c)));
-  if(!codesInCountry.includes(activeCustFilter) && activeCustFilter!=='ALL') activeCustFilter='ALL';
+  activeCustFilter = activeCustFilter.filter(c => codesInCountry.includes(c));
   const counts = code => visibleRows().filter(p=>p.cust===code).length;
-  const tabs = ['ALL', ...codesInCountry];
-  const el = document.getElementById('filterCustSelect');
-  el.innerHTML = tabs.map(code=>{
-    const label = code==='ALL' ? '全部客户' : custName(code);
-    const count = code==='ALL' ? codesInCountry.reduce((s,c)=>s+counts(c),0) : counts(code);
-    return `<option value="${code}">${label} (${count})</option>`;
-  }).join('');
-  el.value = activeCustFilter;
-  el.onchange = ()=>{ activeCustFilter = el.value; renderCustTabs(); renderPriceTable(); };
+  const panel = document.getElementById('filterCustPanel');
+  const label = document.getElementById('filterCustBtnLabel');
+  if (!panel || !label) return;
+  const totalCount = codesInCountry.reduce((s,c)=>s+counts(c),0);
+  panel.innerHTML = `<label class="ms-dd-row"><input type="checkbox" id="filterCustAllCb" ${activeCustFilter.length ? '' : 'checked'}><span class="name">全部客户</span><span class="count">(${totalCount})</span></label>` +
+    codesInCountry.map(code=>{
+      const checked = activeCustFilter.includes(code) ? 'checked' : '';
+      return `<label class="ms-dd-row"><input type="checkbox" data-cust="${code}" ${checked}><span class="name">${custName(code)}</span><span class="count">(${counts(code)})</span></label>`;
+    }).join('');
+  label.textContent = activeCustFilter.length ? `已选客户 (${activeCustFilter.length})` : '全部客户';
+  const allCb = document.getElementById('filterCustAllCb');
+  if (allCb) allCb.addEventListener('change', () => {
+    activeCustFilter = [];
+    renderCustTabs(); renderPriceTable();
+  });
+  panel.querySelectorAll('input[data-cust]').forEach(cb=>{
+    cb.addEventListener('change', () => {
+      const code = cb.dataset.cust;
+      const idx = activeCustFilter.indexOf(code);
+      if (idx === -1) activeCustFilter.push(code); else activeCustFilter.splice(idx,1);
+      renderCustTabs(); renderPriceTable();
+    });
+  });
+}
+
+const filterCustBtnEl = document.getElementById('filterCustBtn');
+const filterCustPanelEl = document.getElementById('filterCustPanel');
+if (filterCustBtnEl && filterCustPanelEl){
+  filterCustBtnEl.addEventListener('click', function(e){
+    e.stopPropagation();
+    filterCustPanelOpen = !filterCustPanelOpen;
+    filterCustPanelEl.classList.toggle('hidden', !filterCustPanelOpen);
+  });
+  document.addEventListener('click', function(e){
+    if (!filterCustPanelOpen) return;
+    if (e.target.closest('#filterCustWrap')) return;
+    filterCustPanelOpen = false;
+    filterCustPanelEl.classList.add('hidden');
+  });
 }
 
 function renderCategoryTabs(){
@@ -4988,7 +5019,7 @@ function renderBrandTabs(){
 function getFilteredPriceRows(){
   let rows = visibleRows();
   if(activeCountryFilter.length) rows = rows.filter(p=>activeCountryFilter.includes(custCountry(p.cust)));
-  if(activeCustFilter!=='ALL') rows = rows.filter(p=>p.cust===activeCustFilter);
+  if(activeCustFilter.length) rows = rows.filter(p=>activeCustFilter.includes(p.cust));
   if(activeMonthFilter!=='ALL') rows = rows.filter(p=>p.month===activeMonthFilter);
   if(activeCategoryFilter!=='ALL') rows = rows.filter(p=>productType(p.product)===activeCategoryFilter);
   if(activeBrandFilter!=='ALL') rows = rows.filter(p=>productBrand(p.product)===activeBrandFilter);
@@ -5149,7 +5180,7 @@ function renderPriceTable(){
       <td><button class="del-btn" onclick="deletePrice(${p.id})">✕</button></td>
     </tr>`;
   }).join('');
-  const custLabel = activeCustFilter==='ALL' ? '全部客户' : custName(activeCustFilter);
+  const custLabel = activeCustFilter.length ? activeCustFilter.map(custName).join('/') : '全部客户';
   const countryLabel = activeCountryFilter.length ? activeCountryFilter.join('/') : '全部国家';
   document.getElementById('priceCount').textContent = `共 ${rows.length} 条报价 · ${countryLabel} · ${custLabel}`;
   const footRow = document.getElementById('priceTableFootRow');
@@ -6350,7 +6381,7 @@ const filterResetBtnEl = document.getElementById('filterResetBtn');
 if (filterResetBtnEl){
   filterResetBtnEl.addEventListener('click', ()=>{
     activeCountryFilter = [];
-    activeCustFilter = 'ALL';
+    activeCustFilter = [];
     activeMonthFilter = 'ALL';
     activeCategoryFilter = 'ALL';
     activeBrandFilter = 'ALL';
@@ -10829,6 +10860,7 @@ const I18N_DICT = [
   ['全部国家','all countries','wszystkie kraje'],
   ['已选国家','Selected Countries','Wybrane kraje'],
   ['全部客户','all customers','wszyscy klienci'],
+  ['已选客户','Selected Customers','Wybrani klienci'],
   ['批量结束','Batch End','Zakończ zbiorczo'],
   ['搜索客户...','Search customer...','Szukaj klienta...'],
   ['未找到匹配客户','No matching customers found','Nie znaleziono pasujących klientów'],

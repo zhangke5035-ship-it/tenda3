@@ -3045,16 +3045,20 @@
         <div class="panel-head"><h3>活动列表</h3></div>
         <table>
           <thead>
-            <tr>
-              <th>客户</th>
-              <th>活动名称</th>
-              <th>补贴明细</th>
-              <th>活动总预算</th>
+                  <tr>
+                    <th>客户</th>
+                    <th>活动名称</th>
+                    <th>促销时间</th>
+                    <th>补贴明细</th>
+                    <th>活动总预算</th>
                     <th>含税总金额</th>
-              <th>报销状态</th>
-              <th style="width:44px;"></th>
-            </tr>
-          </thead>
+                    <th>报销状态</th>
+                    <th>预算申请流程号</th>
+                    <th>活动报销流程号</th>
+                    <th>报销凭证</th>
+                    <th style="width:44px;"></th>
+                  </tr>
+                </thead>
           <tbody id="promoTableBody"></tbody>
         </table>
       </div>
@@ -3109,6 +3113,16 @@
             <option value="已结清">已结清</option>
           </select>
         </div>
+              <div class="field"><label>预算申请流程号</label><input id="m_budget_flow_no" placeholder="例如 BUD-2026-0012"></div>
+              <div class="field"><label>活动报销流程号</label><input id="m_reimburse_flow_no" placeholder="例如 RB-2026-0012"></div>
+              <div class="field">
+                <label>报销凭证</label>
+                <div style="display:flex;gap:16px;margin-top:4px;">
+                  <label style="display:flex;align-items:center;gap:6px;font-weight:400;font-size:13px;"><input type="checkbox" id="m_doc_sales" value="销售报告"> 销售报告</label>
+                  <label style="display:flex;align-items:center;gap:6px;font-weight:400;font-size:13px;"><input type="checkbox" id="m_doc_inventory" value="库存报告"> 库存报告</label>
+                </div>
+              </div>
+
         <div style="display:flex;gap:8px;margin-top:12px;">
           <button type="button" class="btn ghost" id="promoDrawerCancelBtn" style="flex:1;">取消</button>
           <button class="btn" id="addPromoBtn" style="flex:1;">保存活动</button>
@@ -3135,6 +3149,12 @@
             <div><div style="font-size:12px;color:var(--text-dim);">活动类型</div><div id="promoDetailType" style="margin-top:4px;"></div></div>
             <div><div style="font-size:12px;color:var(--text-dim);">月份 / 起止时间</div><div id="promoDetailPeriod" style="margin-top:4px;"></div></div>
             <div><div style="font-size:12px;color:var(--text-dim);">报销状态</div><div id="promoDetailStatus" style="margin-top:4px;"></div></div>
+          </div>
+
+                    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin:0 0 16px;padding:16px;background:var(--surface-alt);border-radius:var(--radius);">
+            <div><div style="font-size:12px;color:var(--text-dim);">预算申请流程号</div><div id="promoDetailBudgetFlowNo" style="margin-top:4px;"></div></div>
+            <div><div style="font-size:12px;color:var(--text-dim);">活动报销流程号</div><div id="promoDetailReimburseFlowNo" style="margin-top:4px;"></div></div>
+            <div style="grid-column:span 2;"><div style="font-size:12px;color:var(--text-dim);">报销凭证</div><div id="promoDetailDocs" style="margin-top:4px;"></div></div>
           </div>
 
           <h4 style="margin:16px 0 8px;">产品补贴明细</h4>
@@ -5100,6 +5120,10 @@ function renderPromoTable(){
       const withTax = (it.amount_with_tax != null) ? Number(it.amount_with_tax) : net * (1 + (it.vat_rate != null ? Number(it.vat_rate) : 0.23));
       return sum + withTax;
     }, 0) : Number(m.budget || 0) * 1.23;
+    const periodParts = [];
+    if (m.month && m.month !== '-') periodParts.push(m.month);
+    if (m.start_date || m.end_date) periodParts.push((m.start_date || '?') + ' ~ ' + (m.end_date || '?'));
+    const periodText = periodParts.length ? periodParts.join(' / ') : '-';
     const miniListHtml = meaItemsList.length ? ('<div class="subsidy-mini-list">' + meaItemsList.map(function(it){
       return '<div class="subsidy-mini-row"><span class="subsidy-mini-model">' + escapeHtmlCP(it.product || '-') + '</span><span class="subsidy-mini-qty">x' + (it.qty || 0) + '</span><span class="subsidy-mini-amount">' + Number(it.amount || 0).toFixed(2) + ' PLN</span></div>';
     }).join('') + '</div>') : '<span style="font-size:12px;color:var(--text-dim);">暂无明细</span>';
@@ -5107,10 +5131,14 @@ function renderPromoTable(){
       '<tr class="promo-row-clickable" data-activity-id="' + m.id + '">' +
       '<td>' + escapeHtmlCP(custName(m.cust)) + '</td>' +
       '<td>' + escapeHtmlCP(m.name) + '</td>' +
+      '<td>' + escapeHtmlCP(periodText) + '</td>' +
       '<td>' + miniListHtml + '</td>' +
       '<td class="mono"><strong>' + Number(m.budget || 0).toFixed(2) + ' PLN</strong></td>' +
       '<td class="mono">' + Number(budgetWithTax || 0).toFixed(2) + ' PLN</td>' +
       '<td><span class="status ' + statusClass(m.status) + '"><span class="sdot"></span>' + escapeHtmlCP(m.status || '待提交') + '</span></td>' +
+      '<td>' + escapeHtmlCP(m.budget_flow_no || '-') + '</td>' +
+      '<td>' + escapeHtmlCP(m.reimburse_flow_no || '-') + '</td>' +
+      '<td>' + ((m.reimburse_docs && m.reimburse_docs.length) ? escapeHtmlCP(m.reimburse_docs.join(' / ')) : '-') + '</td>' +
       '<td><button type="button" class="btn ghost" data-del-id="' + m.id + '" style="padding:4px 8px;font-size:12px;">删除</button></td>' +
       '</tr>';
   }).join('');
@@ -6476,6 +6504,11 @@ function openPromoDrawer(mode, id){
     document.getElementById('m_end_date').value = m.end_date || '';
     document.getElementById('m_actual').value = m.actual || '';
     document.getElementById('m_status').value = m.status || '待提交';
+    document.getElementById('m_budget_flow_no').value = m.budget_flow_no || '';
+    document.getElementById('m_reimburse_flow_no').value = m.reimburse_flow_no || '';
+    const docs = m.reimburse_docs || [];
+    document.getElementById('m_doc_sales').checked = docs.indexOf('销售报告') !== -1;
+    document.getElementById('m_doc_inventory').checked = docs.indexOf('库存报告') !== -1;
     meaLoadItems(marketingActivityItemsByActivity[id]);
   } else {
     promoDrawerCust = null;
@@ -6491,6 +6524,10 @@ function openPromoDrawer(mode, id){
     document.getElementById('m_end_date').value = '';
     document.getElementById('m_actual').value = '';
     document.getElementById('m_status').value = '待提交';
+    document.getElementById('m_budget_flow_no').value = '';
+    document.getElementById('m_reimburse_flow_no').value = '';
+    document.getElementById('m_doc_sales').checked = false;
+    document.getElementById('m_doc_inventory').checked = false;
     meaResetItems();
   }
   panel.style.display = '';
@@ -6541,6 +6578,9 @@ function openPromoDetail(id){
   const statusEl = document.getElementById('promoDetailStatus');
   statusEl.innerHTML = '<span class="status ' + statusClass(m.status) + '"><span class="sdot"></span>' + escapeHtmlCP(m.status || '待提交') + '</span>';
   document.getElementById('promoDetailActual').textContent = Number(m.actual || 0).toFixed(2) + ' PLN';
+  document.getElementById('promoDetailBudgetFlowNo').textContent = m.budget_flow_no || '-';
+  document.getElementById('promoDetailReimburseFlowNo').textContent = m.reimburse_flow_no || '-';
+  document.getElementById('promoDetailDocs').textContent = (m.reimburse_docs && m.reimburse_docs.length) ? m.reimburse_docs.join(' / ') : '-';
 
   const items = marketingActivityItemsByActivity[id] || [];
   const tbody = document.getElementById('promoDetailItemsBody');
@@ -6610,7 +6650,12 @@ document.getElementById('addPromoBtn').addEventListener('click', async ()=>{
   const actual = parseFloat(document.getElementById('m_actual').value) || 0;
   const status = document.getElementById('m_status').value;
   const budget = meaGrandTotalValue();
-  const payload = { name: name, cust: cust, type: type, month: month, start_date: startDate, end_date: endDate, budget: budget, actual: actual, status: status };
+    const budgetFlowNo = document.getElementById('m_budget_flow_no').value.trim();
+  const reimburseFlowNo = document.getElementById('m_reimburse_flow_no').value.trim();
+  const reimburseDocs = [];
+  if (document.getElementById('m_doc_sales').checked) reimburseDocs.push('销售报告');
+  if (document.getElementById('m_doc_inventory').checked) reimburseDocs.push('库存报告');
+  const payload = { name: name, cust: cust, type: type, month: month, start_date: startDate, end_date: endDate, budget: budget, actual: actual, status: status, budget_flow_no: budgetFlowNo || null, reimburse_flow_no: reimburseFlowNo || null, reimburse_docs: reimburseDocs };
 
   let activityId;
   if (promoDrawerMode === 'edit'){
@@ -10505,6 +10550,42 @@ try { currentLang = localStorage.getItem(I18N_LANG_KEY) || 'pl'; } catch(e) { co
 
 // [中文, English, Polski] —— 可以随时往这个数组里加新条目
 const I18N_DICT = [
+  ['促销时间','Campaign Period','Okres kampanii'],
+  ['预算申请流程号','Budget Application No.','Nr wniosku budżetowego'],
+  ['活动报销流程号','Reimbursement Process No.','Nr procesu rozliczenia'],
+  ['报销凭证','Reimbursement Documents','Dokumenty rozliczeniowe'],
+  ['销售报告','Sales Report','Raport sprzedaży'],
+  ['库存报告','Inventory Report','Raport magazynowy'],
+  ['活动类型沿用总部《费用-活动》表的分类口径。每个客户仅保留一条活动记录（一客一动），点击列表行可查看或编辑详情。','Campaign types follow the HQ "Expense-Activity" classification. Each customer keeps only one campaign record (one campaign per customer) — click a row to view or edit details.','Typy kampanii są zgodne z klasyfikacją centrali w tabeli „Wydatki-Działania”. Każdy klient ma tylko jeden rekord kampanii (jedna kampania na klienta) — kliknij wiersz, aby zobaczyć lub edytować szczegóły.'],
+  ['一客一动','One Campaign per Customer','Jedna kampania na klienta'],
+  ['含税结算金额','Settlement Amount (incl. VAT)','Kwota rozliczenia (z VAT)'],
+  ['结算金额','Settlement Amount','Kwota rozliczenia'],
+  ['补贴明细','Subsidy Details','Szczegóły dopłat'],
+  ['活动总预算','Total Campaign Budget','Całkowity budżet kampanii'],
+  ['含税总金额','Total Amount (incl. VAT)','Kwota całkowita (z VAT)'],
+  ['报销状态','Reimbursement Status','Status rozliczenia'],
+  ['待提交','Pending Submission','Oczekuje na złożenie'],
+  ['审批中','Under Approval','W trakcie zatwierdzania'],
+  ['已驳回','Rejected','Odrzucone'],
+  ['已批准待付款','Approved – Pending Payment','Zatwierdzone – oczekuje na płatność'],
+  ['已结清','Settled','Rozliczone'],
+  ['暂无补贴明细','No subsidy details','Brak szczegółów dopłat'],
+  ['暂无明细','No details yet','Brak szczegółów'],
+  ['编辑活动','Edit Campaign','Edytuj kampanię'],
+  ['产品补贴明细','Product Subsidy Details','Szczegóły dopłat do produktów'],
+  ['活动开始时间','Campaign Start Date','Data rozpoczęcia kampanii'],
+  ['活动结束时间','Campaign End Date','Data zakończenia kampanii'],
+  ['单个型号促销补贴','Subsidy per Model','Dopłata na model'],
+  ['预估补贴台数','Estimated Subsidized Units','Szacowana liczba jednostek'],
+  ['税率','VAT Rate','Stawka VAT'],
+  ['添加型号','Add Model','Dodaj model'],
+  ['预算汇总','Budget Summary','Podsumowanie budżetu'],
+  ['保存活动','Save Campaign','Zapisz kampanię'],
+  ['活动详情','Campaign Details','Szczegóły kampanii'],
+  ['返回列表','Back to List','Powrót do listy'],
+  ['月份 / 起止时间','Month / Period','Miesiąc / Okres'],
+  ['单个补贴','Subsidy per Unit','Dopłata jednostkowa'],
+  ['降价促销','Price Reduction Promotion','Promocja obniżki ceny'],
   ['产品描述','Product Description','Opis produktu'],
   ['建议零售价','Suggested Retail Price','Sugerowana cena detaliczna'],
   ['最小起订数量','MOQ','MOQ'],

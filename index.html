@@ -10229,7 +10229,13 @@ function exportPriceWorkbookXLSX(mode, filename){
     const prevRow = prevQ ? priceList.find(function(r){ return r.product===p.product && r.cust===p.cust && r.quarter===prevQ; }) : null;
     const retail = (typeof p.retailPLN === 'number') ? p.retailPLN : null;
     const net = (retail!==null) ? retail/(1+effectiveVat) : ((typeof p.netPLN==='number') ? p.netPLN : null);
-    const prevNet = (prevRow && typeof prevRow.netPLN==='number') ? prevRow.netPLN : null;
+    let prevNet = null;
+    if (prevRow){
+      const prevVatRate = computeVat(custCountry(prevRow.cust));
+      const prevEffectiveVat = prevVatRate !== null ? prevVatRate : 0.23;
+      if (typeof prevRow.retailPLN === 'number') prevNet = prevRow.retailPLN/(1+prevEffectiveVat);
+      else if (typeof prevRow.netPLN === 'number') prevNet = prevRow.netPLN;
+    }
     const qoqAbs = (net!==null && prevNet) ? net-prevNet : null;
     const qoqPct = (net!==null && prevNet) ? (net-prevNet)/prevNet : null;
     const tier1raw = (net!==null) ? net*0.95 : null;

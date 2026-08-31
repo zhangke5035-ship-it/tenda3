@@ -3012,7 +3012,8 @@
         活动类型沿用总部《费用-活动》表的分类口径。下方两条为示例数据，帮助你理解格式；请替换为当月实际数字。
       </div>
 
-      <div class="panel">
+      <button type="button" class="btn ghost" id="promoAddToggleBtn" style="margin-bottom:12px;">+ 新增活动</button>
+      <div class="panel" id="promoAddPanel" style="display:none;">
         <div class="panel-head"><h3>新增活动</h3></div>
         <div class="form-grid">
           <div class="field"><label>活动名称</label><input id="m_name" placeholder="例如 Incom 社群媒体推广"></div>
@@ -3067,7 +3068,7 @@
       <div class="panel">
         <div class="panel-head"><h3>活动列表</h3></div>
         <table>
-          <thead><tr><th>活动名称</th><th>客户</th><th>类型</th><th>月份</th><th>预留执行</th><th>状态</th><th></th></tr></thead>
+          <thead><tr><th>活动名称</th><th>客户</th><th>类型</th><th>月份</th><th>补贴明细</th><th>预留执行</th><th>状态</th><th></th></tr></thead>
           <tbody id="promoTableBody"></tbody>
         </table>
       </div>
@@ -4409,6 +4410,7 @@ let priceList = [
   {id:9200, product:'G5328XP-24-410W', cust:'ELTROX', quarter:'Q3', retailPLN:1799, vatRate:0.23, netPLN:911.21, costUSD:null, profitUSD:null, marginPct:null, ean:'6932392835394', cnCode:'8517 18 00', splitPayment:'N'},
 ];
 
+let marketingActivityItemsByActivity = {};
 let promotions = [
   {id:1, name:'Incom 社群媒体推广（示例）', cust:'INC', type:'品牌营销 - 社群媒体', month:'2026-07', budget:8000, actual:6200, status:'进行中'},
   {id:2, name:'Action ST促销（示例）',      cust:'ACT', type:'渠道营销 - ST促销',   month:'2026-07', budget:12000, actual:0,   status:'计划中'},
@@ -5004,12 +5006,16 @@ function renderPromoTable(){
   tbody.innerHTML = promotions.map(m=>{
     const pct = m.budget>0 ? Math.min(200,(m.actual/m.budget*100)) : 0;
     const over = m.actual > m.budget;
+    const itemsHtml = (marketingActivityItemsByActivity[m.id]||[]).map(function(it){
+      return it.product + ' × ' + it.qty + ' (' + fmt(it.amount) + ' PLN)';
+    }).join('<br>') || '-';
     return `
     <tr>
       <td>${m.name}</td>
       <td>${custName(m.cust)}</td>
       <td>${m.type}</td>
       <td class="num-cell">${m.month||'-'}</td>
+      <td style="font-size:12px;">${itemsHtml}</td>
       <td>
         <div class="progress-wrap"><div class="progress-bar ${over?'over':''}" style="width:${Math.min(100,pct)}%"></div></div>
         <div class="num-cell" style="font-size:11px;color:var(--text-faint);margin-top:4px;">${fmt(m.actual)} zł / ${fmt(m.budget)} zł (${fmt(pct)}%)</div>
@@ -5023,6 +5029,7 @@ async function deletePromo(id){
   const { error } = await sb.from('marketing_activities').delete().eq('id', id);
   if (error){ alert('删除失败：' + error.message); return; }
   promotions = promotions.filter(m=>m.id!==id);
+  delete marketingActivityItemsByActivity[id];
   refreshAll();
 }
 
@@ -6327,6 +6334,16 @@ function meaResetItems(){
   renderMeaItems();
 })();
 
+const promoAddToggleBtn = document.getElementById('promoAddToggleBtn');
+if (promoAddToggleBtn){
+  promoAddToggleBtn.addEventListener('click', function(){
+    const panel = document.getElementById('promoAddPanel');
+    if (!panel) return;
+    const isHidden = panel.style.display === 'none';
+    panel.style.display = isHidden ? '' : 'none';
+    promoAddToggleBtn.textContent = isHidden ? '− 收起表单' : '+ 新增活动';
+  });
+}
 document.getElementById('addPromoBtn').addEventListener('click', async ()=>{
   const name = document.getElementById('m_name').value.trim();
   if(!name){ alert('请填写活动名称'); return; }
@@ -6357,9 +6374,14 @@ document.getElementById('addPromoBtn').addEventListener('click', async ()=>{
   const { error: itemsError } = await sb.from('marketing_activity_items').insert(itemsPayload);
   if (itemsError){ console.error('save marketing_activity_items', itemsError); alert('活动已保存，但补贴明细保存失败：' + itemsError.message); }
   promotions.push({ id: data.id, name: data.name, cust: data.cust, type: data.type, month: data.month, budget: Number(data.budget)||0, actual: Number(data.actual)||0, status: data.status });
+  marketingActivityItemsByActivity[data.id] = validItems.map(function(it){ return { product: it.product.trim(), subsidy: parseFloat(it.subsidy)||0, qty: parseInt(it.count)||0, amount: meaRowTotal(it) }; });
   ['m_name','m_month','m_actual','m_start_date','m_end_date'].forEach(id=>document.getElementById(id).value='');
   meaResetItems();
   refreshAll();
+  const promoPanelAfterSave = document.getElementById('promoAddPanel');
+  if (promoPanelAfterSave) promoPanelAfterSave.style.display = 'none';
+  const promoToggleBtnAfterSave = document.getElementById('promoAddToggleBtn');
+  if (promoToggleBtnAfterSave) promoToggleBtnAfterSave.textContent = '+ 新增活动';
 });
 
 function findCustomerQuote(cust, product){
@@ -6956,6 +6978,14 @@ async function loadMarketingActivities(){
       id: r.id, name: r.name, cust: r.cust, type: r.type, month: r.month,
       budget: Number(r.budget)||0, actual: Number(r.actual)||0, status: r.status
     }));
+    const { data: itemsData, error: itemsError } = await sb.from('marketing_activity_items').select('*').order('id', {ascending:true});
+    if (itemsError){ console.error('loadMarketingActivityItems', itemsError); }
+    marketingActivityItemsByActivity = {};
+    (itemsData||[]).forEach(function(it){
+      const key = it.activity_id;
+      if (!marketingActivityItemsByActivity[key]) marketingActivityItemsByActivity[key] = [];
+      marketingActivityItemsByActivity[key].push({ product: it.product, subsidy: Number(it.subsidy)||0, qty: Number(it.qty)||0, amount: Number(it.amount)||0 });
+    });
     if (typeof renderPromoTable === 'function') renderPromoTable();
   }catch(e){ console.error(e); }
 }

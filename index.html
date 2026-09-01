@@ -4572,7 +4572,10 @@ var SEP_PRICE_OVERRIDES = {
     {product:'i33v1.1', retailPLN:409, ean:'6932849435771'},
     {product:'CS6GV1.0', retailPLN:419, ean:'6932849439656'},
     {product:'TEM2005D', retailPLN:169, custs:['ELTROX','ACT']},
-    {product:'TEM2008D', retailPLN:259, custs:['ELTROX','ACT']}
+    {product:'TEM2008D', retailPLN:259, custs:['ELTROX','ACT']},
+    {product:'MX12V4.0(1pack)', retailPLN:399},
+    {product:'MX12V4.0(2pack)', retailPLN:599},
+    {product:'MX12V4.0(3pack)', retailPLN:899}
   ];
   var custs = ['ACT','INC','ELTROX'];
   var addRows = [];
@@ -5060,7 +5063,7 @@ function renderBrandTabs(){
   el.value = activeBrandFilter;
   el.onchange = ()=>{ activeBrandFilter = el.value; renderBrandTabs(); renderPriceTable(); };
 }
-const HIDDEN_SEP_PRODUCT_PATTERNS = ['4G180','EE3 PRO','EX3','EX12','MW12','MW5G','MX21','MX3','TFC100A','TFC100B'];
+const HIDDEN_SEP_PRODUCT_PATTERNS = ['4G180','EE3 PRO','EX3','EX12','MW12','MW5G','MX12','MX21','MX3','TFC100A','TFC100B'];
 const HIDDEN_SEP_EXACT_PRODUCTS = ['4G03','IC7-PRS-4','N6P-8H','TEF1005D','IT7-PRS-4','K4P-4TR','K4P-4CR','AC3','AC5','TX12 PRO'];
 function getFilteredPriceRows(){
   let rows = visibleRows();

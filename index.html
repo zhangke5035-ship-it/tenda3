@@ -4562,6 +4562,25 @@ var SEP_PRICE_OVERRIDES = {
   priceList = priceList.concat(novRows);
 })();
 
+(function(){
+  var maxId = 0;
+  for (var i = 0; i < priceList.length; i++) { if (priceList[i].id > maxId) maxId = priceList[i].id; }
+  var nextId = maxId + 1;
+  var NEW_SEP_ONLY_PRODUCTS = [
+    {product:'AX12v4.0', retailPLN:189},
+    {product:'i33v1.1', retailPLN:409},
+    {product:'CS6GV1.0', retailPLN:419}
+  ];
+  var custs = ['ACT','INC','ELTROX'];
+  var addRows = [];
+  NEW_SEP_ONLY_PRODUCTS.forEach(function(item){
+    custs.forEach(function(cust){
+      addRows.push({id:nextId++, product:item.product, cust:cust, quarter:'Q3', month:'09', category:'HOME', retailPLN:item.retailPLN, netPLN:null, vatRate:0.23, costUSD:null, profitUSD:null, marginPct:null, cnCode:null, splitPayment:null});
+    });
+  });
+  priceList = priceList.concat(addRows);
+})();
+
 let marketingActivityItemsByActivity = {};
 let promotions = [
   {id:1, name:'Incom 社群媒体推广（示例）', cust:'INC', type:'品牌营销 - 社群媒体', month:'2026-07', budget:8000, actual:6200, status:'进行中'},
@@ -5039,11 +5058,13 @@ function renderBrandTabs(){
   el.onchange = ()=>{ activeBrandFilter = el.value; renderBrandTabs(); renderPriceTable(); };
 }
 const HIDDEN_SEP_PRODUCT_PATTERNS = ['4G180','EE3 PRO','EX3','EX12','MW12','MW5G','MX21','MX3','TFC100A','TFC100B'];
+const HIDDEN_SEP_EXACT_PRODUCTS = ['4G03'];
 function getFilteredPriceRows(){
   let rows = visibleRows();
   rows = rows.filter(function(p){
     if (monthKey(p.month) !== '09') return true;
     if (productBrand(p.product) === 'IP-COM') return false;
+    if (HIDDEN_SEP_EXACT_PRODUCTS.indexOf(p.product) !== -1) return false;
     var up = (p.product || '').toUpperCase();
     return !HIDDEN_SEP_PRODUCT_PATTERNS.some(function(pat){ return up.indexOf(pat) !== -1; });
   });

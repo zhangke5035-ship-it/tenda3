@@ -4526,6 +4526,13 @@ let priceList = [
   {id:9199, product:'G5328X', cust:'ELTROX', quarter:'Q3', retailPLN:999, vatRate:0.23, netPLN:506, costUSD:null, profitUSD:null, marginPct:null, ean:'6932392831914', cnCode:'8517 18 00', splitPayment:'N'},
   {id:9200, product:'G5328XP-24-410W', cust:'ELTROX', quarter:'Q3', retailPLN:1799, vatRate:0.23, netPLN:911.21, costUSD:null, profitUSD:null, marginPct:null, ean:'6932392835394', cnCode:'8517 18 00', splitPayment:'N'},
 ];
+var SEP_PRICE_OVERRIDES = {
+  'SM105V1.0':189, 'SM108':219, 'CH10':289, '5G06':1199, 'OAP3000':340,
+  'TK4P-4BC':1099, 'TK8P-4BC':1899, 'TK8P-4BTC':1999,
+  'ME3 Pro(3-pack)V2.0':1099, 'ME3 Pro(2-pack)V2.0':699, 'ME3 Pro(1-pack)V2.0':359,
+  'ME6 Pro(3-pack)':1299, 'ME6 Pro(2-pack)':899, 'ME6 Pro(1-pack)':449,
+  'SM105V2.0':209, 'TE6L Pro':349, 'RH9-WCA':239, 'TEM2007X':299, 'TEM2010X':349
+};
 (function(){
   var PL_CUSTS = ['INC','ACT','ELTROX','PROSPECT_PL'];
   var maxId = 0;
@@ -4540,6 +4547,10 @@ let priceList = [
       for (var k in r) { if (Object.prototype.hasOwnProperty.call(r, k)) dup[k] = r[k]; }
       dup.id = nextId++;
       dup.month = '09';
+      if (Object.prototype.hasOwnProperty.call(SEP_PRICE_OVERRIDES, dup.product)) {
+        dup.retailPLN = SEP_PRICE_OVERRIDES[dup.product];
+        dup.netPLN = null;
+      }
       novRows.push(dup);
     }
   }

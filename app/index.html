@@ -450,6 +450,7 @@
   .lc-badge.lc-decline{background:var(--copper-soft);color:var(--copper);}
   .lc-badge.lc-eol{background:var(--alert-soft);color:var(--alert);}
   .lc-badge.lc-unknown{background:var(--surface-alt);color:var(--text-faint);}
+  .qoq-new-badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap;background:#E8F0FA;color:#2568B8;}
   #customerPortalRoot{min-height:100vh;background:var(--bg);display:flex;flex-direction:column;}
   #customerPortalRoot.hidden{display:none;}
   .cp-topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 190px 14px 28px;background:var(--surface);border-bottom:1px solid var(--border);}
@@ -5144,9 +5145,19 @@ function getQoQChange(p){
   else if (absChange < -0.004) trend = 'DOWN';
   return {rate: rateChange, absolute: absChange, trend: trend};
 }
+function isNewQuoteThisQuarter(p){
+  var prevQuarterMap = {Q1:'Q4', Q2:'Q1', Q3:'Q2', Q4:'Q3'};
+  var prevQ = prevQuarterMap[p.quarter];
+  if (!prevQ) return false;
+  var prevRow = priceList.find(function(r){ return r.product===p.product && r.cust===p.cust && r.quarter===prevQ; });
+  return !prevRow;
+}
 function qoqCellHtml(p){
   var qc = getQoQChange(p);
-  if (!qc) return '<span style="color:var(--text-faint)">\u2014</span>';
+  if (!qc){
+    if (isNewQuoteThisQuarter(p)) return '<span class="qoq-new-badge">' + translateOne('首次报价') + '</span>';
+    return '<span style="color:var(--text-faint)">\u2014</span>';
+  }
   if (qc.trend==='UP') return '<span style="color:var(--alert);font-weight:600;">\u25B2 +' + qc.rate.toFixed(2) + '%</span><br><small style="color:var(--text-faint);font-weight:400;">(+' + qc.absolute.toFixed(2) + ' PLN)</small>';
   if (qc.trend==='DOWN') return '<span style="color:var(--good);font-weight:600;">\u25BC ' + qc.rate.toFixed(2) + '%</span><br><small style="color:var(--text-faint);font-weight:400;">(' + qc.absolute.toFixed(2) + ' PLN)</small>';
   return '<span style="color:var(--text-faint);">\u25AC 0.00%</span>';
@@ -11166,6 +11177,7 @@ const I18N_DICT = [
   ['上一页','Previous','Poprzednia'],
   ['下一页','Next','Następna'],
   ['产品简介','Product Summary','Opis produktu'],
+  ['首次报价','First Quote','Pierwsza oferta'],
   ['新增','Add','Dodaj'],
   ['删除','Delete','Usuń'],
   ['编辑','Edit','Edytuj'],

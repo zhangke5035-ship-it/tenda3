@@ -450,6 +450,11 @@
   .lc-badge.lc-decline{background:var(--copper-soft);color:var(--copper);}
   .lc-badge.lc-eol{background:var(--alert-soft);color:var(--alert);}
   .lc-badge.lc-unknown{background:var(--surface-alt);color:var(--text-faint);}
+  #view-pricing-customer th.price-sort-th{cursor:pointer;user-select:none;}
+  #view-pricing-customer th.price-sort-th:hover{color:var(--copper);}
+  #view-pricing-customer .price-sort-ind{display:inline-block;margin-left:4px;font-size:10px;opacity:.35;}
+  #view-pricing-customer th.price-sort-active{color:var(--copper);}
+  #view-pricing-customer th.price-sort-active .price-sort-ind{opacity:1;}
   #customerPortalRoot{min-height:100vh;background:var(--bg);display:flex;flex-direction:column;}
   #customerPortalRoot.hidden{display:none;}
   .cp-topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 190px 14px 28px;background:var(--surface);border-bottom:1px solid var(--border);}
@@ -1919,7 +1924,7 @@
         <table id="priceDetailTable">
          <thead><tr>
   <th><input type="checkbox" id="priceSelectAllCheck" title="全选/取消全选当前筛选结果"></th>
-  <th class="price-col-category">类目</th><th class="price-col-brand">品牌</th><th>产品型号</th><th class="price-col-version">版本号</th><th class="price-col-desc">产品信息描述</th><th>EAN</th><th class="price-col-lifecycle">生命周期</th><th data-key="customer">客户</th><th data-key="country">国家</th><th>币种</th><th data-key="retail">含税零售价</th><th data-key="vat">VAT税率</th><th data-key="net">未税净价</th><th data-key="qoq">价格变动（月环比）</th>
+  <th class="price-col-category">类目</th><th class="price-col-brand">品牌</th><th>产品型号</th><th class="price-col-version">版本号</th><th class="price-col-desc">产品信息描述</th><th>EAN</th><th class="price-col-lifecycle">生命周期</th><th data-key="customer">客户</th><th data-key="country">国家</th><th>币种</th><th data-key="retail">含税零售价</th><th data-key="vat">VAT税率</th><th data-key="net">未税净价</th><th data-key="qoq" class="price-sort-th" data-col="qoq">价格变动（月环比）<span class="price-sort-ind">⇅</span></th>
   <th>一级报价</th><th>二级报价</th><th>三级报价</th><th>代理商利润点位</th><th>最终采购价</th>
   <th class="price-col-cncode">CN编码</th><th class="price-col-splitpay">Split Payment</th><th class="price-col-pkg">包装尺寸</th><th class="price-col-page">产品页面</th><th></th>
 </tr></thead>
@@ -4578,6 +4583,8 @@ let activeCategoryFilter = 'ALL';
 let activeBrandFilter = 'ALL';
 let priceSearchTerm = '';
 let priceSelectedIds = new Set();
+let priceSortCol = null;
+let priceSortDir = 'asc';
 let activeLifecycleFilter = 'ALL';
 let catalogSearchTerm = '';
 
@@ -5039,6 +5046,18 @@ function getFilteredPriceRows(){
   if(activeCategoryFilter!=='ALL') rows = rows.filter(p=>productType(p.product)===activeCategoryFilter);
   if(activeBrandFilter!=='ALL') rows = rows.filter(p=>productBrand(p.product)===activeBrandFilter);
   if(priceSearchTerm) rows = rows.filter(p=>p.product.toLowerCase().includes(priceSearchTerm.toLowerCase()));
+  if(priceSortCol === 'qoq'){
+    rows = rows.slice().sort(function(a,b){
+      var qa = getQoQChange(a);
+      var qb = getQoQChange(b);
+      var va = qa ? qa.rate : null;
+      var vb = qb ? qb.rate : null;
+      if (va === null && vb === null) return 0;
+      if (va === null) return 1;
+      if (vb === null) return -1;
+      return priceSortDir === 'asc' ? va - vb : vb - va;
+    });
+  }
   return rows;
 }
 
@@ -5178,7 +5197,23 @@ function qoqCellHtml(p){
   if (qc.trend==='DOWN') return '<span style="color:var(--good);font-weight:600;">\u25BC ' + qc.rate.toFixed(2) + '%</span><br><small style="color:var(--text-faint);font-weight:400;">(' + qc.absolute.toFixed(2) + ' PLN)</small>';
   return '<span style="color:var(--text-faint);">\u25AC 0.00%</span>';
 }
+function priceUpdateSortHeaderUI(){
+  const ths = document.querySelectorAll('#view-pricing-customer th.price-sort-th');
+  ths.forEach(function(th){
+    const col = th.getAttribute('data-col');
+    const ind = th.querySelector('.price-sort-ind');
+    if (!ind) return;
+    if (col === priceSortCol){
+      th.classList.add('price-sort-active');
+      ind.textContent = priceSortDir === 'asc' ? '▲' : '▼';
+    } else {
+      th.classList.remove('price-sort-active');
+      ind.textContent = '⇅';
+    }
+  });
+}
 function renderPriceTable(){
+  priceUpdateSortHeaderUI();
   const tbody = document.getElementById('priceTableBody');
   let rows = getFilteredPriceRows();
   const dash = '<span style="color:var(--text-faint)">—</span>';
@@ -6404,12 +6439,30 @@ document.getElementById('priceSearch').addEventListener('input', e=>{
   priceSearchTerm = e.target.value; renderPriceTable();
 });
 
+const priceTableHeadEl = document.querySelector('#priceDetailTable thead');
+if (priceTableHeadEl){
+  priceTableHeadEl.addEventListener('click', function(e){
+    const th = e.target.closest('th.price-sort-th');
+    if (!th) return;
+    const col = th.getAttribute('data-col');
+    if (priceSortCol === col){
+      priceSortDir = priceSortDir === 'asc' ? 'desc' : 'asc';
+    } else {
+      priceSortCol = col;
+      priceSortDir = 'asc';
+    }
+    renderPriceTable();
+  });
+}
+
 const filterResetBtnEl = document.getElementById('filterResetBtn');
 if (filterResetBtnEl){
   filterResetBtnEl.addEventListener('click', ()=>{
     activeCountryFilter = [];
     activeCustFilter = [];
     activeMonthFilter = getLatestMonthKey();
+    priceSortCol = null;
+    priceSortDir = 'asc';
     activeCategoryFilter = 'ALL';
     activeBrandFilter = 'ALL';
     priceSearchTerm = '';

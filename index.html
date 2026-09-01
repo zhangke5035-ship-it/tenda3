@@ -5038,8 +5038,14 @@ function renderBrandTabs(){
   el.value = activeBrandFilter;
   el.onchange = ()=>{ activeBrandFilter = el.value; renderBrandTabs(); renderPriceTable(); };
 }
+const HIDDEN_SEP_PRODUCT_PATTERNS = ['4G180','EE3 PRO','EX3','EX12'];
 function getFilteredPriceRows(){
   let rows = visibleRows();
+  rows = rows.filter(function(p){
+    if (monthKey(p.month) !== '09') return true;
+    var up = (p.product || '').toUpperCase();
+    return !HIDDEN_SEP_PRODUCT_PATTERNS.some(function(pat){ return up.indexOf(pat) !== -1; });
+  });
   if(activeCountryFilter.length) rows = rows.filter(p=>activeCountryFilter.includes(custCountry(p.cust)));
   if(activeCustFilter.length) rows = rows.filter(p=>activeCustFilter.includes(p.cust));
   if(activeMonthFilter!=='ALL') rows = rows.filter(p=>p.month===activeMonthFilter);

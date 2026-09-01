@@ -4570,12 +4570,14 @@ var SEP_PRICE_OVERRIDES = {
   var NEW_SEP_ONLY_PRODUCTS = [
     {product:'AX12v4.0', retailPLN:189, ean:'6932849423778'},
     {product:'i33v1.1', retailPLN:409, ean:'6932849435771'},
-    {product:'CS6GV1.0', retailPLN:419}
+    {product:'CS6GV1.0', retailPLN:419, ean:'6932849439656'},
+    {product:'TEM2005D', retailPLN:169, custs:['ELTROX','ACT']},
+    {product:'TEM2008D', retailPLN:259, custs:['ELTROX','ACT']}
   ];
   var custs = ['ACT','INC','ELTROX'];
   var addRows = [];
   NEW_SEP_ONLY_PRODUCTS.forEach(function(item){
-    custs.forEach(function(cust){
+    (item.custs||custs).forEach(function(cust){
       addRows.push({id:nextId++, product:item.product, cust:cust, quarter:'Q3', month:'09', category:'HOME', ean:item.ean||null, retailPLN:item.retailPLN, netPLN:null, vatRate:0.23, costUSD:null, profitUSD:null, marginPct:null, cnCode:null, splitPayment:null});
     });
   });

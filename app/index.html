@@ -450,6 +450,7 @@
   .lc-badge.lc-decline{background:var(--copper-soft);color:var(--copper);}
   .lc-badge.lc-eol{background:var(--alert-soft);color:var(--alert);}
   .lc-badge.lc-unknown{background:var(--surface-alt);color:var(--text-faint);}
+  .qoq-new-badge{display:inline-block;padding:2px 8px;border-radius:10px;background:var(--copper-soft);color:var(--copper);font-size:11px;font-weight:600;white-space:nowrap;}
   #view-pricing-customer th.price-sort-th{cursor:pointer;user-select:none;}
   #view-pricing-customer th.price-sort-th:hover{color:var(--copper);}
   #view-pricing-customer .price-sort-ind{display:inline-block;margin-left:4px;font-size:10px;opacity:.35;}
@@ -4567,7 +4568,7 @@ var SEP_PRICE_OVERRIDES = {
   for (var i = 0; i < priceList.length; i++) { if (priceList[i].id > maxId) maxId = priceList[i].id; }
   var nextId = maxId + 1;
   var NEW_SEP_ONLY_PRODUCTS = [
-    {product:'AX12v4.0', retailPLN:189},
+    {product:'AX12v4.0', retailPLN:189, ean:'6932849423778'},
     {product:'i33v1.1', retailPLN:409},
     {product:'CS6GV1.0', retailPLN:419}
   ];
@@ -4575,7 +4576,7 @@ var SEP_PRICE_OVERRIDES = {
   var addRows = [];
   NEW_SEP_ONLY_PRODUCTS.forEach(function(item){
     custs.forEach(function(cust){
-      addRows.push({id:nextId++, product:item.product, cust:cust, quarter:'Q3', month:'09', category:'HOME', retailPLN:item.retailPLN, netPLN:null, vatRate:0.23, costUSD:null, profitUSD:null, marginPct:null, cnCode:null, splitPayment:null});
+      addRows.push({id:nextId++, product:item.product, cust:cust, quarter:'Q3', month:'09', category:'HOME', ean:item.ean||null, retailPLN:item.retailPLN, netPLN:null, vatRate:0.23, costUSD:null, profitUSD:null, marginPct:null, cnCode:null, splitPayment:null});
     });
   });
   priceList = priceList.concat(addRows);
@@ -5220,7 +5221,10 @@ function getQoQChange(p){
 }
 function qoqCellHtml(p){
   var qc = getQoQChange(p);
-  if (!qc) return '<span style="color:var(--text-faint)">\u2014</span>';
+  if (!qc) {
+    if (monthKey(p.month) === '09') return '<span class="qoq-new-badge">首次报价</span>';
+    return '<span style="color:var(--text-faint)">\u2014</span>';
+  }
   if (qc.trend==='UP') return '<span style="color:var(--alert);font-weight:600;">\u25B2 +' + qc.rate.toFixed(2) + '%</span><br><small style="color:var(--text-faint);font-weight:400;">(+' + qc.absolute.toFixed(2) + ' PLN)</small>';
   if (qc.trend==='DOWN') return '<span style="color:var(--good);font-weight:600;">\u25BC ' + qc.rate.toFixed(2) + '%</span><br><small style="color:var(--text-faint);font-weight:400;">(' + qc.absolute.toFixed(2) + ' PLN)</small>';
   return '<span style="color:var(--text-faint);">\u25AC 0.00%</span>';

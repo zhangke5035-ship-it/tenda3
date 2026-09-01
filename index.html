@@ -1795,7 +1795,7 @@
       
       
       <div class="notebox">
-        表中「未税净价」「单位盈亏」「净利率」均为报价表原始计算结果，已包含品牌预留、MDF 预留、风险与指标预留等费用，口径与总部一致。「生命周期」取自《报价型号生命周期_26年6月》清单；「EAN」取自《Q3_Price》价目表。报价明细覆盖 <b>Incom / Action / Eltrox / Intelek / DC-Link</b> 五个客户。Eltrox 同时有 Q2、Q3 两个季度的真实价目表，可以切换"Q3（当前）/ Q2（上一季度）/ 全部季度"查看价格随时间的变化，「环比(QoQ)」列会标出未税净价相对上一季度的涨跌幅。Intelek 的 <b>209 款型号</b> Q3 含税零售价（捷克 Kč）已从最新报价表导入，去税、经销商预留、7% 代理商利润的计算全程用 Kč 进行，仅「最终采购价」按 6.125 汇率换算成 PLN 展示；暂无出厂成本和净利率数据，显示为"—"。DC-Link 暂时只有客户信息，还没有对应的价目表。等你提供其他季度或其他客户的价格表，我可以继续补上。新增行为你手工补充的数据，需要自行核对口径。
+        表中「未税净价」「单位盈亏」「净利率」均为报价表原始计算结果，已包含品牌预留、MDF 预留、风险与指标预留等费用，口径与总部一致。「生命周期」取自《报价型号生命周期_26年6月》清单；「EAN」取自《Q3_Price》价目表。报价明细覆盖 <b>Incom / Action / Eltrox / Intelek / DC-Link</b> 五个客户。「价格变动（月环比）」列会标出未税净价相对上月的涨跌幅，目前仅波兰客户 Incom / Action / Eltrox 的 9 月数据可与 8 月对比，其余暂无上月数据的型号显示"首次报价"。Intelek 的 <b>209 款型号</b> Q3 含税零售价（捷克 Kč）已从最新报价表导入，去税、经销商预留、7% 代理商利润的计算全程用 Kč 进行，仅「最终采购价」按 6.125 汇率换算成 PLN 展示；暂无出厂成本和净利率数据，显示为"—"。DC-Link 暂时只有客户信息，还没有对应的价目表。等你提供其他季度或其他客户的价格表，我可以继续补上。新增行为你手工补充的数据，需要自行核对口径。
       </div>
 
      <div class="modal-overlay" id="addPriceItemModalOverlay">
@@ -1837,7 +1837,7 @@
         <div class="panel-head"><h3>报价明细</h3><div class="desc" id="priceCount"></div></div>
         <div class="filter-bar">
           <div class="filter-ops" style="flex:1;">
-            <select id="quarterSelect" title="报价周期"></select>
+            <select id="quarterSelect" title="报价周期" style="display:none;"></select>
           <select id="filterMonthSelect" title="月份"></select>
             <div class="filter-search"><input id="priceSearch" placeholder="搜索型号/SKU，例如 TE6L、W15-Pro..."></div>
             <div class="ms-dd" id="filterCountryWrap"><button type="button" class="ms-dd-btn" id="filterCountryBtn" title="国家"><span id="filterCountryBtnLabel">全部国家</span><span class="ms-dd-chevron">⌄</span></button><div class="ms-dd-panel hidden" id="filterCountryPanel"></div></div>
@@ -1920,7 +1920,7 @@
         <table id="priceDetailTable">
          <thead><tr>
   <th><input type="checkbox" id="priceSelectAllCheck" title="全选/取消全选当前筛选结果"></th>
-  <th class="price-col-category">类目</th><th class="price-col-brand">品牌</th><th>产品型号</th><th class="price-col-version">版本号</th><th class="price-col-desc">产品信息描述</th><th>EAN</th><th class="price-col-lifecycle">生命周期</th><th data-key="customer">客户</th><th data-key="country">国家</th><th>币种</th><th data-key="retail">含税零售价</th><th data-key="vat">VAT税率</th><th data-key="net">未税净价</th><th data-key="qoq">价格变动 (QoQ)</th>
+  <th class="price-col-category">类目</th><th class="price-col-brand">品牌</th><th>产品型号</th><th class="price-col-version">版本号</th><th class="price-col-desc">产品信息描述</th><th>EAN</th><th class="price-col-lifecycle">生命周期</th><th data-key="customer">客户</th><th data-key="country">国家</th><th>币种</th><th data-key="retail">含税零售价</th><th data-key="vat">VAT税率</th><th data-key="net">未税净价</th><th data-key="qoq">价格变动（月环比）</th>
   <th>一级报价</th><th>二级报价</th><th>三级报价</th><th>代理商利润点位</th><th>最终采购价</th>
   <th class="price-col-cncode">CN编码</th><th class="price-col-splitpay">Split Payment</th><th class="price-col-pkg">包装尺寸</th><th class="price-col-page">产品页面</th><th></th>
 </tr></thead>
@@ -5132,25 +5132,33 @@ function setPriceTableMode(simMode){
   if (table) table.classList.toggle('sim-hide-cols', priceTableSimMode);
   renderPriceTable();
 }
+function findPrevMonthRow(p){
+  var mk = monthKey(p.month);
+  if (!mk) return null;
+  var num = parseInt(mk, 10);
+  if (!num || num <= 1) return null;
+  var prevMonth = String(num - 1).padStart(2, '0');
+  return priceList.find(function(r){ return r.product===p.product && r.cust===p.cust && monthKey(r.month)===prevMonth; });
+}
 function getQoQChange(p){
-  var prevQuarterMap = {Q1:'Q4', Q2:'Q1', Q3:'Q2', Q4:'Q3'};
-  var prevQ = prevQuarterMap[p.quarter];
-  if (!prevQ) return null;
-  var prevRow = priceList.find(function(r){ return r.product===p.product && r.cust===p.cust && r.quarter===prevQ; });
-  if (!prevRow || !prevRow.netPLN || !p.netPLN) return null;
-  var absChange = Math.round((p.netPLN - prevRow.netPLN) * 100) / 100;
-  var rateChange = Math.round((absChange / prevRow.netPLN) * 10000) / 100;
+  var prevRow = findPrevMonthRow(p);
+  if (!prevRow) return null;
+  var vatRate = computeVat(custCountry(p.cust));
+  var effectiveVat = vatRate !== null ? vatRate : 0.23;
+  var net = (typeof p.retailPLN === 'number') ? p.retailPLN/(1+effectiveVat) : ((typeof p.netPLN === 'number') ? p.netPLN : null);
+  var prevVatRate = computeVat(custCountry(prevRow.cust));
+  var prevEffectiveVat = prevVatRate !== null ? prevVatRate : 0.23;
+  var prevNet = (typeof prevRow.retailPLN === 'number') ? prevRow.retailPLN/(1+prevEffectiveVat) : ((typeof prevRow.netPLN === 'number') ? prevRow.netPLN : null);
+  if (net===null || !prevNet) return null;
+  var absChange = Math.round((net - prevNet) * 100) / 100;
+  var rateChange = Math.round((absChange / prevNet) * 10000) / 100;
   var trend = 'STABLE';
   if (absChange > 0.004) trend = 'UP';
   else if (absChange < -0.004) trend = 'DOWN';
   return {rate: rateChange, absolute: absChange, trend: trend};
 }
 function isNewQuoteThisQuarter(p){
-  var prevQuarterMap = {Q1:'Q4', Q2:'Q1', Q3:'Q2', Q4:'Q3'};
-  var prevQ = prevQuarterMap[p.quarter];
-  if (!prevQ) return false;
-  var prevRow = priceList.find(function(r){ return r.product===p.product && r.cust===p.cust && r.quarter===prevQ; });
-  return !prevRow;
+  return !findPrevMonthRow(p);
 }
 function qoqCellHtml(p){
   var qc = getQoQChange(p);
@@ -10214,7 +10222,6 @@ function buildPriceExportRows(){
 function exportPriceWorkbookXLSX(mode, filename){
   const rows = buildPriceExportRows();
   if (!rows.length){ alert('当前没有可导出的报价数据'); return; }
-  const prevQuarterMap = {Q1:'Q4', Q2:'Q1', Q3:'Q2', Q4:'Q3'};
   const includeProfit = mode !== 'customer';
   const colKeys = ['category','brand','product','version','desc','ean','lifecycle','cust','country','currency','retail','vat','net','prevNet','qoqAbs','qoqPct','tier1','tier2','tier3'];
   if (includeProfit) colKeys.push('profitPct');
@@ -10222,7 +10229,7 @@ function exportPriceWorkbookXLSX(mode, filename){
   const headerMap = {
     category:'类目', brand:'品牌', product:'产品型号', version:'版本号', desc:'产品信息描述', ean:'EAN',
     lifecycle:'生命周期', cust:'客户', country:'国家', currency:'币种', retail:'含税零售价', vat:'VAT税率',
-    net:'未税净价', prevNet:'上季度未税净价（参考）', qoqAbs:'环比涨跌额 QoQ (PLN)', qoqPct:'环比涨跌幅 QoQ (%)',
+    net:'未税净价', prevNet:'上月未税净价（参考）', qoqAbs:'环比涨跌额 (PLN)', qoqPct:'环比涨跌幅 (%)',
     tier1:'一级报价', tier2:'二级报价', tier3:'三级报价', profitPct:'代理商利润点位 (%)', final:'最终采购价',
     cnCode:'CN编码', splitPayment:'Split Payment', pkg:'包装尺寸', page:'产品页面'
   };
@@ -10236,8 +10243,7 @@ function exportPriceWorkbookXLSX(mode, filename){
     const isCzk = currency === 'CZK';
     const vatRate = computeVat(country);
     const effectiveVat = vatRate !== null ? vatRate : 0.23;
-    const prevQ = prevQuarterMap[p.quarter];
-    const prevRow = prevQ ? priceList.find(function(r){ return r.product===p.product && r.cust===p.cust && r.quarter===prevQ; }) : null;
+    const prevRow = findPrevMonthRow(p);
     const retail = (typeof p.retailPLN === 'number') ? p.retailPLN : null;
     const net = (retail!==null) ? retail/(1+effectiveVat) : ((typeof p.netPLN==='number') ? p.netPLN : null);
     let prevNet = null;
@@ -10793,7 +10799,7 @@ try { currentLang = localStorage.getItem(I18N_LANG_KEY) || 'pl'; } catch(e) { co
 
 // [中文, English, Polski] —— 可以随时往这个数组里加新条目
 const I18N_DICT = [
-  ['价格变动 (QoQ)','Price Change (QoQ)','Zmiana ceny (QoQ)'],
+  ['价格变动（月环比）','Price Change (MoM)','Zmiana ceny (m/m)'],
   ['总数量','Total Quantity','Łączna ilość'],
   ['促销时间','Campaign Period','Okres kampanii'],
   ['预算申请流程号','Budget Application No.','Nr wniosku budżetowego'],
@@ -11520,7 +11526,7 @@ const I18N_DICT = [
   ["波兰站点及周边市场 · 客户档案管理（数据与报价管理\"客户\"字段联动）","Poland site and neighboring markets · Customer profile management (linked with the \"Customer\" field in Quote Management)","Oddział Polska i rynki sąsiednie · Zarządzanie profilami klientów (powiązane z polem \"Klient\" w zarządzaniu ofertami)"],
   ["以下客户档案根据已有报价/GTM数据中出现的客户名称初步整理，字段可能不完整。如需补充联系人、信用等级、合同信息等具体要求，请告诉我，我会继续完善。","The customer profiles below are compiled from customer names found in existing quotes/GTM data and may be incomplete. Let me know if you need contact details, credit tier, contract info, or other specifics added, and I will continue to complete them.","Poniższe profile klientów zostały wstępnie zebrane na podstawie nazw klientów występujących w istniejących ofertach/danych GTM i mogą być niekompletne. Daj znać, jeśli potrzebujesz uzupełnić dane kontaktowe, poziom kredytowy, informacje o umowie itp., a ja to uzupełnię."],
   ["表中「未税净价」「单位盈亏」「净利率」均为报价表原始计算结果，已包含品牌预留、MDF 预留、风险与指标预留等费用，口径与总部一致。「生命周期」取自《报价型号生命周期_26年6月》清单；「EAN」取自《Q3_Price》价目表。报价明细覆盖","The \"Net Price (ex-VAT)\", \"Unit P&L\", and \"Net Margin\" in this table are the original calculation results from the quote sheet, already including brand reserve, MDF reserve, risk & metrics reserve, etc., consistent with HQ methodology. \"Lifecycle\" is taken from the \"Quote Model Lifecycle_Jun26\" list; \"EAN\" is taken from the \"Q3_Price\" price list. The quote details cover","Wartości \"Cena netto (bez VAT)\", \"Zysk/strata jednostkowa\" i \"Marża netto\" w tej tabeli pochodzą bezpośrednio z arkusza ofert i uwzględniają już rezerwę marki, rezerwę MDF oraz rezerwę na ryzyko i wskaźniki, zgodnie z metodologią centrali. \"Cykl życia\" pochodzi z listy \"Cykl życia modeli ofertowych_cze26\"; \"EAN\" pochodzi z cennika \"Q3_Price\". Szczegóły oferty obejmują"],
-  ["五个客户。Eltrox 同时有 Q2、Q3 两个季度的真实价目表，可以切换\"Q3（当前）/ Q2（上一季度）/ 全部季度\"查看价格随时间的变化，「环比(QoQ)」列会标出未税净价相对上一季度的涨跌幅。Intelek 的","five customers. Eltrox has real price lists for both Q2 and Q3 — switch between \"Q3 (current) / Q2 (last quarter) / All quarters\" to see price changes over time; the \"QoQ\" column shows the change in net price versus the prior quarter. For Intelek,","pięciu klientów. Eltrox ma rzeczywiste cenniki zarówno za Q2, jak i Q3 — przełącz \"Q3 (bieżący) / Q2 (poprzedni kwartał) / Wszystkie kwartały\", aby zobaczyć zmiany cen w czasie; kolumna \"QoQ\" pokazuje zmianę ceny netto względem poprzedniego kwartału. Dla klienta Intelek,"],
+  ["五个客户。「价格变动（月环比）」列会标出未税净价相对上月的涨跌幅，目前仅波兰客户 Incom / Action / Eltrox 的 9 月数据可与 8 月对比，其余暂无上月数据的型号显示\"首次报价\"。Intelek 的","five customers. The \"Price Change (MoM)\" column shows the change in net price versus the prior month; currently only the September data for Poland customers Incom / Action / Eltrox can be compared against August, other models without prior-month data show \"First Quote\". For Intelek,","pięciu klientów. Kolumna \"Zmiana ceny (m/m)\" pokazuje zmianę ceny netto względem poprzedniego miesiąca; obecnie tylko dane za wrzesień dla klientów z Polski Incom / Action / Eltrox można porównać z sierpniem, pozostałe modele bez danych z poprzedniego miesiąca pokazują \"Pierwsza oferta\". Dla klienta Intelek,"],
   ["209 款型号","209 models","209 modeli"],
   ["Q3 含税零售价（捷克 Kč）已从最新报价表导入，去税、经销商预留、7% 代理商利润的计算全程用 Kč 进行，仅「最终采购价」按 6.125 汇率换算成 PLN 展示；暂无出厂成本和净利率数据，显示为\"—\"。DC-Link 暂时只有客户信息，还没有对应的价目表。等你提供其他季度或其他客户的价格表，我可以继续补上。新增行为你手工补充的数据，需要自行核对口径。","Q3 gross retail price (Czech Kč) has been imported from the latest quote sheet; VAT removal, distributor reserve, and 7% agent profit are all calculated in Kč, only the \"Final Purchase Price\" is converted to PLN at a 6.125 rate for display; factory cost and net margin data are not yet available and show as \"—\". DC-Link currently only has customer info, no price list yet. Once you provide price lists for other quarters or customers I can continue to add them. Newly added rows are data you entered manually and should be double-checked.","Cena detaliczna brutto Q3 (CZK) została zaimportowana z najnowszego arkusza ofert; odliczenie VAT, rezerwa dystrybutora i 7% zysku agenta są liczone w CZK, tylko \"Cena zakupu ostateczna\" jest przeliczana na PLN wg kursu 6,125 do wyświetlenia; brak jeszcze danych o koszcie fabrycznym i marży netto, wyświetlane jako \"—\". DC-Link ma na razie tylko dane klienta, bez cennika. Gdy dostarczysz cenniki innych kwartałów lub klientów, mogę je dodać. Nowo dodane wiersze to dane wprowadzone ręcznie i wymagają weryfikacji."],
   ["新增报价项","Add Quote Item","Dodaj pozycję oferty"],

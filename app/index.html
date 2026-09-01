@@ -5066,7 +5066,7 @@ function renderBrandTabs(){
   el.onchange = ()=>{ activeBrandFilter = el.value; renderBrandTabs(); renderPriceTable(); };
 }
 const HIDDEN_SEP_PRODUCT_PATTERNS = ['4G180','EE3 PRO','EX3','EX12','MW12','MW5G','MX12','MX21','MX3','TFC100A','TFC100B'];
-const HIDDEN_SEP_EXACT_PRODUCTS = ['4G03','IC7-PRS-4','N6P-8H','TEF1005D','IT7-PRS-4','K4P-4TR','K4P-4CR','AC3','AC5','TX12 PRO'];
+const HIDDEN_SEP_EXACT_PRODUCTS = ['4G03','IC7-PRS-4','N6P-8H','TEF1005D','IT7-PRS-4','K4P-4TR','K4P-4CR','AC3','AC5','TX12 PRO','IT7-PCS-4','K4W-3TC'];
 function getFilteredPriceRows(){
   let rows = visibleRows();
   rows = rows.filter(function(p){

@@ -5038,11 +5038,12 @@ function renderBrandTabs(){
   el.value = activeBrandFilter;
   el.onchange = ()=>{ activeBrandFilter = el.value; renderBrandTabs(); renderPriceTable(); };
 }
-const HIDDEN_SEP_PRODUCT_PATTERNS = ['4G180','EE3 PRO','EX3','EX12'];
+const HIDDEN_SEP_PRODUCT_PATTERNS = ['4G180','EE3 PRO','EX3','EX12','MW12','MW5G','MX21','MX3','TFC100A','TFC100B'];
 function getFilteredPriceRows(){
   let rows = visibleRows();
   rows = rows.filter(function(p){
     if (monthKey(p.month) !== '09') return true;
+    if (productBrand(p.product) === 'IP-COM') return false;
     var up = (p.product || '').toUpperCase();
     return !HIDDEN_SEP_PRODUCT_PATTERNS.some(function(pat){ return up.indexOf(pat) !== -1; });
   });

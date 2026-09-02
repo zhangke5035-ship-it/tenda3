@@ -7644,6 +7644,26 @@ function exportCustMomCSV(){
   URL.revokeObjectURL(url);
 }
 
+function normMomModelKey(s){ return String(s).toUpperCase().replace(/[\s\-]+/g,'').replace(/[()（）]/g,''); }
+const MOM_MODEL_LIST = ["4G03 Pro","4G05","4G06","4G08","4G09","4G185","5G06","MF6","NVR3108","NVR3116","TN3108","TN3116","N6P-8H","NVR3104-4P","NVR3108-8P","TN3104-4P","G1105P-4-63W","G1105PD","G1110PF-8-120W","G1118P-16-250W","G1120P-16-150W","G1120P-16-250W","G1124P-24-250W","G1126P-24-410W","G1128P-24-250W","G1128P-24-410W","G2220P-16-250W","G2228P-24-410W","G3310P-8-150W","G5328P-24-410W","TEF1106P-4-63W","TEF1109P-8-102W","TEF1110P-8-63W","TEG1105P-4-63W","TEG1105PD","TEG1110PF-8-120W","TEG1120P-16-150W","TEG1120P-16-250W","TEG1124P-24-250W","TEG1128P-24-410W","TEG2220P-16-250W","TEG2228P-24-410W","TEG5310P-8-150W","TEG5328P-24-410W","SG103M","SG108","SM105","SM108","K4W-3TC-1T","G311SM","G511MM","G511SM","PSE30G-AT","PoE30G-AT","TEG311SM","TFC100A","TFC100B","TFC300A","TFC304B","TK4P-4BC","TK8P-4BC","TK8P-4BTC","A18","T10","U11","U11 Pro","U2","W311MI","CPE3","G300-F","M50-F","Pro-7-LR","W15-Pro(深灰色)","W63AP","i26","i27","i36","ANT12-5G360","BS6","CPE13","EW15D","G0-5G-PoE","G0-8G-POE","M20-8G-PoE","M20-POE","M30","O1-5G","O3","O9","OAP1200","W15E","W30E","W36AP","i24","iLBE-5AC","AC1000","CPE12","CPE5","CPE5套装","CPE6S","CPE9","O4(套装)","O6","OAP3000","OS3(套装）","Pro-6-Lite","Pro-6-M","Pro-6-Mini","iUAP-AC-M","A18 Pro","A23","A33","AC10","AC6","AC8","AX12 Pro","BE12 Pro","EE3 Pro(2-pack)","EE3 Pro(3-pack)","EX12(2-pack)","EX3(2-pack)","F3","ME3 Pro(2-pack)","ME3 Pro(3-pack)","ME6 Pro(2-pack)","ME6 Pro(3-pack)","MW3(2-pack)","MW6(1-pack)","MW6(2-pack)","MW6(3-pack)","MX12(2-pack)","MX15 Pro(2-pack)","MX21 Pro(2-pack)","MX21 Pro(3-pack)","MX3(2-pack)","MX3(3-pack)","N301","RX27 Pro","TE3L","TE6L Pro","TX12 Pro","TX12L Pro","TX2 Pro","TX27 Pro","TX2L Pro","TX9 Pro","原材料","BWM1","KATD032GACSMH","KATD064GACSMJ","KATD128GACSMJ","SP15(1-pack)","SP6(1-pack)","G2205D","G2206P-4-63W","G2208D","G2210P-8-120W","G2216D","G2224D","G2226F","G3310F","G3328F","G3350F","G5312F","G5328X","G5328XP-24-410W","TEG1016M","TEG1128P-24-250W","TEG2205D","TEG2206P-4-63W","TEG2208D","TEG2210P-8-120W","TEG2216D","TEG2224D","X5308F","CH10","CP6","IC7-PRS-4","IPC3B24C-4","IPC3B24C-6","IPC3T24C-2.8","IPC3T24C-4","RH7-WCA","RP3","RP7","TC3B24C-4","TC3B24C-6","TC3T24C-2.8","G1005","G1008M","G1016D","G1016G","G1050F","SG105","TEF1005D","TEF1016D","TEF1024D","TEG1005D","TEG1005M","TEG1008M","TEG1016D","TEG1016G","TEG1024D","TEG1024G","TEG1050F","TEM2007X","TEM2010F","TEM2010X","RH3-WCA","RH9-WCA","RP3 Pro","AX12","U18","A9"];
+const MOM_MODEL_LIST_SORTED = MOM_MODEL_LIST.slice().sort(function(a,b){ return normMomModelKey(b).length - normMomModelKey(a).length; });
+function extractModelFromProduct(text){
+  if(!text) return '';
+  let s = String(text);
+  const tm = s.match(/Tenda\s+/i);
+  if(tm){ s = s.slice(tm.index + tm[0].length); }
+  s = s.replace(/^\s*(Nova|NOVA)\s+/,'');
+  const remNorm = normMomModelKey(s);
+  for(let i=0;i<MOM_MODEL_LIST_SORTED.length;i++){
+    const mm = MOM_MODEL_LIST_SORTED[i];
+    const mNorm = normMomModelKey(mm);
+    if(mNorm && remNorm.indexOf(mNorm)===0) return mm;
+  }
+  const fm = s.match(/^([A-Za-z0-9]+(?:[-.][A-Za-z0-9]+)*)(\s+Pro\b)?/i);
+  if(fm) return (fm[1]+(fm[2]||'')).trim();
+  return s.split(' ')[0] || text;
+}
+
 function renderProductMomTable(){
   const head = document.getElementById('productMomTableHead');
   const body = document.getElementById('productMomTableBody');
@@ -7655,7 +7675,7 @@ function renderProductMomTable(){
   const ytdYear = curMonth.slice(0,4);
 
   const theadEl = head.parentElement;
-  head.innerHTML = '<th rowspan="2">产品型号</th>' +
+  head.innerHTML = '<th rowspan="2">型号</th><th rowspan="2">产品型号</th>' +
     '<th colspan="2" class="ytd-col-head" style="text-align:center;">'+ytdYear+' 年累计(YTD)</th>' +
     months.map(m=>'<th colspan="2" style="text-align:center;">'+m+'</th>').join('');
   let subHead = document.getElementById('productMomTableSubHead');
@@ -7697,7 +7717,7 @@ function renderProductMomTable(){
   const table = body.closest('table');
   let foot = table ? table.querySelector('tfoot') : null;
   if (!prodKeys.length){
-    body.innerHTML = '<tr><td colspan="'+(months.length*2+3)+'" style="color:var(--text-faint);">暂无数据</td></tr>';
+    body.innerHTML = '<tr><td colspan="'+(months.length*2+4)+'" style="color:var(--text-faint);">暂无数据</td></tr>';
     if (foot) foot.innerHTML = '';
     window.__productMomExportCache = null;
     return;
@@ -7711,7 +7731,7 @@ function renderProductMomTable(){
   }).sort((a,b)=>b.cur-a.cur);
 
   body.innerHTML = rows.map(r=>
-    '<tr><td>'+r.name+'</td>' +
+    '<tr><td>'+extractModelFromProduct(r.name)+'</td><td>'+r.name+'</td>' +
     '<td class="ytd-col-cell" style="text-align:right;font-weight:600;">'+fmtAmt(r.ytd.amount)+'</td><td class="ytd-col-cell" style="text-align:right;color:var(--text-dim);">'+fmtQty(r.ytd.qty)+'</td>' +
     r.vals.map(v=>'<td style="text-align:right;">'+fmtAmt(v.amount)+'</td><td style="text-align:right;color:var(--text-dim);">'+fmtQty(v.qty)+'</td>').join('') +
     '</tr>'
@@ -7738,7 +7758,7 @@ function renderProductMomTable(){
       return acc;
     }, {amount:0, qty:0});
     foot.innerHTML = '<tr style="font-weight:700;background:var(--surface-alt);border-top:2px solid var(--border);">' +
-      '<td>合计</td>' +
+      '<td colspan="2">合计</td>' +
       '<td class="ytd-col-cell" style="text-align:right;">'+fmtAmt(ytdTotal.amount)+'</td><td class="ytd-col-cell" style="text-align:right;color:var(--text-dim);">'+fmtQty(ytdTotal.qty)+'</td>' +
       months.map(m=>{
         const t = totals[m] || {amount:0, qty:0};
@@ -7753,15 +7773,15 @@ function renderProductMomTable(){
 function exportProductMomCSV(){
   const cache = window.__productMomExportCache;
   if (!cache) return;
-  const header = ['产品型号', cache.ytdYear+' YTD 金额', cache.ytdYear+' YTD 数量'];
+  const header = ['型号','产品型号', cache.ytdYear+' YTD 金额', cache.ytdYear+' YTD 数量'];
   cache.months.forEach(m=>{ header.push(m+' 金额', m+' 数量'); });
   const lines = [header.join(',')];
   cache.rows.forEach(r=>{
-    const vals = [r.name, r.ytd.amount.toFixed(1), r.ytd.qty];
+    const vals = [extractModelFromProduct(r.name), r.name, r.ytd.amount.toFixed(1), r.ytd.qty];
     r.vals.forEach(v=>{ vals.push(v.amount.toFixed(1), v.qty); });
     lines.push(vals.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(','));
   });
-  const totalVals = ['合计', cache.ytdTotal.amount.toFixed(1), cache.ytdTotal.qty];
+  const totalVals = ['', '合计', cache.ytdTotal.amount.toFixed(1), cache.ytdTotal.qty];
   cache.months.forEach(m=>{
     const t = cache.totals[m] || {amount:0, qty:0};
     totalVals.push(t.amount.toFixed(1), t.qty);

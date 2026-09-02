@@ -129,6 +129,20 @@
   .price-table-scroll{overflow:auto;max-height:640px;border:1px solid var(--border-soft);border-radius:8px;}
   .mom-table-scroll{overflow-x:auto;width:100%;}
   .mom-table-scroll table{min-width:max-content;}
+  .mom-table-scroll{position:relative;}
+  #custMomTable thead tr:first-child th:nth-child(n+3){min-width:250px;}
+  #custMomTable thead tr:nth-child(2) th:nth-child(n+3){min-width:125px;}
+  #custMomTable tbody td:nth-child(n+4),#custMomTable tfoot td:nth-child(n+4){min-width:125px;}
+  #custMomTable tbody td:nth-child(3)::after,#custMomTable thead tr:nth-child(2) th:nth-child(2)::after{content:'';position:absolute;right:-10px;top:0;width:10px;height:100%;background:linear-gradient(to right,rgba(20,30,50,0.10),rgba(20,30,50,0));pointer-events:none;}
+  .mom-zero{color:#c3c9d4!important;font-weight:400!important;}
+  #custMomTable tfoot tr{background:#eef2f8!important;}
+  #custMomTable tfoot td{font-weight:700!important;}
+  #custMomTable tfoot td.ytd-col-cell{background:#dfe8f5!important;}
+  .mom-table-scroll::-webkit-scrollbar{height:6px;}
+  .mom-table-scroll::-webkit-scrollbar-track{background:transparent;}
+  .mom-table-scroll::-webkit-scrollbar-thumb{background:rgba(144,147,153,0.01);border-radius:3px;}
+  .mom-table-scroll:hover::-webkit-scrollbar-thumb{background:rgba(144,147,153,0.45);}
+
   #custMomTable tbody td:nth-child(1),#custMomTable tfoot td:nth-child(1),#custMomTable thead tr:first-child th:nth-child(1){min-width:150px;max-width:150px;position:sticky;left:0;z-index:2;background:var(--surface);}
   #custMomTable tbody td:nth-child(2),#custMomTable tfoot td:nth-child(2),#custMomTable thead tr:first-child th:nth-child(2),#custMomTable thead tr:nth-child(2) th:nth-child(1){min-width:90px;max-width:90px;position:sticky;left:150px;z-index:2;}
   #custMomTable tbody td:nth-child(3),#custMomTable tfoot td:nth-child(3),#custMomTable thead tr:nth-child(2) th:nth-child(2){min-width:90px;max-width:90px;position:sticky;left:240px;z-index:2;box-shadow:2px 0 4px rgba(0,0,0,0.05);}
@@ -7927,6 +7941,22 @@ function renderCustMomTable(){
   }
 
   window.__custMomExportCache = { months, ytdYear, rows, totals, ytdTotal, fMomText };
+  (function(){
+    var tbl = document.getElementById('custMomTable');
+    if (tbl){
+      var cells = tbl.querySelectorAll('tbody td, tfoot td');
+      for (var i=0;i<cells.length;i++){
+        var t = (cells[i].textContent||'').trim();
+        if (t==='0.0' || t==='0' || t==='-'){ cells[i].classList.add('mom-zero'); }
+        else { cells[i].classList.remove('mom-zero'); }
+      }
+    }
+    var wrap = document.querySelector('.mom-table-scroll');
+    if (wrap){
+      requestAnimationFrame(function(){ wrap.scrollLeft = wrap.scrollWidth; });
+    }
+  })();
+
 }
 
 function renderRecentOrdersTable(){

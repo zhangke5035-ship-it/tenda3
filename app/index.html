@@ -2214,7 +2214,7 @@
       <div class="ofb-tags hidden" id="orderFilterTags"></div>
       <table>
         <thead><tr>
-          <th>订单号</th><th>客户订单号</th><th>下单日期</th><th>客户</th><th>型号数</th><th>订单总额(PLN)</th><th>状态</th><th>仓库Reference编号</th><th>物流追踪号</th><th>OA流程号</th><th></th>
+          <th>订单号</th><th>客户订单号</th><th>下单日期</th><th>客户</th><th>型号数</th><th>订单数量</th><th>订单总额(PLN)</th><th>状态</th><th>仓库Reference编号</th><th>物流追踪号</th><th>OA流程号</th><th></th>
         </tr></thead>
         <tbody id="orderTableBody"></tbody>
       </table>
@@ -10077,6 +10077,7 @@ function renderOrderTable(){
   body.innerHTML = rows.map(o=>{
     const custName = CUSTOMERS[o.cust] ? CUSTOMERS[o.cust].name : (o.cust||'');
     const itemCount = orderItems.filter(i=>i.orderId===o.id).length;
+    const orderQty = orderItems.filter(i=>i.orderId===o.id).reduce((s,i)=>s+(i.qty||0),0);
     const amount = orderTotal(o.id).toFixed(1);
     return `<tr class="order-row" data-id="${o.id}" style="cursor:pointer;">
       <td class="mono">${o.no}</td>
@@ -10087,6 +10088,7 @@ function renderOrderTable(){
       <td>${o.date||''}</td>
       <td>${custName}</td>
       <td class="num-cell">${itemCount}</td>
+      <td class="num-cell">${orderQty}</td>
       <td class="num-cell">${amount}</td>
       <td><div class="order-status-wrap">
         <span class="sdot" data-status="${o.status}"></span>

@@ -886,6 +886,12 @@
   .inv-field:focus{outline:none;border-color:var(--copper);}
   select.inv-field{cursor:pointer;}
   .inv-search{display:flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:8px 12px;min-width:220px;}
+  .inv-colcfg-wrap{display:inline-block;position:relative;}
+  .inv-colcfg-panel{position:absolute;right:0;top:calc(100% + 6px);background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:0 8px 24px rgba(0,0,0,.12);padding:10px 12px;min-width:160px;z-index:50;}
+  .inv-colcfg-item{display:flex;align-items:center;gap:6px;padding:4px 0;font-size:13px;cursor:pointer;white-space:nowrap;}
+  .inv-colcfg-item input{cursor:pointer;}
+  .inv-colcfg-footer{margin-top:6px;padding-top:6px;border-top:1px solid var(--border);text-align:right;}
+  .inv-colcfg-reset-btn{background:none;border:none;color:var(--copper);font-size:12px;cursor:pointer;padding:0;}
   .inv-search input{background:transparent;border:none;outline:none;color:var(--text);font-size:13px;width:100%;}
   .inv-search svg{flex-shrink:0;opacity:.5;}
   .inv-btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:var(--radius);font-size:13px;font-weight:600;cursor:pointer;border:1px solid transparent;}
@@ -2584,6 +2590,17 @@
     <div style="display:flex;gap:8px;">
       <button class="inv-btn inv-btn-ghost" id="invBtnExport">导出 Excel</button>
       <button class="inv-btn inv-btn-primary" id="invBtnAdd">＋ 新增库存</button>
+      <div class="inv-colcfg-wrap">
+        <button class="inv-btn inv-btn-ghost" id="invBtnColCfg">列配置</button>
+        <div id="invColCfgPanel" class="inv-colcfg-panel" style="display:none;">
+          <label class="inv-colcfg-item"><input type="checkbox" class="inv-colcfg-checkbox" data-col="lifecycle" checked> 产品生命周期</label>
+          <label class="inv-colcfg-item"><input type="checkbox" class="inv-colcfg-checkbox" data-col="version" checked> 版本型号</label>
+          <label class="inv-colcfg-item"><input type="checkbox" class="inv-colcfg-checkbox" data-col="info" checked> 产品信息</label>
+          <label class="inv-colcfg-item"><input type="checkbox" class="inv-colcfg-checkbox" data-col="category" checked> 类目</label>
+          <label class="inv-colcfg-item"><input type="checkbox" class="inv-colcfg-checkbox" data-col="ean" checked> EAN编码</label>
+          <div class="inv-colcfg-footer"><button type="button" id="invColCfgReset" class="inv-colcfg-reset-btn">恢复默认</button></div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -2593,11 +2610,11 @@
         <tr>
           <th>SKU 编码</th>
           <th>产品型号</th>
-          <th>产品生命周期</th>
-          <th>版本型号</th>
-          <th>产品信息</th>
-          <th>类目</th>
-          <th>EAN编码</th>
+          <th class="inv-col-lifecycle">产品生命周期</th>
+          <th class="inv-col-version">版本型号</th>
+          <th class="inv-col-info">产品信息</th>
+          <th class="inv-col-category">类目</th>
+          <th class="inv-col-ean">EAN编码</th>
           <th id="invSortQtyTh" style="cursor:pointer;user-select:none;">当前库存 <span id="invSortQtyIcon" style="opacity:.5;">⇅</span></th>
           <th id="invSortTransitTh" style="cursor:pointer;user-select:none;">在途货柜1 <span id="invSortTransitIcon" style="opacity:.5;">⇅</span></th>
           <th>在途货柜2</th>
@@ -12302,7 +12319,29 @@ applyLanguage(currentLang);
     return '<span class="lc-badge ' + lifecycleClass(stage) + '">' + stage + '</span>';
   }
 
-  function renderInventoryTable(){
+  function invApplyColumnConfig(){
+  var cfg = {};
+  try{ cfg = JSON.parse(localStorage.getItem('tenda_inv_colcfg_v1') || '{}') || {}; }catch(e){ cfg = {}; }
+  var keys = ['lifecycle','version','info','category','ean'];
+  keys.forEach(function(key){
+    var visible = cfg[key] !== false;
+    document.querySelectorAll('.inv-col-' + key).forEach(function(el){ el.style.display = visible ? '' : 'none'; });
+    var cb = document.querySelector('.inv-colcfg-checkbox[data-col="' + key + '"]');
+    if(cb) cb.checked = visible;
+  });
+}
+function invSaveColCfgKey(key, value){
+  var cfg = {};
+  try{ cfg = JSON.parse(localStorage.getItem('tenda_inv_colcfg_v1') || '{}') || {}; }catch(e){ cfg = {}; }
+  cfg[key] = value;
+  try{ localStorage.setItem('tenda_inv_colcfg_v1', JSON.stringify(cfg)); }catch(e){}
+}
+function invResetColCfg(){
+  try{ localStorage.removeItem('tenda_inv_colcfg_v1'); }catch(e){}
+  invApplyColumnConfig();
+}
+
+function renderInventoryTable(){
     const filtered = invGetFiltered();
     if(invSortDir !== 0){
       filtered.sort(function(a,b){ return invSortDir === 1 ? a.qty - b.qty : b.qty - a.qty; });
@@ -12331,11 +12370,11 @@ applyLanguage(currentLang);
         return '<tr>' +
           '<td class="inv-sku">' + item.sku + '</td>' +
           '<td>' + (item.model || '--') + '</td>' +
-          '<td>' + invLifecycleBadge(item.model) + '</td>' +
-          '<td>' + invVersionOf(item) + '</td>' +
-          '<td><div class="inv-prod-name">' + item.name + '</div><div class="inv-prod-cat">' + item.cat + '</div></td>' +
-          '<td>' + (item.cat2 || '-') + '</td>' +
-          '<td>' + (item.ean || '-') + '</td>' +
+          '<td class="inv-col-lifecycle">' + invLifecycleBadge(item.model) + '</td>' +
+          '<td class="inv-col-version">' + invVersionOf(item) + '</td>' +
+          '<td class="inv-col-info"><div class="inv-prod-name">' + item.name + '</div><div class="inv-prod-cat">' + item.cat + '</div></td>' +
+          '<td class="inv-col-category">' + (item.cat2 || '-') + '</td>' +
+          '<td class="inv-col-ean">' + (item.ean || '-') + '</td>' +
           '<td><span class="inv-qty">' + item.qty + '</span><span class="inv-unit">' + item.unit + '</span></td>' +
           '<td>' + transitCell + '</td>' +
           '<td><span class="inv-qty">' + (item.transit2||0) + ' ' + item.unit + '</span></td>' +
@@ -12375,6 +12414,7 @@ applyLanguage(currentLang);
     if(invCurrentPage<totalPages){ nextBtn.onclick = function(){ invCurrentPage += 1; renderInventoryTable(); }; }
     pageBtns.appendChild(nextBtn);
   }
+  invApplyColumnConfig();
 
   function refreshInventory(){
     renderInventoryStats();
@@ -12446,6 +12486,12 @@ applyLanguage(currentLang);
   function closeInventoryModal(){ invOverlay.classList.remove('open'); }
 
   document.getElementById('invBtnAdd').onclick = function(){ openInventoryModal('add', null); };
+  document.getElementById('invBtnColCfg').onclick = function(e){ e.stopPropagation(); var panel = document.getElementById('invColCfgPanel'); panel.style.display = (panel.style.display === 'none' || !panel.style.display) ? 'block' : 'none'; };
+  document.addEventListener('click', function(e){ var panel = document.getElementById('invColCfgPanel'); if(!panel) return; if(panel.style.display !== 'none' && !e.target.closest('.inv-colcfg-wrap')){ panel.style.display = 'none'; } });
+  document.querySelectorAll('.inv-colcfg-checkbox').forEach(function(cb){ cb.onchange = function(){ invSaveColCfgKey(cb.dataset.col, cb.checked); invApplyColumnConfig(); }; });
+  var invColCfgResetBtn = document.getElementById('invColCfgReset');
+  if(invColCfgResetBtn) invColCfgResetBtn.onclick = function(){ invResetColCfg(); };
+  invApplyColumnConfig();
   document.getElementById('invModalClose').onclick = closeInventoryModal;
   document.getElementById('invBtnCancel').onclick = closeInventoryModal;
   invOverlay.addEventListener('click', function(e){ if(e.target === invOverlay) closeInventoryModal(); });

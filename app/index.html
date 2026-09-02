@@ -2599,6 +2599,7 @@
           <th id="invSortQtyTh" style="cursor:pointer;user-select:none;">当前库存 <span id="invSortQtyIcon" style="opacity:.5;">⇅</span></th>
           <th id="invSortTransitTh" style="cursor:pointer;user-select:none;">在途库存 <span id="invSortTransitIcon" style="opacity:.5;">⇅</span></th>
           <th>在途货柜2</th>
+          <th>总库存</th>
           <th>在制库存</th>
           <th>库存状态</th>
           <th>最后更新</th>
@@ -12319,7 +12320,7 @@ applyLanguage(currentLang);
 
     const tbody = document.getElementById('invTableBody');
     if(pageItems.length === 0){
-      tbody.innerHTML = '<tr><td colspan="12" style="text-align:center;color:var(--text-faint);padding:30px;">未找到匹配的库存记录</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="13" style="text-align:center;color:var(--text-faint);padding:30px;">未找到匹配的库存记录</td></tr>';
     } else {
       tbody.innerHTML = pageItems.map(function(item){
         const status = invStatusOf(item);
@@ -12342,6 +12343,7 @@ applyLanguage(currentLang);
           '<td><span class="inv-qty">' + item.qty + '</span><span class="inv-unit">' + item.unit + '</span></td>' +
           '<td>' + transitCell + '</td>' +
           '<td><span class="inv-qty">' + (item.transit2||0) + ' ' + item.unit + '</span></td>' +
+          '<td><span class="inv-qty">' + ((item.qty||0)+(item.transit||0)+(item.transit2||0)) + ' ' + item.unit + '</span></td>' +
           '<td>' + (item.inProd ? (item.inProd + ' ' + item.unit) : '-') + '</td>' +
           '<td>' + invBadgeHtml(status) + '</td>' +
           '<td>' + item.updated + '</td>' +
@@ -12485,12 +12487,12 @@ applyLanguage(currentLang);
 
   function exportInventoryCSV(){
     const rows = invGetFiltered();
-    const header = ['SKU编码','产品型号','版本型号','产品名称','分类','当前库存','单位','在途库存','在途货柜2','预计到货日期','在制库存','库存状态','最后更新'];
+    const header = ['SKU编码','产品型号','版本型号','产品名称','分类','当前库存','单位','在途库存','在途货柜2','总库存','预计到货日期','在制库存','库存状态','最后更新'];
     const lines = [header.join(',')];
     rows.forEach(function(item){
       const arrival = invEarliestArrival(item) || '';
       const statusLabel = invStatusOf(item) === 'out' ? '缺货' : '库存正常';
-      const rowVals = [item.sku, item.model, invVersionOf(item), item.name, item.cat, item.qty, item.unit, item.transit, item.transit2||0, arrival, item.inProd || 0, statusLabel, item.updated];
+      const rowVals = [item.sku, item.model, invVersionOf(item), item.name, item.cat, item.qty, item.unit, item.transit, item.transit2||0, (item.qty||0)+(item.transit||0)+(item.transit2||0), arrival, item.inProd || 0, statusLabel, item.updated];
       lines.push(rowVals.map(function(v){ return '"' + String(v).replace(/"/g,'""') + '"'; }).join(','));
     });
     const blob = new Blob(['﻿' + lines.join('\n')], {type:'text/csv;charset=utf-8;'});

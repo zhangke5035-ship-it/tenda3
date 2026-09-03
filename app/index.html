@@ -12476,11 +12476,11 @@ function renderInventoryTable(){
           '<td>' + item.updated + '</td>' +
           '<td><div class="inv-row-actions"><a data-action="edit" data-sku="' + item.sku + '">编辑</a><a data-action="log" data-sku="' + item.sku + '">出入库记录</a></div></td>' +
           '<td><input type="number" step="any" class="inv-ctnqty-input" data-sku="' + item.sku + '" value="' + (item.ctnQty||'') + '" style="width:74px;border:1px solid var(--border);border-radius:6px;padding:4px 6px;font-size:13px;"></td>' +
-          ''<td><input type="number" step="any" class="inv-netwctn-input" data-sku="' + item.sku + '" value="' + (item.netWCtn||'') + '" style="width:74px;border:1px solid var(--border);border-radius:6px;padding:4px 6px;font-size:13px;"></td>' +
-          ''<td><input type="number" step="any" class="inv-grosswctn-input" data-sku="' + item.sku + '" value="' + (item.grossWCtn||'') + '" style="width:74px;border:1px solid var(--border);border-radius:6px;padding:4px 6px;font-size:13px;"></td>' +
-          ''<td><input type="number" step="any" class="inv-lenmm-input" data-sku="' + item.sku + '" value="' + (item.lenMm||'') + '" style="width:74px;border:1px solid var(--border);border-radius:6px;padding:4px 6px;font-size:13px;"></td>' +
-          ''<td><input type="number" step="any" class="inv-widmm-input" data-sku="' + item.sku + '" value="' + (item.widMm||'') + '" style="width:74px;border:1px solid var(--border);border-radius:6px;padding:4px 6px;font-size:13px;"></td>' +
-          ''<td><input type="number" step="any" class="inv-htmm-input" data-sku="' + item.sku + '" value="' + (item.htMm||'') + '" style="width:74px;border:1px solid var(--border);border-radius:6px;padding:4px 6px;font-size:13px;"></td>' +
+          '<td><input type="number" step="any" class="inv-netwctn-input" data-sku="' + item.sku + '" value="' + (item.netWCtn||'') + '" style="width:74px;border:1px solid var(--border);border-radius:6px;padding:4px 6px;font-size:13px;"></td>' +
+          '<td><input type="number" step="any" class="inv-grosswctn-input" data-sku="' + item.sku + '" value="' + (item.grossWCtn||'') + '" style="width:74px;border:1px solid var(--border);border-radius:6px;padding:4px 6px;font-size:13px;"></td>' +
+          '<td><input type="number" step="any" class="inv-lenmm-input" data-sku="' + item.sku + '" value="' + (item.lenMm||'') + '" style="width:74px;border:1px solid var(--border);border-radius:6px;padding:4px 6px;font-size:13px;"></td>' +
+          '<td><input type="number" step="any" class="inv-widmm-input" data-sku="' + item.sku + '" value="' + (item.widMm||'') + '" style="width:74px;border:1px solid var(--border);border-radius:6px;padding:4px 6px;font-size:13px;"></td>' +
+          '<td><input type="number" step="any" class="inv-htmm-input" data-sku="' + item.sku + '" value="' + (item.htMm||'') + '" style="width:74px;border:1px solid var(--border);border-radius:6px;padding:4px 6px;font-size:13px;"></td>' +
           '</tr>';
       }).join('');
     }

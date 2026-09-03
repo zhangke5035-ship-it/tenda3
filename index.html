@@ -3083,7 +3083,7 @@
                     <th>活动总预算</th>
                     <th>含税总金额</th>
                     <th>报销状态</th>
-                    <th>预算申请流程号</th>
+                    <th>预算申请时间</th><th>预算申请流程号</th>
                     <th>活动报销流程号</th>
                     <th>报销凭证</th>
                     <th style="width:44px;"></th>
@@ -3143,7 +3143,7 @@
             <option value="已结清">已结清</option>
           </select>
         </div>
-              <div class="field"><label>预算申请流程号</label><input id="m_budget_flow_no" placeholder="例如 BUD-2026-0012"></div>
+              <div class="field"><label>预算申请时间</label><input type="date" id="m_budget_apply_date"></div><div class="field"><label>预算申请流程号</label><input id="m_budget_flow_no" placeholder="例如 BUD-2026-0012"></div>
               <div class="field"><label>活动报销流程号</label><input id="m_reimburse_flow_no" placeholder="例如 RB-2026-0012"></div>
               <div class="field">
                 <label>报销凭证</label>
@@ -5362,6 +5362,7 @@ function renderPromoTable(){
       '<td class="mono"><strong>' + Number(m.budget || 0).toFixed(2) + ' PLN</strong></td>' +
       '<td class="mono">' + Number(budgetWithTax || 0).toFixed(2) + ' PLN</td>' +
       '<td><span class="status ' + statusClass(m.status) + '"><span class="sdot"></span>' + escapeHtmlCP(m.status || '待提交') + '</span></td>' +
+      '<td class="mono">' + (m.budget_apply_date || '-') + '</td>' +
       '<td>' + escapeHtmlCP(m.budget_flow_no || '-') + '</td>' +
       '<td>' + escapeHtmlCP(m.reimburse_flow_no || '-') + '</td>' +
       '<td>' + ((m.reimburse_docs && m.reimburse_docs.length) ? escapeHtmlCP(m.reimburse_docs.join(' / ')) : '-') + '</td>' +
@@ -6748,6 +6749,7 @@ function openPromoDrawer(mode, id){
     document.getElementById('m_end_date').value = m.end_date || '';
     document.getElementById('m_actual').value = m.actual || '';
     document.getElementById('m_status').value = m.status || '待提交';
+    document.getElementById('m_budget_apply_date').value = m.budget_apply_date || '';
     document.getElementById('m_budget_flow_no').value = m.budget_flow_no || '';
     document.getElementById('m_reimburse_flow_no').value = m.reimburse_flow_no || '';
     const docs = m.reimburse_docs || [];
@@ -6768,6 +6770,7 @@ function openPromoDrawer(mode, id){
     document.getElementById('m_end_date').value = '';
     document.getElementById('m_actual').value = '';
     document.getElementById('m_status').value = '待提交';
+    document.getElementById('m_budget_apply_date').value = '';
     document.getElementById('m_budget_flow_no').value = '';
     document.getElementById('m_reimburse_flow_no').value = '';
     document.getElementById('m_doc_sales').checked = false;
@@ -6895,12 +6898,13 @@ document.getElementById('addPromoBtn').addEventListener('click', async ()=>{
   const actual = parseFloat(document.getElementById('m_actual').value) || 0;
   const status = document.getElementById('m_status').value;
   const budget = meaGrandTotalValue();
+    const budgetApplyDate = document.getElementById('m_budget_apply_date').value;
     const budgetFlowNo = document.getElementById('m_budget_flow_no').value.trim();
   const reimburseFlowNo = document.getElementById('m_reimburse_flow_no').value.trim();
   const reimburseDocs = [];
   if (document.getElementById('m_doc_sales').checked) reimburseDocs.push('销售报告');
   if (document.getElementById('m_doc_inventory').checked) reimburseDocs.push('库存报告');
-  const payload = { name: name, cust: cust, type: type, month: month, start_date: startDate, end_date: endDate, budget: budget, actual: actual, status: status, budget_flow_no: budgetFlowNo || null, reimburse_flow_no: reimburseFlowNo || null, reimburse_docs: reimburseDocs };
+  const payload = { name: name, cust: cust, type: type, month: month, start_date: startDate, end_date: endDate, budget: budget, actual: actual, status: status, budget_apply_date: budgetApplyDate || null, budget_flow_no: budgetFlowNo || null, reimburse_flow_no: reimburseFlowNo || null, reimburse_docs: reimburseDocs };
 
   let activityId;
   if (promoDrawerMode === 'edit'){
@@ -7530,7 +7534,7 @@ async function loadMarketingActivities(){
       id: r.id, name: r.name, cust: r.cust, type: r.type, month: r.month,
       start_date: r.start_date, end_date: r.end_date,
       budget: Number(r.budget)||0, actual: Number(r.actual)||0, status: r.status,
-      budget_flow_no: r.budget_flow_no, reimburse_flow_no: r.reimburse_flow_no, reimburse_docs: r.reimburse_docs||[]
+      budget_apply_date: r.budget_apply_date, budget_flow_no: r.budget_flow_no, reimburse_flow_no: r.reimburse_flow_no, reimburse_docs: r.reimburse_docs||[]
     }));
     const { data: itemsData, error: itemsError } = await sb.from('marketing_activity_items').select('*').order('id', {ascending:true});
     if (itemsError){ console.error('loadMarketingActivityItems', itemsError); }
@@ -11005,6 +11009,7 @@ const I18N_DICT = [
   ['价格变动（月环比）','Price Change (MoM)','Zmiana ceny (m/m)'],
   ['总数量','Total Quantity','Łączna ilość'],
   ['促销时间','Campaign Period','Okres kampanii'],
+  ['预算申请时间','Budget Application Date','Data wniosku budżetowego'],
   ['预算申请流程号','Budget Application No.','Nr wniosku budżetowego'],
   ['活动报销流程号','Reimbursement Process No.','Nr procesu rozliczenia'],
   ['报销凭证','Reimbursement Documents','Dokumenty rozliczeniowe'],

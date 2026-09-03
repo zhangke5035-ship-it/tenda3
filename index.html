@@ -7726,7 +7726,7 @@ function renderProductMomTable(){
     return { name: k, vals, ytd, cur };
   }).sort((a,b)=>b.cur-a.cur);
 
-  const PRODUCT_MOM_PAGE_SIZE = 30;
+  const PRODUCT_MOM_PAGE_SIZE = 20;
   const productMomTotalPages = Math.max(1, Math.ceil(rows.length / PRODUCT_MOM_PAGE_SIZE));
   if (typeof window.productMomPage !== 'number') window.productMomPage = 1;
   if (window.productMomPage > productMomTotalPages) window.productMomPage = productMomTotalPages;

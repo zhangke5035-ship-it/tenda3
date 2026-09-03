@@ -3195,7 +3195,8 @@
                 <th>单个补贴 (PLN)</th>
                 <th>预估销售数量</th>
                 <th>实际销售数量（结算数量）</th>
-                <th>结算金额 (PLN)</th>
+                <th>预算金额 (PLN)</th>
+                <th>实际结算金额 (PLN)</th>
                 <th>税率 (%)</th>
                 <th>含税结算金额 (PLN)</th>
               </tr>
@@ -6624,8 +6625,7 @@ function meaEsc(s){
 
 function meaRowTotal(item){
   const s = parseFloat(item.subsidy) || 0;
-  const hasActual = item.actualQty !== undefined && item.actualQty !== null && String(item.actualQty).trim() !== '';
-  const c = hasActual ? (parseInt(item.actualQty) || 0) : (parseInt(item.count) || 0);
+  const c = parseInt(item.count) || 0;
   return s * c;
 }
 
@@ -6840,6 +6840,7 @@ function openPromoDetail(id){
     const net = Number(it.amount || 0);
     const vatPct = it.vat_rate != null ? Number(it.vat_rate) * 100 : 23;
     const withTax = it.amount_with_tax != null ? Number(it.amount_with_tax) : net * (1 + vatPct / 100);
+    const actualAmount = it.actual_qty != null ? Number(it.subsidy || 0) * Number(it.actual_qty) : null;
     return '' +
       '<tr>' +
       '<td>' + escapeHtmlCP(it.product || '-') + '</td>' +
@@ -6847,10 +6848,11 @@ function openPromoDetail(id){
       '<td class="mono">' + (it.qty || 0) + '</td>' +
       '<td class="mono">' + (it.actual_qty != null ? it.actual_qty : '-') + '</td>' +
       '<td class="mono">' + net.toFixed(2) + '</td>' +
+      '<td class="mono">' + (actualAmount != null ? actualAmount.toFixed(2) : '-') + '</td>' +
       '<td class="mono">' + vatPct.toFixed(0) + '%</td>' +
       '<td class="mono">' + withTax.toFixed(2) + '</td>' +
       '</tr>';
-  }).join('') : '<tr><td colspan="7" style="text-align:center;color:var(--text-dim);">暂无补贴明细</td></tr>';
+  }).join('') : '<tr><td colspan="8" style="text-align:center;color:var(--text-dim);">暂无补贴明细</td></tr>';
 
   document.getElementById('promoDetailBudget').textContent = Number(m.budget || 0).toFixed(2) + ' PLN';
   const budgetWithTax = items.length ? items.reduce(function(sum, it){
@@ -11025,6 +11027,8 @@ const I18N_DICT = [
   ['一客一动','One Campaign per Customer','Jedna kampania na klienta'],
   ['含税结算金额','Settlement Amount (incl. VAT)','Kwota rozliczenia (z VAT)'],
   ['结算金额','Settlement Amount','Kwota rozliczenia'],
+  ['预算金额','Budget Amount','Kwota budżetu'],
+  ['实际结算金额','Actual Settlement Amount','Rzeczywista kwota rozliczenia'],
   ['补贴明细','Subsidy Details','Szczegóły dopłat'],
   ['活动总预算','Total Campaign Budget','Całkowity budżet kampanii'],
   ['含税总金额','Total Amount (incl. VAT)','Kwota całkowita (z VAT)'],

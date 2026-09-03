@@ -3193,7 +3193,8 @@
               <tr>
                 <th>产品型号</th>
                 <th>单个补贴 (PLN)</th>
-                <th>数量</th>
+                <th>预估销售数量</th>
+                <th>实际销售数量（结算数量）</th>
                 <th>结算金额 (PLN)</th>
                 <th>税率 (%)</th>
                 <th>含税结算金额 (PLN)</th>
@@ -6612,7 +6613,7 @@ if (addPriceItemModalOverlayEl){
   });
 }
 
-let meaItems = [{ id: 1, product: '', subsidy: '', count: '', vat: 23 }];
+let meaItems = [{ id: 1, product: '', subsidy: '', count: '', actualQty: '', vat: 23 }];
 let meaNextId = 2;
 
 function meaEsc(s){
@@ -6623,7 +6624,8 @@ function meaEsc(s){
 
 function meaRowTotal(item){
   const s = parseFloat(item.subsidy) || 0;
-  const c = parseInt(item.count) || 0;
+  const hasActual = item.actualQty !== undefined && item.actualQty !== null && String(item.actualQty).trim() !== '';
+  const c = hasActual ? (parseInt(item.actualQty) || 0) : (parseInt(item.count) || 0);
   return s * c;
 }
 
@@ -6651,7 +6653,8 @@ function renderMeaItems(){
       '<div class="field"><label>产品型号</label><input type="text" list="modelDatalist" class="inv-field mea-item-product" data-id="' + item.id + '" value="' + meaEsc(item.product) + '" placeholder="例如 TX12L Pro"></div>' +
       '<div class="mea-card-row">' +
         '<div class="field"><label>单个型号促销补贴 (PLN)</label><input type="number" class="inv-field mea-item-subsidy" data-id="' + item.id + '" value="' + meaEsc(item.subsidy) + '" placeholder="0.00"></div>' +
-        '<div class="field"><label>预估补贴台数 (台)</label><input type="number" class="inv-field mea-item-count" data-id="' + item.id + '" value="' + meaEsc(item.count) + '" placeholder="0"></div>' +
+        '<div class="field"><label>预估销售数量</label><input type="number" class="inv-field mea-item-count" data-id="' + item.id + '" value="' + meaEsc(item.count) + '" placeholder="0"></div>' +
+        '<div class="field"><label>实际销售数量（结算数量）</label><input type="number" class="inv-field mea-item-actual" data-id="' + item.id + '" value="' + meaEsc(item.actualQty) + '" placeholder="0"></div>' +
       '</div>' +
       '<div class="mea-card-row">' +
         '<div class="field"><label>税率 (%)</label><input type="number" class="inv-field mea-item-vat" data-id="' + item.id + '" value="' + meaEsc(item.vat) + '" placeholder="23"></div>' +
@@ -6687,7 +6690,7 @@ function meaResetItems(){
 
 function meaLoadItems(items){
   meaItems = (items && items.length) ? items.map(function(it){
-    return { id: meaNextId++, product: it.product || '', subsidy: it.subsidy != null ? String(it.subsidy) : '', count: it.qty != null ? String(it.qty) : '', vat: it.vat_rate != null ? Math.round(it.vat_rate*100) : 23 };
+    return { id: meaNextId++, product: it.product || '', subsidy: it.subsidy != null ? String(it.subsidy) : '', count: it.qty != null ? String(it.qty) : '', actualQty: it.actual_qty != null ? String(it.actual_qty) : '', vat: it.vat_rate != null ? Math.round(it.vat_rate*100) : 23 };
   }) : [{ id: meaNextId++, product: '', subsidy: '', count: '', vat: 23 }];
   renderMeaItems();
 }
@@ -6703,6 +6706,7 @@ function meaLoadItems(items){
     else if (e.target.classList.contains('mea-item-subsidy')) item.subsidy = e.target.value;
     else if (e.target.classList.contains('mea-item-count')) item.count = e.target.value;
     else if (e.target.classList.contains('mea-item-vat')) item.vat = e.target.value;
+    else if (e.target.classList.contains('mea-item-actual')) item.actualQty = e.target.value;
     meaUpdateRowTotal(id);
   });
   body.addEventListener('click', function(e){
@@ -6715,7 +6719,7 @@ function meaLoadItems(items){
   });
   const addBtn = document.getElementById('meaAddRowBtn');
   if (addBtn) addBtn.addEventListener('click', function(){
-    meaItems.push({ id: meaNextId++, product: '', subsidy: '', count: '', vat: 23 });
+    meaItems.push({ id: meaNextId++, product: '', subsidy: '', count: '', actualQty: '', vat: 23 });
     renderMeaItems();
   });
   renderMeaItems();
@@ -6841,11 +6845,12 @@ function openPromoDetail(id){
       '<td>' + escapeHtmlCP(it.product || '-') + '</td>' +
       '<td class="mono">' + Number(it.subsidy || 0).toFixed(2) + '</td>' +
       '<td class="mono">' + (it.qty || 0) + '</td>' +
+      '<td class="mono">' + (it.actual_qty != null ? it.actual_qty : '-') + '</td>' +
       '<td class="mono">' + net.toFixed(2) + '</td>' +
       '<td class="mono">' + vatPct.toFixed(0) + '%</td>' +
       '<td class="mono">' + withTax.toFixed(2) + '</td>' +
       '</tr>';
-  }).join('') : '<tr><td colspan="6" style="text-align:center;color:var(--text-dim);">暂无补贴明细</td></tr>';
+  }).join('') : '<tr><td colspan="7" style="text-align:center;color:var(--text-dim);">暂无补贴明细</td></tr>';
 
   document.getElementById('promoDetailBudget').textContent = Number(m.budget || 0).toFixed(2) + ' PLN';
   const budgetWithTax = items.length ? items.reduce(function(sum, it){
@@ -6926,6 +6931,7 @@ document.getElementById('addPromoBtn').addEventListener('click', async ()=>{
       product: it.product.trim(),
       subsidy: parseFloat(it.subsidy) || 0,
       qty: parseInt(it.count) || 0,
+      actual_qty: (it.actualQty !== undefined && it.actualQty !== null && String(it.actualQty).trim() !== '') ? (parseInt(it.actualQty) || 0) : null,
       amount: meaRowTotal(it),
       vat_rate: vat / 100,
       amount_with_tax: meaRowTotalWithTax(it),
@@ -11035,7 +11041,8 @@ const I18N_DICT = [
   ['活动开始时间','Campaign Start Date','Data rozpoczęcia kampanii'],
   ['活动结束时间','Campaign End Date','Data zakończenia kampanii'],
   ['单个型号促销补贴','Subsidy per Model','Dopłata na model'],
-  ['预估补贴台数','Estimated Subsidized Units','Szacowana liczba jednostek'],
+  ['预估销售数量','Estimated Sales Qty','Szacowana ilość sprzedaży'],
+  ['实际销售数量（结算数量）','Actual Sales Qty (Settlement)','Rzeczywista ilość sprzedaży (rozliczenie)'],
   ['税率','VAT Rate','Stawka VAT'],
   ['添加型号','Add Model','Dodaj model'],
   ['预算汇总','Budget Summary','Podsumowanie budżetu'],

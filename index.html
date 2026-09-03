@@ -2610,6 +2610,7 @@
           <th>SKU 编码</th>
           <th>产品型号</th>
           <th class="inv-col-lifecycle">产品生命周期</th>
+          <th>26年销量</th>
           <th class="inv-col-version">版本型号</th>
           <th class="inv-col-info">产品信息</th>
           <th class="inv-col-category">类目</th>
@@ -12381,7 +12382,22 @@ applyLanguage(currentLang);
     return '<span class="lc-badge ' + lifecycleClass(stage) + '">' + stage + '</span>';
   }
 
-  function invApplyColumnConfig(){
+  function invYtdQty2026(model){
+  if (!window.__invYtdQtyMap){
+    var map = {};
+    var orderYearById = {};
+    orders.forEach(function(o){ orderYearById[o.id] = (o.date||'').slice(0,4); });
+    orderItems.forEach(function(it){
+      if (orderYearById[it.orderId] !== '2026') return;
+      var m = extractModelFromProduct(it.product);
+      if (!m) return;
+      map[m] = (map[m]||0) + (it.qty||0);
+    });
+    window.__invYtdQtyMap = map;
+  }
+  return window.__invYtdQtyMap[model] || 0;
+}
+function invApplyColumnConfig(){
   var cfg = {};
   try{ cfg = JSON.parse(localStorage.getItem('tenda_inv_colcfg_v1') || '{}') || {}; }catch(e){ cfg = {}; }
   var keys = ['lifecycle','version','info','category','ean'];
@@ -12433,6 +12449,7 @@ function renderInventoryTable(){
           '<td class="inv-sku">' + item.sku + '</td>' +
           '<td>' + (item.model || '--') + '</td>' +
           '<td class="inv-col-lifecycle">' + invLifecycleBadge(item.model) + '</td>' +
+          '<td>' + invYtdQty2026(item.model).toLocaleString('en-US') + ' 台</td>' +
           '<td class="inv-col-version">' + invVersionOf(item) + '</td>' +
           '<td class="inv-col-info"><div class="inv-prod-name">' + item.name + '</div><div class="inv-prod-cat">' + item.cat + '</div></td>' +
           '<td class="inv-col-category">' + (item.cat2 || '-') + '</td>' +

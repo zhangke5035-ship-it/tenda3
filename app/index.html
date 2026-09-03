@@ -2610,7 +2610,7 @@
           <th>SKU 编码</th>
           <th>产品型号</th>
           <th class="inv-col-lifecycle">产品生命周期</th>
-          <th>26年销量</th>
+          <th id="invSortYtdTh" style="cursor:pointer;user-select:none;">26年销量 <span id="invSortYtdIcon" style="opacity:.5;">⇅</span></th>
           <th class="inv-col-version">版本型号</th>
           <th class="inv-col-info">产品信息</th>
           <th class="inv-col-category">类目</th>
@@ -2618,9 +2618,9 @@
           <th id="invSortQtyTh" style="cursor:pointer;user-select:none;">当前库存 <span id="invSortQtyIcon" style="opacity:.5;">⇅</span></th>
           <th id="invSortTransitTh" style="cursor:pointer;user-select:none;">在途货柜1 <span id="invSortTransitIcon" style="opacity:.5;">⇅</span></th>
           <th>在途货柜2</th>
-          <th>总库存</th>
-          <th>预测需求</th>
-          <th>在制库存</th>
+          <th id="invSortTotalTh" style="cursor:pointer;user-select:none;">总库存 <span id="invSortTotalIcon" style="opacity:.5;">⇅</span></th>
+          <th id="invSortForecastTh" style="cursor:pointer;user-select:none;">预测需求 <span id="invSortForecastIcon" style="opacity:.5;">⇅</span></th>
+          <th id="invSortInProdTh" style="cursor:pointer;user-select:none;">在制库存 <span id="invSortInProdIcon" style="opacity:.5;">⇅</span></th>
           <th>库存状态</th>
           <th>最后更新</th>
           <th>操作</th><th>整箱台数</th><th>Net.W(kg)/CTN</th><th>G.W(kg)/CTN</th><th>L(mm)</th><th>W(mm)</th><th>H(mm)</th>
@@ -12376,6 +12376,10 @@ applyLanguage(currentLang);
   }
 
   let invSortTransitDir = 0;
+  let invSortYtdDir = 0;
+  let invSortTotalDir = 0;
+  let invSortForecastDir = 0;
+  let invSortInProdDir = 0;
   function invLifecycleBadge(model){
     var stage = LIFECYCLE_MAP[model];
     if(!stage) return '<span class="lc-badge lc-unknown">--</span>';
@@ -12431,6 +12435,14 @@ function renderInventoryTable(){
         if(!db) return -1;
         return invSortTransitDir === 1 ? (da < db ? -1 : da > db ? 1 : 0) : (da > db ? -1 : da < db ? 1 : 0);
       });
+    } else if(invSortYtdDir !== 0){
+      filtered.sort(function(a,b){ var va = invYtdQty2026(a.model), vb = invYtdQty2026(b.model); return invSortYtdDir === 1 ? va - vb : vb - va; });
+    } else if(invSortTotalDir !== 0){
+      filtered.sort(function(a,b){ var va = (a.qty||0)+(a.transit||0)+(a.transit2||0), vb = (b.qty||0)+(b.transit||0)+(b.transit2||0); return invSortTotalDir === 1 ? va - vb : vb - va; });
+    } else if(invSortForecastDir !== 0){
+      filtered.sort(function(a,b){ return invSortForecastDir === 1 ? (a.forecast||0) - (b.forecast||0) : (b.forecast||0) - (a.forecast||0); });
+    } else if(invSortInProdDir !== 0){
+      filtered.sort(function(a,b){ return invSortInProdDir === 1 ? (a.inProd||0) - (b.inProd||0) : (b.inProd||0) - (a.inProd||0); });
     }
     const totalPages = Math.max(1, Math.ceil(filtered.length / INV_PAGE_SIZE));
     if(invCurrentPage > totalPages) invCurrentPage = totalPages;
@@ -12513,7 +12525,15 @@ function renderInventoryTable(){
   document.getElementById('invSortQtyTh').addEventListener('click', function(){
     invSortDir = invSortDir === 1 ? -1 : 1;
     invSortTransitDir = 0;
+    invSortYtdDir = 0;
+    invSortTotalDir = 0;
+    invSortForecastDir = 0;
+    invSortInProdDir = 0;
     document.getElementById('invSortQtyIcon').textContent = invSortDir === 1 ? '↑' : '↓';
+    document.getElementById('invSortYtdIcon').textContent = '⇅';
+    document.getElementById('invSortTotalIcon').textContent = '⇅';
+    document.getElementById('invSortForecastIcon').textContent = '⇅';
+    document.getElementById('invSortInProdIcon').textContent = '⇅';
     document.getElementById('invSortTransitIcon').textContent = '⇅';
     invCurrentPage = 1;
     renderInventoryTable();
@@ -12521,8 +12541,80 @@ function renderInventoryTable(){
   document.getElementById('invSortTransitTh').addEventListener('click', function(){
     invSortTransitDir = invSortTransitDir === 1 ? -1 : 1;
     invSortDir = 0;
+    invSortYtdDir = 0;
+    invSortTotalDir = 0;
+    invSortForecastDir = 0;
+    invSortInProdDir = 0;
     document.getElementById('invSortTransitIcon').textContent = invSortTransitDir === 1 ? '↑' : '↓';
+    document.getElementById('invSortYtdIcon').textContent = '⇅';
+    document.getElementById('invSortTotalIcon').textContent = '⇅';
+    document.getElementById('invSortForecastIcon').textContent = '⇅';
+    document.getElementById('invSortInProdIcon').textContent = '⇅';
     document.getElementById('invSortQtyIcon').textContent = '⇅';
+    invCurrentPage = 1;
+    renderInventoryTable();
+  });
+  document.getElementById('invSortYtdTh').addEventListener('click', function(){
+    invSortYtdDir = invSortYtdDir === 1 ? -1 : 1;
+    invSortDir = 0;
+    invSortTransitDir = 0;
+    invSortTotalDir = 0;
+    invSortForecastDir = 0;
+    invSortInProdDir = 0;
+    document.getElementById('invSortQtyIcon').textContent = '⇅';
+    document.getElementById('invSortTransitIcon').textContent = '⇅';
+    document.getElementById('invSortTotalIcon').textContent = '⇅';
+    document.getElementById('invSortForecastIcon').textContent = '⇅';
+    document.getElementById('invSortInProdIcon').textContent = '⇅';
+    document.getElementById('invSortYtdIcon').textContent = invSortYtdDir === 1 ? '↑' : '↓';
+    invCurrentPage = 1;
+    renderInventoryTable();
+  });
+  document.getElementById('invSortTotalTh').addEventListener('click', function(){
+    invSortTotalDir = invSortTotalDir === 1 ? -1 : 1;
+    invSortDir = 0;
+    invSortTransitDir = 0;
+    invSortYtdDir = 0;
+    invSortForecastDir = 0;
+    invSortInProdDir = 0;
+    document.getElementById('invSortQtyIcon').textContent = '⇅';
+    document.getElementById('invSortTransitIcon').textContent = '⇅';
+    document.getElementById('invSortYtdIcon').textContent = '⇅';
+    document.getElementById('invSortForecastIcon').textContent = '⇅';
+    document.getElementById('invSortInProdIcon').textContent = '⇅';
+    document.getElementById('invSortTotalIcon').textContent = invSortTotalDir === 1 ? '↑' : '↓';
+    invCurrentPage = 1;
+    renderInventoryTable();
+  });
+  document.getElementById('invSortForecastTh').addEventListener('click', function(){
+    invSortForecastDir = invSortForecastDir === 1 ? -1 : 1;
+    invSortDir = 0;
+    invSortTransitDir = 0;
+    invSortYtdDir = 0;
+    invSortTotalDir = 0;
+    invSortInProdDir = 0;
+    document.getElementById('invSortQtyIcon').textContent = '⇅';
+    document.getElementById('invSortTransitIcon').textContent = '⇅';
+    document.getElementById('invSortYtdIcon').textContent = '⇅';
+    document.getElementById('invSortTotalIcon').textContent = '⇅';
+    document.getElementById('invSortInProdIcon').textContent = '⇅';
+    document.getElementById('invSortForecastIcon').textContent = invSortForecastDir === 1 ? '↑' : '↓';
+    invCurrentPage = 1;
+    renderInventoryTable();
+  });
+  document.getElementById('invSortInProdTh').addEventListener('click', function(){
+    invSortInProdDir = invSortInProdDir === 1 ? -1 : 1;
+    invSortDir = 0;
+    invSortTransitDir = 0;
+    invSortYtdDir = 0;
+    invSortTotalDir = 0;
+    invSortForecastDir = 0;
+    document.getElementById('invSortQtyIcon').textContent = '⇅';
+    document.getElementById('invSortTransitIcon').textContent = '⇅';
+    document.getElementById('invSortYtdIcon').textContent = '⇅';
+    document.getElementById('invSortTotalIcon').textContent = '⇅';
+    document.getElementById('invSortForecastIcon').textContent = '⇅';
+    document.getElementById('invSortInProdIcon').textContent = invSortInProdDir === 1 ? '↑' : '↓';
     invCurrentPage = 1;
     renderInventoryTable();
   });

@@ -12387,7 +12387,7 @@ applyLanguage(currentLang);
   }
 
   function invYtdQty2026(model){
-  if (!window.__invYtdQtyMap){
+  if (!window.__invYtdQtyMap || (Object.keys(window.__invYtdQtyMap).length === 0 && orders.length > 0 && orderItems.length > 0)){
     var map = {};
     var orderYearById = {};
     orders.forEach(function(o){ orderYearById[o.id] = (o.date||'').slice(0,4); });

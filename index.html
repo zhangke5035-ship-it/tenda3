@@ -901,6 +901,8 @@
   select.inv-field{cursor:pointer;}
   .inv-search{display:flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:8px 12px;min-width:220px;}
   .inv-colcfg-wrap{display:inline-block;position:relative;}
+  .inv-colcfg-inline{display:flex;align-items:center;flex-wrap:wrap;gap:14px;margin:10px 0 4px;}
+  .inv-colcfg-inline-label{font-size:13px;color:var(--text-dim);font-weight:600;}
   .inv-colcfg-panel{position:absolute;right:0;top:calc(100% + 6px);background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:0 8px 24px rgba(0,0,0,.12);padding:10px 12px;min-width:160px;z-index:50;}
   .inv-colcfg-item{display:flex;align-items:center;gap:6px;padding:4px 0;font-size:13px;cursor:pointer;white-space:nowrap;}
   .inv-colcfg-item input{cursor:pointer;}
@@ -2587,20 +2589,20 @@
     <div style="display:flex;gap:8px;">
       <button class="inv-btn inv-btn-ghost" id="invBtnExport">导出 Excel</button>
       <button class="inv-btn inv-btn-primary" id="invBtnAdd">＋ 新增库存</button>
-      <div class="inv-colcfg-wrap">
-        <button class="inv-btn inv-btn-ghost" id="invBtnColCfg">列配置</button>
-        <div id="invColCfgPanel" class="inv-colcfg-panel" style="display:none;">
-          <label class="inv-colcfg-item"><input type="checkbox" class="inv-colcfg-checkbox" data-col="lifecycle" checked> 产品生命周期</label>
-          <label class="inv-colcfg-item"><input type="checkbox" class="inv-colcfg-checkbox" data-col="version" checked> 版本型号</label>
-          <label class="inv-colcfg-item"><input type="checkbox" class="inv-colcfg-checkbox" data-col="info" checked> 产品信息</label>
-          <label class="inv-colcfg-item"><input type="checkbox" class="inv-colcfg-checkbox" data-col="category" checked> 类目</label>
-          <label class="inv-colcfg-item"><input type="checkbox" class="inv-colcfg-checkbox" data-col="ean" checked> EAN编码</label>
-          <div class="inv-colcfg-footer"><button type="button" id="invColCfgReset" class="inv-colcfg-reset-btn">恢复默认</button></div>
-        </div>
-      </div>
+      
     </div>
   </div>
 
+
+  <div class="inv-colcfg-inline" id="invColCfgPanel">
+    <span class="inv-colcfg-inline-label">显示列：</span>
+    <label class="inv-colcfg-item"><input type="checkbox" class="inv-colcfg-checkbox" data-col="lifecycle" checked> 产品生命周期</label>
+    <label class="inv-colcfg-item"><input type="checkbox" class="inv-colcfg-checkbox" data-col="version" checked> 版本型号</label>
+    <label class="inv-colcfg-item"><input type="checkbox" class="inv-colcfg-checkbox" data-col="info" checked> 产品信息</label>
+    <label class="inv-colcfg-item"><input type="checkbox" class="inv-colcfg-checkbox" data-col="category" checked> 类目</label>
+    <label class="inv-colcfg-item"><input type="checkbox" class="inv-colcfg-checkbox" data-col="ean" checked> EAN编码</label>
+    <button type="button" id="invColCfgReset" class="inv-btn inv-btn-ghost">恢复默认</button>
+  </div>
   <div class="inv-table-wrap">
     <table>
       <thead>
@@ -12546,8 +12548,6 @@ function renderInventoryTable(){
   function closeInventoryModal(){ invOverlay.classList.remove('open'); }
 
   document.getElementById('invBtnAdd').onclick = function(){ openInventoryModal('add', null); };
-  document.getElementById('invBtnColCfg').onclick = function(e){ e.stopPropagation(); var panel = document.getElementById('invColCfgPanel'); panel.style.display = (panel.style.display === 'none' || !panel.style.display) ? 'block' : 'none'; };
-  document.addEventListener('click', function(e){ var panel = document.getElementById('invColCfgPanel'); if(!panel) return; if(panel.style.display !== 'none' && !e.target.closest('.inv-colcfg-wrap')){ panel.style.display = 'none'; } });
   document.querySelectorAll('.inv-colcfg-checkbox').forEach(function(cb){ cb.onchange = function(){ invSaveColCfgKey(cb.dataset.col, cb.checked); invApplyColumnConfig(); }; });
   var invColCfgResetBtn = document.getElementById('invColCfgReset');
   if(invColCfgResetBtn) invColCfgResetBtn.onclick = function(){ invResetColCfg(); };

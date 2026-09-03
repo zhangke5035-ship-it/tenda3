@@ -1658,6 +1658,7 @@
         <table>
           <thead>
             <tr>
+              <th><input type="checkbox" id="raSelectAllCheck" title="全选/取消全选当前筛选结果"></th>
               <th>状态</th>
               <th>提交时间</th>
               <th>客户</th>
@@ -8038,6 +8039,8 @@ let raFilterStatus = '';
 let raFilterSearch = '';
 let raPageSize = 20;
 let raCurrentPage = 1;
+let raSelectedIds = new Set();
+let raLastFilteredIds = [];
 
 function raCustomerName(code){
   return (typeof CUSTOMERS !== 'undefined' && CUSTOMERS[code] && CUSTOMERS[code].name) || code;
@@ -8101,6 +8104,8 @@ function renderReturnsAdminTable(){
     }
     return true;
   });
+  raLastFilteredIds = filtered.map(function(r){ return r.id; });
+  raUpdateSelectAllCheckboxState();
   const raTotalPages = Math.max(1, Math.ceil(filtered.length / raPageSize));
   if (raCurrentPage > raTotalPages) raCurrentPage = raTotalPages;
   if (raCurrentPage < 1) raCurrentPage = 1;
@@ -8113,6 +8118,7 @@ function renderReturnsAdminTable(){
   }
   tbody.innerHTML = pageItems.map(function(r){
     return '<tr>' +
+      '<td><input type="checkbox" class="ra-row-check" data-id="' + r.id + '"' + (raSelectedIds.has(r.id)?' checked':'') + '></td>' +
       '<td><span class="cp-status cp-status-' + raStatusClass(r.status) + '"' + (r.status === '已拒绝' && r.reject_reason ? ' title="' + escapeHtmlCP(r.reject_reason) + '"' : '') + '>' + escapeHtmlCP(r.status) + '</span></td>' +
       '<td>' + escapeHtmlCP(r.created_at ? r.created_at.slice(0,16).replace('T',' ') : '') + '</td>' +
       '<td>' + escapeHtmlCP(raCustomerName(r.customer_code)) + '</td>' +
@@ -8298,6 +8304,34 @@ if (raTableBodyEl){
   raTableBodyEl.addEventListener('click', function(e){
     const btn = e.target.closest('.ra-detail-btn');
     if (btn) raOpenDetail(btn.dataset.id);
+  });
+  raTableBodyEl.addEventListener('change', function(e){
+    const cb = e.target.closest('.ra-row-check');
+    if (!cb) return;
+    const id = Number(cb.dataset.id);
+    if (cb.checked) raSelectedIds.add(id); else raSelectedIds.delete(id);
+    raUpdateSelectAllCheckboxState();
+  });
+}
+
+function raUpdateSelectAllCheckboxState(){
+  const cb = document.getElementById('raSelectAllCheck');
+  if (!cb) return;
+  const total = raLastFilteredIds.length;
+  const selectedCount = raLastFilteredIds.filter(function(id){ return raSelectedIds.has(id); }).length;
+  cb.checked = total > 0 && selectedCount === total;
+  cb.indeterminate = selectedCount > 0 && selectedCount < total;
+}
+
+const raSelectAllCheckEl = document.getElementById('raSelectAllCheck');
+if (raSelectAllCheckEl){
+  raSelectAllCheckEl.addEventListener('change', function(e){
+    if (e.target.checked){
+      raLastFilteredIds.forEach(function(id){ raSelectedIds.add(id); });
+    } else {
+      raLastFilteredIds.forEach(function(id){ raSelectedIds.delete(id); });
+    }
+    renderReturnsAdminTable();
   });
 }
 

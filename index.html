@@ -5343,7 +5343,7 @@ function statusClass(s){
 function renderPromoTable(){
   const tbody = document.getElementById('promoTableBody');
   if (!tbody) return;
-  tbody.innerHTML = promotions.map(function(m){
+  tbody.innerHTML = promotions.slice().reverse().map(function(m){
     const meaItemsList = marketingActivityItemsByActivity[m.id] || [];
     const budgetWithTax = meaItemsList.length ? meaItemsList.reduce(function(sum, it){
       const net = Number(it.amount || 0);

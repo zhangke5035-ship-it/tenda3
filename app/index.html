@@ -171,8 +171,8 @@
   .status .sdot{width:6px;height:6px;border-radius:50%;}
   .status.plan .sdot{background:var(--text-faint);} .status.live .sdot{background:var(--good);} .status.done .sdot{background:var(--text-dim);} .status.submit .sdot{background:var(--text-faint);} .status.review .sdot{background:var(--amber);} .status.rejected .sdot{background:var(--alert);} .status.approved .sdot{background:var(--teal);} .status.settled .sdot{background:var(--good);}
   .promo-split{display:grid;grid-template-columns:1fr;gap:16px;align-items:start;}
-  .promo-split.drawer-open{grid-template-columns:minmax(0,1fr) 420px;}
-  .promo-drawer{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);display:flex;flex-direction:column;max-height:calc(100vh - 140px);position:sticky;top:16px;}
+  .promo-split.drawer-open{grid-template-columns:1fr;}
+  .promo-drawer{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);display:flex;flex-direction:column;}
   .promo-drawer-head{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid var(--border);}
   .promo-drawer-head h3{margin:0;font-size:15px;}
   .promo-drawer-body{padding:16px 18px;overflow-y:auto;flex:1;}
@@ -6803,6 +6803,7 @@ function openPromoDrawer(mode, id){
   }
   panel.style.display = '';
   if (split) split.classList.add('drawer-open');
+  requestAnimationFrame(function(){ panel.scrollIntoView({behavior:'smooth', block:'start'}); });
   Array.from(document.querySelectorAll('#promoTableBody tr')).forEach(function(tr){
     tr.classList.toggle('promo-row-selected', mode === 'edit' && Number(tr.dataset.activityId) === id);
   });

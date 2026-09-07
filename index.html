@@ -3102,11 +3102,11 @@
                     <th>活动名称</th>
                     <th>促销时间</th>
                     <th>活动总预算</th>
-                    <th>含税总金额</th>
+                    <th>含税总金额</th><th>实际最终结算总金额</th>
                     <th>报销状态</th>
                     <th>预算申请时间</th><th>预算申请流程号</th>
                     <th>活动报销流程号</th>
-                    <th>报销凭证</th>
+                    <th>报销凭证</th><th>Credit Note 号码</th>
                     <th style="width:44px;"></th>
                   </tr>
                 </thead>
@@ -3165,7 +3165,7 @@
           </select>
         </div>
               <div class="field"><label>预算申请时间</label><input type="date" id="m_budget_apply_date"></div><div class="field"><label>预算申请流程号</label><input id="m_budget_flow_no" placeholder="例如 BUD-2026-0012"></div>
-              <div class="field"><label>活动报销流程号</label><input id="m_reimburse_flow_no" placeholder="例如 RB-2026-0012"></div>
+              <div class="field"><label>活动报销流程号</label><input id="m_reimburse_flow_no" placeholder="例如 RB-2026-0012"></div><div class="field"><label>Credit Note 号码</label><input id="m_credit_note_no" placeholder="例如 CN-2026-0012"></div>
               <div class="field">
                 <label>报销凭证</label>
                 <div style="display:flex;gap:16px;margin-top:4px;">
@@ -5371,6 +5371,12 @@ function renderPromoTable(){
       const withTax = (it.amount_with_tax != null) ? Number(it.amount_with_tax) : net * (1 + (it.vat_rate != null ? Number(it.vat_rate) : 0.23));
       return sum + withTax;
     }, 0) : Number(m.budget || 0) * 1.23;
+    const actualWithTax = meaItemsList.length ? meaItemsList.reduce(function(sum, it){
+      if (it.actual_qty == null) return sum;
+      const actualNet = Number(it.subsidy || 0) * Number(it.actual_qty);
+      const vatRate = it.vat_rate != null ? Number(it.vat_rate) : 0.23;
+      return sum + actualNet * (1 + vatRate);
+    }, 0) : 0;
     const periodParts = [];
     if (m.month && m.month !== '-') periodParts.push(m.month);
     if (m.start_date || m.end_date) periodParts.push((m.start_date || '?') + ' ~ ' + (m.end_date || '?'));
@@ -5385,11 +5391,13 @@ function renderPromoTable(){
       '<td>' + escapeHtmlCP(periodText) + '</td>' +
       '<td class="mono"><strong>' + Number(m.budget || 0).toFixed(2) + ' PLN</strong></td>' +
       '<td class="mono">' + Number(budgetWithTax || 0).toFixed(2) + ' PLN</td>' +
+      '<td class="mono">' + Number(actualWithTax || 0).toFixed(2) + ' PLN</td>' +
       '<td><span class="status ' + statusClass(m.status) + '"><span class="sdot"></span>' + escapeHtmlCP(m.status || '待提交') + '</span></td>' +
       '<td class="mono">' + (m.budget_apply_date || '-') + '</td>' +
       '<td>' + escapeHtmlCP(m.budget_flow_no || '-') + '</td>' +
       '<td>' + escapeHtmlCP(m.reimburse_flow_no || '-') + '</td>' +
       '<td>' + ((m.reimburse_docs && m.reimburse_docs.length) ? escapeHtmlCP(m.reimburse_docs.join(' / ')) : '-') + '</td>' +
+      '<td>' + escapeHtmlCP(m.credit_note_no || '-') + '</td>' +
       '<td><button type="button" class="btn ghost" data-del-id="' + m.id + '" style="padding:4px 8px;font-size:12px;">删除</button></td>' +
       '</tr>';
   }).join('');
@@ -6778,6 +6786,7 @@ function openPromoDrawer(mode, id){
     document.getElementById('m_budget_apply_date').value = m.budget_apply_date || '';
     document.getElementById('m_budget_flow_no').value = m.budget_flow_no || '';
     document.getElementById('m_reimburse_flow_no').value = m.reimburse_flow_no || '';
+    document.getElementById('m_credit_note_no').value = m.credit_note_no || '';
     const docs = m.reimburse_docs || [];
     document.getElementById('m_doc_sales').checked = docs.indexOf('销售报告') !== -1;
     document.getElementById('m_doc_inventory').checked = docs.indexOf('库存报告') !== -1;
@@ -6799,6 +6808,7 @@ function openPromoDrawer(mode, id){
     document.getElementById('m_budget_apply_date').value = '';
     document.getElementById('m_budget_flow_no').value = '';
     document.getElementById('m_reimburse_flow_no').value = '';
+    document.getElementById('m_credit_note_no').value = '';
     document.getElementById('m_doc_sales').checked = false;
     document.getElementById('m_doc_inventory').checked = false;
     meaResetItems();
@@ -6931,10 +6941,11 @@ document.getElementById('addPromoBtn').addEventListener('click', async ()=>{
     const budgetApplyDate = document.getElementById('m_budget_apply_date').value;
     const budgetFlowNo = document.getElementById('m_budget_flow_no').value.trim();
   const reimburseFlowNo = document.getElementById('m_reimburse_flow_no').value.trim();
+  const creditNoteNo = document.getElementById('m_credit_note_no').value.trim();
   const reimburseDocs = [];
   if (document.getElementById('m_doc_sales').checked) reimburseDocs.push('销售报告');
   if (document.getElementById('m_doc_inventory').checked) reimburseDocs.push('库存报告');
-  const payload = { name: name, cust: cust, type: type, month: month, start_date: startDate, end_date: endDate, budget: budget, actual: actual, status: status, budget_apply_date: budgetApplyDate || null, budget_flow_no: budgetFlowNo || null, reimburse_flow_no: reimburseFlowNo || null, reimburse_docs: reimburseDocs };
+  const payload = { name: name, cust: cust, type: type, month: month, start_date: startDate, end_date: endDate, budget: budget, actual: actual, status: status, budget_apply_date: budgetApplyDate || null, budget_flow_no: budgetFlowNo || null, reimburse_flow_no: reimburseFlowNo || null, reimburse_docs: reimburseDocs, credit_note_no: creditNoteNo || null };
 
   let activityId;
   if (promoDrawerMode === 'edit'){
@@ -7565,7 +7576,7 @@ async function loadMarketingActivities(){
       id: r.id, name: r.name, cust: r.cust, type: r.type, month: r.month,
       start_date: r.start_date, end_date: r.end_date,
       budget: Number(r.budget)||0, actual: Number(r.actual)||0, status: r.status,
-      budget_apply_date: r.budget_apply_date, budget_flow_no: r.budget_flow_no, reimburse_flow_no: r.reimburse_flow_no, reimburse_docs: r.reimburse_docs||[]
+      budget_apply_date: r.budget_apply_date, budget_flow_no: r.budget_flow_no, reimburse_flow_no: r.reimburse_flow_no, reimburse_docs: r.reimburse_docs||[], credit_note_no: r.credit_note_no
     }));
     const { data: itemsData, error: itemsError } = await sb.from('marketing_activity_items').select('*').order('id', {ascending:true});
     if (itemsError){ console.error('loadMarketingActivityItems', itemsError); }

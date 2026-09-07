@@ -2039,6 +2039,7 @@
         <table>
           <thead>
             <tr>
+              <th style="width:36px;"><input type="checkbox" id="aerSelectAllCheck"></th>
               <th>发票号码</th>
               <th class="aer-sort-th" data-col="category">费用类型<span class="aer-sort-ind">⇅</span></th>
               <th class="aer-sort-th" data-col="period">月份<span class="aer-sort-ind">⇅</span></th>
@@ -8620,6 +8621,33 @@ let aerFilterMonth = '';
 let aerSortCol = 'period';
 let aerSortDir = 'desc';
 let aerEditingId = null;
+let aerSelectedIds = new Set();
+
+function aerUpdateSelectAllCheckboxState(){
+  const cb = document.getElementById('aerSelectAllCheck');
+  if (!cb) return;
+  const rows = Array.from(document.querySelectorAll('#aerTableBody .aer-row-check'));
+  const total = rows.length;
+  const selectedCount = rows.filter(function(el){ return el.checked; }).length;
+  cb.checked = total > 0 && selectedCount === total;
+  cb.indeterminate = selectedCount > 0 && selectedCount < total;
+}
+
+document.addEventListener('change', function(e){
+  const rowCb = e.target.closest('.aer-row-check');
+  if (rowCb) {
+    const id = Number(rowCb.dataset.id);
+    if (rowCb.checked) aerSelectedIds.add(id); else aerSelectedIds.delete(id);
+    aerUpdateSelectAllCheckboxState();
+    return;
+  }
+  const allCb = e.target.closest('#aerSelectAllCheck');
+  if (allCb) {
+    const ids = Array.from(document.querySelectorAll('#aerTableBody .aer-row-check')).map(function(el){ return Number(el.dataset.id); });
+    ids.forEach(function(id){ if (allCb.checked) aerSelectedIds.add(id); else aerSelectedIds.delete(id); });
+    document.querySelectorAll('#aerTableBody .aer-row-check').forEach(function(el){ el.checked = allCb.checked; });
+  }
+});
 
 function aerPopulateCategoryOptions(){
   const filterSel = document.getElementById('aerFilterCategory');
@@ -8730,11 +8758,12 @@ function renderAdminExpensesTable(){
     return aerSortDir === 'asc' ? cmp : -cmp;
   });
   if (!filtered.length){
-    tbody.innerHTML = '<tr><td colspan="13" style="text-align:center;color:var(--text-faint);padding:24px;">暂无记录</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="14" style="text-align:center;color:var(--text-faint);padding:24px;">暂无记录</td></tr>';
     return;
   }
   tbody.innerHTML = filtered.map(function(r){
     return '<tr>' +
+      '<td><input type="checkbox" class="aer-row-check" data-id="' + r.id + '"' + (aerSelectedIds.has(r.id)?' checked':'') + '></td>' +
       '<td>' + escapeHtmlCP(r.invoice_no||'-') + '</td>' +
       '<td>' + escapeHtmlCP(r.category) + '</td>' +
       '<td>' + escapeHtmlCP(r.period||'-') + '</td>' +
@@ -8760,6 +8789,7 @@ function renderAdminExpensesAll(){
   aerPopulateCategoryOptions();
   renderAdminExpensesStats();
   renderAdminExpensesTable();
+  aerUpdateSelectAllCheckboxState();
 }
 
 async function aerDeleteExpense(id){

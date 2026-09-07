@@ -7573,7 +7573,7 @@ async function loadMarketingActivities(){
     (itemsData||[]).forEach(function(it){
       const key = it.activity_id;
       if (!marketingActivityItemsByActivity[key]) marketingActivityItemsByActivity[key] = [];
-      marketingActivityItemsByActivity[key].push({ product: it.product, subsidy: Number(it.subsidy)||0, qty: Number(it.qty)||0, amount: Number(it.amount)||0 });
+      marketingActivityItemsByActivity[key].push({ id: it.id, activity_id: it.activity_id, product: it.product, subsidy: Number(it.subsidy)||0, qty: Number(it.qty)||0, actual_qty: (it.actual_qty!=null?Number(it.actual_qty):null), amount: Number(it.amount)||0, vat_rate: it.vat_rate, amount_with_tax: it.amount_with_tax });
     });
     if (typeof renderPromoTable === 'function') renderPromoTable();
   }catch(e){ console.error(e); }

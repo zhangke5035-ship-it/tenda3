@@ -2042,10 +2042,10 @@
               <th>发票号码</th>
               <th class="aer-sort-th" data-col="category">费用类型<span class="aer-sort-ind">⇅</span></th>
               <th class="aer-sort-th" data-col="period">月份<span class="aer-sort-ind">⇅</span></th>
-              <th class="aer-sort-th" data-col="amount">不含税金额<span class="aer-sort-ind">⇅</span></th>
-              <th class="aer-sort-th" data-col="currency">币种<span class="aer-sort-ind">⇅</span></th>
               <th>发票收款方</th>
               <th>费控流程号</th>
+              <th class="aer-sort-th" data-col="amount">不含税金额<span class="aer-sort-ind">⇅</span></th>
+              <th class="aer-sort-th" data-col="currency">币种<span class="aer-sort-ind">⇅</span></th>
               <th class="aer-sort-th" data-col="tax_amount">税额<span class="aer-sort-ind">⇅</span></th>
               <th class="aer-sort-th" data-col="total">总金额<span class="aer-sort-ind">⇅</span></th>
               <th>备注</th>
@@ -8738,10 +8738,10 @@ function renderAdminExpensesTable(){
       '<td>' + escapeHtmlCP(r.invoice_no||'-') + '</td>' +
       '<td>' + escapeHtmlCP(r.category) + '</td>' +
       '<td>' + escapeHtmlCP(r.period||'-') + '</td>' +
-      '<td>' + (Number(r.amount)||0).toLocaleString('en-US',{minimumFractionDigits:2, maximumFractionDigits:2}) + '</td>' +
-      '<td>' + escapeHtmlCP(r.currency||'PLN') + '</td>' +
       '<td>' + escapeHtmlCP(r.bank_account_name||'-') + '</td>' +
       '<td>' + escapeHtmlCP(r.expense_control_no||'-') + '</td>' +
+      '<td>' + (Number(r.amount)||0).toLocaleString('en-US',{minimumFractionDigits:2, maximumFractionDigits:2}) + '</td>' +
+      '<td>' + escapeHtmlCP(r.currency||'PLN') + '</td>' +
       '<td>' + (r.tax_amount != null ? Number(r.tax_amount).toLocaleString('en-US',{minimumFractionDigits:2, maximumFractionDigits:2}) : '-') + '</td>' +
       '<td>' + aerRowTotal(r).toLocaleString('en-US',{minimumFractionDigits:2, maximumFractionDigits:2}) + '</td>' +
       '<td>' + escapeHtmlCP(r.note||'-') + '</td>' +

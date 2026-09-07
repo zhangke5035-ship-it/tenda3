@@ -2039,6 +2039,7 @@
         <table>
           <thead>
             <tr>
+              <th>发票号码</th>
               <th class="aer-sort-th" data-col="category">费用类型<span class="aer-sort-ind">⇅</span></th>
               <th class="aer-sort-th" data-col="period">月份<span class="aer-sort-ind">⇅</span></th>
               <th class="aer-sort-th" data-col="amount">不含税金额<span class="aer-sort-ind">⇅</span></th>
@@ -2047,7 +2048,6 @@
               <th>费控流程号</th>
               <th class="aer-sort-th" data-col="tax_amount">税额<span class="aer-sort-ind">⇅</span></th>
               <th class="aer-sort-th" data-col="total">总金额<span class="aer-sort-ind">⇅</span></th>
-              <th>发票号码</th>
               <th>备注</th>
               <th class="aer-sort-th" data-col="created_at">提交时间<span class="aer-sort-ind">⇅</span></th>
               <th class="aer-sort-th" data-col="payment_status">支付状态<span class="aer-sort-ind">⇅</span></th>
@@ -8735,6 +8735,7 @@ function renderAdminExpensesTable(){
   }
   tbody.innerHTML = filtered.map(function(r){
     return '<tr>' +
+      '<td>' + escapeHtmlCP(r.invoice_no||'-') + '</td>' +
       '<td>' + escapeHtmlCP(r.category) + '</td>' +
       '<td>' + escapeHtmlCP(r.period||'-') + '</td>' +
       '<td>' + (Number(r.amount)||0).toLocaleString('en-US',{minimumFractionDigits:2, maximumFractionDigits:2}) + '</td>' +
@@ -8743,7 +8744,6 @@ function renderAdminExpensesTable(){
       '<td>' + escapeHtmlCP(r.expense_control_no||'-') + '</td>' +
       '<td>' + (r.tax_amount != null ? Number(r.tax_amount).toLocaleString('en-US',{minimumFractionDigits:2, maximumFractionDigits:2}) : '-') + '</td>' +
       '<td>' + aerRowTotal(r).toLocaleString('en-US',{minimumFractionDigits:2, maximumFractionDigits:2}) + '</td>' +
-      '<td>' + escapeHtmlCP(r.invoice_no||'-') + '</td>' +
       '<td>' + escapeHtmlCP(r.note||'-') + '</td>' +
       '<td>' + escapeHtmlCP(r.created_at ? r.created_at.slice(0,16).replace('T',' ') : '') + '</td>' +
       '<td><select class="inv-field aer-status-select" data-id="' + r.id + '" data-status="' + (r.payment_status||'未提交') + '" style="padding:4px 8px;font-size:12px;">' +

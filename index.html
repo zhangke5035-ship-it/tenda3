@@ -2043,6 +2043,7 @@
               <th class="aer-sort-th" data-col="period">月份<span class="aer-sort-ind">⇅</span></th>
               <th class="aer-sort-th" data-col="amount">不含税金额<span class="aer-sort-ind">⇅</span></th>
               <th class="aer-sort-th" data-col="currency">币种<span class="aer-sort-ind">⇅</span></th>
+              <th>发票收款方</th>
               <th>费控流程号</th>
               <th class="aer-sort-th" data-col="tax_amount">税额<span class="aer-sort-ind">⇅</span></th>
               <th class="aer-sort-th" data-col="total">总金额<span class="aer-sort-ind">⇅</span></th>
@@ -8729,7 +8730,7 @@ function renderAdminExpensesTable(){
     return aerSortDir === 'asc' ? cmp : -cmp;
   });
   if (!filtered.length){
-    tbody.innerHTML = '<tr><td colspan="12" style="text-align:center;color:var(--text-faint);padding:24px;">暂无记录</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="13" style="text-align:center;color:var(--text-faint);padding:24px;">暂无记录</td></tr>';
     return;
   }
   tbody.innerHTML = filtered.map(function(r){
@@ -8738,6 +8739,7 @@ function renderAdminExpensesTable(){
       '<td>' + escapeHtmlCP(r.period||'-') + '</td>' +
       '<td>' + (Number(r.amount)||0).toLocaleString('en-US',{minimumFractionDigits:2, maximumFractionDigits:2}) + '</td>' +
       '<td>' + escapeHtmlCP(r.currency||'PLN') + '</td>' +
+      '<td>' + escapeHtmlCP(r.bank_account_name||'-') + '</td>' +
       '<td>' + escapeHtmlCP(r.expense_control_no||'-') + '</td>' +
       '<td>' + (r.tax_amount != null ? Number(r.tax_amount).toLocaleString('en-US',{minimumFractionDigits:2, maximumFractionDigits:2}) : '-') + '</td>' +
       '<td>' + aerRowTotal(r).toLocaleString('en-US',{minimumFractionDigits:2, maximumFractionDigits:2}) + '</td>' +

@@ -6925,10 +6925,6 @@ document.getElementById('addPromoBtn').addEventListener('click', async ()=>{
   if(!name){ alert('请填写活动名称'); return; }
   const cust = promoDrawerMode === 'edit' ? promoDrawerCust : document.getElementById('m_customer').value;
   if(!cust){ alert('请选择客户'); return; }
-  if (promoDrawerMode === 'create' && promotions.some(function(p){ return p.cust === cust; })){
-    alert('该客户已存在一条活动记录（一客一动），请编辑现有活动。');
-    return;
-  }
   const validItems = meaItems.filter(function(it){ return it.product && it.product.trim(); });
   if (!validItems.length){ alert('请至少填写一行产品补贴明细（产品型号）'); return; }
   const type = document.getElementById('m_type').value;

@@ -2783,6 +2783,8 @@
           <th>产品型号</th>
           <th>产品信息</th>
           <th>当前库存</th>
+          <th>月均销量</th>
+          <th>可消耗天数</th>
           <th>采购单价</th>
           <th>更新日期</th>
           <th>周次</th>
@@ -2836,6 +2838,18 @@
         <div class="inv-form-group">
           <label class="inv-form-label">更新日期</label>
           <input class="inv-field" type="date" id="agentInvFDate">
+        </div>
+        <div class="inv-form-group">
+          <label class="inv-form-label">销量统计起始</label>
+          <input class="inv-field" type="date" id="agentInvFPeriodStart">
+        </div>
+        <div class="inv-form-group">
+          <label class="inv-form-label">销量统计截止</label>
+          <input class="inv-field" type="date" id="agentInvFPeriodEnd">
+        </div>
+        <div class="inv-form-group">
+          <label class="inv-form-label">期间销售数量</label>
+          <input class="inv-field" type="number" id="agentInvFSelloutQty" placeholder="选填">
         </div>
         <div class="inv-form-group full">
           <label class="inv-form-label">备注</label>
@@ -11181,6 +11195,11 @@ const I18N_DICT = [
   ['代理商、销售单号、SKU编码、销量、交易日期为必填项；代理商名称请尽量选用下拉建议中已有的名称，避免拼写不一致。','Agent, SO number, SKU, units sold and transaction date are required. Please use an existing agent name from the suggestion list to avoid spelling inconsistencies.','Agent, numer SO, SKU, sprzedane sztuki i data transakcji są wymagane. Użyj istniejącej nazwy agenta z listy podpowiedzi, aby uniknąć błędów pisowni.'],
   ['已存在(跳过)','Already Exists (Skipped)','Już istnieje (pominięto)'],
   ['新代理商，请核对拼写','New agent name, please verify spelling','Nowy agent, sprawdź pisownię'],
+  ['月均销量','Avg Monthly Sales','Śr. sprzedaż/mies.'],
+  ['可消耗天数','Days of Stock','Dni zapasu'],
+  ['销量统计起始','Sales Period Start','Początek okresu sprzedaży'],
+  ['销量统计截止','Sales Period End','Koniec okresu sprzedaży'],
+  ['期间销售数量','Period Sales Qty','Sprzedaż w okresie'],
   ['周次','Week','Tydzień'],
   ['全部周次','All Weeks','Wszystkie tygodnie'],
   ['本周','This Week','Ten tydzień'],
@@ -13060,12 +13079,38 @@ function renderInventoryTable(){
     document.getElementById('agentInvStatQty').textContent = agentInvData.reduce(function(s,i){ return s + (Number(i.qty)||0); }, 0);
   }
 
+  function agentInvPeriodDays(i){
+    if (!i.period_start || !i.period_end) return 0;
+    const s = new Date(i.period_start + 'T00:00:00');
+    const e = new Date(i.period_end + 'T00:00:00');
+    if (isNaN(s.getTime()) || isNaN(e.getTime())) return 0;
+    const days = Math.round((e.getTime() - s.getTime()) / 86400000) + 1;
+    return days > 0 ? days : 0;
+  }
+  function agentInvMonthlyAvg(i){
+    const days = agentInvPeriodDays(i);
+    const sold = Number(i.period_sellout_qty);
+    if (!days || !sold) return null;
+    return sold / days * 30;
+  }
+  function agentInvMonthlyAvgLabel(i){
+    const v = agentInvMonthlyAvg(i);
+    return v == null ? '—' : v.toFixed(1) + ' 台/月';
+  }
+  function agentInvDaysCoverLabel(i){
+    const v = agentInvMonthlyAvg(i);
+    if (v == null || v <= 0) return '—';
+    const dailyRate = v / 30;
+    const days = (Number(i.qty)||0) / dailyRate;
+    return Math.round(days) + ' 天';
+  }
+
   function renderAgentInvTable(){
     const tbody = document.getElementById('agentInvTableBody');
     const list = filteredAgentInvData();
     document.getElementById('agentInvPageInfo').textContent = '共 ' + list.length + ' 条记录';
     if (!list.length){
-      tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;color:var(--text-faint);padding:24px;">暂无代理商库存记录，点击"＋ 新增库存"手动录入</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="12" style="text-align:center;color:var(--text-faint);padding:24px;">暂无代理商库存记录，点击"＋ 新增库存"手动录入</td></tr>';
       return;
     }
     tbody.innerHTML = list.map(function(i, idx){
@@ -13075,6 +13120,8 @@ function renderInventoryTable(){
         '<td>' + (i.model||'—') + '</td>' +
         '<td>' + (i.name||'—') + '</td>' +
         '<td class="inv-qty">' + (i.qty||0) + '<span class="inv-unit">台</span></td>' +
+        '<td>' + agentInvMonthlyAvgLabel(i) + '</td>' +
+        '<td>' + agentInvDaysCoverLabel(i) + '</td>' +
         '<td>' + (i.purchase_price!=null && i.purchase_price!=='' ? Number(i.purchase_price).toFixed(2)+' '+(i.currency||'PLN') : '—') + '</td>' +
         '<td>' + (i.date||'—') + '</td>' +
         '<td>' + (agentInvWeekLabel(i)) + '</td>' +
@@ -13179,6 +13226,9 @@ function renderInventoryTable(){
     { key:'purchase_price', label:'采购单价', numeric:true },
     { key:'currency', label:'币种' },
     { key:'inventory_date', label:'更新日期', date:true, required:true },
+    { key:'period_sellout_qty', label:'期间销售数量', numeric:true },
+    { key:'period_start', label:'销量统计起始', date:true },
+    { key:'period_end', label:'销量统计截止', date:true },
     { key:'note', label:'备注' }
   ];
   let agentInvBatchRows = [];
@@ -13404,6 +13454,9 @@ function renderInventoryTable(){
     document.getElementById('agentInvFPrice').value = item ? (item.purchase_price!=null?item.purchase_price:'') : '';
     document.getElementById('agentInvFCurrency').value = item ? (item.currency||'PLN') : 'PLN';
     document.getElementById('agentInvFDate').value = item ? (item.date||'') : new Date().toISOString().slice(0,10);
+    document.getElementById('agentInvFPeriodStart').value = item ? (item.period_start||'') : '';
+    document.getElementById('agentInvFPeriodEnd').value = item ? (item.period_end||'') : '';
+    document.getElementById('agentInvFSelloutQty').value = item ? (item.period_sellout_qty!=null?item.period_sellout_qty:'') : '';
     document.getElementById('agentInvFNote').value = item ? (item.note||'') : '';
     agentInvOverlay.classList.add('open');
   }
@@ -13427,6 +13480,9 @@ function renderInventoryTable(){
       purchase_price: priceRaw ? Number(priceRaw) : null,
       currency: document.getElementById('agentInvFCurrency').value.trim() || 'PLN',
       inventory_date: document.getElementById('agentInvFDate').value || new Date().toISOString().slice(0,10),
+      period_start: document.getElementById('agentInvFPeriodStart').value || null,
+      period_end: document.getElementById('agentInvFPeriodEnd').value || null,
+      period_sellout_qty: document.getElementById('agentInvFSelloutQty').value ? Number(document.getElementById('agentInvFSelloutQty').value) : null,
       note: document.getElementById('agentInvFNote').value.trim()
     };
     const btn = this;

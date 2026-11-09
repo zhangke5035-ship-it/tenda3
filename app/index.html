@@ -1419,7 +1419,7 @@
       <div class="kpi-row" id="salesKpiRow"></div>
 
       <div class="panel">
-        <div class="panel-head"><div><h3>客户维度月环比</h3><div class="desc">各客户本年度月度订单净额趋势</div></div><button class="btn ghost" id="custMomExportBtn" style="font-size:12px;padding:6px 12px;">导出 Excel</button></div>
+        <div class="panel-head"><div><h3>客户维度月环比</h3><div class="desc">各客户本年度月度订单净额趋势</div></div><select id="custMomCountry" onchange="renderCustMomTable()" style="font-size:12px;padding:6px 8px;margin-right:8px;border:1px solid var(--border);border-radius:6px;background:#fff;"><option value="">全部国家</option><option value="PL">波兰</option><option value="UA">乌克兰</option></select><button class="btn ghost" id="custMomExportBtn" style="font-size:12px;padding:6px 12px;">导出 Excel</button></div>
         <div class="mom-table-scroll">
         <table id="custMomTable">
           <thead><tr id="custMomTableHead"><th>客户</th></tr></thead>
@@ -7920,7 +7920,10 @@ function renderCustMomTable(){
       byCustYtd[o.cust].qty += qty;
     }
   });
-  const custKeys = Object.keys(byCustMonth);
+  const custCountryOf = k => { const nm = (typeof CUSTOMERS!=='undefined' && CUSTOMERS[k]) ? CUSTOMERS[k].name : k; const ct = (typeof CUSTOMERS!=='undefined' && CUSTOMERS[k]) ? (CUSTOMERS[k].country||'') : ''; return (/dc.?link/i.test(k+' '+nm) || ct.indexOf('乌克兰')>=0) ? 'UA' : 'PL'; };
+  const countrySel = document.getElementById('custMomCountry'); const countryVal = countrySel ? countrySel.value : '';
+  if (countryVal==='UA' && !Object.keys(byCustMonth).some(k=>custCountryOf(k)==='UA')) byCustMonth['DC-Link'] = {};
+  const custKeys = Object.keys(byCustMonth).filter(k => !countryVal || custCountryOf(k)===countryVal);
   const table = body.closest('table');
   let foot = table ? table.querySelector('tfoot') : null;
   if (!custKeys.length){

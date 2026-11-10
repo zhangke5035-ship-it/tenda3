@@ -7572,7 +7572,8 @@ function applyRoleRestrictions(session){
 
   const LIMITED_ACCESS_VIEWS = {
     'huangxiang@tenda.cn': ['returns-admin', 'inventory', 'inventory-agent', 'agent-sellthrough', 'inventory-dashboard', 'promo'],
-    'yushisen@tenda.cn': ['returns-admin', 'inventory', 'inventory-agent', 'agent-sellthrough', 'inventory-dashboard', 'orders', 'invoices']
+    'yushisen@tenda.cn': ['returns-admin', 'inventory', 'inventory-agent', 'agent-sellthrough', 'inventory-dashboard', 'orders', 'invoices'],
+    'pete.s@tenda.cn': ['ukraine']
   };
   if (LIMITED_ACCESS_VIEWS[userEmail]){
     const allowedViews = LIMITED_ACCESS_VIEWS[userEmail];
@@ -7586,9 +7587,10 @@ function applyRoleRestrictions(session){
     });
     document.querySelectorAll('.navitem').forEach(function(n){ n.classList.remove('active'); });
     document.querySelectorAll('.view').forEach(function(v){ v.classList.remove('active'); });
-    const targetNavItem = document.querySelector('.navitem[data-view="returns-admin"]');
+    const landingView = allowedViews.includes('returns-admin') ? 'returns-admin' : allowedViews[0];
+    const targetNavItem = document.querySelector('.navitem[data-view="'+landingView+'"]');
     if (targetNavItem) targetNavItem.classList.add('active');
-    const targetView = document.getElementById('view-returns-admin');
+    const targetView = document.getElementById('view-'+landingView);
     if (targetView) targetView.classList.add('active');
   }
 }

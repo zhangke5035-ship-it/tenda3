@@ -15854,17 +15854,17 @@ function catPieGen(cfg){
   var host=document.getElementById(cfg.host);
   if(!host){ var panel=anchor.closest('.panel'); if(!panel) return; host=document.createElement('div'); host.className='panel'; host.id=cfg.host; host.style.marginTop='16px'; panel.insertAdjacentElement('afterend',host); }
   var amt={}, qty={}; CATS.forEach(function(c){ amt[c]=0; qty[c]=0; });
-  cfg.rows(function(model,a,q){ var c=catLookup(model); amt[c]+=a; qty[c]+=q; });
+  cfg.rows(function(model,a,q){ var c=(cfg.lookup||catLookup)(model); amt[c]+=a; qty[c]+=q; });
   var av=CATS.map(function(c){return amt[c];}), qv=CATS.map(function(c){return qty[c];});
   var at=av.reduce(function(s,v){return s+Math.max(v,0);},0), qt=qv.reduce(function(s,v){return s+Math.max(v,0);},0);
   var opts='<option value="">2026 累计 (YTD)</option>'+['2026-10','2026-09','2026-08','2026-07','2026-06','2026-05','2026-04','2026-03','2026-02','2026-01'].map(function(m){ return '<option value="'+m+'"'+(m===pieMonth?' selected':'')+'>'+m+'</option>'; }).join('');
   var order=CATS.map(function(c,i){return i;}).filter(function(i){ return CATS[i]!=='未分类'||av[i]||qv[i]; }).sort(function(a,b){return av[b]-av[a];});
   var rows=order.map(function(i){ var ap=at>0&&av[i]>0?av[i]/at*100:0, qp=qt>0&&qv[i]>0?qv[i]/qt*100:0; return '<tr><td><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:'+COL[i]+';margin-right:6px;"></span>'+CATS[i]+'</td><td style="text-align:right;">'+f1(av[i])+'</td><td style="text-align:right;">'+ap.toFixed(1)+'%</td><td style="text-align:right;">'+fq(qv[i])+'</td><td style="text-align:right;">'+qp.toFixed(1)+'%</td></tr>'; }).join('');
-  host.innerHTML='<div class="panel-head"><div><h3>BU 占比分析</h3><div class="desc">'+cfg.desc+'</div></div><div style="font-size:12px;color:var(--text-dim);">时间维度：2026 全年累计</div></div>'+
+  host.innerHTML='<div class="panel-head"><div><h3>'+(cfg.title||'BU 占比分析')+'</h3><div class="desc">'+cfg.desc+'</div></div><div style="font-size:12px;color:var(--text-dim);">时间维度：2026 全年累计</div></div>'+
    '<div style="display:flex;flex-wrap:wrap;gap:28px;align-items:flex-start;padding:8px 4px;">'+
    '<div style="text-align:center;"><div style="font-size:13px;color:var(--text-dim);margin-bottom:4px;">销售额占比</div>'+pieSvg(av,at,cfg.cur)+'</div>'+
    '<div style="text-align:center;"><div style="font-size:13px;color:var(--text-dim);margin-bottom:4px;">销售数量占比</div>'+pieSvg(qv,qt,'n')+'</div>'+
-   '<div style="flex:1;min-width:340px;overflow-x:auto;"><table style="width:100%;"><thead><tr><th>BU</th><th style="text-align:right;">销售额 ('+cfg.cname+')</th><th style="text-align:right;">占比</th><th style="text-align:right;">数量</th><th style="text-align:right;">占比</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
+   '<div style="flex:1;min-width:340px;overflow-x:auto;"><table style="width:100%;"><thead><tr><th>'+(cfg.colLabel||'BU')+'</th><th style="text-align:right;">销售额 ('+cfg.cname+')</th><th style="text-align:right;">占比</th><th style="text-align:right;">数量</th><th style="text-align:right;">占比</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
   host.querySelectorAll('.pieSvg').forEach(function(svg){
     var t1=svg.querySelector('.pc1'),t2=svg.querySelector('.pc2'),t3=svg.querySelector('.pc3'),cur=null;
     function sel(el){ svg.querySelectorAll('.pslice').forEach(function(x){ x.style.transform=''; x.style.opacity=el?'0.55':'1'; }); if(el){ el.style.transform='scale(1.06)'; el.style.opacity='1'; t1.textContent=el.getAttribute('data-n'); t2.textContent=el.getAttribute('data-p'); t3.textContent=el.getAttribute('data-v'); } else { t1.textContent=''; t2.textContent=''; t3.textContent=''; } cur=el; }
@@ -15873,8 +15873,24 @@ function catPieGen(cfg){
   
 }
 
-function catPie(){ catPieGen({anchor:'productMomTable',host:'ovCatPie',cur:'¥',cname:'CNY',desc:'各 BU 已发货销售额与数量占比（CNY，取自每月财务销售明细；负值不计入饼图）',rows:function(cb){ OV.p.forEach(function(p){ Object.keys(p[2]).forEach(function(m){ cb(p[0],p[2][m][1],p[2][m][0]); }); }); }}); }
-window.renderPlCatPie=function(){ try{ catPieGen({anchor:'plProdBody',host:'plCatPie',cur:'zł',cname:'PLN',desc:'波兰（不含 Intelek）各 BU 销售额与数量占比（PLN，取自销售订单；负值不计入饼图）',rows:function(cb){ var om={}, ymax=''; orders.forEach(function(o){ var y=(o.date||'').slice(0,4); om[o.id]=y; if(y>ymax) ymax=y; }); orderItems.forEach(function(i){ if(om[i.orderId]!==ymax) return; cb(String(i.product||''), i.qty*i.price, i.qty); }); }}); }catch(e){ console.error('plPie',e); } };
+var LCATS=['无线路由器','Mesh路由系统','交换机','4G/5G路由器','室外CPE','智能摄像机','企业AP/天线','USB无线网卡','NVR录像机','网络配件','未分类'];
+var LCOLS=['#c2703d','#4a6fa5','#3f8f6b','#d9a441','#8a5fa8','#c0504d','#2f9aa6','#7a8b3c','#a0522d','#8c8c8c','#d0d3d8'];
+var LMAP=null;
+function lineLookup(x){
+  if(!LMAP){ LMAP={}; OV.p.forEach(function(p){ LMAP[nz(p[0])]=catOf(p[0]); }); }
+  var raw=String(x||'').replace(/^\s*(tenda|ip-com)\s+/i,'').replace(/^#/,'').trim(), n=nz(raw);
+  if(LMAP[n]) return LMAP[n];
+  var best='';
+  for(var k in LMAP){ if(k.length>=3 && n.indexOf(k)===0 && k.length>best.length) best=k; }
+  return best?LMAP[best]:catOf(raw,true);
+}
+function catPieLine(host,anchor,cur,cname,desc,rows){
+  var a=CATS,b=COL; CATS=LCATS; COL=LCOLS;
+  try{ catPieGen({anchor:anchor,host:host,cur:cur,cname:cname,desc:desc,rows:rows,lookup:lineLookup,title:'产品线占比分析',colLabel:'产品线'}); }finally{ CATS=a; COL=b; }
+}
+function catPie(){ catPieGen({anchor:'productMomTable',host:'ovCatPie',cur:'¥',cname:'CNY',desc:'各 BU 已发货销售额与数量占比（CNY，取自每月财务销售明细；负值不计入饼图）',rows:function(cb){ OV.p.forEach(function(p){ Object.keys(p[2]).forEach(function(m){ cb(p[0],p[2][m][1],p[2][m][0]); }); }); }});
+  catPieLine('ovLinePie','ovCatPie','¥','CNY','各产品线已发货销售额与数量占比（CNY，取自每月财务销售明细；负值不计入饼图）',function(cb){ OV.p.forEach(function(p){ Object.keys(p[2]).forEach(function(m){ cb(p[0],p[2][m][1],p[2][m][0]); }); }); }); }
+window.renderPlCatPie=function(){ try{ catPieGen({anchor:'plProdBody',host:'plCatPie',cur:'zł',cname:'PLN',desc:'波兰（不含 Intelek）各 BU 销售额与数量占比（PLN，取自销售订单；负值不计入饼图）',rows:function(cb){ var om={}, ymax=''; orders.forEach(function(o){ var y=(o.date||'').slice(0,4); om[o.id]=y; if(y>ymax) ymax=y; }); orderItems.forEach(function(i){ if(om[i.orderId]!==ymax) return; cb(String(i.product||''), i.qty*i.price, i.qty); }); }}); catPieLine('plLinePie','plCatPie','zł','PLN','波兰（不含 Intelek）各产品线销售额与数量占比（PLN，取自销售订单；负值不计入饼图）',function(cb){ var om={}, ymax=''; orders.forEach(function(o){ var y=(o.date||'').slice(0,4); om[o.id]=y; if(y>ymax) ymax=y; }); orderItems.forEach(function(i){ if(om[i.orderId]!==ymax) return; cb(String(i.product||''), i.qty*i.price, i.qty); }); }); }catch(e){ console.error('plPie',e); } };
 
 var LCOL=['#4a6fa5','#3f8f6b','#d9a441','#8a5fa8','#c0504d','#2f9aa6','#7a8b3c','#a0522d'];
 function lineGen(cfg){

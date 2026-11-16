@@ -15890,7 +15890,7 @@ function catPieLine(host,anchor,cur,cname,desc,rows){
 }
 function catPie(){ catPieGen({anchor:'productMomTable',host:'ovCatPie',cur:'¥',cname:'CNY',desc:'各 BU 已发货销售额与数量占比（CNY，取自每月财务销售明细；负值不计入饼图）',rows:function(cb){ OV.p.forEach(function(p){ Object.keys(p[2]).forEach(function(m){ cb(p[0],p[2][m][1],p[2][m][0]); }); }); }});
   catPieLine('ovLinePie','ovCatPie','¥','CNY','各产品线已发货销售额与数量占比（CNY，取自每月财务销售明细；负值不计入饼图）',function(cb){ OV.p.forEach(function(p){ Object.keys(p[2]).forEach(function(m){ cb(p[0],p[2][m][1],p[2][m][0]); }); }); }); }
-window.renderPlCatPie=function(){ try{ catPieGen({anchor:'plProdBody',host:'plCatPie',cur:'zł',cname:'PLN',desc:'波兰（不含 Intelek）各 BU 销售额与数量占比（PLN，取自销售订单；负值不计入饼图）',rows:function(cb){ var om={}, ymax=''; orders.forEach(function(o){ var y=(o.date||'').slice(0,4); om[o.id]=y; if(y>ymax) ymax=y; }); orderItems.forEach(function(i){ if(om[i.orderId]!==ymax) return; cb(String(i.product||''), i.qty*i.price, i.qty); }); }}); catPieLine('plLinePie','plCatPie','zł','PLN','波兰（不含 Intelek）各产品线销售额与数量占比（PLN，取自销售订单；负值不计入饼图）',function(cb){ var om={}, ymax=''; orders.forEach(function(o){ var y=(o.date||'').slice(0,4); om[o.id]=y; if(y>ymax) ymax=y; }); orderItems.forEach(function(i){ if(om[i.orderId]!==ymax) return; cb(String(i.product||''), i.qty*i.price, i.qty); }); }); }catch(e){ console.error('plPie',e); } };
+window.renderPlCatPie=function(){ try{ catPieGen({anchor:'plProdBody',host:'plCatPie',cur:'zł',cname:'PLN',desc:'波兰（不含 Intelek）各 BU 销售额与数量占比（PLN，取自销售订单；负值不计入饼图）',rows:function(cb){ var om={}, ymax=''; orders.forEach(function(o){ var y=(o.date||'').slice(0,4); om[o.id]=y; if(y>ymax) ymax=y; }); orderItems.forEach(function(i){ if(om[i.orderId]!==ymax) return; cb(String(i.product||''), i.qty*i.price, i.qty); }); }}); catPieLine('plLinePie','plCatPie','zł','PLN','波兰（不含 Intelek）各产品线销售额与数量占比（PLN，取自销售订单；负值不计入饼图）',function(cb){ var om={}, ymax=''; orders.forEach(function(o){ var y=(o.date||'').slice(0,4); om[o.id]=y; if(y>ymax) ymax=y; }); orderItems.forEach(function(i){ if(om[i.orderId]!==ymax) return; cb(String(i.product||''), i.qty*i.price, i.qty); }); }); moveBottom('plProdMomTable',['plLinePie','plCatPie']); }catch(e){ console.error('plPie',e); } };
 
 var LCOL=['#4a6fa5','#3f8f6b','#d9a441','#8a5fa8','#c0504d','#2f9aa6','#7a8b3c','#a0522d'];
 function lineGen(cfg){
@@ -15999,6 +15999,11 @@ function plBar(by,keys,ms){
   var tot=0, list=keys.map(function(c){ var a=ms.map(function(m,j){ return by[c][j+1]||0; }); var y=a.reduce(function(s,v){return s+v;},0); tot+=y; return {n:(typeof CUSTOMERS!=='undefined'&&CUSTOMERS[c])?CUSTOMERS[c].name:c,a:a,y:y}; });
   barGen({anchor:'plMomTableBody',host:'plBarPanel',months:ms.slice(1),desc:'波兰（不含 Intelek）各客户逐月销售额环比（PLN；上月为 0 或负数的月份不显示；柱高以 ±300% 截断，实际值见气泡；点击图例显示/隐藏客户）',series:list.map(function(c,i){ return momSeries(c.n,BCOL[i%BCOL.length],c.a,c.y<tot*0.02,'zł'); })});
 }
-window.renderOverviewFromSales=function(){ try{ kpi(); custTable(); ovLine(); ovBar(); prodTable(); catPie(); }catch(e){ console.error('ovSales',e); } };
+function moveBottom(tblId,lastIds){
+  var t=document.getElementById(tblId), pp=t&&t.closest('.panel'), last=null;
+  for(var i=0;i<lastIds.length;i++){ var e=document.getElementById(lastIds[i]); if(e){ last=e; break; } }
+  if(pp&&last&&pp!==last&&last.nextElementSibling!==pp) last.insertAdjacentElement('afterend',pp);
+}
+window.renderOverviewFromSales=function(){ try{ kpi(); custTable(); ovLine(); ovBar(); prodTable(); catPie(); moveBottom('productMomTable',['ovLinePie','ovCatPie']); }catch(e){ console.error('ovSales',e); } };
 })();
 </script>

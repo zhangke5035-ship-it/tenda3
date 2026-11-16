@@ -8023,7 +8023,7 @@ function exportProductMomCSV(){
 }
 
 function renderCustMomTable(cfg){
-  if (!cfg && document.getElementById('czMomTableBody')) renderCustMomTable({head:'czMomTableHead', body:'czMomTableBody', sub:'czMomTableSubHead', onlyKeys:['INTELEK','INTELEK-FOB'], extraKeys:['INTELEK-FOB'], nameMap:{'INTELEK':'Intelek-DDP','INTELEK-FOB':'Intelek-FOB'}, noExport:true});
+  if (!cfg && document.getElementById('czMomTableBody')) renderCustMomTable({head:'czMomTableHead', body:'czMomTableBody', sub:'czMomTableSubHead', onlyKeys:['INTELEK','INTELEK-FOB'], extraKeys:['INTELEK-FOB'], nameMap:{'INTELEK':'Intelek-DDP (PLN)','INTELEK-FOB':'Intelek-FOB (CNY)'}, amountHead:'金额', noExport:true});
   cfg = cfg || {};
   const head = document.getElementById(cfg.head || 'custMomTableHead');
   const body = document.getElementById(cfg.body || 'custMomTableBody');
@@ -8048,8 +8048,8 @@ function renderCustMomTable(cfg){
     theadEl.appendChild(subHead);
   }
   if (subHead){
-    subHead.innerHTML = '<th class="ytd-col-sub" style="text-align:right;color:var(--text-dim);font-weight:500;">金额 (PLN)</th><th class="ytd-col-sub" style="text-align:right;color:var(--text-dim);font-weight:500;">数量</th>' +
-      months.map(()=>'<th style="text-align:right;color:var(--text-faint);font-weight:500;">金额 (PLN)</th><th style="text-align:right;color:var(--text-faint);font-weight:500;">数量</th>').join('');
+    subHead.innerHTML = '<th class="ytd-col-sub" style="text-align:right;color:var(--text-dim);font-weight:500;">'+(cfg.amountHead || '金额 (PLN)')+'</th><th class="ytd-col-sub" style="text-align:right;color:var(--text-dim);font-weight:500;">数量</th>' +
+      months.map(()=>'<th style="text-align:right;color:var(--text-faint);font-weight:500;">'+(cfg.amountHead || '金额 (PLN)')+'</th><th style="text-align:right;color:var(--text-faint);font-weight:500;">数量</th>').join('');
   }
 
   const exportBtn = document.getElementById('custMomExportBtn');

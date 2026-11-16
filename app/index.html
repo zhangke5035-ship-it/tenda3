@@ -1352,7 +1352,8 @@
       <div class="navgroup open" data-group="orders">
         <div class="navgroup-head"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg></span>销售订单<span class="chevron">▾</span></div>
         <div class="navgroup-body">
-          <div class="navitem sub" data-view="orders"><span class="dot"></span>订单列表</div>
+          <div class="navitem sub" data-view="orders"><span class="dot"></span>DDP-订单列表</div>
+          <div class="navitem sub" data-view="orders-fob"><span class="dot"></span>FOB-订单列表</div>
           <div class="navitem sub" data-view="invoices"><span class="dot"></span>发票</div>
           <div class="navitem sub" data-view="returns-admin"><span class="dot"></span>退货管理<span class="nav-badge hidden" id="raNavBadge"></span></div>
         </div>
@@ -2310,7 +2311,7 @@
 
   <div id="orderListPanelGroup">
     <div class="panel">
-      <div class="panel-head"><h3>订单列表</h3><div class="desc" id="orderCount"></div></div>
+      <div class="panel-head"><h3>DDP-订单列表</h3><div class="desc" id="orderCount"></div></div>
       <div class="ofb-top">
         <div class="ofb-tabs" id="orderStatusTabs"></div>
         <button type="button" class="ofb-reset-btn" id="orderFilterResetBtn">↺ 重置筛选</button>
@@ -2356,6 +2357,15 @@
         <tbody id="orderItemTableBody"></tbody>
       </table>
     </div>
+  </div>
+</section>
+<section class="view" id="view-orders-fob">
+  <div class="viewhead">
+    <div><h2>FOB-订单列表</h2><p>FOB 订单（币种 CNY），暂无数据</p></div>
+  </div>
+  <div class="panel">
+    <div class="panel-head"><h3>FOB-订单列表</h3><div class="desc">暂无订单</div></div>
+    <div style="padding:28px 8px;color:var(--text-faint);">内容暂空</div>
   </div>
 </section>
 <section class="view" id="view-invoices">
@@ -12352,6 +12362,7 @@ const I18N_DICT = [
   ['乌克兰业绩进展','Ukraine Performance','Wyniki Ukraina'],
   ['波兰站点业绩数据','Poland site performance data','Dane wyników strony Polska'],
   ['捷克站点业绩数据','Czech site performance data','Dane wyników strony Czechy'],
+  ['FOB-订单列表','FOB order list','Lista zamówień FOB'],['DDP-订单列表','DDP order list','Lista zamówień DDP'],['FOB 订单（币种 CNY），暂无数据','FOB orders (CNY) - no data yet','Zamówienia FOB (CNY) - brak danych'],['内容暂空','Empty for now','Na razie puste'],['暂无订单','No orders','Brak zamówień']
 ];
 I18N_DICT.sort((a,b)=>b[0].length-a[0].length);
 

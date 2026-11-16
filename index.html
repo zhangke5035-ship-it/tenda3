@@ -12362,7 +12362,7 @@ const I18N_DICT = [
   ['乌克兰业绩进展','Ukraine Performance','Wyniki Ukraina'],
   ['波兰站点业绩数据','Poland site performance data','Dane wyników strony Polska'],
   ['捷克站点业绩数据','Czech site performance data','Dane wyników strony Czechy'],
-  ['FOB-订单列表','FOB order list','Lista zamówień FOB'],['DDP-订单列表','DDP order list','Lista zamówień DDP'],['FOB 订单（币种 CNY），暂无数据','FOB orders (CNY) - no data yet','Zamówienia FOB (CNY) - brak danych'],['内容暂空','Empty for now','Na razie puste'],['暂无订单','No orders','Brak zamówień']
+  ['FOB-订单列表','FOB order list','Lista zamówień FOB'],['DDP-订单列表','DDP order list','Lista zamówień DDP'],['FOB 订单（币种 CNY），暂无数据','FOB orders (CNY) - no data yet','Zamówienia FOB (CNY) - brak danych'],['内容暂空','Empty for now','Na razie puste'],['暂无订单','No orders','Brak zamówień'],['订单信息','Order info','Informacje o zamówieniu'],['发货信息','Shipment info','Informacje o wysyłce'],['指标','Metric','Wskaźnik'],['查看型号 ›','View models ›','Zobacz modele ›']
 ];
 I18N_DICT.sort((a,b)=>b[0].length-a[0].length);
 
@@ -16018,5 +16018,40 @@ function moveBottom(tblId,lastIds){
   if(pp&&last&&pp!==last&&last.nextElementSibling!==pp) last.insertAdjacentElement('afterend',pp);
 }
 window.renderOverviewFromSales=function(){ try{ kpi(); custTable(); ovLine(); ovBar(); prodTable(); catPie(); moveBottom('productMomTable',['ovLinePie','ovCatPie']); }catch(e){ console.error('ovSales',e); } };
+})();
+</script>
+
+<script>
+/* UKRAINE_MATRIX: months horizontal */
+(function(){
+  function build(){
+    var main=document.getElementById('ukrMain'); if(!main||document.getElementById('ukrMatrix')) return;
+    var rows=[].slice.call(main.querySelectorAll('tr.ukr-row')); if(!rows.length) return;
+    var oldPanel=rows[0].closest('.panel'); if(!oldPanel) return;
+    function num(s){ var v=parseFloat(String(s||'').replace(/,/g,'')); return isNaN(v)?null:v; }
+    var data=rows.map(function(tr){ var td=tr.children; return {m:tr.getAttribute('data-m'),tr:tr,pi:td[1].textContent.trim(),st:td[2].innerHTML,oq:num(td[3].textContent),oa:num(td[4].textContent),q:num(td[5].textContent),usd:num(td[6].textContent),rmb:num(td[7].textContent),disc:num(td[8].textContent)}; }).sort(function(a,b){ return a.m<b.m?1:-1; });
+    function f2(n){ return n===null?'—':n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+    function fq(n){ return n===null?'—':n.toLocaleString('en-US'); }
+    function sum(k){ var s=0,any=false; data.forEach(function(x){ if(x[k]!==null){ s+=x[k]; any=true; } }); return any?s:null; }
+    var N=data.length+2;
+    var lab='position:sticky;left:0;background:#fff;z-index:1;white-space:nowrap;font-weight:500;';
+    var ytdBg='background:#eef3fb;';
+    function cell(v,fmt,bold,extra){ return '<td style="text-align:right;white-space:nowrap;'+(v===null?'color:var(--text-faint);':'')+(bold?'font-weight:700;':'')+(extra||'')+'">'+fmt(v)+'</td>'; }
+    function line(label,key,fmt,bold){ return '<tr><td style="'+lab+'">'+label+'</td>'+cell(sum(key),fmt,true,ytdBg)+data.map(function(x){ return cell(x[key],fmt,bold); }).join('')+'</tr>'; }
+    function sec(t){ return '<tr><td colspan="'+N+'" style="background:#f6f7f9;font-weight:600;font-size:12px;color:var(--text-dim);padding:6px 10px;">'+t+'</td></tr>'; }
+    var head='<th style="'+lab+'">指标</th><th style="text-align:right;'+ytdBg+'">合计</th>'+data.map(function(x){ var empty=!x.q&&x.usd===null&&x.rmb===null; return '<th class="ukrMh" data-m="'+x.m+'" style="text-align:right;white-space:nowrap;min-width:118px;cursor:pointer;'+(empty?'opacity:.55;':'')+'">'+x.m+'<div style="font-size:11px;font-weight:400;color:var(--copper);">查看型号 ›</div></th>'; }).join('');
+    var body=sec('订单信息')+
+      '<tr><td style="'+lab+'">PI号码</td><td style="text-align:right;'+ytdBg+'"></td>'+data.map(function(x){ return '<td style="text-align:right;white-space:nowrap;'+(x.pi==='—'||!x.pi?'color:var(--text-faint);':'')+'">'+(x.pi||'—')+'</td>'; }).join('')+'</tr>'+
+      '<tr><td style="'+lab+'">发货状态</td><td style="text-align:right;'+ytdBg+'"></td>'+data.map(function(x){ return '<td style="text-align:right;">'+x.st+'</td>'; }).join('')+'</tr>'+
+      line('下单数量','oq',fq,false)+line('下单金额','oa',f2,false)+
+      sec('发货信息')+
+      line('发货数量','q',fq,false)+line('美金金额 (USD)','usd',f2,true)+line('人民币金额 (RMB)','rmb',f2,true)+line('折扣金额 (RMB)','disc',f2,false);
+    var ph=oldPanel.querySelector('.panel-head');
+    var html='<div class="panel" id="ukrMatrix">'+(ph?'<div class="panel-head">'+ph.innerHTML+'</div>':'')+'<div class="mom-table-scroll"><table style="border-collapse:separate;border-spacing:0;"><thead><tr>'+head+'</tr></thead><tbody>'+body+'</tbody></table></div></div>';
+    oldPanel.insertAdjacentHTML('beforebegin',html);
+    oldPanel.style.display='none';
+    document.querySelectorAll('#ukrMatrix .ukrMh').forEach(function(th){ th.onclick=function(){ var m=th.getAttribute('data-m'); for(var i=0;i<data.length;i++){ if(data[i].m===m){ data[i].tr.click(); break; } } }; });
+  }
+  build();
 })();
 </script>

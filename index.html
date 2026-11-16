@@ -15963,14 +15963,14 @@ function barGen(cfg){
   var W=900,H=330,L=56,R=16,T=20,B=40, ms=cfg.months, S=cfg.series.filter(function(s){ return !s.small; }), vis=S.filter(function(s){ return !hid[s.name]; });
   var mx=50; vis.forEach(function(s){ s.vals.forEach(function(v){ if(v!==null&&Math.abs(v)>mx) mx=Math.abs(v); }); });
   var C=Math.min(300,Math.ceil(mx/50)*50);
-  function y(v){ return T+(H-T-B)*(1-(Math.max(-C,Math.min(C,v))+C)/(2*C)); }
+  function y(v){ return T+(H-T-B)*(1-Math.min(Math.abs(v),C)/C); }
   var gw=(W-L-R)/ms.length, k=Math.max(vis.length,1), bw=Math.max(3,Math.min(18,(gw-10)/k));
   var svg='<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;max-width:960px;height:auto;">';
-  for(var g=-2;g<=2;g++){ var gv=C*g/2, gy=y(gv); svg+='<line x1="'+L+'" x2="'+(W-R)+'" y1="'+gy+'" y2="'+gy+'" stroke="'+(g===0?'#9aa3af':'#e6e9ee')+'"/><text x="'+(L-8)+'" y="'+(gy+4)+'" text-anchor="end" font-size="11" fill="#8a93a0">'+gv.toFixed(0)+'%</text>'; }
+  for(var g=0;g<=4;g++){ var gv=C*g/4, gy=y(gv); svg+='<line x1="'+L+'" x2="'+(W-R)+'" y1="'+gy+'" y2="'+gy+'" stroke="'+(g===0?'#9aa3af':'#e6e9ee')+'"/><text x="'+(L-8)+'" y="'+(gy+4)+'" text-anchor="end" font-size="11" fill="#8a93a0">'+gv.toFixed(0)+'%</text>'; }
   ms.forEach(function(m,i){ svg+='<text x="'+(L+gw*i+gw/2)+'" y="'+(H-14)+'" text-anchor="middle" font-size="11" fill="#8a93a0">'+m.slice(5)+'月</text>'; });
   var y0=y(0);
-  ms.forEach(function(m,i){ vis.forEach(function(s,j){ var v=s.vals[i]; if(v===null||v===undefined) return; var bx=L+gw*i+(gw-bw*k)/2+bw*j, yy=y(v), top=Math.min(yy,y0), h=Math.max(Math.abs(yy-y0),1);
-    svg+='<rect class="bpt" x="'+bx.toFixed(1)+'" y="'+top.toFixed(1)+'" width="'+(bw-1).toFixed(1)+'" height="'+h.toFixed(1)+'" fill="'+s.color+'" style="cursor:pointer" data-s="'+s.name+'" data-m="'+m+'" data-v="'+(v>0?'+':'')+v.toFixed(1)+'%" data-d="'+(s.tips[i]||'')+'" data-x="'+(bx+bw/2).toFixed(1)+'" data-y="'+top.toFixed(1)+'"></rect>'; }); });
+  ms.forEach(function(m,i){ vis.forEach(function(s,j){ var v=s.vals[i]; if(v===null||v===undefined) return; var bx=L+gw*i+(gw-bw*k)/2+bw*j, yy=y(v), top=yy, h=Math.max(y0-yy,1);
+    svg+='<rect class="bpt" x="'+bx.toFixed(1)+'" y="'+top.toFixed(1)+'" width="'+(bw-1).toFixed(1)+'" height="'+h.toFixed(1)+'" fill="'+s.color+'"'+(v<0?' fill-opacity="0.35" stroke="'+s.color+'" stroke-dasharray="3 2"':'')+' style="cursor:pointer" data-s="'+s.name+'" data-m="'+m+'" data-v="'+(v>0?'+':'')+v.toFixed(1)+'%" data-d="'+(s.tips[i]||'')+'" data-x="'+(bx+bw/2).toFixed(1)+'" data-y="'+top.toFixed(1)+'"></rect>'; }); });
   svg+='<g class="ltip" style="display:none;pointer-events:none"><rect rx="5" fill="#222" opacity="0.92"></rect><text class="lt1" fill="#ddd" font-size="11"></text><text class="lt2" fill="#fff" font-size="13" font-weight="600"></text><text class="lt3" fill="#bbb" font-size="10"></text></g></svg>';
   var leg=S.map(function(s,i){ return '<span class="lgItem" data-i="'+i+'" style="cursor:pointer;display:inline-flex;align-items:center;margin-right:14px;font-size:12px;'+(hid[s.name]?'opacity:.35;':'')+'"><span style="width:10px;height:10px;background:'+s.color+';margin-right:6px;display:inline-block;border-radius:2px;"></span>'+s.name+'</span>'; }).join('');
   host.innerHTML='<div class="panel-head"><div><h3>客户月度环比柱形图</h3><div class="desc">'+cfg.desc+'</div></div></div><div style="padding:4px 8px 0;">'+leg+'</div><div style="padding:6px 4px;">'+svg+'</div>';
@@ -15993,11 +15993,11 @@ function ovBar(){
   var last=1; OV.c.forEach(function(c){ Object.keys(c[2]).forEach(function(m){ if(+m.slice(5)>last) last=+m.slice(5); }); });
   var ms=[]; for(var k=2;k<=last;k++) ms.push('2026-'+(k<10?'0':'')+k);
   var tot=0, list=OV.c.map(function(c){ var a=[]; for(var k=1;k<=last;k++){ var v=c[2]['2026-'+(k<10?'0':'')+k]; a.push(v?v[1]:0); } var y=a.reduce(function(s,v){return s+v;},0); tot+=y; return {n:dn(c[0]),a:a,y:y}; }).sort(function(a,b){ return b.y-a.y; });
-  barGen({anchor:'custMomTableBody',host:'ovBarPanel',months:ms,desc:'各客户逐月销售额环比（CNY，已发货口径；上月为 0 或负数的月份不显示；柱高以 ±300% 截断，实际值见气泡；点击图例显示/隐藏客户）',series:list.map(function(c,i){ return momSeries(c.n,BCOL[i%BCOL.length],c.a,c.y<tot*0.02,'¥'); })});
+  barGen({anchor:'custMomTableBody',host:'ovBarPanel',months:ms,desc:'各客户逐月销售额环比（CNY，已发货口径；上月为 0 或负数的月份不显示；柱高为环比幅度（浅色虚线柱=环比下降，最高画到 300%），实际值见气泡；点击图例显示/隐藏客户）',series:list.map(function(c,i){ return momSeries(c.n,BCOL[i%BCOL.length],c.a,c.y<tot*0.02,'¥'); })});
 }
 function plBar(by,keys,ms){
   var tot=0, list=keys.map(function(c){ var a=ms.map(function(m,j){ return by[c][j+1]||0; }); var y=a.reduce(function(s,v){return s+v;},0); tot+=y; return {n:(typeof CUSTOMERS!=='undefined'&&CUSTOMERS[c])?CUSTOMERS[c].name:c,a:a,y:y}; });
-  barGen({anchor:'plMomTableBody',host:'plBarPanel',months:ms.slice(1),desc:'波兰（不含 Intelek）各客户逐月销售额环比（PLN；上月为 0 或负数的月份不显示；柱高以 ±300% 截断，实际值见气泡；点击图例显示/隐藏客户）',series:list.map(function(c,i){ return momSeries(c.n,BCOL[i%BCOL.length],c.a,c.y<tot*0.02,'zł'); })});
+  barGen({anchor:'plMomTableBody',host:'plBarPanel',months:ms.slice(1),desc:'波兰（不含 Intelek）各客户逐月销售额环比（PLN；上月为 0 或负数的月份不显示；柱高为环比幅度（浅色虚线柱=环比下降，最高画到 300%），实际值见气泡；点击图例显示/隐藏客户）',series:list.map(function(c,i){ return momSeries(c.n,BCOL[i%BCOL.length],c.a,c.y<tot*0.02,'zł'); })});
 }
 function moveBottom(tblId,lastIds){
   var t=document.getElementById(tblId), pp=t&&t.closest('.panel'), last=null;

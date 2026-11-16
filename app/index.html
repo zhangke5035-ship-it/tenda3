@@ -15902,10 +15902,33 @@ function ukrRows(cb){
   var D=window.__UKR_D; if(!D){ var ss=document.querySelectorAll('script'); for(var s=0;s<ss.length&&!D;s++){ var x=ss[s].textContent; if(x.indexOf('ukrInit(D)')<0) continue; var e=x.indexOf('})({'); if(e<0) continue; try{ D=JSON.parse(x.slice(e+3,x.lastIndexOf('})')+1)); }catch(er){ D=null; } } window.__UKR_D=D; }
   if(!D) return; Object.keys(D).forEach(function(m){ D[m].forEach(function(r){ cb(String(r[0]||''), +r[5]||0, +r[2]||0); }); });
 }
+function ukrNewProd(){
+  var D=window.__UKR_D, anchor=document.getElementById('ukrMatrix'); if(!D||!anchor) return;
+  var host=document.getElementById('ukrNewProd');
+  if(!host){ host=document.createElement('div'); host.className='panel'; host.id='ukrNewProd'; host.style.marginTop='16px'; }
+  anchor.insertAdjacentElement('afterend',host);
+  var ks=Object.keys(D).sort(), last=ks.length?ks[ks.length-1]:'', ymax=last.slice(0,4), lastM=+last.slice(5)||1;
+  var data={}, totAll=0; NEWP.forEach(function(n){ data[n]={}; });
+  ks.forEach(function(m){ var k=+m.slice(5); D[m].forEach(function(r){ var net=+r[5]||0, q=+r[2]||0; totAll+=net; var n=newOf(String(r[0]||'')+' '+String(r[1]||'')); if(!n) return; var c=data[n][k]=data[n][k]||[0,0]; c[0]+=net; c[1]+=q; }); });
+  var months=[]; for(var k=lastM;k>=1;k--) months.push(k);
+  function ml(k){ return ymax+'-'+(k<10?'0':'')+k; }
+  var sc='style="text-align:right;color:var(--text-faint);font-weight:500;"';
+  function cell(a,q,cls){ var z=(!a&&!q); return '<td class="'+(cls||'')+'" style="text-align:right;'+(z?'color:var(--text-faint);':'')+'">'+(z?'—':f1(a))+'</td><td class="'+(cls||'')+'" style="text-align:right;'+(z?'color:var(--text-faint);':'')+'">'+(z?'—':fq(q))+'</td>'; }
+  var tot={}, tY=[0,0];
+  var body=NEWP.map(function(n){ var ya=0,yq=0; months.forEach(function(k){ var c=data[n][k]; if(c){ ya+=c[0]; yq+=c[1]; tot[k]=tot[k]||[0,0]; tot[k][0]+=c[0]; tot[k][1]+=c[1]; } }); tY[0]+=ya; tY[1]+=yq;
+    return '<tr><td><b>'+n+'</b></td>'+cell(ya,yq,'ytd-col')+months.map(function(k){ var c=data[n][k]; return cell(c?c[0]:0,c?c[1]:0); }).join('')+'</tr>'; }).join('');
+  var foot='<tr style="font-weight:600;"><td>合计</td>'+cell(tY[0],tY[1],'ytd-col')+months.map(function(k){ var t=tot[k]||[0,0]; return cell(t[0],t[1]); }).join('')+'</tr>';
+  var share=totAll>0?(tY[0]/totAll*100):0;
+  var cards=[['copper','新产品销售金额',f1(tY[0])+'<span class="unit">¥</span>','CNY · '+ymax+' 全年累计'],['text-dim','新产品销售数量',fq(tY[1])+'<span class="unit">件</span>',NEWP.join(' / ')],['good','占 DC-Link 总销售额',share.toFixed(1)+'<span class="unit">%</span>','已发货销售净额']];
+  host.innerHTML='<div class="panel-head"><div><h3>新产品销售金额</h3><div class="desc">DC-Link 新产品 '+NEWP.join(' / ')+' 的已发货数量与销售净额（CNY，取自每月财务销售明细）</div></div></div>'+
+    '<div class="kpi-row">'+cards.map(function(c){ return '<div class="kpi" style="border-top:3px solid var(--'+c[0]+');"><div class="label">'+c[1]+'</div><div class="value">'+c[2]+'</div><div class="sub">'+c[3]+'</div></div>'; }).join('')+'</div>'+
+    '<div class="mom-table-scroll"><table><thead><tr><th rowspan="2">型号</th><th colspan="2" class="ytd-col-head" style="text-align:center;">'+ymax+' 累计 (YTD)</th>'+months.map(function(k){ return '<th colspan="2" style="text-align:center;">'+ml(k)+'</th>'; }).join('')+'</tr><tr><th class="ytd-col-sub" '+sc+'>金额 (CNY)</th><th class="ytd-col-sub" '+sc+'>数量</th>'+months.map(function(){ return '<th '+sc+'>金额 (CNY)</th><th '+sc+'>数量</th>'; }).join('')+'</tr></thead><tbody>'+body+'</tbody><tfoot>'+foot+'</tfoot></table></div>';
+}
 window.renderUkrCatPie=function(){ try{
   if(!document.getElementById('ukrMatrix')) return;
   catPieGen({anchor:'ukrMatrix',host:'ukrCatPie',cur:'¥',cname:'CNY',desc:'DC-Link 各 BU 已发货销售额与数量占比（CNY，销售净额，取自每月财务销售明细；负值不计入饼图）',rows:ukrRows});
   catPieLine('ukrLinePie','ukrCatPie','¥','CNY','DC-Link 各产品线已发货销售额与数量占比（CNY，销售净额，取自每月财务销售明细；负值不计入饼图）',ukrRows);
+  ukrNewProd();
 }catch(e){ console.warn('ukrCatPie',e); } };
 setTimeout(window.renderUkrCatPie,400);
 document.addEventListener('click',function(e){ var n=e.target.closest&&e.target.closest('.navitem[data-view="ukraine"]'); if(n) setTimeout(window.renderUkrCatPie,200); });

@@ -1419,6 +1419,28 @@
           <p>波兰站点业绩数据(待开发)</p>
         </div>
       </div>
+      <div class="kpi-row" id="plKpiRow"></div>
+
+      <div class="panel">
+        <div class="panel-head"><div><h3>客户维度月环比</h3><div class="desc">各客户本年度月度订单净额趋势</div></div></div>
+        <div class="mom-table-scroll">
+        <table id="plMomTable">
+          <thead><tr id="plMomTableHead"><th>客户</th></tr></thead>
+          <tbody id="plMomTableBody"></tbody>
+        </table>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head"><div><h3>产品型号维度月环比</h3><div class="desc">各产品型号近3个月订单净额趋势</div></div></div>
+        <div class="mom-table-scroll" style="max-height:520px;overflow:auto;">
+        <table id="plProdMomTable">
+          <thead id="plProdHeadWrap"><tr id="plProdHead"></tr></thead>
+          <tbody id="plProdBody"></tbody>
+          <tfoot id="plProdFoot"></tfoot>
+        </table>
+        </div>
+      </div>
     </section>
 
     <section class="view" id="view-czech">
@@ -7599,6 +7621,23 @@ function applyRoleRestrictions(session){
   }
 
 
+  const HIDDEN_VIEWS_BY_USER = {
+    'piotr.kowalski@tenda.cn': ['overview', 'ukraine', 'czech'],
+    'gajowski@tenda.cn': ['overview', 'ukraine', 'czech']
+  };
+  if (HIDDEN_VIEWS_BY_USER[userEmail]){
+    const hiddenViews = HIDDEN_VIEWS_BY_USER[userEmail];
+    document.querySelectorAll('.navitem[data-view]').forEach(function(item){
+      if (hiddenViews.includes(item.dataset.view)) item.style.display = 'none';
+    });
+    document.querySelectorAll('.navitem').forEach(function(n){ n.classList.remove('active'); });
+    document.querySelectorAll('.view').forEach(function(vw){ vw.classList.remove('active'); });
+    const plNav = document.querySelector('.navitem[data-view="poland"]');
+    if (plNav) plNav.classList.add('active');
+    const plView = document.getElementById('view-poland');
+    if (plView) plView.classList.add('active');
+  }
+
   const LIMITED_ACCESS_VIEWS = {
     'huangxiang@tenda.cn': ['returns-admin', 'inventory', 'inventory-agent', 'agent-sellthrough', 'inventory-dashboard', 'promo'],
     'yushisen@tenda.cn': ['returns-admin', 'inventory', 'inventory-agent', 'agent-sellthrough', 'inventory-dashboard', 'orders', 'invoices'],
@@ -7674,6 +7713,47 @@ function renderSalesOverview(){
   renderSalesKpi();
   renderCustMomTable();
   renderProductMomTable();
+  renderPolandMirror();
+}
+
+// 波兰子模块:同步业绩总览(不含 Intelek)
+function renderPolandMirror(){
+  const kpiBox = document.getElementById('plKpiRow');
+  if (!kpiBox || window.__plMirrorBusy) return;
+  window.__plMirrorBusy = true;
+  const isIntelek = function(c){ return String(c==null?'':c).toUpperCase()==='INTELEK'; };
+  const savedOrders = orders, savedItems = orderItems, savedInvoices = invoices, savedPage = window.productMomPage;
+  try{
+    orders = savedOrders.filter(function(o){ return !isIntelek(o.cust); });
+    const ids = new Set(orders.map(function(o){ return o.id; }));
+    orderItems = savedItems.filter(function(i){ return ids.has(i.orderId); });
+    invoices = savedInvoices.filter(function(i){ return !isIntelek(i.cust); });
+    renderSalesKpi();
+    kpiBox.innerHTML = document.getElementById('salesKpiRow').innerHTML;
+    renderCustMomTable({head:'plMomTableHead', body:'plMomTableBody', sub:'plMomTableSubHead', excludeKeys:['INTELEK'], noExport:true});
+    const pTable = document.getElementById('productMomTable');
+    const pBody = document.getElementById('productMomTableBody');
+    let headHtml = '', rowsHtml = '', footHtml = '', prevBody = null;
+    for (let p = 1; p <= 60; p++){
+      window.productMomPage = p;
+      renderProductMomTable();
+      const cur = pBody.innerHTML;
+      if (cur === prevBody) break;
+      if (p === 1){ headHtml = pTable.querySelector('thead').innerHTML; }
+      rowsHtml += cur;
+      const ft = pTable.querySelector('tfoot'); footHtml = ft ? ft.innerHTML : '';
+      prevBody = cur;
+    }
+    const plHead = document.getElementById('plProdHeadWrap'), plBody = document.getElementById('plProdBody'), plFoot = document.getElementById('plProdFoot');
+    if (plHead) plHead.innerHTML = headHtml;
+    if (plBody) plBody.innerHTML = rowsHtml;
+    if (plFoot) plFoot.innerHTML = footHtml;
+  } catch(e){ console.error('renderPolandMirror', e); }
+  finally {
+    orders = savedOrders; orderItems = savedItems; invoices = savedInvoices; window.productMomPage = savedPage;
+    renderSalesKpi(); renderCustMomTable(); renderProductMomTable();
+    window.__plMirrorBusy = false;
+  }
 }
 
 function renderSalesKpi(){
@@ -7943,7 +8023,7 @@ function exportProductMomCSV(){
 }
 
 function renderCustMomTable(cfg){
-  if (!cfg && document.getElementById('czMomTableBody')) renderCustMomTable({head:'czMomTableHead', body:'czMomTableBody', sub:'czMomTableSubHead', onlyKeys:['INTELEK'], noExport:true});
+  if (!cfg && document.getElementById('czMomTableBody')) renderCustMomTable({head:'czMomTableHead', body:'czMomTableBody', sub:'czMomTableSubHead', onlyKeys:['INTELEK','INTELEK-FOB'], extraKeys:['INTELEK-FOB'], nameMap:{'INTELEK':'Intelek-DDP','INTELEK-FOB':'Intelek-FOB'}, noExport:true});
   cfg = cfg || {};
   const head = document.getElementById(cfg.head || 'custMomTableHead');
   const body = document.getElementById(cfg.body || 'custMomTableBody');
@@ -7993,9 +8073,10 @@ function renderCustMomTable(cfg){
     }
   });
   const custCountryOf = k => { const nm = (typeof CUSTOMERS!=='undefined' && CUSTOMERS[k]) ? CUSTOMERS[k].name : k; const ct = (typeof CUSTOMERS!=='undefined' && CUSTOMERS[k]) ? (CUSTOMERS[k].country||'') : ''; return (/dc.?link/i.test(k+' '+nm) || ct.indexOf('乌克兰')>=0) ? 'UA' : 'PL'; };
-  const countrySel = cfg.onlyKeys ? null : document.getElementById('custMomCountry'); const countryVal = countrySel ? countrySel.value : '';
+  const countrySel = (cfg.onlyKeys || cfg.excludeKeys) ? null : document.getElementById('custMomCountry'); const countryVal = countrySel ? countrySel.value : '';
   if (countryVal==='UA' && !Object.keys(byCustMonth).some(k=>custCountryOf(k)==='UA')) byCustMonth['DC-Link'] = {};
-  const custKeys = Object.keys(byCustMonth).filter(k => (!countryVal || custCountryOf(k)===countryVal) && (!cfg.onlyKeys || cfg.onlyKeys.indexOf(String(k).toUpperCase())>=0));
+  (cfg.extraKeys||[]).forEach(function(k){ if(!byCustMonth[k]) byCustMonth[k] = {}; });
+  const custKeys = Object.keys(byCustMonth).filter(k => (!countryVal || custCountryOf(k)===countryVal) && (!cfg.onlyKeys || cfg.onlyKeys.indexOf(String(k).toUpperCase())>=0) && (!cfg.excludeKeys || cfg.excludeKeys.indexOf(String(k).toUpperCase())<0));
   const table = body.closest('table');
   let foot = table ? table.querySelector('tfoot') : null;
   if (!custKeys.length){
@@ -8006,7 +8087,7 @@ function renderCustMomTable(cfg){
   }
 
   const rows = custKeys.map(k=>{
-    const name = (typeof CUSTOMERS!=='undefined' && CUSTOMERS[k]) ? CUSTOMERS[k].name : k;
+    const name = (cfg.nameMap && cfg.nameMap[String(k).toUpperCase()]) || ((typeof CUSTOMERS!=='undefined' && CUSTOMERS[k]) ? CUSTOMERS[k].name : k);
     const vals = months.map(m=>byCustMonth[k][m] || {amount:0, qty:0});
     const ytd = byCustYtd[k] || {amount:0, qty:0};
     const cur = (byCustMonth[k][curMonth] || {amount:0}).amount;

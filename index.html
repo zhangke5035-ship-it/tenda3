@@ -15829,9 +15829,10 @@ function catOf(m){
 }
 function arc(cx,cy,r,a0,a1){ var x0=cx+r*Math.sin(a0),y0=cy-r*Math.cos(a0),x1=cx+r*Math.sin(a1),y1=cy-r*Math.cos(a1); return 'M'+cx+','+cy+' L'+x0.toFixed(2)+','+y0.toFixed(2)+' A'+r+','+r+' 0 '+((a1-a0)>Math.PI?1:0)+' 1 '+x1.toFixed(2)+','+y1.toFixed(2)+' Z'; }
 function pieSvg(vals,total,unit){
-  var s='<svg viewBox="0 0 200 200" width="200" height="200">', a=0;
-  vals.forEach(function(v,i){ if(v<=0||total<=0) return; var f=v/total; if(f>=0.9999){ s+='<circle cx="100" cy="100" r="90" fill="'+COL[i]+'"><title>'+CATS[i]+'</title></circle>'; return; } var a1=a+f*2*Math.PI; s+='<path d="'+arc(100,100,90,a,a1)+'" fill="'+COL[i]+'" stroke="#fff" stroke-width="1.5"><title>'+CATS[i]+' '+(f*100).toFixed(1)+'% · '+(unit==='¥'?f1(v)+' ¥':fq(v)+' 件')+'</title></path>'; a=a1; });
-  return s+'<circle cx="100" cy="100" r="42" fill="#fff"/></svg>';
+  var s='<svg viewBox="0 0 200 200" width="200" height="200" class="pieSvg">', a=0;
+  function at(i,v,f){ return ' class="pslice" data-n="'+CATS[i]+'" data-p="'+(f*100).toFixed(1)+'%" data-v="'+(unit==='¥'?f1(v)+' ¥':fq(v)+' 件')+'" style="cursor:pointer;transition:transform .15s;transform-origin:100px 100px;"'; }
+  vals.forEach(function(v,i){ if(v<=0||total<=0) return; var f=v/total; if(f>=0.9999){ s+='<circle cx="100" cy="100" r="90" fill="'+COL[i]+'"'+at(i,v,f)+'></circle>'; return; } var a1=a+f*2*Math.PI; s+='<path d="'+arc(100,100,90,a,a1)+'" fill="'+COL[i]+'" stroke="#fff" stroke-width="1.5"'+at(i,v,f)+'></path>'; a=a1; });
+  return s+'<circle cx="100" cy="100" r="42" fill="#fff" style="pointer-events:none;"/><text class="pc1" x="100" y="94" text-anchor="middle" font-size="11" fill="#555" style="pointer-events:none;"></text><text class="pc2" x="100" y="110" text-anchor="middle" font-size="14" font-weight="600" fill="#222" style="pointer-events:none;"></text><text class="pc3" x="100" y="124" text-anchor="middle" font-size="9" fill="#888" style="pointer-events:none;"></text></svg>';
 }
 var pieMonth='';
 function catPie(){
@@ -15850,6 +15851,11 @@ function catPie(){
    '<div style="text-align:center;"><div style="font-size:13px;color:var(--text-dim);margin-bottom:4px;">销售额占比</div>'+pieSvg(av,at,'¥')+'</div>'+
    '<div style="text-align:center;"><div style="font-size:13px;color:var(--text-dim);margin-bottom:4px;">销售数量占比</div>'+pieSvg(qv,qt,'n')+'</div>'+
    '<div style="flex:1;min-width:340px;overflow-x:auto;"><table style="width:100%;"><thead><tr><th>产品线</th><th style="text-align:right;">销售额 (CNY)</th><th style="text-align:right;">占比</th><th style="text-align:right;">数量</th><th style="text-align:right;">占比</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
+  host.querySelectorAll('.pieSvg').forEach(function(svg){
+    var t1=svg.querySelector('.pc1'),t2=svg.querySelector('.pc2'),t3=svg.querySelector('.pc3'),cur=null;
+    function sel(el){ svg.querySelectorAll('.pslice').forEach(function(x){ x.style.transform=''; x.style.opacity=el?'0.55':'1'; }); if(el){ el.style.transform='scale(1.06)'; el.style.opacity='1'; t1.textContent=el.getAttribute('data-n'); t2.textContent=el.getAttribute('data-p'); t3.textContent=el.getAttribute('data-v'); } else { t1.textContent=''; t2.textContent=''; t3.textContent=''; } cur=el; }
+    svg.querySelectorAll('.pslice').forEach(function(el){ el.onclick=function(e){ e.stopPropagation(); sel(cur===el?null:el); }; el.onmouseenter=function(){ if(!cur) { t1.textContent=el.getAttribute('data-n'); t2.textContent=el.getAttribute('data-p'); t3.textContent=el.getAttribute('data-v'); } }; el.onmouseleave=function(){ if(!cur){ t1.textContent=''; t2.textContent=''; t3.textContent=''; } }; });
+  });
   
 }
 window.renderOverviewFromSales=function(){ try{ kpi(); custTable(); prodTable(); catPie(); }catch(e){ console.error('ovSales',e); } };

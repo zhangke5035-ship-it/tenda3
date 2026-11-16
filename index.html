@@ -15908,7 +15908,8 @@ window.renderPlLine=function(){ try{
   var tot=ms.map(function(m,i){ var s=0; keys.forEach(function(c){ s+=(by[c][i+1]||0); }); return s; });
   var all=ms.map(function(){return 0;}); try{ var A=window.__plAll||{o:[],i:[]}, ay={}; A.o.forEach(function(o){ ay[o.id]=(o.date||'').slice(0,7); }); A.i.forEach(function(i){ var m=ay[i.orderId]; if(!m||m.slice(0,4)!==ymax) return; var k=+m.slice(5); if(k>=1&&k<=all.length) all[k-1]+=i.qty*i.price; }); }catch(e2){}
   var series=[{name:'总销售额（含 Intelek-DDP）',color:'#c2703d',bold:true,dash:true,vals:all},{name:'合计（不含 Intelek）',color:'#222',bold:true,vals:tot}].concat(keys.map(function(c,i){ return {name:(typeof CUSTOMERS!=='undefined'&&CUSTOMERS[c])?CUSTOMERS[c].name:c,color:LCOL[i%LCOL.length],vals:ms.map(function(m,j){ return by[c][j+1]||0; })}; }));
-  lineGen({anchor:'plMomTableBody',host:'plLinePanel',cur:'zł',months:ms,series:series,desc:'总销售额（含 Intelek-DDP）、波兰合计（不含 Intelek）及各客户的月度销售额趋势（PLN，取自销售订单；点击图例可显示/隐藏）'});
+  series=series.slice(0,2);
+  lineGen({anchor:'plMomTableBody',host:'plLinePanel',cur:'zł',months:ms,series:series,desc:'总销售额（含 Intelek-DDP）与波兰合计（不含 Intelek）的月度销售额趋势（PLN，取自销售订单；点击图例可显示/隐藏）'});
 }catch(e){ console.error('plLine',e); } };
 window.renderOverviewFromSales=function(){ try{ kpi(); custTable(); prodTable(); catPie(); }catch(e){ console.error('ovSales',e); } };
 })();

@@ -7919,10 +7919,12 @@ function renderCustMomTable(){
   if (!head || !body) return;
   const fmtAmt = n => n.toLocaleString('en-US', {minimumFractionDigits:1, maximumFractionDigits:1});
   const fmtQty = n => n.toLocaleString('en-US');
-  const months = getYearMonths();
-  const curMonth = months[months.length-1];
-  const prevMonth = months.length>1 ? months[months.length-2] : null;
+  const monthsAsc = getYearMonths();
+  const curMonth = monthsAsc[monthsAsc.length-1];
+  const prevMonth = monthsAsc.length>1 ? monthsAsc[monthsAsc.length-2] : null;
   const ytdYear = curMonth.slice(0,4);
+  // 最近的月份放在最左边(含到12月的空月份)
+  const months = (function(){ const arr = monthsAsc.slice(); for (let m = arr.length + 1; m <= 12; m++){ arr.push(ytdYear + '-' + String(m).padStart(2,'0')); } return arr.reverse(); })();
 
   const theadEl = head.parentElement;
   head.innerHTML = '<th rowspan="2">客户</th>' +

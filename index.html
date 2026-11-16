@@ -1428,6 +1428,15 @@
           <p>捷克站点业绩数据(待开发)</p>
         </div>
       </div>
+      <div class="panel">
+        <div class="panel-head"><div><h3>客户维度月环比</h3><div class="desc">各客户本年度月度订单净额趋势</div></div></div>
+        <div class="mom-table-scroll">
+        <table id="czMomTable">
+          <thead><tr id="czMomTableHead"><th>客户</th></tr></thead>
+          <tbody id="czMomTableBody"></tbody>
+        </table>
+        </div>
+      </div>
     </section>
 
     <section class="view" id="view-ukraine">
@@ -7933,9 +7942,11 @@ function exportProductMomCSV(){
   URL.revokeObjectURL(url);
 }
 
-function renderCustMomTable(){
-  const head = document.getElementById('custMomTableHead');
-  const body = document.getElementById('custMomTableBody');
+function renderCustMomTable(cfg){
+  if (!cfg && document.getElementById('czMomTableBody')) renderCustMomTable({head:'czMomTableHead', body:'czMomTableBody', sub:'czMomTableSubHead', onlyKeys:['INTELEK'], noExport:true});
+  cfg = cfg || {};
+  const head = document.getElementById(cfg.head || 'custMomTableHead');
+  const body = document.getElementById(cfg.body || 'custMomTableBody');
   if (!head || !body) return;
   const fmtAmt = n => n.toLocaleString('en-US', {minimumFractionDigits:1, maximumFractionDigits:1});
   const fmtQty = n => n.toLocaleString('en-US');
@@ -7950,10 +7961,10 @@ function renderCustMomTable(){
   head.innerHTML = '<th rowspan="2">客户</th>' +
     '<th colspan="2" class="ytd-col-head" style="text-align:center;">'+ytdYear+' 年累计(YTD)</th>' +
     months.map(m=>'<th colspan="2" style="text-align:center;">'+m+'</th>').join('');
-  let subHead = document.getElementById('custMomTableSubHead');
+  let subHead = document.getElementById(cfg.sub || 'custMomTableSubHead');
   if (!subHead && theadEl){
     subHead = document.createElement('tr');
-    subHead.id = 'custMomTableSubHead';
+    subHead.id = cfg.sub || 'custMomTableSubHead';
     theadEl.appendChild(subHead);
   }
   if (subHead){
@@ -7962,7 +7973,7 @@ function renderCustMomTable(){
   }
 
   const exportBtn = document.getElementById('custMomExportBtn');
-  if (exportBtn) exportBtn.onclick = exportCustMomCSV;
+  if (exportBtn && !cfg.noExport) exportBtn.onclick = exportCustMomCSV;
 
   const byCustMonth = {};
   const byCustYtd = {};
@@ -7982,15 +7993,15 @@ function renderCustMomTable(){
     }
   });
   const custCountryOf = k => { const nm = (typeof CUSTOMERS!=='undefined' && CUSTOMERS[k]) ? CUSTOMERS[k].name : k; const ct = (typeof CUSTOMERS!=='undefined' && CUSTOMERS[k]) ? (CUSTOMERS[k].country||'') : ''; return (/dc.?link/i.test(k+' '+nm) || ct.indexOf('乌克兰')>=0) ? 'UA' : 'PL'; };
-  const countrySel = document.getElementById('custMomCountry'); const countryVal = countrySel ? countrySel.value : '';
+  const countrySel = cfg.onlyKeys ? null : document.getElementById('custMomCountry'); const countryVal = countrySel ? countrySel.value : '';
   if (countryVal==='UA' && !Object.keys(byCustMonth).some(k=>custCountryOf(k)==='UA')) byCustMonth['DC-Link'] = {};
-  const custKeys = Object.keys(byCustMonth).filter(k => !countryVal || custCountryOf(k)===countryVal);
+  const custKeys = Object.keys(byCustMonth).filter(k => (!countryVal || custCountryOf(k)===countryVal) && (!cfg.onlyKeys || cfg.onlyKeys.indexOf(String(k).toUpperCase())>=0));
   const table = body.closest('table');
   let foot = table ? table.querySelector('tfoot') : null;
   if (!custKeys.length){
     body.innerHTML = '<tr><td colspan="'+(months.length*2+4)+'" style="color:var(--text-faint);">暂无数据</td></tr>';
     if (foot) foot.innerHTML = '';
-    window.__custMomExportCache = null;
+    if (!cfg.noExport) window.__custMomExportCache = null;
     return;
   }
 
@@ -8066,7 +8077,7 @@ function renderCustMomTable(){
       '</tr>';
   }
 
-  window.__custMomExportCache = { months, ytdYear, rows, totals, ytdTotal, fMomText };
+  if (!cfg.noExport) window.__custMomExportCache = { months, ytdYear, rows, totals, ytdTotal, fMomText };
   (function(){
     var tbl = document.getElementById('custMomTable');
     if (tbl){

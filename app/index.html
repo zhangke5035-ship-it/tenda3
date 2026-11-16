@@ -15908,10 +15908,29 @@ function lineGen(cfg){
   var svg='<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;max-width:960px;height:auto;">';
   for(var g=0;g<=5;g++){ var gv=top*g/5, gy=y(gv); svg+='<line x1="'+L+'" x2="'+(W-R)+'" y1="'+gy+'" y2="'+gy+'" stroke="#e6e9ee"/><text x="'+(L-8)+'" y="'+(gy+4)+'" text-anchor="end" font-size="11" fill="#8a93a0">'+cf(gv)+'</text>'; }
   ms.forEach(function(m,i){ svg+='<text x="'+x(i)+'" y="'+(H-14)+'" text-anchor="middle" font-size="11" fill="#8a93a0">'+m.slice(5)+'月</text>'; });
-  S.forEach(function(s){ if(hid[s.name]) return; var dd='',pts=''; s.vals.forEach(function(v,i){ dd+=(i?'L':'M')+x(i).toFixed(1)+','+y(v).toFixed(1)+' '; pts+='<circle cx="'+x(i).toFixed(1)+'" cy="'+y(v).toFixed(1)+'" r="'+(s.bold?4:3)+'" fill="'+s.color+'" stroke="#fff" stroke-width="1"><title>'+s.name+' '+ms[i]+'：'+f1(v)+' '+cfg.cur+'</title></circle>'; }); svg+='<path d="'+dd+'" fill="none" stroke="'+s.color+'" stroke-width="'+(s.bold?3:2)+'"'+(s.dash?' stroke-dasharray="7 4"':'')+' stroke-linejoin="round"/>'+pts; });
-  svg+='</svg>';
+  S.forEach(function(s){ if(hid[s.name]) return; var dd='',pts=''; s.vals.forEach(function(v,i){ dd+=(i?'L':'M')+x(i).toFixed(1)+','+y(v).toFixed(1)+' '; pts+='<circle cx="'+x(i).toFixed(1)+'" cy="'+y(v).toFixed(1)+'" r="'+(s.bold?4:3)+'" fill="'+s.color+'" stroke="#fff" stroke-width="1"></circle><circle class="lpt" cx="'+x(i).toFixed(1)+'" cy="'+y(v).toFixed(1)+'" r="11" fill="transparent" style="cursor:pointer" data-s="'+s.name+'" data-m="'+ms[i]+'" data-v="'+f1(v)+' '+cfg.cur+'"></circle>'; }); svg+='<path d="'+dd+'" fill="none" stroke="'+s.color+'" stroke-width="'+(s.bold?3:2)+'"'+(s.dash?' stroke-dasharray="7 4"':'')+' stroke-linejoin="round"/>'+pts; });
+  svg+='<g class="ltip" style="display:none;pointer-events:none"><rect rx="5" fill="#222" opacity="0.92"></rect><text class="lt1" fill="#ddd" font-size="11"></text><text class="lt2" fill="#fff" font-size="13" font-weight="600"></text></g></svg>';
   var leg=S.map(function(s,i){ return '<span class="lgItem" data-i="'+i+'" style="cursor:pointer;display:inline-flex;align-items:center;margin-right:14px;font-size:12px;'+(hid[s.name]?'opacity:.35;':'')+'"><span style="width:12px;height:3px;background:'+s.color+';margin-right:6px;display:inline-block;"></span>'+s.name+'</span>'; }).join('');
   host.innerHTML='<div class="panel-head"><div><h3>月度销售额折线图</h3><div class="desc">'+cfg.desc+'</div></div></div><div style="padding:4px 8px 0;">'+leg+'</div><div style="padding:6px 4px;">'+svg+'</div>';
+  (function(){
+    var sv=host.querySelector('svg'); if(!sv) return;
+    var g=sv.querySelector('.ltip'), rc=g.querySelector('rect'), t1=g.querySelector('.lt1'), t2=g.querySelector('.lt2'), pin=null;
+    function show(el){
+      var cx=+el.getAttribute('cx'), cy=+el.getAttribute('cy');
+      t1.textContent=el.getAttribute('data-s')+'  '+el.getAttribute('data-m'); t2.textContent=el.getAttribute('data-v');
+      g.style.display='';
+      var w=Math.max(t1.getComputedTextLength(),t2.getComputedTextLength())+20, h=42;
+      var bx=Math.min(Math.max(cx-w/2,2),W-w-2), by=cy-h-12; if(by<2) by=cy+14;
+      rc.setAttribute('x',bx); rc.setAttribute('y',by); rc.setAttribute('width',w); rc.setAttribute('height',h);
+      t1.setAttribute('x',bx+10); t1.setAttribute('y',by+16); t2.setAttribute('x',bx+10); t2.setAttribute('y',by+34);
+    }
+    sv.querySelectorAll('.lpt').forEach(function(el){
+      el.onmouseenter=function(){ if(!pin) show(el); };
+      el.onmouseleave=function(){ if(!pin) g.style.display='none'; };
+      el.onclick=function(e){ e.stopPropagation(); if(pin===el){ pin=null; g.style.display='none'; } else { pin=el; show(el); } };
+    });
+    sv.onclick=function(){ pin=null; g.style.display='none'; };
+  })();
   host.querySelectorAll('.lgItem').forEach(function(el){ el.onclick=function(){ var n=S[+el.getAttribute('data-i')].name; hid[n]=!hid[n]; lineGen(cfg); }; });
 }
 window.renderPlLine=function(){ try{

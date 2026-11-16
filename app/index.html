@@ -7723,6 +7723,7 @@ function renderPolandMirror(){
   if (!kpiBox || window.__plMirrorBusy) return;
   window.__plMirrorBusy = true;
   const isIntelek = function(c){ return String(c==null?'':c).toUpperCase()==='INTELEK'; };
+  window.__plAll = {o: orders, i: orderItems};
   const savedOrders = orders, savedItems = orderItems, savedInvoices = invoices, savedPage = window.productMomPage;
   try{
     orders = savedOrders.filter(function(o){ return !isIntelek(o.cust); });
@@ -15891,7 +15892,7 @@ function lineGen(cfg){
   var svg='<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;max-width:960px;height:auto;">';
   for(var g=0;g<=5;g++){ var gv=top*g/5, gy=y(gv); svg+='<line x1="'+L+'" x2="'+(W-R)+'" y1="'+gy+'" y2="'+gy+'" stroke="#e6e9ee"/><text x="'+(L-8)+'" y="'+(gy+4)+'" text-anchor="end" font-size="11" fill="#8a93a0">'+cf(gv)+'</text>'; }
   ms.forEach(function(m,i){ svg+='<text x="'+x(i)+'" y="'+(H-14)+'" text-anchor="middle" font-size="11" fill="#8a93a0">'+m.slice(5)+'月</text>'; });
-  S.forEach(function(s){ if(hid[s.name]) return; var dd='',pts=''; s.vals.forEach(function(v,i){ dd+=(i?'L':'M')+x(i).toFixed(1)+','+y(v).toFixed(1)+' '; pts+='<circle cx="'+x(i).toFixed(1)+'" cy="'+y(v).toFixed(1)+'" r="'+(s.bold?4:3)+'" fill="'+s.color+'" stroke="#fff" stroke-width="1"><title>'+s.name+' '+ms[i]+'：'+f1(v)+' '+cfg.cur+'</title></circle>'; }); svg+='<path d="'+dd+'" fill="none" stroke="'+s.color+'" stroke-width="'+(s.bold?3:2)+'" stroke-linejoin="round"/>'+pts; });
+  S.forEach(function(s){ if(hid[s.name]) return; var dd='',pts=''; s.vals.forEach(function(v,i){ dd+=(i?'L':'M')+x(i).toFixed(1)+','+y(v).toFixed(1)+' '; pts+='<circle cx="'+x(i).toFixed(1)+'" cy="'+y(v).toFixed(1)+'" r="'+(s.bold?4:3)+'" fill="'+s.color+'" stroke="#fff" stroke-width="1"><title>'+s.name+' '+ms[i]+'：'+f1(v)+' '+cfg.cur+'</title></circle>'; }); svg+='<path d="'+dd+'" fill="none" stroke="'+s.color+'" stroke-width="'+(s.bold?3:2)+'"'+(s.dash?' stroke-dasharray="7 4"':'')+' stroke-linejoin="round"/>'+pts; });
   svg+='</svg>';
   var leg=S.map(function(s,i){ return '<span class="lgItem" data-i="'+i+'" style="cursor:pointer;display:inline-flex;align-items:center;margin-right:14px;font-size:12px;'+(hid[s.name]?'opacity:.35;':'')+'"><span style="width:12px;height:3px;background:'+s.color+';margin-right:6px;display:inline-block;"></span>'+s.name+'</span>'; }).join('');
   host.innerHTML='<div class="panel-head"><div><h3>月度销售额折线图</h3><div class="desc">'+cfg.desc+'</div></div></div><div style="padding:4px 8px 0;">'+leg+'</div><div style="padding:6px 4px;">'+svg+'</div>';
@@ -15905,8 +15906,9 @@ window.renderPlLine=function(){ try{
   if(!last) last=1; var ms=[]; for(var k=1;k<=Math.max(last,2);k++) ms.push(ymax+'-'+(k<10?'0':'')+k);
   var keys=Object.keys(by).sort(function(a,b){ var sa=0,sb=0; for(var q in by[a]) sa+=by[a][q]; for(var r in by[b]) sb+=by[b][r]; return sb-sa; });
   var tot=ms.map(function(m,i){ var s=0; keys.forEach(function(c){ s+=(by[c][i+1]||0); }); return s; });
-  var series=[{name:'合计',color:'#222',bold:true,vals:tot}].concat(keys.map(function(c,i){ return {name:(typeof CUSTOMERS!=='undefined'&&CUSTOMERS[c])?CUSTOMERS[c].name:c,color:LCOL[i%LCOL.length],vals:ms.map(function(m,j){ return by[c][j+1]||0; })}; }));
-  lineGen({anchor:'plMomTableBody',host:'plLinePanel',cur:'zł',months:ms,series:series,desc:'波兰（不含 Intelek）各客户及合计的月度销售额趋势（PLN，取自销售订单；点击图例可显示/隐藏）'});
+  var all=ms.map(function(){return 0;}); try{ var A=window.__plAll||{o:[],i:[]}, ay={}; A.o.forEach(function(o){ ay[o.id]=(o.date||'').slice(0,7); }); A.i.forEach(function(i){ var m=ay[i.orderId]; if(!m||m.slice(0,4)!==ymax) return; var k=+m.slice(5); if(k>=1&&k<=all.length) all[k-1]+=i.qty*i.price; }); }catch(e2){}
+  var series=[{name:'总销售额（含 Intelek-DDP）',color:'#c2703d',bold:true,dash:true,vals:all},{name:'合计（不含 Intelek）',color:'#222',bold:true,vals:tot}].concat(keys.map(function(c,i){ return {name:(typeof CUSTOMERS!=='undefined'&&CUSTOMERS[c])?CUSTOMERS[c].name:c,color:LCOL[i%LCOL.length],vals:ms.map(function(m,j){ return by[c][j+1]||0; })}; }));
+  lineGen({anchor:'plMomTableBody',host:'plLinePanel',cur:'zł',months:ms,series:series,desc:'总销售额（含 Intelek-DDP）、波兰合计（不含 Intelek）及各客户的月度销售额趋势（PLN，取自销售订单；点击图例可显示/隐藏）'});
 }catch(e){ console.error('plLine',e); } };
 window.renderOverviewFromSales=function(){ try{ kpi(); custTable(); prodTable(); catPie(); }catch(e){ console.error('ovSales',e); } };
 })();

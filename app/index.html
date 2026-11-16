@@ -16247,3 +16247,31 @@ window.renderOverviewFromSales=function(){ try{ if(window.fobEnsureLoaded) windo
   list();
 })();
 </script>
+
+<script>
+/* CZ_TOTAL_CNY: Czech customer-month table total converted to CNY (editable rates) */
+(function(){
+  var FXR={PLN:1.70,USD:6.80,CNY:1}; /* 折算汇率: 1 外币 = x CNY，可按需调整 */
+  var busy=false,tm=null;
+  function num(s){ var v=parseFloat(String(s||'').replace(/,/g,'')); return isNaN(v)?0:v; }
+  function fmt(n){ return n.toLocaleString('en-US',{minimumFractionDigits:1,maximumFractionDigits:1}); }
+  function run(){
+    var body=document.getElementById('czMomTableBody'); if(!body) return;
+    var table=body.closest('table'); var tf=table&&table.querySelector('tfoot tr'); if(!tf) return;
+    var rows=[].slice.call(body.querySelectorAll('tr')); if(!rows.length) return;
+    var n=tf.cells.length, tot=[];
+    for(var c=1;c<n;c+=2){ tot[c]=0; }
+    rows.forEach(function(r){ var lab=r.cells[0]?r.cells[0].textContent:''; var m=lab.match(/\((PLN|USD|CNY)\)/i); var k=m?FXR[m[1].toUpperCase()]:1;
+      for(var c=1;c<n&&c<r.cells.length;c+=2){ tot[c]+=num(r.cells[c].textContent)*k; } });
+    var changed=false;
+    for(var c=1;c<n;c+=2){ var t=fmt(tot[c]); if(tf.cells[c].textContent!==t){ tf.cells[c].textContent=t; changed=true; } }
+    var lbl='合计（折合 CNY）'; if(tf.cells[0].textContent!==lbl){ tf.cells[0].textContent=lbl; changed=true; }
+    tf.cells[0].title='PLN×'+FXR.PLN+'，USD×'+FXR.USD+'，CNY×1（数量为各行直接相加）';
+  }
+  function sched(){ clearTimeout(tm); tm=setTimeout(run,150); }
+  function init(){ var body=document.getElementById('czMomTableBody'); if(!body){ setTimeout(init,500); return; }
+    var table=body.closest('table'); new MutationObserver(sched).observe(table,{childList:true,subtree:true,characterData:true}); sched(); }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init); else init();
+})();
+</script>
+

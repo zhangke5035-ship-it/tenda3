@@ -15954,6 +15954,8 @@ function lineGen(cfg){
 }
 var NEWP=['BE12 Pro','AX12','AX12 Pro','A33','MX12','ME6 Pro'];
 function normFam(x){ return String(x||'').replace(/\(.*?\)/g,'').replace(/[^A-Za-z0-9]/g,'').toUpperCase(); }
+var NEWRE=NEWP.slice().sort(function(a,b){return b.length-a.length;}).map(function(n){ return [n,new RegExp('(^|[^A-Za-z0-9])'+n.replace(/ /g,'[ \\-]?')+'(?![0-9]|[ \\-]?Pro)','i')]; });
+function newOf(p){ p=String(p||''); for(var k=0;k<NEWRE.length;k++){ var n=NEWRE[k][0]; var re=/ Pro$/.test(n)?new RegExp('(^|[^A-Za-z0-9])'+n.replace(/ /g,'[ \\-]?')+'(?![A-Za-z0-9])','i'):NEWRE[k][1]; if(re.test(p)) return n; } return null; }
 function plNewProd(){
   var anchor=document.getElementById('plLinePanel'); if(!anchor) return;
   var host=document.getElementById('plNewProd');
@@ -15961,7 +15963,7 @@ function plNewProd(){
   var fam={}; NEWP.forEach(function(n){ fam[normFam(n)]=n; });
   var om={}, ymax=''; orders.forEach(function(o){ var m=(o.date||'').slice(0,7); if(!m) return; om[o.id]=m; if(m.slice(0,4)>ymax) ymax=m.slice(0,4); });
   var data={}, lastAll=1, totAll=0; NEWP.forEach(function(n){ data[n]={}; });
-  orderItems.forEach(function(i){ var m=om[i.orderId]; if(!m||m.slice(0,4)!==ymax) return; var k=+m.slice(5), amt=i.qty*i.price; totAll+=amt; if(k>lastAll) lastAll=k; var n=fam[normFam(i.product)]; if(!n) return; var c=data[n][k]=data[n][k]||[0,0]; c[0]+=amt; c[1]+=i.qty; });
+  orderItems.forEach(function(i){ var m=om[i.orderId]; if(!m||m.slice(0,4)!==ymax) return; var k=+m.slice(5), amt=i.qty*i.price; totAll+=amt; if(k>lastAll) lastAll=k; var n=newOf(i.product); if(!n) return; var c=data[n][k]=data[n][k]||[0,0]; c[0]+=amt; c[1]+=i.qty; });
   var months=[]; for(var k=lastAll;k>=1;k--) months.push(k);
   function ml(k){ return ymax+'-'+(k<10?'0':'')+k; }
   var sc='style="text-align:right;color:var(--text-faint);font-weight:500;"';

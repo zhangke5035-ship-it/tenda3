@@ -15813,20 +15813,32 @@ function prodTable(){
   };
 }
 
-var CATS=['无线路由器','Mesh路由系统','交换机','4G/5G路由器','室外CPE','智能摄像机','企业AP/天线','USB无线网卡','NVR录像机','网络配件'];
-var COL=['#c2703d','#4a6fa5','#3f8f6b','#d9a441','#8a5fa8','#c0504d','#2f9aa6','#7a8b3c','#a0522d','#8c8c8c'];
-function catOf(m){
-  if(/^(MW|MX|EX|EE|ME)\d/.test(m)) return 'Mesh路由系统';
-  if(/^(W311MI|U\d)/.test(m)) return 'USB无线网卡';
-  if(/^(O\d|OS3)/.test(m)) return '室外CPE';
-  if(/^(4G|5G|MF)/.test(m)) return '4G/5G路由器';
-  if(/^(N3L|N6P|TN)/.test(m)) return 'NVR录像机';
-  if(/^(IC|IT|CP|CH|RH|RP|CT|TC|K4|TK)\d?/.test(m) && !/^(IT7|IC7|CP|CH|RH|RP|CT|TC|K4|TK)/.test(m)) return '智能摄像机';
-  if(/^(IC7|IT7|CP\d|CH\d|RH\d|RP\d|CT\d|TC\d|K4|TK\d)/.test(m)) return '智能摄像机';
-  if(/^(TEG|TEF|SG|S1|SM|TEM|G5)/.test(m)) return '交换机';
-  if(/^(i\d|Pro-6|W15|OAP)/.test(m)) return '企业AP/天线';
-  if(/^(PoE|HG|A\d|T10|TFC)/.test(m)) return '网络配件';
-  return '无线路由器';
+var CATS=['无线路由器','Mesh路由系统','交换机','4G/5G路由器','室外CPE','智能摄像机','企业AP/天线','USB无线网卡','NVR录像机','网络配件','未分类'];
+var COL=['#c2703d','#4a6fa5','#3f8f6b','#d9a441','#8a5fa8','#c0504d','#2f9aa6','#7a8b3c','#a0522d','#8c8c8c','#d0d3d8'];
+function catOf(m,strict){
+  if(/^(MW|MX|EX|EE|ME)\d/i.test(m)) return 'Mesh路由系统';
+  if(/^(W311MI|U\d)/i.test(m)) return 'USB无线网卡';
+  if(/^(O\d|OS3)/i.test(m)) return '室外CPE';
+  if(/^(4G|5G|MF)/i.test(m)) return '4G/5G路由器';
+  if(/^(N3L|N6P|TN)/i.test(m)) return 'NVR录像机';
+  if(/^(IC|IT|CP|CH|RH|RP|CT|TC|K4|TK)\d?/i.test(m) && !/^(IT7|IC7|CP|CH|RH|RP|CT|TC|K4|TK)/i.test(m)) return '智能摄像机';
+  if(/^(IC7|IT7|CP\d|CH\d|RH\d|RP\d|CT\d|TC\d|K4|TK\d)/i.test(m)) return '智能摄像机';
+  if(/^(TEG|TEF|SG|S1|SM|TEM|G5)/i.test(m)) return '交换机';
+  if(/^(i\d|Pro-6|W15|OAP)/i.test(m)) return '企业AP/天线';
+  if(/^(PoE|HG|A\d|T10|TFC)/i.test(m)) return '网络配件';
+  if(strict && /^(AC\d|F\d|TX|AX|BE|RX|TE\d|N301|RE\d|G0|W30|W18)/i.test(m)) return '无线路由器';
+  return strict?'未分类':'无线路由器';
+}
+var CATMAP=null;
+function nz(s){ return String(s||'').toUpperCase().replace(/[^A-Z0-9]/g,''); }
+function catLookup(x){
+  if(!CATMAP){ CATMAP={}; OV.p.forEach(function(p){ CATMAP[nz(p[0])]=catOf(p[0]); }); }
+  var raw=String(x||'').replace(/^\s*(tenda|ip-com)\s+/i,'').replace(/^#/,'').trim(), n=nz(raw);
+  if(CATMAP[n]) return CATMAP[n];
+  var best='';
+  for(var k in CATMAP){ if(k.length>=3 && n.indexOf(k)===0 && k.length>best.length) best=k; }
+  if(best) return CATMAP[best];
+  return catOf(raw,true);
 }
 function arc(cx,cy,r,a0,a1){ var x0=cx+r*Math.sin(a0),y0=cy-r*Math.cos(a0),x1=cx+r*Math.sin(a1),y1=cy-r*Math.cos(a1); return 'M'+cx+','+cy+' L'+x0.toFixed(2)+','+y0.toFixed(2)+' A'+r+','+r+' 0 '+((a1-a0)>Math.PI?1:0)+' 1 '+x1.toFixed(2)+','+y1.toFixed(2)+' Z'; }
 function pieSvg(vals,total,unit){
@@ -15841,11 +15853,11 @@ function catPieGen(cfg){
   var host=document.getElementById(cfg.host);
   if(!host){ var panel=anchor.closest('.panel'); if(!panel) return; host=document.createElement('div'); host.className='panel'; host.id=cfg.host; host.style.marginTop='16px'; panel.insertAdjacentElement('afterend',host); }
   var amt={}, qty={}; CATS.forEach(function(c){ amt[c]=0; qty[c]=0; });
-  cfg.rows(function(model,a,q){ var c=catOf(model); amt[c]+=a; qty[c]+=q; });
+  cfg.rows(function(model,a,q){ var c=catLookup(model); amt[c]+=a; qty[c]+=q; });
   var av=CATS.map(function(c){return amt[c];}), qv=CATS.map(function(c){return qty[c];});
   var at=av.reduce(function(s,v){return s+Math.max(v,0);},0), qt=qv.reduce(function(s,v){return s+Math.max(v,0);},0);
   var opts='<option value="">2026 累计 (YTD)</option>'+['2026-10','2026-09','2026-08','2026-07','2026-06','2026-05','2026-04','2026-03','2026-02','2026-01'].map(function(m){ return '<option value="'+m+'"'+(m===pieMonth?' selected':'')+'>'+m+'</option>'; }).join('');
-  var order=CATS.map(function(c,i){return i;}).sort(function(a,b){return av[b]-av[a];});
+  var order=CATS.map(function(c,i){return i;}).filter(function(i){ return CATS[i]!=='未分类'||av[i]||qv[i]; }).sort(function(a,b){return av[b]-av[a];});
   var rows=order.map(function(i){ var ap=at>0&&av[i]>0?av[i]/at*100:0, qp=qt>0&&qv[i]>0?qv[i]/qt*100:0; return '<tr><td><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:'+COL[i]+';margin-right:6px;"></span>'+CATS[i]+'</td><td style="text-align:right;">'+f1(av[i])+'</td><td style="text-align:right;">'+ap.toFixed(1)+'%</td><td style="text-align:right;">'+fq(qv[i])+'</td><td style="text-align:right;">'+qp.toFixed(1)+'%</td></tr>'; }).join('');
   host.innerHTML='<div class="panel-head"><div><h3>产品线占比分析</h3><div class="desc">'+cfg.desc+'</div></div><div style="font-size:12px;color:var(--text-dim);">时间维度：2026 全年累计</div></div>'+
    '<div style="display:flex;flex-wrap:wrap;gap:28px;align-items:flex-start;padding:8px 4px;">'+

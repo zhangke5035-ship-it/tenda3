@@ -12359,7 +12359,7 @@ const I18N_DICT = [
   ['乌克兰业绩进展','Ukraine Performance','Wyniki Ukraina'],
   ['波兰站点业绩数据','Poland site performance data','Dane wyników strony Polska'],
   ['捷克站点业绩数据','Czech site performance data','Dane wyników strony Czechy'],
-  ['FOB-订单列表','FOB order list','Lista zamówień FOB'],['DDP-订单列表','DDP order list','Lista zamówień DDP'],['FOB 订单（币种 CNY），暂无数据','FOB orders (CNY) - no data yet','Zamówienia FOB (CNY) - brak danych'],['内容暂空','Empty for now','Na razie puste'],['暂无订单','No orders','Brak zamówień'],['导入 CI','Import CI','Importuj CI'],['确认保存','Confirm & save','Zatwierdź i zapisz'],['删除订单','Delete order','Usuń zamówienie'],['CI 订单号','CI No.','Nr CI'],['开票日期','Invoice date','Data faktury'],['贸易条款','Incoterm','Incoterm'],['付款条款','Payment term','Warunki płatności'],['商品金额','Goods amount','Wartość towarów'],['折扣合计','Total discount','Rabaty razem'],['赠品','FOC (free)','Gratis'],['累计订单数','Orders','Zamówienia'],['累计数量','Total quantity','Łączna ilość'],['涉及型号数','Models','Modele'],['订单信息','Order info','Informacje o zamówieniu'],['发货信息','Shipment info','Informacje o wysyłce'],['指标','Metric','Wskaźnik'],['查看型号 ›','View models ›','Zobacz modele ›']
+  ['FOB-订单列表','FOB order list','Lista zamówień FOB'],['DDP-订单列表','DDP order list','Lista zamówień DDP'],['FOB 订单（币种 CNY），暂无数据','FOB orders (CNY) - no data yet','Zamówienia FOB (CNY) - brak danych'],['内容暂空','Empty for now','Na razie puste'],['暂无订单','No orders','Brak zamówień'],['导入 CI','Import CI','Importuj CI'],['新产品销售金额','New product sales','Sprzedaż nowych produktów'],['新产品销售数量','New product quantity','Ilość nowych produktów'],['占波兰总销售额','Share of Poland sales','Udział w sprzedaży Polska'],['确认保存','Confirm & save','Zatwierdź i zapisz'],['删除订单','Delete order','Usuń zamówienie'],['CI 订单号','CI No.','Nr CI'],['开票日期','Invoice date','Data faktury'],['贸易条款','Incoterm','Incoterm'],['付款条款','Payment term','Warunki płatności'],['商品金额','Goods amount','Wartość towarów'],['折扣合计','Total discount','Rabaty razem'],['赠品','FOC (free)','Gratis'],['累计订单数','Orders','Zamówienia'],['累计数量','Total quantity','Łączna ilość'],['涉及型号数','Models','Modele'],['订单信息','Order info','Informacje o zamówieniu'],['发货信息','Shipment info','Informacje o wysyłce'],['指标','Metric','Wskaźnik'],['查看型号 ›','View models ›','Zobacz modele ›']
 ];
 I18N_DICT.sort((a,b)=>b[0].length-a[0].length);
 
@@ -15941,6 +15941,30 @@ function lineGen(cfg){
   })();
   host.querySelectorAll('.lgItem').forEach(function(el){ el.onclick=function(){ var n=S[+el.getAttribute('data-i')].name; hid[n]=!hid[n]; lineGen(cfg); }; });
 }
+var NEWP=['BE12 Pro','AX12','AX12 Pro','A33','MX12','ME6 Pro'];
+function normFam(x){ return String(x||'').replace(/\(.*?\)/g,'').replace(/[^A-Za-z0-9]/g,'').toUpperCase(); }
+function plNewProd(){
+  var anchor=document.getElementById('plLinePanel'); if(!anchor) return;
+  var host=document.getElementById('plNewProd');
+  if(!host){ host=document.createElement('div'); host.className='panel'; host.id='plNewProd'; host.style.marginTop='16px'; anchor.insertAdjacentElement('afterend',host); }
+  var fam={}; NEWP.forEach(function(n){ fam[normFam(n)]=n; });
+  var om={}, ymax=''; orders.forEach(function(o){ var m=(o.date||'').slice(0,7); if(!m) return; om[o.id]=m; if(m.slice(0,4)>ymax) ymax=m.slice(0,4); });
+  var data={}, lastAll=1, totAll=0; NEWP.forEach(function(n){ data[n]={}; });
+  orderItems.forEach(function(i){ var m=om[i.orderId]; if(!m||m.slice(0,4)!==ymax) return; var k=+m.slice(5), amt=i.qty*i.price; totAll+=amt; if(k>lastAll) lastAll=k; var n=fam[normFam(i.product)]; if(!n) return; var c=data[n][k]=data[n][k]||[0,0]; c[0]+=amt; c[1]+=i.qty; });
+  var months=[]; for(var k=lastAll;k>=1;k--) months.push(k);
+  function ml(k){ return ymax+'-'+(k<10?'0':'')+k; }
+  var sc='style="text-align:right;color:var(--text-faint);font-weight:500;"';
+  function cell(a,q,cls){ var z=(!a&&!q); return '<td class="'+(cls||'')+'" style="text-align:right;'+(z?'color:var(--text-faint);':(a<0?'color:var(--alert);':''))+'">'+(z?'—':f1(a))+'</td><td class="'+(cls||'')+'" style="text-align:right;'+(z?'color:var(--text-faint);':'')+'">'+(z?'—':fq(q))+'</td>'; }
+  var tot={}, tY=[0,0];
+  var body=NEWP.map(function(n){ var ya=0,yq=0; months.forEach(function(k){ var c=data[n][k]; if(c){ ya+=c[0]; yq+=c[1]; tot[k]=tot[k]||[0,0]; tot[k][0]+=c[0]; tot[k][1]+=c[1]; } }); tY[0]+=ya; tY[1]+=yq;
+    return '<tr><td><b>'+n+'</b></td>'+cell(ya,yq,'ytd-col')+months.map(function(k){ var c=data[n][k]; return cell(c?c[0]:0,c?c[1]:0); }).join('')+'</tr>'; }).join('');
+  var foot='<tr style="font-weight:600;"><td>合计</td>'+cell(tY[0],tY[1],'ytd-col')+months.map(function(k){ var t=tot[k]||[0,0]; return cell(t[0],t[1]); }).join('')+'</tr>';
+  var share=totAll>0?(tY[0]/totAll*100):0;
+  var cards=[['copper','新产品销售金额',f1(tY[0])+'<span class="unit">zł</span>','PLN · '+ymax+' 全年累计'],['text-dim','新产品销售数量',fq(tY[1])+'<span class="unit">件</span>',NEWP.join(' / ')],['good','占波兰总销售额',share.toFixed(1)+'<span class="unit">%</span>','不含 Intelek']];
+  host.innerHTML='<div class="panel-head"><div><h3>新产品销售金额</h3><div class="desc">波兰（不含 Intelek）新产品 '+NEWP.join(' / ')+' 的销售数量与金额（PLN，取自销售订单；含各包装规格，如 MX12 / ME6 Pro 的 2-pack、3-pack）</div></div></div>'+
+    '<div class="kpi-row">'+cards.map(function(c){ return '<div class="kpi" style="border-top:3px solid var(--'+c[0]+');"><div class="label">'+c[1]+'</div><div class="value">'+c[2]+'</div><div class="sub">'+c[3]+'</div></div>'; }).join('')+'</div>'+
+    '<div class="mom-table-scroll"><table><thead><tr><th rowspan="2">型号</th><th colspan="2" class="ytd-col-head" style="text-align:center;">'+ymax+' 累计 (YTD)</th>'+months.map(function(k){ return '<th colspan="2" style="text-align:center;">'+ml(k)+'</th>'; }).join('')+'</tr><tr><th class="ytd-col-sub" '+sc+'>金额 (PLN)</th><th class="ytd-col-sub" '+sc+'>数量</th>'+months.map(function(){ return '<th '+sc+'>金额 (PLN)</th><th '+sc+'>数量</th>'; }).join('')+'</tr></thead><tbody>'+body+'</tbody><tfoot>'+foot+'</tfoot></table></div>';
+}
 window.renderPlLine=function(){ try{
   var oy={},om={},oc={},ymax='';
   orders.forEach(function(o){ var m=(o.date||'').slice(0,7); if(!m) return; oy[o.id]=m; oc[o.id]=o.cust; if(m.slice(0,4)>ymax) ymax=m.slice(0,4); });
@@ -15953,7 +15977,7 @@ window.renderPlLine=function(){ try{
   var series=[{name:'总销售额（含 Intelek-DDP）',color:'#c2703d',bold:true,dash:true,vals:all},{name:'合计（不含 Intelek）',color:'#222',bold:true,vals:tot}].concat(keys.map(function(c,i){ return {name:(typeof CUSTOMERS!=='undefined'&&CUSTOMERS[c])?CUSTOMERS[c].name:c,color:LCOL[i%LCOL.length],vals:ms.map(function(m,j){ return by[c][j+1]||0; })}; }));
   series=[{name:'总销售额',color:'#c2703d',bold:true,vals:tot}];
   lineGen({anchor:'plMomTableBody',host:'plLinePanel',cur:'zł',months:ms,series:series,desc:'波兰（不含 Intelek）月度总销售额趋势（PLN，取自销售订单）'});
-plBar(by,keys,ms);
+plBar(by,keys,ms); plNewProd();
 }catch(e){ console.error('plLine',e); } };
 function ovLine(){
   var tot={}, last=1;

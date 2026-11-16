@@ -15814,8 +15814,9 @@ function prodTable(){
   };
 }
 
-var CATS=['无线路由器','Mesh路由系统','交换机','4G/5G路由器','室外CPE','智能摄像机','企业AP/天线','USB无线网卡','NVR录像机','网络配件','未分类'];
-var COL=['#c2703d','#4a6fa5','#3f8f6b','#d9a441','#8a5fa8','#c0504d','#2f9aa6','#7a8b3c','#a0522d','#8c8c8c','#d0d3d8'];
+var CATS=['SMB网络BU','安防BU','家庭覆盖BU','移动接入BU','未分类'];
+var BUMAP_RAW={"G0-5G-PoE":"SMB网络BU","G0-8G-POE":"SMB网络BU","G5328X":"SMB网络BU","PoE15F":"SMB网络BU","PoE30G-AT":"SMB网络BU","S105":"SMB网络BU","S108":"SMB网络BU","SG105":"SMB网络BU","SG105M":"SMB网络BU","SG108":"SMB网络BU","SG108M":"SMB网络BU","SM105":"SMB网络BU","SM108":"SMB网络BU","TEF1024D":"SMB网络BU","TEF1105P-4-38W":"SMB网络BU","TEF1105P-4-63W":"SMB网络BU","TEF1106P-4-63W":"SMB网络BU","TEF1109D":"SMB网络BU","TEF1109P-8-102W":"SMB网络BU","TEF1109P-8-63W":"SMB网络BU","TEF1110P-8-63W":"SMB网络BU","TEF1118P-16-150W":"SMB网络BU","TEG1005D":"SMB网络BU","TEG1005M":"SMB网络BU","TEG1008M":"SMB网络BU","TEG1016D":"SMB网络BU","TEG1016G":"SMB网络BU","TEG1016M":"SMB网络BU","TEG1024D":"SMB网络BU","TEG1024G":"SMB网络BU","TEG1050F":"SMB网络BU","TEG1105P-4-63W":"SMB网络BU","TEG1105PD":"SMB网络BU","TEG1110PF-8-120W":"SMB网络BU","TEG1120P-16-150W":"SMB网络BU","TEG1120P-16-250W":"SMB网络BU","TEG1124P-24-250W":"SMB网络BU","TEG1128P-24-250W":"SMB网络BU","TEG1128P-24-410W":"SMB网络BU","TEG2205D":"SMB网络BU","TEG2208D":"SMB网络BU","TEG2210P-8-120W":"SMB网络BU","TEG2216D":"SMB网络BU","TEG2220P-16-250W":"SMB网络BU","TEG2224D":"SMB网络BU","TEG2226F":"SMB网络BU","TEG2228P-24-410W":"SMB网络BU","TEG5310P-8-150W":"SMB网络BU","TEM2007X":"SMB网络BU","TEM2010X":"SMB网络BU","TFC100A":"SMB网络BU","TFC100B":"SMB网络BU","TFC300A":"SMB网络BU","TFC300B":"SMB网络BU","CH10":"安防BU","CH3-WCA":"安防BU","CH7-WCA":"安防BU","CP3(白色)":"安防BU","CP6":"安防BU","CP7":"安防BU","CT6-WCA":"安防BU","IC7-PRS-4":"安防BU","IT7-PRS-4":"安防BU","K4P-4CR":"安防BU","K4P-4TR":"安防BU","K4W-3TC":"安防BU","N3L-16H":"安防BU","N6P-4H":"安防BU","N6P-8H":"安防BU","RH3-WCA":"安防BU","RH7-WCA":"安防BU","RH9-WCA":"安防BU","RP3":"安防BU","RP3 Pro":"安防BU","RP7":"安防BU","TC3B24C-4":"安防BU","TC3B24C-6":"安防BU","TC3T24C-2.8":"安防BU","TC3T24C-4":"安防BU","TK8P-4BC":"安防BU","TK8P-4BTC":"安防BU","TN3108":"安防BU","A15":"家庭覆盖BU","A18":"家庭覆盖BU","A18 Pro":"家庭覆盖BU","A21":"家庭覆盖BU","A23":"家庭覆盖BU","A33":"家庭覆盖BU","A9":"家庭覆盖BU","AC10":"家庭覆盖BU","AC19":"家庭覆盖BU","AC5-白色":"家庭覆盖BU","AC6":"家庭覆盖BU","AC8":"家庭覆盖BU","AX12":"家庭覆盖BU","AX12 Pro":"家庭覆盖BU","BE12 Pro":"家庭覆盖BU","EE3 Pro(2-pack)":"家庭覆盖BU","EE3 Pro(3-pack)":"家庭覆盖BU","EX12(2-pack)":"家庭覆盖BU","EX12(3-pack)":"家庭覆盖BU","EX3(2-pack)":"家庭覆盖BU","EX3(3-pack)":"家庭覆盖BU","F3":"家庭覆盖BU","F6":"家庭覆盖BU","i24":"家庭覆盖BU","i26":"家庭覆盖BU","i27":"家庭覆盖BU","i29":"家庭覆盖BU","i36":"家庭覆盖BU","ME3 Pro(2-pack)":"家庭覆盖BU","ME3 Pro(3-pack)":"家庭覆盖BU","ME6 Pro(2-pack)":"家庭覆盖BU","ME6 Pro(3-pack)":"家庭覆盖BU","MW3(2-pack)":"家庭覆盖BU","MW3(3-pack)":"家庭覆盖BU","MW6(2-pack)":"家庭覆盖BU","MW6(3-pack)":"家庭覆盖BU","MX12(1-pack)":"家庭覆盖BU","MX12(2-pack)":"家庭覆盖BU","MX15 Pro(2-pack)":"家庭覆盖BU","MX21 Pro(2-pack)":"家庭覆盖BU","MX21 Pro(3-pack)":"家庭覆盖BU","MX3(2-pack)":"家庭覆盖BU","MX3(3-pack)":"家庭覆盖BU","N301":"家庭覆盖BU","O1":"家庭覆盖BU","O1-5G":"家庭覆盖BU","O1-5G(套装)":"家庭覆盖BU","O3":"家庭覆盖BU","O4":"家庭覆盖BU","O6":"家庭覆盖BU","O9":"家庭覆盖BU","OAP1200":"家庭覆盖BU","OAP3000":"家庭覆盖BU","OS3":"家庭覆盖BU","Pro-6-LR":"家庭覆盖BU","RE3L":"家庭覆盖BU","RX12 Pro":"家庭覆盖BU","RX12L Pro":"家庭覆盖BU","RX2L Pro":"家庭覆盖BU","T10":"家庭覆盖BU","TE3L":"家庭覆盖BU","TE6L Pro":"家庭覆盖BU","TX12 Pro":"家庭覆盖BU","TX12L Pro":"家庭覆盖BU","TX2":"家庭覆盖BU","TX2 Pro":"家庭覆盖BU","TX27 Pro":"家庭覆盖BU","TX2L Pro":"家庭覆盖BU","TX9 Pro":"家庭覆盖BU","U10":"家庭覆盖BU","U11":"家庭覆盖BU","U11 Pro":"家庭覆盖BU","U18a":"家庭覆盖BU","U2":"家庭覆盖BU","U9":"家庭覆盖BU","W15-Pro(深灰色)":"家庭覆盖BU","W18E":"家庭覆盖BU","W30E":"家庭覆盖BU","W311MI":"家庭覆盖BU","4G03":"移动接入BU","4G03 Pro":"移动接入BU","4G05":"移动接入BU","4G06":"移动接入BU","4G06C":"移动接入BU","4G07":"移动接入BU","4G08":"移动接入BU","4G09":"移动接入BU","4G180":"移动接入BU","4G185":"移动接入BU","5G01":"移动接入BU","5G03":"移动接入BU","5G06":"移动接入BU","HG1":"移动接入BU","HG10C":"移动接入BU","HG15C":"移动接入BU","MF3":"移动接入BU","MF6":"移动接入BU"};
+var COL=['#4a6fa5','#c0504d','#3f8f6b','#d9a441','#d0d3d8'];
 function catOf(m,strict){
   if(/^(MW|MX|EX|EE|ME)\d/i.test(m)) return 'Mesh路由系统';
   if(/^(W311MI|U\d)/i.test(m)) return 'USB无线网卡';
@@ -15833,13 +15834,12 @@ function catOf(m,strict){
 var CATMAP=null;
 function nz(s){ return String(s||'').toUpperCase().replace(/[^A-Z0-9]/g,''); }
 function catLookup(x){
-  if(!CATMAP){ CATMAP={}; OV.p.forEach(function(p){ CATMAP[nz(p[0])]=catOf(p[0]); }); }
+  if(!CATMAP){ CATMAP={}; Object.keys(BUMAP_RAW).forEach(function(m){ CATMAP[nz(m)]=BUMAP_RAW[m]; }); }
   var raw=String(x||'').replace(/^\s*(tenda|ip-com)\s+/i,'').replace(/^#/,'').trim(), n=nz(raw);
   if(CATMAP[n]) return CATMAP[n];
   var best='';
   for(var k in CATMAP){ if(k.length>=3 && n.indexOf(k)===0 && k.length>best.length) best=k; }
-  if(best) return CATMAP[best];
-  return catOf(raw,true);
+  return best?CATMAP[best]:'未分类';
 }
 function arc(cx,cy,r,a0,a1){ var x0=cx+r*Math.sin(a0),y0=cy-r*Math.cos(a0),x1=cx+r*Math.sin(a1),y1=cy-r*Math.cos(a1); return 'M'+cx+','+cy+' L'+x0.toFixed(2)+','+y0.toFixed(2)+' A'+r+','+r+' 0 '+((a1-a0)>Math.PI?1:0)+' 1 '+x1.toFixed(2)+','+y1.toFixed(2)+' Z'; }
 function pieSvg(vals,total,unit){
@@ -15860,11 +15860,11 @@ function catPieGen(cfg){
   var opts='<option value="">2026 累计 (YTD)</option>'+['2026-10','2026-09','2026-08','2026-07','2026-06','2026-05','2026-04','2026-03','2026-02','2026-01'].map(function(m){ return '<option value="'+m+'"'+(m===pieMonth?' selected':'')+'>'+m+'</option>'; }).join('');
   var order=CATS.map(function(c,i){return i;}).filter(function(i){ return CATS[i]!=='未分类'||av[i]||qv[i]; }).sort(function(a,b){return av[b]-av[a];});
   var rows=order.map(function(i){ var ap=at>0&&av[i]>0?av[i]/at*100:0, qp=qt>0&&qv[i]>0?qv[i]/qt*100:0; return '<tr><td><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:'+COL[i]+';margin-right:6px;"></span>'+CATS[i]+'</td><td style="text-align:right;">'+f1(av[i])+'</td><td style="text-align:right;">'+ap.toFixed(1)+'%</td><td style="text-align:right;">'+fq(qv[i])+'</td><td style="text-align:right;">'+qp.toFixed(1)+'%</td></tr>'; }).join('');
-  host.innerHTML='<div class="panel-head"><div><h3>产品线占比分析</h3><div class="desc">'+cfg.desc+'</div></div><div style="font-size:12px;color:var(--text-dim);">时间维度：2026 全年累计</div></div>'+
+  host.innerHTML='<div class="panel-head"><div><h3>BU 占比分析</h3><div class="desc">'+cfg.desc+'</div></div><div style="font-size:12px;color:var(--text-dim);">时间维度：2026 全年累计</div></div>'+
    '<div style="display:flex;flex-wrap:wrap;gap:28px;align-items:flex-start;padding:8px 4px;">'+
    '<div style="text-align:center;"><div style="font-size:13px;color:var(--text-dim);margin-bottom:4px;">销售额占比</div>'+pieSvg(av,at,cfg.cur)+'</div>'+
    '<div style="text-align:center;"><div style="font-size:13px;color:var(--text-dim);margin-bottom:4px;">销售数量占比</div>'+pieSvg(qv,qt,'n')+'</div>'+
-   '<div style="flex:1;min-width:340px;overflow-x:auto;"><table style="width:100%;"><thead><tr><th>产品线</th><th style="text-align:right;">销售额 ('+cfg.cname+')</th><th style="text-align:right;">占比</th><th style="text-align:right;">数量</th><th style="text-align:right;">占比</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
+   '<div style="flex:1;min-width:340px;overflow-x:auto;"><table style="width:100%;"><thead><tr><th>BU</th><th style="text-align:right;">销售额 ('+cfg.cname+')</th><th style="text-align:right;">占比</th><th style="text-align:right;">数量</th><th style="text-align:right;">占比</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
   host.querySelectorAll('.pieSvg').forEach(function(svg){
     var t1=svg.querySelector('.pc1'),t2=svg.querySelector('.pc2'),t3=svg.querySelector('.pc3'),cur=null;
     function sel(el){ svg.querySelectorAll('.pslice').forEach(function(x){ x.style.transform=''; x.style.opacity=el?'0.55':'1'; }); if(el){ el.style.transform='scale(1.06)'; el.style.opacity='1'; t1.textContent=el.getAttribute('data-n'); t2.textContent=el.getAttribute('data-p'); t3.textContent=el.getAttribute('data-v'); } else { t1.textContent=''; t2.textContent=''; t3.textContent=''; } cur=el; }
@@ -15873,8 +15873,8 @@ function catPieGen(cfg){
   
 }
 
-function catPie(){ catPieGen({anchor:'productMomTable',host:'ovCatPie',cur:'¥',cname:'CNY',desc:'各产品线已发货销售额与数量占比（CNY，取自每月财务销售明细；负值不计入饼图）',rows:function(cb){ OV.p.forEach(function(p){ Object.keys(p[2]).forEach(function(m){ cb(p[0],p[2][m][1],p[2][m][0]); }); }); }}); }
-window.renderPlCatPie=function(){ try{ catPieGen({anchor:'plProdBody',host:'plCatPie',cur:'zł',cname:'PLN',desc:'波兰（不含 Intelek）各产品线销售额与数量占比（PLN，取自销售订单；负值不计入饼图）',rows:function(cb){ var om={}, ymax=''; orders.forEach(function(o){ var y=(o.date||'').slice(0,4); om[o.id]=y; if(y>ymax) ymax=y; }); orderItems.forEach(function(i){ if(om[i.orderId]!==ymax) return; cb(String(i.product||''), i.qty*i.price, i.qty); }); }}); }catch(e){ console.error('plPie',e); } };
+function catPie(){ catPieGen({anchor:'productMomTable',host:'ovCatPie',cur:'¥',cname:'CNY',desc:'各 BU 已发货销售额与数量占比（CNY，取自每月财务销售明细；负值不计入饼图）',rows:function(cb){ OV.p.forEach(function(p){ Object.keys(p[2]).forEach(function(m){ cb(p[0],p[2][m][1],p[2][m][0]); }); }); }}); }
+window.renderPlCatPie=function(){ try{ catPieGen({anchor:'plProdBody',host:'plCatPie',cur:'zł',cname:'PLN',desc:'波兰（不含 Intelek）各 BU 销售额与数量占比（PLN，取自销售订单；负值不计入饼图）',rows:function(cb){ var om={}, ymax=''; orders.forEach(function(o){ var y=(o.date||'').slice(0,4); om[o.id]=y; if(y>ymax) ymax=y; }); orderItems.forEach(function(i){ if(om[i.orderId]!==ymax) return; cb(String(i.product||''), i.qty*i.price, i.qty); }); }}); }catch(e){ console.error('plPie',e); } };
 
 var LCOL=['#4a6fa5','#3f8f6b','#d9a441','#8a5fa8','#c0504d','#2f9aa6','#7a8b3c','#a0522d'];
 function lineGen(cfg){

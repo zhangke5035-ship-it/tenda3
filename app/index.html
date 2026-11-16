@@ -15899,7 +15899,7 @@ function catPieLine(host,anchor,cur,cname,desc,rows){
 function catPie(){ catPieGen({anchor:'productMomTable',host:'ovCatPie',cur:'¥',cname:'CNY',desc:'各 BU 已发货销售额与数量占比（CNY，取自每月财务销售明细；负值不计入饼图）',rows:function(cb){ OV.p.forEach(function(p){ Object.keys(p[2]).forEach(function(m){ cb(p[0],p[2][m][1],p[2][m][0]); }); }); }});
   catPieLine('ovLinePie','ovCatPie','¥','CNY','各产品线已发货销售额与数量占比（CNY，取自每月财务销售明细；负值不计入饼图）',function(cb){ OV.p.forEach(function(p){ Object.keys(p[2]).forEach(function(m){ cb(p[0],p[2][m][1],p[2][m][0]); }); }); }); }
 function ukrRows(cb){
-  var D=window.__UKR_D; if(!D){ var ss=document.querySelectorAll('script'); for(var s=0;s<ss.length&&!D;s++){ var x=ss[s].textContent; if(x.indexOf('ukrInit(D)')<0) continue; var e=x.indexOf('})({'); if(e<0) continue; try{ D=JSON.parse(x.slice(e+3,x.lastIndexOf('})'))); }catch(er){ D=null; } } window.__UKR_D=D; }
+  var D=window.__UKR_D; if(!D){ var ss=document.querySelectorAll('script'); for(var s=0;s<ss.length&&!D;s++){ var x=ss[s].textContent; if(x.indexOf('ukrInit(D)')<0) continue; var e=x.indexOf('})({'); if(e<0) continue; try{ D=JSON.parse(x.slice(e+3,x.lastIndexOf('})')+1)); }catch(er){ D=null; } } window.__UKR_D=D; }
   if(!D) return; Object.keys(D).forEach(function(m){ D[m].forEach(function(r){ cb(String(r[0]||''), +r[5]||0, +r[2]||0); }); });
 }
 window.renderUkrCatPie=function(){ try{

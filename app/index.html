@@ -7891,8 +7891,8 @@ function renderProductMomTable(){
     theadEl.appendChild(subHead);
   }
   if (subHead){
-    subHead.innerHTML = '<th class="ytd-col-sub" style="text-align:right;color:var(--text-dim);font-weight:500;">金额</th><th class="ytd-col-sub" style="text-align:right;color:var(--text-dim);font-weight:500;">数量</th>' +
-      months.map(()=>'<th style="text-align:right;color:var(--text-faint);font-weight:500;">金额</th><th style="text-align:right;color:var(--text-faint);font-weight:500;">数量</th>').join('');
+    subHead.innerHTML = '<th class="ytd-col-sub" style="text-align:right;color:var(--text-dim);font-weight:500;">金额 (PLN)</th><th class="ytd-col-sub" style="text-align:right;color:var(--text-dim);font-weight:500;">数量</th>' +
+      months.map(()=>'<th style="text-align:right;color:var(--text-faint);font-weight:500;">金额 (PLN)</th><th style="text-align:right;color:var(--text-faint);font-weight:500;">数量</th>').join('');
   }
 
   const exportBtn = document.getElementById('productMomExportBtn');
@@ -8048,8 +8048,8 @@ function renderCustMomTable(cfg){
     theadEl.appendChild(subHead);
   }
   if (subHead){
-    subHead.innerHTML = '<th class="ytd-col-sub" style="text-align:right;color:var(--text-dim);font-weight:500;">金额</th><th class="ytd-col-sub" style="text-align:right;color:var(--text-dim);font-weight:500;">数量</th>' +
-      months.map(()=>'<th style="text-align:right;color:var(--text-faint);font-weight:500;">金额</th><th style="text-align:right;color:var(--text-faint);font-weight:500;">数量</th>').join('');
+    subHead.innerHTML = '<th class="ytd-col-sub" style="text-align:right;color:var(--text-dim);font-weight:500;">金额 (PLN)</th><th class="ytd-col-sub" style="text-align:right;color:var(--text-dim);font-weight:500;">数量</th>' +
+      months.map(()=>'<th style="text-align:right;color:var(--text-faint);font-weight:500;">金额 (PLN)</th><th style="text-align:right;color:var(--text-faint);font-weight:500;">数量</th>').join('');
   }
 
   const exportBtn = document.getElementById('custMomExportBtn');

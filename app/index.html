@@ -15911,6 +15911,12 @@ window.renderPlLine=function(){ try{
   series=series.slice(0,2);
   lineGen({anchor:'plMomTableBody',host:'plLinePanel',cur:'zł',months:ms,series:series,desc:'总销售额（含 Intelek-DDP）与波兰合计（不含 Intelek）的月度销售额趋势（PLN，取自销售订单；点击图例可显示/隐藏）'});
 }catch(e){ console.error('plLine',e); } };
-window.renderOverviewFromSales=function(){ try{ kpi(); custTable(); prodTable(); catPie(); }catch(e){ console.error('ovSales',e); } };
+function ovLine(){
+  var tot={}, last=1;
+  OV.c.forEach(function(c){ Object.keys(c[2]).forEach(function(m){ var k=+m.slice(5); tot[k]=(tot[k]||0)+c[2][m][1]; if(k>last) last=k; }); });
+  var ms=[],vals=[]; for(var k=1;k<=last;k++){ ms.push('2026-'+(k<10?'0':'')+k); vals.push(tot[k]||0); }
+  lineGen({anchor:'custMomTableBody',host:'ovLinePanel',cur:'¥',months:ms,series:[{name:'总销售额',color:'#c2703d',bold:true,vals:vals}],desc:'月度已发货总销售额趋势（CNY，取自每月财务销售明细）'});
+}
+window.renderOverviewFromSales=function(){ try{ kpi(); custTable(); ovLine(); prodTable(); catPie(); }catch(e){ console.error('ovSales',e); } };
 })();
 </script>

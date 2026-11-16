@@ -15960,7 +15960,7 @@ function barGen(cfg){
   if(!host){ var panel=anchor.closest('.panel'); if(!panel) return; host=document.createElement('div'); host.className='panel'; host.id=cfg.host; host.style.marginTop='16px'; panel.insertAdjacentElement('afterend',host); }
   var hid=host.__hid||(host.__hid={});
   if(!host.__init){ host.__init=1; cfg.series.forEach(function(s){ if(s.small) hid[s.name]=true; }); }
-  var W=900,H=330,L=56,R=16,T=20,B=40, ms=cfg.months, S=cfg.series, vis=S.filter(function(s){ return !hid[s.name]; });
+  var W=900,H=330,L=56,R=16,T=20,B=40, ms=cfg.months, S=cfg.series.filter(function(s){ return !s.small; }), vis=S.filter(function(s){ return !hid[s.name]; });
   var mx=50; vis.forEach(function(s){ s.vals.forEach(function(v){ if(v!==null&&Math.abs(v)>mx) mx=Math.abs(v); }); });
   var C=Math.min(300,Math.ceil(mx/50)*50);
   function y(v){ return T+(H-T-B)*(1-(Math.max(-C,Math.min(C,v))+C)/(2*C)); }

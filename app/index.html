@@ -16057,7 +16057,7 @@ window.renderOverviewFromSales=function(){ try{ if(window.fobEnsureLoaded) windo
 /* FOB_ORDERS: Supabase fob_orders + CI import (admin only) */
 (function(){
   var SYM={CNY:'¥',USD:'$'}, R='style="text-align:right;white-space:nowrap;"';
-  var FOB=[], isAdmin=false, loaded=false, loading=false, uEmail='';
+  var FOB=[], isAdmin=false, loaded=false, loading=false, uEmail='', fobCust='';
   function $(id){ return document.getElementById(id); }
   function f2(n){ return Number(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
   function f1(n){ return Number(n).toLocaleString('en-US',{minimumFractionDigits:1,maximumFractionDigits:1}); }
@@ -16090,16 +16090,19 @@ window.renderOverviewFromSales=function(){ try{ if(window.fobEnsureLoaded) windo
 
   function list(){
     var root=$('fobRoot'); if(!root) return;
-    var orders=FOB.slice().sort(function(a,b){ return a.date<b.date?1:-1; });
+    var custs=[]; FOB.forEach(function(o){ if(custs.indexOf(o.cust)<0) custs.push(o.cust); });
+    var orders=FOB.filter(function(o){ return !fobCust||o.cust===fobCust; }).sort(function(a,b){ return a.date<b.date?1:-1; });
     var cur={}, models={}, qty=0;
     orders.forEach(function(o){ cur[o.cur]=cur[o.cur]||{net:0,disc:0}; cur[o.cur].net+=o.net; cur[o.cur].disc+=disc(o); qty+=o.qty; o.items.forEach(function(i){ models[i[0]]=1; }); });
-    var cards=[['copper','累计订单数',String(orders.length),'Intelek（捷克）· FOB'],['text-dim','累计数量',fq(qty)+'<span class="unit">件</span>','含赠品'],['good','涉及型号数',String(Object.keys(models).length)+'<span class="unit">个</span>','CI 商业发票']];
+    var cards=[['copper','累计订单数',String(orders.length),(fobCust||'全部客户')+' · FOB'],['text-dim','累计数量',fq(qty)+'<span class="unit">件</span>','含赠品'],['good','涉及型号数',String(Object.keys(models).length)+'<span class="unit">个</span>','CI 商业发票']];
     Object.keys(cur).forEach(function(c){ cards.push(['amber',c+' 净额',(SYM[c]||'')+f2(cur[c].net),'折扣合计 '+(SYM[c]||'')+f2(cur[c].disc)]); });
     var kpi='<div class="kpi-row">'+cards.map(function(c){ return '<div class="kpi" style="border-top:3px solid var(--'+c[0]+');"><div class="label">'+c[1]+'</div><div class="value">'+c[2]+'</div><div class="sub">'+c[3]+'</div></div>'; }).join('')+'</div>';
     var rows=orders.map(function(o){ var s=SYM[o.cur]||''; return '<tr class="fobRow" data-no="'+esc(o.no)+'" style="cursor:pointer;"><td><b>'+esc(o.no)+'</b></td><td>'+esc(o.date)+'</td><td>'+esc(o.cust)+'</td><td>'+esc(o.pi)+'</td><td>'+esc(o.inco)+'</td><td>'+esc(o.pay)+'</td><td>'+esc(o.cur)+'</td><td '+R+'>'+fq(o.qty)+'</td><td '+R+'>'+s+f2(o.gross)+'</td><td '+R+'>'+s+f2(disc(o))+'</td><td '+R+'><b>'+s+f2(o.net)+'</b></td></tr>'; }).join('');
-    var tools=isAdmin?'<div><input type="file" id="fobFile" accept=".xlsx,.xls" style="display:none;"><button class="btn" id="fobImportBtn" style="font-size:12px;padding:6px 12px;">导入 CI</button></div>':'';
+    var sel='<select id="fobCustSel" style="font-size:12px;padding:6px 8px;margin-right:8px;border:1px solid var(--border);border-radius:6px;background:#fff;"><option value="">全部客户</option>'+custs.map(function(c){ return '<option value="'+esc(c)+'"'+(c===fobCust?' selected':'')+'>'+esc(c)+'</option>'; }).join('')+'</select>';
+    var tools='<div style="display:flex;align-items:center;">'+sel+(isAdmin?'<input type="file" id="fobFile" accept=".xlsx,.xls" style="display:none;"><button class="btn" id="fobImportBtn" style="font-size:12px;padding:6px 12px;">导入 CI</button>':'')+'</div>';
     root.innerHTML=kpi+'<div class="panel"><div class="panel-head"><div><h3>FOB-订单列表</h3><div class="desc">'+(loaded?'共 '+orders.length+' 个订单（每个订单对应一张 CI；币种以各 CI 为准）':'加载中…')+'</div></div>'+tools+'</div><div class="mom-table-scroll"><table><thead><tr><th>CI 订单号</th><th>开票日期</th><th>客户</th><th>PI号码</th><th>贸易条款</th><th>付款条款</th><th>币种</th><th '+R+'>数量</th><th '+R+'>商品金额</th><th '+R+'>折扣金额</th><th '+R+'>净额</th></tr></thead><tbody>'+(rows||'<tr><td colspan="11" style="color:var(--text-faint);">暂无订单</td></tr>')+'</tbody></table></div></div>';
     root.querySelectorAll('.fobRow').forEach(function(tr){ tr.onclick=function(){ detail(tr.getAttribute('data-no')); }; });
+    var cs=$('fobCustSel'); if(cs) cs.onchange=function(){ fobCust=cs.value; list(); };
     var fb=$('fobImportBtn'), fi=$('fobFile');
     if(fb&&fi){ fb.onclick=function(){ fi.value=''; fi.click(); }; fi.onchange=function(){ if(fi.files&&fi.files[0]) readFile(fi.files[0]); }; }
   }
@@ -16137,6 +16140,8 @@ window.renderOverviewFromSales=function(){ try{ if(window.fobEnsureLoaded) windo
     var rows=XLSX.utils.sheet_to_json(wb.Sheets[name],{header:1,raw:true,defval:null});
     var no=cellAfter(rows,'invoicenumber:'), dt=toDate(cellAfter(rows,'invoicedate:')), pay=cellAfter(rows,'paymentterm:'), inco=cellAfter(rows,'incoterm:');
     if(!no) throw new Error('未找到 Invoice Number'); if(!dt) throw new Error('未找到 Invoice Date');
+    var importer=''; for(var q=0;q<rows.length;q++){ if(/IMPORTER/i.test(String(rows[q][0]||''))){ importer=String((rows[q+1]&&rows[q+1][0])||''); break; } }
+    var cust=/INTELEK/i.test(importer)?'Intelek（捷克）':(/FLASHCOM|DC-?LINK/i.test(importer)?'DC-Link（乌克兰）':(importer.trim()||'未知客户'));
     var hi=-1; for(var i=0;i<rows.length;i++){ if(String(rows[i][0]||'').trim().toUpperCase()==='ITEM'){ hi=i; break; } }
     if(hi<0) throw new Error('未找到明细表头（ITEM）');
     var cur=null; rows[hi].forEach(function(c){ var m=String(c||'').match(/^([A-Z]{3})\s*\/\s*PCS/i); if(m) cur=m[1].toUpperCase(); });
@@ -16145,7 +16150,7 @@ window.renderOverviewFromSales=function(){ try{ if(window.fobEnsureLoaded) windo
     for(var r=hi+1;r<rows.length;r++){
       var row=rows[r], a=row[0];
       if(typeof a==='number'){ if(!pi&&row[4]) pi=String(row[4]).trim(); items.push([String(row[1]||'').trim(),String(row[2]||'').trim(),Number(row[3])||0,typeof row[5]==='number'?Math.round(row[5]*10000)/10000:null,typeof row[6]==='number'?r2(row[6]):null]); }
-      else if(String(a||'').trim().toLowerCase()==='discount'){ if(typeof row[6]==='number') dc.push(['折扣',Math.abs(r2(row[6]))]); }
+      else if(String(a||'').trim().toLowerCase()==='discount'){ if(typeof row[6]==='number') dc.push([(typeof row[2]==='string'&&row[2].trim()&&row[2].trim().toLowerCase()!=='discount')?row[2].trim():'折扣',Math.abs(r2(row[6]))]); }
       else if(row[2]&&/RMA/i.test(String(row[2]))){ if(typeof row[6]==='number') dc.push([String(row[2]).replace(/\s+/g,'').replace(/RMA/i,' RMA'),Math.abs(r2(row[6]))]); }
       else if(String(a||'').trim().toLowerCase()==='in total'){ tot={qty:Number(row[3]),net:r2(Number(row[6]))}; break; }
     }
@@ -16153,7 +16158,7 @@ window.renderOverviewFromSales=function(){ try{ if(window.fobEnsureLoaded) windo
     var gross=r2(items.reduce(function(s,i){ return s+(i[4]||0); },0)), ds=dc.reduce(function(s,x){ return s+x[1]; },0), qty=items.reduce(function(s,i){ return s+i[2]; },0);
     var net=r2(gross-ds), warn=[];
     if(tot){ if(Math.abs(tot.net-net)>0.05) warn.push('CI 合计 '+f2(tot.net)+' 与明细汇总 '+f2(net)+' 不一致'); if(tot.qty!==qty) warn.push('CI 合计数量 '+fq(tot.qty)+' 与明细汇总 '+fq(qty)+' 不一致'); } else warn.push('未找到 In Total 合计行，无法核对');
-    return {no:String(no).trim(),date:dt,cust:'Intelek（捷克）',pi:pi,cur:cur,inco:String(inco||'').trim(),pay:String(pay||'').trim(),items:items,disc:dc,gross:gross,qty:qty,net:net,warn:warn};
+    return {no:String(no).trim(),date:dt,cust:cust,pi:pi,cur:cur,inco:String(inco||'').trim(),pay:String(pay||'').trim(),items:items,disc:dc,gross:gross,qty:qty,net:net,warn:warn};
   }
   function readFile(f){
     var fr=new FileReader();
@@ -16194,7 +16199,7 @@ window.renderOverviewFromSales=function(){ try{ if(window.fobEnsureLoaded) windo
     var year=months[0].slice(0,4);
     function fill(row,cur){
       var a={}, ya=0, yq=0;
-      FOB.forEach(function(o){ if(o.cur!==cur||!o.date) return; var m=o.date.slice(0,7); a[m]=a[m]||[0,0]; a[m][0]+=o.net; a[m][1]+=o.qty; if(m.slice(0,4)===year){ ya+=o.net; yq+=o.qty; } });
+      FOB.forEach(function(o){ if(o.cur!==cur||!o.date||!/intelek/i.test(o.cust)) return; var m=o.date.slice(0,7); a[m]=a[m]||[0,0]; a[m][0]+=o.net; a[m][1]+=o.qty; if(m.slice(0,4)===year){ ya+=o.net; yq+=o.qty; } });
       function set(td,txt,zero){ if(!td) return; td.textContent=txt; td.style.color=zero?'':'var(--text)'; }
       set(row.cells[1],f1(ya),!ya); set(row.cells[2],fq(yq),!yq);
       months.forEach(function(m,i){ var v=a[m]||[0,0]; set(row.cells[3+2*i],f1(v[0]),!v[0]); set(row.cells[4+2*i],fq(v[1]),!v[1]); });

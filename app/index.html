@@ -4983,7 +4983,8 @@ function visibleRows(){
   const _pl = priceList.filter(r => custCountry(r.cust) === '波兰');
   return activeQuarterFilter === 'ALL' ? _pl : _pl.filter(r => (r.quarter||'Q3') === activeQuarterFilter);
 }
-function uniqueCustomers(){ return [...new Set(visibleRows().map(p=>p.cust))]; }
+function monthRows(){ return visibleRows().filter(function(p){ return !activeMonthFilter || activeMonthFilter==='ALL' || monthKey(p.month)===activeMonthFilter; }); }
+function uniqueCustomers(){ return [...new Set(monthRows().map(p=>p.cust))]; }
 function uniqueProducts(){ return [...new Set(visibleRows().map(p=>p.product))]; }
 
 /* 环比变化：同一产品同一客户在Q2与Q3的未税净价对比（目前只有ELTROX有Q2数据） */
@@ -5194,7 +5195,7 @@ function renderMonthTabs(){
   el.value = activeMonthFilter;
   el.onchange = ()=>{
     activeMonthFilter = el.value;
-    renderMonthTabs(); renderCustTabs(); renderCategoryTabs(); renderBrandTabs(); renderPriceTable();
+    renderMonthTabs(); renderCountryTabs(); renderCustTabs(); renderCategoryTabs(); renderBrandTabs(); renderPriceTable();
   };
 }
 
@@ -5202,11 +5203,11 @@ function renderCountryTabs(){
   const codes = uniqueCustomers();
   const countries = [...new Set(codes.map(custCountry))];
   activeCountryFilter = activeCountryFilter.filter(c => countries.includes(c));
-  const countFor = c => visibleRows().filter(p=>custCountry(p.cust)===c).length;
+  const countFor = c => monthRows().filter(p=>custCountry(p.cust)===c).length;
   const panel = document.getElementById('filterCountryPanel');
   const label = document.getElementById('filterCountryBtnLabel');
   if (!panel || !label) return;
-  panel.innerHTML = `<label class="ms-dd-row"><input type="checkbox" id="filterCountryAllCb" ${activeCountryFilter.length ? '' : 'checked'}><span class="name">全部国家</span><span class="count">(${visibleRows().length})</span></label>` +
+  panel.innerHTML = `<label class="ms-dd-row"><input type="checkbox" id="filterCountryAllCb" ${activeCountryFilter.length ? '' : 'checked'}><span class="name">全部国家</span><span class="count">(${monthRows().length})</span></label>` +
     countries.map(c=>{
       const checked = activeCountryFilter.includes(c) ? 'checked' : '';
       return `<label class="ms-dd-row"><input type="checkbox" data-country="${c}" ${checked}><span class="name">${c}</span><span class="count">(${countFor(c)})</span></label>`;
@@ -5248,7 +5249,7 @@ if (filterCountryBtnEl && filterCountryPanelEl){
 function renderCustTabs(){
   const codesInCountry = uniqueCustomers().filter(c => !activeCountryFilter.length || activeCountryFilter.includes(custCountry(c)));
   activeCustFilter = activeCustFilter.filter(c => codesInCountry.includes(c));
-  const counts = code => visibleRows().filter(p=>p.cust===code).length;
+  const counts = code => monthRows().filter(p=>p.cust===code).length;
   const panel = document.getElementById('filterCustPanel');
   const label = document.getElementById('filterCustBtnLabel');
   if (!panel || !label) return;
@@ -5291,15 +5292,15 @@ if (filterCustBtnEl && filterCustPanelEl){
 }
 
 function renderCategoryTabs(){
-  const presentCats = [...new Set(visibleRows().map(p=>productType(p.product)))];
+  const presentCats = [...new Set(monthRows().map(p=>productType(p.product)))];
   const orderedCats = CATEGORY_LIST.filter(c=>presentCats.includes(c));
   if(!orderedCats.includes(activeCategoryFilter) && activeCategoryFilter!=='ALL') activeCategoryFilter='ALL';
-  const counts = cat => visibleRows().filter(p=>productType(p.product)===cat).length;
+  const counts = cat => monthRows().filter(p=>productType(p.product)===cat).length;
   const tabs = ['ALL', ...orderedCats];
   const el = document.getElementById('filterCategorySelect');
   el.innerHTML = tabs.map(cat=>{
     const label = cat==='ALL' ? '全部类目' : cat;
-    const count = cat==='ALL' ? visibleRows().length : counts(cat);
+    const count = cat==='ALL' ? monthRows().length : counts(cat);
     return `<option value="${cat}">${label} (${count})</option>`;
   }).join('');
   el.value = activeCategoryFilter;
@@ -5307,15 +5308,15 @@ function renderCategoryTabs(){
 }
 
 function renderBrandTabs(){
-  const presentBrands = [...new Set(visibleRows().map(p=>rowBrand(p)))];
+  const presentBrands = [...new Set(monthRows().map(p=>rowBrand(p)))];
   const orderedBrands = BRAND_LIST.filter(b=>presentBrands.includes(b));
   if(!orderedBrands.includes(activeBrandFilter) && activeBrandFilter!=='ALL') activeBrandFilter='ALL';
-  const counts = b => visibleRows().filter(p=>rowBrand(p)===b).length;
+  const counts = b => monthRows().filter(p=>rowBrand(p)===b).length;
   const tabs = ['ALL', ...orderedBrands];
   const el = document.getElementById('filterBrandSelect');
   el.innerHTML = tabs.map(b=>{
     const label = b==='ALL' ? '全部品牌' : b;
-    const count = b==='ALL' ? visibleRows().length : counts(b);
+    const count = b==='ALL' ? monthRows().length : counts(b);
     return `<option value="${b}">${label} (${count})</option>`;
   }).join('');
   el.value = activeBrandFilter;

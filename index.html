@@ -2921,7 +2921,7 @@
   function pushRemote(){
     if(!ADMIN||typeof sb==='undefined')return Promise.resolve();
     var C=compute();var asof=S.meta.stockAsOf||'';
-    var rows=C.list.filter(function(x){return x.avail>0;}).map(function(x){return {brand:x.brand,category:x.cat,model:x.model,version:x.ver,ean:x.ean,description:x.desc,qty:x.avail,qty_per_box:String(x.box==null?'':x.box),as_of:asof};});
+    var rows=C.list.filter(function(x){return x.avail>0&&String(x.brand).trim().toLowerCase()==='tenda';}).map(function(x){return {brand:x.brand,category:x.cat,model:x.model,version:x.ver,ean:x.ean,description:x.desc,qty:x.avail,qty_per_box:String(x.box==null?'':x.box),as_of:asof};});
     return sb.from('tenda_inventory_snapshot').upsert({id:1,payload:S,as_of:asof,updated_at:new Date().toISOString(),updated_by:EMAIL})
       .then(function(r){if(r.error)throw r.error;return sb.from('tenda_inventory_portal').delete().gt('id',0);})
       .then(function(r){if(r.error)throw r.error;var p=Promise.resolve();for(var i=0;i<rows.length;i+=200){(function(ch){p=p.then(function(){return sb.from('tenda_inventory_portal').insert(ch).then(function(r2){if(r2.error)throw r2.error;});});})(rows.slice(i,i+200));}return p;})

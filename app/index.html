@@ -5183,7 +5183,7 @@ function renderQuarterTabs(){
 }
 
 function renderMonthTabs(){
-  const monthKeys = ['ALL','01','02','03','04','05','06','07','08','09'];
+  const monthKeys = [...new Set(priceList.map(function(r){ return monthKey(r.month); }).filter(Boolean))].sort();
   const el = document.getElementById('filterMonthSelect');
   if (!el) return;
   el.innerHTML = monthKeys.map(m=>{

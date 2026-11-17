@@ -2678,7 +2678,7 @@
 .ti-tool .sp{flex:1;}
 .ti-badge{display:inline-block;padding:1px 8px;border-radius:10px;font-size:11px;font-weight:600;}
 .ti-badge.bad{background:var(--alert-soft);color:var(--alert);} .ti-badge.ok{background:var(--good-soft);color:var(--good);} .ti-badge.mid{background:var(--amber-soft);color:var(--amber);} .ti-badge.no{background:var(--surface-alt);color:var(--text-faint);}
-.ti-imp{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-top:16px;}
+.ti-imp{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:16px;}
 .ti-imp .ti-card p{font-size:12.5px;color:var(--text-dim);margin:6px 0 12px 0;line-height:1.6;}
 .ti-imp .st{margin-top:10px;font-size:12.5px;color:var(--text-dim);}
 .ti-imp .st b{color:var(--text);}
@@ -2722,15 +2722,9 @@
     </div>
     <div class="ti-card">
       <h3>③ 型号清单 Stock list</h3>
-      <p>品牌 / 品类 / 型号 / 版本 / EAN / 描述，以及手工填写的「预测」「备货」列。每周随库存一起更新，库存与库龄按型号自动匹配。</p>
+      <p>品牌 / 品类 / 型号 / 版本 / EAN / 描述。新品上市时更新，库存与库龄按型号自动匹配。</p>
       <input type="file" id="tiFileMaster" accept=".xlsx,.xls">
       <div class="st" id="tiStMaster">未导入</div>
-    </div>
-    <div class="ti-card">
-      <h3>④ 在途 in transit</h3>
-      <p>左侧 SAP型号→计划备货（在途2）、MODEL→QTY（在途1）、右侧型号→备货数量（在制）。有变化时更新。</p>
-      <input type="file" id="tiFileTransit" accept=".xlsx,.xls">
-      <div class="st" id="tiStTransit">未导入</div>
     </div>
   </div>
   <div class="ti-card" style="margin-top:16px;">
@@ -2738,13 +2732,13 @@
     <p style="font-size:12.5px;color:var(--text-dim);line-height:1.8;margin:0;">
       型号匹配键 = 型号去空格、转小写、全角括号转半角。库龄分档：0-90 天 = ≤30 + 31-60 + 61-90；91-180 天 = 91-120 + 121-150 + 151-180；超过 181 天 = 181-240 + 241-270 + 271-360。
       总库存与总金额取库龄表全部行（含不在型号清单内的型号）；品牌概览与 Top 榜单仅统计型号清单内的型号；清单外有库存的型号单独列在总览底部「未在型号清单」。
-    <br>明细：库存数量 = 库存表按型号精确匹配；在途1 = 在途表 MODEL→QTY；在途2 = 在途表 SAP型号→计划备货；在制 = 在途表右侧 型号→备货数量；供应合计 = 库存数量 + 在途2。</p>
+    </p>
   </div>
 </div>
 <script>
 (function(){
   var KEY='tenda_inv_v1';
-  var S={master:[],stock:[],aging:[],transit:[],meta:{}};
+  var S={master:[],stock:[],aging:[],meta:{}};
   var VIEW={brand:'',cat:'',status:'',q:'',sort:'amt',dir:-1};
   var BK=['≤30 天','31-60 天','61-90 天','91-120 天','121-150 天','151-180 天','181-240 天','241-270 天','271-360 天'];
   function $(id){return document.getElementById(id);}
@@ -2755,7 +2749,7 @@
   function fA(x){return num(x).toLocaleString('en-US',{maximumFractionDigits:0});}
   function fP(x){return (num(x)*100).toFixed(1)+'%';}
   function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
-  function load(){try{var s=JSON.parse(localStorage.getItem(KEY)||'null');if(s&&s.master)S=s;}catch(e){}if(!S.transit)S.transit=[];if(!S.meta)S.meta={};}
+  function load(){try{var s=JSON.parse(localStorage.getItem(KEY)||'null');if(s&&s.master)S=s;}catch(e){}}
 
   /* ---------- compute ---------- */
   function compute(){
@@ -2765,19 +2759,17 @@
       var o=ag[k]||(ag[k]={model:r.model,desc:r.desc,q:[0,0,0,0,0,0,0,0,0],a:[0,0,0,0,0,0,0,0,0]});
       for(var i=0;i<9;i++){o.q[i]+=num(r.q[i]);o.a[i]+=num(r.a[i]);}
     });
-    var lk=function(m){return String(m==null?'':m).trim().toLowerCase();};
-    var st={},t1={},t2={},t3={};
-    S.stock.forEach(function(r){var k=lk(r.model);if(k&&!st[k])st[k]={qty:num(r.qty),box:r.box};});
-    S.transit.forEach(function(r){if(r.m1&&t1[lk(r.m1)]==null)t1[lk(r.m1)]=num(r.q1);if(r.sap&&t2[lk(r.sap)]==null)t2[lk(r.sap)]=num(r.plan);if(r.m3&&t3[lk(r.m3)]==null)t3[lk(r.m3)]=num(r.q3);});
+    var st={};
+    S.stock.forEach(function(r){var k=key(r.model);if(k&&!st[k])st[k]={qty:num(r.qty),box:r.box};});
     var seen={},list=[],dups=0;
     S.master.forEach(function(m){
       var k=key(m.model);if(!k)return;
       if(seen[k]){dups++;return;}
       var g=ag[k]||{q:[0,0,0,0,0,0,0,0,0],a:[0,0,0,0,0,0,0,0,0]};
-      var lm=lk(m.model),s=st[lm];
+      var s=st[k];
       var q0=g.q[0]+g.q[1]+g.q[2],q1=g.q[3]+g.q[4]+g.q[5],q2=g.q[6]+g.q[7]+g.q[8];
       var a0=g.a[0]+g.a[1]+g.a[2],a1=g.a[3]+g.a[4]+g.a[5],a2=g.a[6]+g.a[7]+g.a[8];
-      var it={k:k,brand:m.brand,cat:m.cat,model:m.model,ver:m.ver,ean:m.ean,desc:m.desc,fc:m.fc,bh:m.bh,avail:s?s.qty:0,box:s?s.box:'',t1:t1[lm]||0,t2:t2[lm]||0,pr:t3[lm]||0,sup:(s?s.qty:0)+(t2[lm]||0),q0:q0,q1:q1,q2:q2,tq:q0+q1+q2,a0:a0,a1:a1,a2:a2,ta:a0+a1+a2,q:g.q,a:g.a};
+      var it={k:k,brand:m.brand,cat:m.cat,model:m.model,ver:m.ver,ean:m.ean,desc:m.desc,avail:s?s.qty:0,box:s?s.box:'',q0:q0,q1:q1,q2:q2,tq:q0+q1+q2,a0:a0,a1:a1,a2:a2,ta:a0+a1+a2,q:g.q,a:g.a};
       seen[k]=it;list.push(it);
     });
     var T={qty:0,amt:0,old:0,bq:[0,0,0,0,0,0,0,0,0],ba:[0,0,0,0,0,0,0,0,0]};
@@ -2820,9 +2812,6 @@
     var amtRows=amtTop.map(function(x,i){return '<tr><td>'+(i+1)+'</td><td>'+esc(x.model)+'</td><td class="num">'+fN(x.tq)+'</td><td class="num">'+fN(x.q2)+'</td><td class="num">'+fA(x.ta)+'</td><td class="num">'+fA(x.a2)+'</td></tr>';}).join('');
     var qtyTop=L.filter(function(x){return x.tq>0;}).sort(function(a,b){return b.tq-a.tq;}).slice(0,20);
     var qtyRows=qtyTop.map(function(x,i){return '<tr><td>'+(i+1)+'</td><td>'+esc(x.model)+'</td><td class="num">'+fN(x.tq)+'</td><td class="num">'+fN(x.q2)+'</td><td class="num">'+fA(x.ta)+'</td></tr>';}).join('');
-    var sp={a:0,t1:0,t2:0,pr:0,fc:0,bh:0};L.forEach(function(x){sp.a+=x.avail;sp.t1+=x.t1;sp.t2+=x.t2;sp.pr+=x.pr;sp.fc+=num(x.fc);sp.bh+=num(x.bh);});
-    var spi=function(l,v,c){return '<div><div class="inv-stat-label">'+l+'</div><div class="inv-stat-value" style="font-size:20px;'+(c?'color:'+c+';':'')+'">'+fN(v)+'</div></div>';};
-    h+='<div class="ti-card" style="margin-bottom:16px;"><h3>供应与计划<span class="sub">型号清单内合计</span></h3><div style="display:grid;grid-template-columns:repeat(7,1fr);gap:12px;">'+spi('库存数量',sp.a)+spi(''+(S.meta.l1||'在途1'),sp.t1,'var(--amber)')+spi(''+(S.meta.l2||'在途2'),sp.t2,'var(--amber)')+spi('供应合计',sp.a+sp.t2)+spi('在制',sp.pr)+spi('备货',sp.bh)+spi('预测',sp.fc)+'</div></div>';
     h+='<div class="ti-grid2">'+brandCard+agingCard+'</div>';
     h+='<div class="ti-card" style="margin-bottom:16px;"><h3>前 10 呆滞型号<span class="sub">按超 180 天金额</span></h3>'+tbl('<th>#</th><th>型号</th><th class="num">总数量</th><th class="num">&gt;181天数量</th><th class="num">总金额</th><th class="num">&gt;181天金额</th><th class="num">&gt;181占比</th>',oldRows||'<tr><td colspan="7" class="ti-empty">无</td></tr>')+'</div>';
     h+='<div class="ti-grid2"><div class="ti-card"><h3>前 10 库存型号<span class="sub">按总金额</span></h3>'+tbl('<th>#</th><th>型号</th><th class="num">总数量</th><th class="num">&gt;181天数量</th><th class="num">总金额</th><th class="num">&gt;181天金额</th>',amtRows||'<tr><td colspan="6" class="ti-empty">无</td></tr>')+'</div>'
@@ -2846,23 +2835,23 @@
       if(VIEW.q){var q=VIEW.q.toLowerCase();if((x.model+' '+(x.ean||'')+' '+(x.desc||'')).toLowerCase().indexOf(q)<0)return false;}
       return true;});
     var sk=VIEW.sort,d=VIEW.dir;
-    var gv=function(x){return sk==='model'?String(x.model).toLowerCase():sk==='avail'?x.avail:sk==='sup'?x.sup:sk==='tq'?x.tq:sk==='q2'?x.q2:sk==='old'?x.a2:x.ta;};
+    var gv=function(x){return sk==='model'?String(x.model).toLowerCase():sk==='avail'?x.avail:sk==='tq'?x.tq:sk==='q2'?x.q2:sk==='old'?x.a2:x.ta;};
     rows.sort(function(a,b){var A=gv(a),B=gv(b);return (A<B?-1:A>B?1:0)*d;});
     window.__tiRows=rows;
     var th=function(k,l,n){return '<th class="sortable'+(n?' num':'')+'" data-s="'+k+'">'+l+(VIEW.sort===k?(VIEW.dir<0?' ↓':' ↑'):'')+'</th>';};
     var body=rows.map(function(x){var s=statusOf(x);var bd=s==='no'?'<span class="ti-badge no">无库存</span>':s==='old'?'<span class="ti-badge bad">呆滞</span>':'<span class="ti-badge ok">正常</span>';
-      return '<tr><td>'+esc(x.brand)+'</td><td>'+esc(x.cat)+'</td><td><b>'+esc(x.model)+'</b></td><td>'+esc(x.ver)+'</td><td class="num">'+esc(x.ean)+'</td><td style="max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="'+esc(x.desc)+'">'+esc(x.desc)+'</td><td class="num">'+fN(x.avail)+'</td><td class="num">'+esc(x.box)+'</td><td class="num">'+fN(x.t1)+'</td><td class="num">'+fN(x.t2)+'</td><td class="num">'+fN(x.pr)+'</td><td class="num"><b>'+fN(x.sup)+'</b></td><td class="num">'+esc(x.fc)+'</td><td class="num">'+esc(x.bh)+'</td><td class="num">'+fN(x.q0)+'</td><td class="num">'+fN(x.q1)+'</td><td class="num" style="color:'+(x.q2>0?'var(--alert)':'inherit')+'">'+fN(x.q2)+'</td><td class="num">'+fN(x.tq)+'</td><td class="num">'+fA(x.ta)+'</td><td class="num">'+fA(x.a2)+'</td><td>'+bd+'</td></tr>';}).join('');
+      return '<tr><td>'+esc(x.brand)+'</td><td>'+esc(x.cat)+'</td><td><b>'+esc(x.model)+'</b></td><td>'+esc(x.ver)+'</td><td class="num">'+esc(x.ean)+'</td><td style="max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="'+esc(x.desc)+'">'+esc(x.desc)+'</td><td class="num">'+fN(x.avail)+'</td><td class="num">'+esc(x.box)+'</td><td class="num">'+fN(x.q0)+'</td><td class="num">'+fN(x.q1)+'</td><td class="num" style="color:'+(x.q2>0?'var(--alert)':'inherit')+'">'+fN(x.q2)+'</td><td class="num">'+fN(x.tq)+'</td><td class="num">'+fA(x.ta)+'</td><td class="num">'+fA(x.a2)+'</td><td>'+bd+'</td></tr>';}).join('');
     p.innerHTML='<div class="ti-tool"><select id="tiFB">'+opt(brands,VIEW.brand,'全部品牌')+'</select><select id="tiFC">'+opt(cats,VIEW.cat,'全部品类')+'</select>'
       +'<select id="tiFS"><option value="">全部状态</option><option value="in"'+(VIEW.status==='in'?' selected':'')+'>有库存</option><option value="old"'+(VIEW.status==='old'?' selected':'')+'>含超181天库存</option><option value="no"'+(VIEW.status==='no'?' selected':'')+'>无库存</option></select>'
       +'<input type="text" id="tiFQ" placeholder="搜索型号 / EAN / 描述" value="'+esc(VIEW.q)+'"><span class="sp"></span><span style="font-size:12.5px;color:var(--text-faint);">'+rows.length+' / '+L.length+' 个型号'+(C.dups?'（重复型号 '+C.dups+' 个已合并）':'')+'</span><button type="button" class="btn ghost" id="tiExport">导出 Excel</button></div>'
-      +'<div class="ti-scroll"><table class="ti-tbl"><thead><tr><th>品牌</th><th>品类</th>'+th('model','型号')+'<th>版本</th><th class="num">EAN</th><th>描述</th>'+th('avail','库存数量',1)+'<th class="num">每箱</th><th class="num">'+esc(S.meta.l1||'在途1')+'</th><th class="num">'+esc(S.meta.l2||'在途2')+'</th><th class="num">在制</th>'+th('sup','供应合计',1)+'<th class="num">预测</th><th class="num">备货</th><th class="num">0-90天</th><th class="num">91-180天</th>'+th('q2','&gt;181天',1)+th('tq','库龄合计',1)+th('amt','金额',1)+th('old','&gt;181天金额',1)+'<th>状态</th></tr></thead><tbody>'+body+'</tbody></table></div>';
+      +'<div class="ti-scroll"><table class="ti-tbl"><thead><tr><th>品牌</th><th>品类</th>'+th('model','型号')+'<th>版本</th><th class="num">EAN</th><th>描述</th>'+th('avail','库存数量',1)+'<th class="num">每箱</th><th class="num">0-90天</th><th class="num">91-180天</th>'+th('q2','&gt;181天',1)+th('tq','库龄合计',1)+th('amt','金额',1)+th('old','&gt;181天金额',1)+'<th>状态</th></tr></thead><tbody>'+body+'</tbody></table></div>';
     var rr=function(){renderDt(C);};
     $('tiFB').onchange=function(){VIEW.brand=this.value;rr();};$('tiFC').onchange=function(){VIEW.cat=this.value;rr();};$('tiFS').onchange=function(){VIEW.status=this.value;rr();};
     var q=$('tiFQ');q.oninput=function(){VIEW.q=this.value.trim();var pos=this.selectionStart;rr();var n=$('tiFQ');n.focus();try{n.setSelectionRange(pos,pos);}catch(e){}};
     p.querySelectorAll('th.sortable').forEach(function(t){t.onclick=function(){var s=t.getAttribute('data-s');if(VIEW.sort===s)VIEW.dir=-VIEW.dir;else{VIEW.sort=s;VIEW.dir=s==='model'?1:-1;}rr();};});
     $('tiExport').onclick=function(){
       if(!window.XLSX)return;
-      var out=window.__tiRows.map(function(x){return {'品牌':x.brand,'品类':x.cat,'型号':x.model,'版本':x.ver,'EAN':x.ean,'描述':x.desc,'库存数量':x.avail,'每箱':x.box,'在途1':x.t1,'在途2':x.t2,'在制':x.pr,'供应合计':x.sup,'预测':x.fc,'备货':x.bh,'0-90天':x.q0,'91-180天':x.q1,'>181天':x.q2,'库龄合计':x.tq,'金额':Math.round(x.ta*100)/100,'>181天金额':Math.round(x.a2*100)/100};});
+      var out=window.__tiRows.map(function(x){return {'品牌':x.brand,'品类':x.cat,'型号':x.model,'版本':x.ver,'EAN':x.ean,'描述':x.desc,'库存数量':x.avail,'每箱':x.box,'0-90天':x.q0,'91-180天':x.q1,'>181天':x.q2,'库龄合计':x.tq,'金额':Math.round(x.ta*100)/100,'>181天金额':Math.round(x.a2*100)/100};});
       var wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(out),'stock list');XLSX.writeFile(wb,'tenda_stock_list.xlsx');
     };
   }
@@ -2891,22 +2880,15 @@
     var h=-1;for(var i=0;i<Math.min(rows.length,10);i++){var x=rows[i]||[];if(String(x[0]||'').trim().toLowerCase()==='brand'&&String(x[2]||'').trim().toLowerCase()==='model'){h=i;break;}}
     if(h<0)throw new Error('型号清单未找到表头 Brand / Model');
     var out=[];
-    for(var j=h+1;j<rows.length;j++){var y=rows[j]||[];if(!y[0]||!y[2])continue;out.push({brand:String(y[0]).trim(),cat:y[1]==null?'':String(y[1]).trim(),model:String(y[2]).trim(),ver:y[3]==null?'':String(y[3]).trim(),ean:y[4]==null?'':String(y[4]).trim(),desc:y[5]==null?'':String(y[5]).trim(),fc:y[18]==null?'':y[18],bh:y[20]==null?'':y[20]});}
+    for(var j=h+1;j<rows.length;j++){var y=rows[j]||[];if(!y[0]||!y[2])continue;out.push({brand:String(y[0]).trim(),cat:y[1]==null?'':String(y[1]).trim(),model:String(y[2]).trim(),ver:y[3]==null?'':String(y[3]).trim(),ean:y[4]==null?'':String(y[4]).trim(),desc:y[5]==null?'':String(y[5]).trim()});}
     return out;
-  }
-  function parseTransit(rows){
-    var h=-1;for(var i=0;i<Math.min(rows.length,10);i++){var x=rows[i]||[];if(String(x[1]||'').toUpperCase().indexOf('SAP')>=0){h=i;break;}}
-    if(h<0)throw new Error('在途表未找到表头 SAP型号');
-    var out=[];
-    for(var j=h+1;j<rows.length;j++){var y=rows[j]||[];var m1=y[6]!=null?String(y[6]).trim():'',sap=y[1]!=null?String(y[1]).trim():'',m3=y[11]!=null?String(y[11]).trim():'';if(!m1&&!sap&&!m3)continue;out.push({m1:m1,q1:num(y[8]),sap:sap,plan:num(y[2]),m3:m3,q3:num(y[14])});}
-    return {rows:out};
   }
   function stamp(){var d=new Date();return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2)+' '+('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2);}
   function readFile(file,cb){
     if(!window.XLSX){cb(new Error('Excel 解析库未加载'));return;}
     var fr=new FileReader();fr.onload=function(){try{cb(null,XLSX.read(new Uint8Array(fr.result),{type:'array'}));}catch(e){cb(e);}};fr.readAsArrayBuffer(file);
   }
-  var NAMES={stock:['交付更新库存表'],aging:['交付更新库龄'],master:['stock list'],transit:['in transit']};
+  var NAMES={stock:['交付更新库存表'],aging:['交付更新库龄'],master:['stock list']};
   function applyWb(wb,which,strict){
     var done=[];
     which.forEach(function(w){
@@ -2915,8 +2897,7 @@
       var rows=rowsOf(wb,sn);
       if(w==='stock'){var r=parseStock(rows);S.stock=r.rows;S.meta.stockAsOf=r.asof;S.meta.stockAt=stamp();done.push('库存表 '+r.rows.length+' 行');}
       if(w==='aging'){var a=parseAging(rows);S.aging=a;S.meta.agingAt=stamp();done.push('库龄表 '+a.length+' 行');}
-      if(w==='transit'){var tr=parseTransit(rows);S.transit=tr.rows;S.meta.transitAt=stamp();done.push('在途表 '+tr.rows.length+' 行');}
-      if(w==='master'){var r0=rows[0]||[];if(r0[14])S.meta.l1=String(r0[14]);if(r0[15])S.meta.l2=String(r0[15]);var m=parseMaster(rows);S.master=m;S.meta.masterAt=stamp();done.push('型号清单 '+m.length+' 行');}
+      if(w==='master'){var m=parseMaster(rows);S.master=m;S.meta.masterAt=stamp();done.push('型号清单 '+m.length+' 行');}
     });
     return done;
   }
@@ -2924,8 +2905,8 @@
   function bindImport(){
     $('tiFileAll').onchange=function(){var f=this.files[0];if(!f)return;msg('tiMsgAll','解析中…');
       readFile(f,function(err,wb){if(err){msg('tiMsgAll','导入失败：'+esc(err.message),false);return;}
-        try{var d=applyWb(wb,['master','stock','aging','transit']);if(!d.length)throw new Error('未识别到「交付更新库存表 / 交付更新库龄 / stock list」sheet');save();refresh();msg('tiMsgAll','导入成功：'+esc(d.join('；')),true);}catch(e){msg('tiMsgAll','导入失败：'+esc(e.message),false);}});};
-    [['tiFileTransit','transit','tiStTransit'],['tiFileStock','stock','tiStStock'],['tiFileAging','aging','tiStAging'],['tiFileMaster','master','tiStMaster']].forEach(function(c){
+        try{var d=applyWb(wb,['master','stock','aging']);if(!d.length)throw new Error('未识别到「交付更新库存表 / 交付更新库龄 / stock list」sheet');save();refresh();msg('tiMsgAll','导入成功：'+esc(d.join('；')),true);}catch(e){msg('tiMsgAll','导入失败：'+esc(e.message),false);}});};
+    [['tiFileStock','stock','tiStStock'],['tiFileAging','aging','tiStAging'],['tiFileMaster','master','tiStMaster']].forEach(function(c){
       $(c[0]).onchange=function(){var f=this.files[0];if(!f)return;
         readFile(f,function(err,wb){if(err){msg(c[2],'导入失败：'+esc(err.message),false);return;}
           try{var d=applyWb(wb,[c[1]],'single');save();refresh();}catch(e){msg(c[2],'导入失败：'+esc(e.message),false);}});};
@@ -2935,7 +2916,6 @@
     var m=S.meta||{};
     $('tiStStock').innerHTML=S.stock.length?'已导入 <b>'+S.stock.length+'</b> 行 · 数据日期 <b>'+esc(m.stockAsOf||'--')+'</b> · 导入于 '+esc(m.stockAt||''):'未导入';
     $('tiStAging').innerHTML=S.aging.length?'已导入 <b>'+S.aging.length+'</b> 行 · 导入于 '+esc(m.agingAt||''):'未导入';
-    $('tiStTransit').innerHTML=S.transit.length?'已导入 <b>'+S.transit.length+'</b> 行 · 导入于 '+esc(m.transitAt||''):'未导入';
     $('tiStMaster').innerHTML=S.master.length?'已导入 <b>'+S.master.length+'</b> 行 · 导入于 '+esc(m.masterAt||''):'未导入';
     $('tiAsOf').textContent=m.stockAsOf||m.agingAt||'--';
   }

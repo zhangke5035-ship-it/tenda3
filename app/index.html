@@ -2722,7 +2722,7 @@
     </div>
     <div class="ti-card">
       <h3>③ 型号清单 Stock list</h3>
-      <p>品牌 / 品类 / 型号 / 版本 / EAN / 描述。新品上市时更新，库存与库龄按型号自动匹配。</p>
+      <p>品牌 / 品类 / 型号 / 版本 / EAN / 描述，以及手工填写的「预测」「备货」列。每周随库存一起更新，库存与库龄按型号自动匹配。</p>
       <input type="file" id="tiFileMaster" accept=".xlsx,.xls">
       <div class="st" id="tiStMaster">未导入</div>
     </div>
@@ -2777,7 +2777,7 @@
       var lm=lk(m.model),s=st[lm];
       var q0=g.q[0]+g.q[1]+g.q[2],q1=g.q[3]+g.q[4]+g.q[5],q2=g.q[6]+g.q[7]+g.q[8];
       var a0=g.a[0]+g.a[1]+g.a[2],a1=g.a[3]+g.a[4]+g.a[5],a2=g.a[6]+g.a[7]+g.a[8];
-      var it={k:k,brand:m.brand,cat:m.cat,model:m.model,ver:m.ver,ean:m.ean,desc:m.desc,avail:s?s.qty:0,box:s?s.box:'',t1:t1[lm]||0,t2:t2[lm]||0,pr:t3[lm]||0,sup:(s?s.qty:0)+(t2[lm]||0),q0:q0,q1:q1,q2:q2,tq:q0+q1+q2,a0:a0,a1:a1,a2:a2,ta:a0+a1+a2,q:g.q,a:g.a};
+      var it={k:k,brand:m.brand,cat:m.cat,model:m.model,ver:m.ver,ean:m.ean,desc:m.desc,fc:m.fc,bh:m.bh,avail:s?s.qty:0,box:s?s.box:'',t1:t1[lm]||0,t2:t2[lm]||0,pr:t3[lm]||0,sup:(s?s.qty:0)+(t2[lm]||0),q0:q0,q1:q1,q2:q2,tq:q0+q1+q2,a0:a0,a1:a1,a2:a2,ta:a0+a1+a2,q:g.q,a:g.a};
       seen[k]=it;list.push(it);
     });
     var T={qty:0,amt:0,old:0,bq:[0,0,0,0,0,0,0,0,0],ba:[0,0,0,0,0,0,0,0,0]};
@@ -2820,6 +2820,9 @@
     var amtRows=amtTop.map(function(x,i){return '<tr><td>'+(i+1)+'</td><td>'+esc(x.model)+'</td><td class="num">'+fN(x.tq)+'</td><td class="num">'+fN(x.q2)+'</td><td class="num">'+fA(x.ta)+'</td><td class="num">'+fA(x.a2)+'</td></tr>';}).join('');
     var qtyTop=L.filter(function(x){return x.tq>0;}).sort(function(a,b){return b.tq-a.tq;}).slice(0,20);
     var qtyRows=qtyTop.map(function(x,i){return '<tr><td>'+(i+1)+'</td><td>'+esc(x.model)+'</td><td class="num">'+fN(x.tq)+'</td><td class="num">'+fN(x.q2)+'</td><td class="num">'+fA(x.ta)+'</td></tr>';}).join('');
+    var sp={a:0,t1:0,t2:0,pr:0,fc:0,bh:0};L.forEach(function(x){sp.a+=x.avail;sp.t1+=x.t1;sp.t2+=x.t2;sp.pr+=x.pr;sp.fc+=num(x.fc);sp.bh+=num(x.bh);});
+    var spi=function(l,v,c){return '<div><div class="inv-stat-label">'+l+'</div><div class="inv-stat-value" style="font-size:20px;'+(c?'color:'+c+';':'')+'">'+fN(v)+'</div></div>';};
+    h+='<div class="ti-card" style="margin-bottom:16px;"><h3>供应与计划<span class="sub">型号清单内合计</span></h3><div style="display:grid;grid-template-columns:repeat(7,1fr);gap:12px;">'+spi('库存数量',sp.a)+spi(''+(S.meta.l1||'在途1'),sp.t1,'var(--amber)')+spi(''+(S.meta.l2||'在途2'),sp.t2,'var(--amber)')+spi('供应合计',sp.a+sp.t2)+spi('在制',sp.pr)+spi('备货',sp.bh)+spi('预测',sp.fc)+'</div></div>';
     h+='<div class="ti-grid2">'+brandCard+agingCard+'</div>';
     h+='<div class="ti-card" style="margin-bottom:16px;"><h3>前 10 呆滞型号<span class="sub">按超 180 天金额</span></h3>'+tbl('<th>#</th><th>型号</th><th class="num">总数量</th><th class="num">&gt;181天数量</th><th class="num">总金额</th><th class="num">&gt;181天金额</th><th class="num">&gt;181占比</th>',oldRows||'<tr><td colspan="7" class="ti-empty">无</td></tr>')+'</div>';
     h+='<div class="ti-grid2"><div class="ti-card"><h3>前 10 库存型号<span class="sub">按总金额</span></h3>'+tbl('<th>#</th><th>型号</th><th class="num">总数量</th><th class="num">&gt;181天数量</th><th class="num">总金额</th><th class="num">&gt;181天金额</th>',amtRows||'<tr><td colspan="6" class="ti-empty">无</td></tr>')+'</div>'
@@ -2848,18 +2851,18 @@
     window.__tiRows=rows;
     var th=function(k,l,n){return '<th class="sortable'+(n?' num':'')+'" data-s="'+k+'">'+l+(VIEW.sort===k?(VIEW.dir<0?' ↓':' ↑'):'')+'</th>';};
     var body=rows.map(function(x){var s=statusOf(x);var bd=s==='no'?'<span class="ti-badge no">无库存</span>':s==='old'?'<span class="ti-badge bad">呆滞</span>':'<span class="ti-badge ok">正常</span>';
-      return '<tr><td>'+esc(x.brand)+'</td><td>'+esc(x.cat)+'</td><td><b>'+esc(x.model)+'</b></td><td>'+esc(x.ver)+'</td><td class="num">'+esc(x.ean)+'</td><td style="max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="'+esc(x.desc)+'">'+esc(x.desc)+'</td><td class="num">'+fN(x.avail)+'</td><td class="num">'+esc(x.box)+'</td><td class="num">'+fN(x.t1)+'</td><td class="num">'+fN(x.t2)+'</td><td class="num">'+fN(x.pr)+'</td><td class="num"><b>'+fN(x.sup)+'</b></td><td class="num">'+fN(x.q0)+'</td><td class="num">'+fN(x.q1)+'</td><td class="num" style="color:'+(x.q2>0?'var(--alert)':'inherit')+'">'+fN(x.q2)+'</td><td class="num">'+fN(x.tq)+'</td><td class="num">'+fA(x.ta)+'</td><td class="num">'+fA(x.a2)+'</td><td>'+bd+'</td></tr>';}).join('');
+      return '<tr><td>'+esc(x.brand)+'</td><td>'+esc(x.cat)+'</td><td><b>'+esc(x.model)+'</b></td><td>'+esc(x.ver)+'</td><td class="num">'+esc(x.ean)+'</td><td style="max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="'+esc(x.desc)+'">'+esc(x.desc)+'</td><td class="num">'+fN(x.avail)+'</td><td class="num">'+esc(x.box)+'</td><td class="num">'+fN(x.t1)+'</td><td class="num">'+fN(x.t2)+'</td><td class="num">'+fN(x.pr)+'</td><td class="num"><b>'+fN(x.sup)+'</b></td><td class="num">'+esc(x.fc)+'</td><td class="num">'+esc(x.bh)+'</td><td class="num">'+fN(x.q0)+'</td><td class="num">'+fN(x.q1)+'</td><td class="num" style="color:'+(x.q2>0?'var(--alert)':'inherit')+'">'+fN(x.q2)+'</td><td class="num">'+fN(x.tq)+'</td><td class="num">'+fA(x.ta)+'</td><td class="num">'+fA(x.a2)+'</td><td>'+bd+'</td></tr>';}).join('');
     p.innerHTML='<div class="ti-tool"><select id="tiFB">'+opt(brands,VIEW.brand,'全部品牌')+'</select><select id="tiFC">'+opt(cats,VIEW.cat,'全部品类')+'</select>'
       +'<select id="tiFS"><option value="">全部状态</option><option value="in"'+(VIEW.status==='in'?' selected':'')+'>有库存</option><option value="old"'+(VIEW.status==='old'?' selected':'')+'>含超181天库存</option><option value="no"'+(VIEW.status==='no'?' selected':'')+'>无库存</option></select>'
       +'<input type="text" id="tiFQ" placeholder="搜索型号 / EAN / 描述" value="'+esc(VIEW.q)+'"><span class="sp"></span><span style="font-size:12.5px;color:var(--text-faint);">'+rows.length+' / '+L.length+' 个型号'+(C.dups?'（重复型号 '+C.dups+' 个已合并）':'')+'</span><button type="button" class="btn ghost" id="tiExport">导出 Excel</button></div>'
-      +'<div class="ti-scroll"><table class="ti-tbl"><thead><tr><th>品牌</th><th>品类</th>'+th('model','型号')+'<th>版本</th><th class="num">EAN</th><th>描述</th>'+th('avail','库存数量',1)+'<th class="num">每箱</th><th class="num">'+esc(S.meta.l1||'在途1')+'</th><th class="num">'+esc(S.meta.l2||'在途2')+'</th><th class="num">在制</th>'+th('sup','供应合计',1)+'<th class="num">0-90天</th><th class="num">91-180天</th>'+th('q2','&gt;181天',1)+th('tq','库龄合计',1)+th('amt','金额',1)+th('old','&gt;181天金额',1)+'<th>状态</th></tr></thead><tbody>'+body+'</tbody></table></div>';
+      +'<div class="ti-scroll"><table class="ti-tbl"><thead><tr><th>品牌</th><th>品类</th>'+th('model','型号')+'<th>版本</th><th class="num">EAN</th><th>描述</th>'+th('avail','库存数量',1)+'<th class="num">每箱</th><th class="num">'+esc(S.meta.l1||'在途1')+'</th><th class="num">'+esc(S.meta.l2||'在途2')+'</th><th class="num">在制</th>'+th('sup','供应合计',1)+'<th class="num">预测</th><th class="num">备货</th><th class="num">0-90天</th><th class="num">91-180天</th>'+th('q2','&gt;181天',1)+th('tq','库龄合计',1)+th('amt','金额',1)+th('old','&gt;181天金额',1)+'<th>状态</th></tr></thead><tbody>'+body+'</tbody></table></div>';
     var rr=function(){renderDt(C);};
     $('tiFB').onchange=function(){VIEW.brand=this.value;rr();};$('tiFC').onchange=function(){VIEW.cat=this.value;rr();};$('tiFS').onchange=function(){VIEW.status=this.value;rr();};
     var q=$('tiFQ');q.oninput=function(){VIEW.q=this.value.trim();var pos=this.selectionStart;rr();var n=$('tiFQ');n.focus();try{n.setSelectionRange(pos,pos);}catch(e){}};
     p.querySelectorAll('th.sortable').forEach(function(t){t.onclick=function(){var s=t.getAttribute('data-s');if(VIEW.sort===s)VIEW.dir=-VIEW.dir;else{VIEW.sort=s;VIEW.dir=s==='model'?1:-1;}rr();};});
     $('tiExport').onclick=function(){
       if(!window.XLSX)return;
-      var out=window.__tiRows.map(function(x){return {'品牌':x.brand,'品类':x.cat,'型号':x.model,'版本':x.ver,'EAN':x.ean,'描述':x.desc,'库存数量':x.avail,'每箱':x.box,'在途1':x.t1,'在途2':x.t2,'在制':x.pr,'供应合计':x.sup,'0-90天':x.q0,'91-180天':x.q1,'>181天':x.q2,'库龄合计':x.tq,'金额':Math.round(x.ta*100)/100,'>181天金额':Math.round(x.a2*100)/100};});
+      var out=window.__tiRows.map(function(x){return {'品牌':x.brand,'品类':x.cat,'型号':x.model,'版本':x.ver,'EAN':x.ean,'描述':x.desc,'库存数量':x.avail,'每箱':x.box,'在途1':x.t1,'在途2':x.t2,'在制':x.pr,'供应合计':x.sup,'预测':x.fc,'备货':x.bh,'0-90天':x.q0,'91-180天':x.q1,'>181天':x.q2,'库龄合计':x.tq,'金额':Math.round(x.ta*100)/100,'>181天金额':Math.round(x.a2*100)/100};});
       var wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(out),'stock list');XLSX.writeFile(wb,'tenda_stock_list.xlsx');
     };
   }
@@ -2888,7 +2891,7 @@
     var h=-1;for(var i=0;i<Math.min(rows.length,10);i++){var x=rows[i]||[];if(String(x[0]||'').trim().toLowerCase()==='brand'&&String(x[2]||'').trim().toLowerCase()==='model'){h=i;break;}}
     if(h<0)throw new Error('型号清单未找到表头 Brand / Model');
     var out=[];
-    for(var j=h+1;j<rows.length;j++){var y=rows[j]||[];if(!y[0]||!y[2])continue;out.push({brand:String(y[0]).trim(),cat:y[1]==null?'':String(y[1]).trim(),model:String(y[2]).trim(),ver:y[3]==null?'':String(y[3]).trim(),ean:y[4]==null?'':String(y[4]).trim(),desc:y[5]==null?'':String(y[5]).trim()});}
+    for(var j=h+1;j<rows.length;j++){var y=rows[j]||[];if(!y[0]||!y[2])continue;out.push({brand:String(y[0]).trim(),cat:y[1]==null?'':String(y[1]).trim(),model:String(y[2]).trim(),ver:y[3]==null?'':String(y[3]).trim(),ean:y[4]==null?'':String(y[4]).trim(),desc:y[5]==null?'':String(y[5]).trim(),fc:y[18]==null?'':y[18],bh:y[20]==null?'':y[20]});}
     return out;
   }
   function parseTransit(rows){

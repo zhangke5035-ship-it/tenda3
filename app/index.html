@@ -2946,15 +2946,23 @@
       .catch(function(e){console.error('inv sync',e);var m=$('tiMsgAll');if(m){m.className='ti-msg err';m.innerHTML+=' · 同步数据库失败：'+esc(e.message||e);}});
   }
   function initRemote(){
-    if(typeof sb==='undefined')return;
-    sb.auth.getSession().then(function(r){
-      var u=r&&r.data&&r.data.session&&r.data.session.user;if(!u)return;
-      EMAIL=u.email||'';ADMIN=EMAIL.toLowerCase()==='zhangke2@tenda.cn';if(ADMIN)$('tiTabIm').style.display='';
-      return sb.from('tenda_inventory_snapshot').select('payload').eq('id',1).maybeSingle().then(function(q){
-        if(q.data&&q.data.payload&&q.data.payload.master){S=q.data.payload;if(!S.meta)S.meta={};save();refresh();}
-        else if(ADMIN&&(S.stock.length||S.aging.length||S.master.length)){pushRemote();}
-      });
-    }).catch(function(e){console.error('inv remote',e);});
+    var tries=0,done=false;
+    function again(ms){ if(!done&&tries<300) setTimeout(tick,ms); }
+    function tick(){
+      tries++;
+      if(typeof sb==='undefined'||!sb||!sb.auth){ again(1000); return; }
+      sb.auth.getSession().then(function(r){
+        var u=r&&r.data&&r.data.session&&r.data.session.user;
+        if(!u){ again(1500); return; }
+        done=true;
+        EMAIL=u.email||'';ADMIN=EMAIL.toLowerCase()==='zhangke2@tenda.cn';if(ADMIN)$('tiTabIm').style.display='';
+        return sb.from('tenda_inventory_snapshot').select('payload').eq('id',1).maybeSingle().then(function(q){
+          if(q.data&&q.data.payload&&q.data.payload.master){S=q.data.payload;if(!S.transit)S.transit=[];if(!S.meta)S.meta={};save();refresh();}
+          else if(ADMIN&&(S.stock.length||S.aging.length||S.master.length)){pushRemote();}
+        });
+      }).catch(function(e){console.error('inv remote',e);again(2000);});
+    }
+    tick();
   }
   /* ---------- init ---------- */
   load();

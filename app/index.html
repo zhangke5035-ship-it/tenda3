@@ -1233,7 +1233,7 @@
     <div id="cpViewInventory" class="cp-view hidden">
     <div class="cp-card">
       <div class="cp-card-head"><h2>库存管理</h2></div>
-      <div style="text-align:center;color:var(--text-faint);padding:40px 20px;">暂无库存</div>
+      <div id="cpInventoryBody"><div style="text-align:center;color:var(--text-faint);padding:40px 20px;">暂无库存</div></div>
     </div>
     </div>
     <div id="cpViewQuotes" class="cp-view hidden">
@@ -2911,11 +2911,11 @@
   function bindImport(){
     $('tiFileAll').onchange=function(){var f=this.files[0];if(!f)return;msg('tiMsgAll','解析中…');
       readFile(f,function(err,wb){if(err){msg('tiMsgAll','导入失败：'+esc(err.message),false);return;}
-        try{var d=applyWb(wb,['master','stock','aging']);if(!d.length)throw new Error('未识别到「交付更新库存表 / 交付更新库龄 / stock list」sheet');save();refresh();msg('tiMsgAll','导入成功：'+esc(d.join('；')),true);}catch(e){msg('tiMsgAll','导入失败：'+esc(e.message),false);}});};
+        try{var d=applyWb(wb,['master','stock','aging']);if(!d.length)throw new Error('未识别到「交付更新库存表 / 交付更新库龄 / stock list」sheet');save();refresh();pushRemote();msg('tiMsgAll','导入成功：'+esc(d.join('；')),true);}catch(e){msg('tiMsgAll','导入失败：'+esc(e.message),false);}});};
     [['tiFileStock','stock','tiStStock'],['tiFileAging','aging','tiStAging'],['tiFileMaster','master','tiStMaster']].forEach(function(c){
       $(c[0]).onchange=function(){var f=this.files[0];if(!f)return;
         readFile(f,function(err,wb){if(err){msg(c[2],'导入失败：'+esc(err.message),false);return;}
-          try{var d=applyWb(wb,[c[1]],'single');save();refresh();}catch(e){msg(c[2],'导入失败：'+esc(e.message),false);}});};
+          try{var d=applyWb(wb,[c[1]],'single');save();refresh();pushRemote();}catch(e){msg(c[2],'导入失败：'+esc(e.message),false);}});};
     });
   }
   function status(){
@@ -2927,13 +2927,35 @@
   }
   function refresh(){var C=compute();renderOv(C);renderDt(C);status();}
 
+  var ADMIN=false,EMAIL='';
+  function pushRemote(){
+    if(!ADMIN||typeof sb==='undefined')return Promise.resolve();
+    var C=compute();var asof=S.meta.stockAsOf||'';
+    var rows=C.list.filter(function(x){return x.avail>0;}).map(function(x){return {brand:x.brand,category:x.cat,model:x.model,version:x.ver,ean:x.ean,description:x.desc,qty:x.avail,qty_per_box:String(x.box==null?'':x.box),as_of:asof};});
+    return sb.from('tenda_inventory_snapshot').upsert({id:1,payload:S,as_of:asof,updated_at:new Date().toISOString(),updated_by:EMAIL})
+      .then(function(r){if(r.error)throw r.error;return sb.from('tenda_inventory_portal').delete().gt('id',0);})
+      .then(function(r){if(r.error)throw r.error;var p=Promise.resolve();for(var i=0;i<rows.length;i+=200){(function(ch){p=p.then(function(){return sb.from('tenda_inventory_portal').insert(ch).then(function(r2){if(r2.error)throw r2.error;});});})(rows.slice(i,i+200));}return p;})
+      .then(function(){var e=$('tiMsgAll');if(e){e.className='ti-msg ok';e.innerHTML+=' · 已同步到数据库和客户门户（'+rows.length+' 个有库存型号）';}})
+      .catch(function(e){console.error('inv sync',e);var m=$('tiMsgAll');if(m){m.className='ti-msg err';m.innerHTML+=' · 同步数据库失败：'+esc(e.message||e);}});
+  }
+  function initRemote(){
+    if(typeof sb==='undefined')return;
+    sb.auth.getSession().then(function(r){
+      var u=r&&r.data&&r.data.session&&r.data.session.user;if(!u)return;
+      EMAIL=u.email||'';ADMIN=EMAIL.toLowerCase()==='zhangke2@tenda.cn';if(ADMIN)$('tiTabIm').style.display='';
+      return sb.from('tenda_inventory_snapshot').select('payload').eq('id',1).maybeSingle().then(function(q){
+        if(q.data&&q.data.payload&&q.data.payload.master){S=q.data.payload;if(!S.meta)S.meta={};save();refresh();}
+        else if(ADMIN&&(S.stock.length||S.aging.length||S.master.length)){pushRemote();}
+      });
+    }).catch(function(e){console.error('inv remote',e);});
+  }
   /* ---------- init ---------- */
   load();
   $('tiTabs').addEventListener('click',function(e){var b=e.target.closest('.ti-tab');if(!b)return;var t=b.getAttribute('data-t');
     document.querySelectorAll('#tiTabs .ti-tab').forEach(function(x){x.classList.toggle('active',x===b);});
     ['ov','dt','im'].forEach(function(k){$('tiPane_'+k).classList.toggle('active',k===t);});});
   bindImport();refresh();
-  try{if(typeof sb!=='undefined'){sb.auth.getSession().then(function(r){var u=r&&r.data&&r.data.session&&r.data.session.user;if(u&&String(u.email||'').toLowerCase()==='zhangke2@tenda.cn')$('tiTabIm').style.display='';});}}catch(e){}
+  try{initRemote();}catch(e){}
 })();
 </script>
 </section>
@@ -10021,6 +10043,7 @@ async function showCustomerApp(session, customerCode){
   const badge = document.getElementById('cpCustomerBadge');
   if (badge) badge.textContent = (typeof CUSTOMERS !== 'undefined' && CUSTOMERS[customerCode] && CUSTOMERS[customerCode].name) || customerCode;
   renderCpQuotes(customerCode);
+  renderCpInventory(customerCode);
   if (typeof applyLanguage === 'function') applyLanguage('pl');
   renderCpExtraFields(customerCode);
   renderCpProductModelOptions(customerCode);
@@ -10055,6 +10078,31 @@ function renderCpQuotes(code){
     document.getElementById('cpQuotesSearch').addEventListener('input',draw);
     draw();
   }catch(e){ console.error('renderCpQuotes',e); }
+}
+function renderCpInventory(code){
+  try{
+    var box=document.getElementById('cpInventoryBody'); if(!box) return;
+    if(code!=='ELTROX') return;
+    var esc=function(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); };
+    var th='padding:9px 12px;';
+    box.innerHTML='<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap;"><input type="text" id="cpInvSearch" placeholder="搜索型号" style="border:1px solid var(--border);border-radius:var(--radius);padding:8px 10px;font-size:13px;width:240px;"><span style="font-size:12.5px;color:var(--text-faint);">库存更新时间：<b id="cpInvAsOf">--</b></span><span id="cpInvCount" style="font-size:12.5px;color:var(--text-faint);margin-left:auto;"></span></div>'
+      +'<div style="overflow:auto;border:1px solid var(--border);border-radius:var(--radius);"><table style="width:100%;border-collapse:collapse;font-size:13px;"><thead><tr style="background:var(--surface-alt);color:var(--text-dim);"><th style="text-align:left;'+th+'">品牌</th><th style="text-align:left;'+th+'">品类</th><th style="text-align:left;'+th+'">型号</th><th style="text-align:left;'+th+'">版本</th><th style="text-align:left;'+th+'">EAN</th><th style="text-align:left;'+th+'">描述</th><th style="text-align:right;'+th+'">库存数量</th><th style="text-align:right;'+th+'">每箱数量</th></tr></thead><tbody id="cpInvTbody"></tbody></table></div>';
+    var data=[];
+    var draw=function(){
+      var q=(document.getElementById('cpInvSearch').value||'').trim().toLowerCase();
+      var list=data.filter(function(d){ return !q || (String(d.model)+' '+(d.ean||'')+' '+(d.description||'')).toLowerCase().indexOf(q)>=0; });
+      document.getElementById('cpInvTbody').innerHTML=list.map(function(d){ return '<tr style="border-top:1px solid var(--border-soft);"><td style="padding:8px 12px;">'+esc(d.brand)+'</td><td style="padding:8px 12px;">'+esc(d.category)+'</td><td style="padding:8px 12px;font-weight:600;">'+esc(d.model)+'</td><td style="padding:8px 12px;">'+esc(d.version)+'</td><td style="padding:8px 12px;font-family:\'IBM Plex Mono\',monospace;">'+esc(d.ean)+'</td><td style="padding:8px 12px;max-width:320px;">'+esc(d.description)+'</td><td style="padding:8px 12px;text-align:right;font-family:\'IBM Plex Mono\',monospace;font-weight:700;">'+Number(d.qty).toLocaleString('en-US')+'</td><td style="padding:8px 12px;text-align:right;font-family:\'IBM Plex Mono\',monospace;">'+esc(d.qty_per_box)+'</td></tr>'; }).join('')||'<tr><td colspan="8" style="text-align:center;color:var(--text-faint);padding:30px;">暂无库存数据</td></tr>';
+      document.getElementById('cpInvCount').textContent=list.length+' / '+data.length;
+    };
+    document.getElementById('cpInvSearch').addEventListener('input',draw);
+    draw();
+    sb.from('tenda_inventory_portal').select('brand,category,model,version,ean,description,qty,qty_per_box,as_of').order('qty',{ascending:false}).limit(2000).then(function(r){
+      if(r.error){ console.error('cp inventory',r.error); return; }
+      data=r.data||[];
+      if(data.length&&data[0].as_of) document.getElementById('cpInvAsOf').textContent=data[0].as_of;
+      draw();
+    });
+  }catch(e){ console.error('renderCpInventory',e); }
 }
 const CUSTOMER_LIMITED_ACCESS_EMAILS = {
   'm.gorecki@eltrox.pl': ['returns'],
@@ -12790,7 +12838,11 @@ const I18N_DICT = [
 ["最终采购价","Final purchase price","Cena zakupu"],
 ["不含税","excl. VAT","bez VAT"],
 ["报价月份","Quotation month","Miesiąc wyceny"],
-["搜索型号","Search model","Szukaj modelu"]
+["搜索型号","Search model","Szukaj modelu"],
+["库存数量","Stock quantity","Stan magazynowy"],
+["每箱数量","Qty per carton","Ilość w kartonie"],
+["库存更新时间","Stock updated","Aktualizacja stanu"],
+["暂无库存数据","No inventory data","Brak danych"]
 ];
 I18N_DICT.sort((a,b)=>b[0].length-a[0].length);
 

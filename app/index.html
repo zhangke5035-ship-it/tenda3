@@ -1239,7 +1239,7 @@
     <div id="cpViewQuotes" class="cp-view hidden">
     <div class="cp-card">
       <div class="cp-card-head"><h2>报价管理</h2></div>
-      <div style="text-align:center;color:var(--text-faint);padding:40px 20px;">暂无报价</div>
+      <div id="cpQuotesBody"><div style="text-align:center;color:var(--text-faint);padding:40px 20px;">暂无报价</div></div>
     </div>
     </div>
     <div id="cpViewReturns" class="cp-view">
@@ -10385,6 +10385,7 @@ async function showCustomerApp(session, customerCode){
   document.getElementById('customerPortalRoot').classList.remove('hidden');
   const badge = document.getElementById('cpCustomerBadge');
   if (badge) badge.textContent = (typeof CUSTOMERS !== 'undefined' && CUSTOMERS[customerCode] && CUSTOMERS[customerCode].name) || customerCode;
+  renderCpQuotes(customerCode);
   if (typeof applyLanguage === 'function') applyLanguage('pl');
   renderCpExtraFields(customerCode);
   renderCpProductModelOptions(customerCode);
@@ -10395,6 +10396,31 @@ async function showCustomerApp(session, customerCode){
   applyCustomerAccessRestrictions(session);
 }
 
+function renderCpQuotes(code){
+  try{
+    var box=document.getElementById('cpQuotesBody'); if(!box) return;
+    var rows=[];
+    try{ rows=priceList.filter(function(p){ return p.cust===code && String(p.month)==='11' && p.retailPLN; }); }catch(e){}
+    if(!rows.length){ box.innerHTML='<div style="text-align:center;color:var(--text-faint);padding:40px 20px;">暂无报价</div>'; return; }
+    var esc=function(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); };
+    var data=rows.map(function(p){
+      var vat=p.vatRate!=null?p.vatRate:0.23;
+      var profit=(p.brand==='IP-COM')?10:(code==='ELTROX'?11:7);
+      var brand='Tenda'; try{ brand=rowBrand(p)||'Tenda'; }catch(e){}
+      return {brand:brand,model:p.product,ean:p.ean||'',retail:p.retailPLN,price:computeFinalPurchasePrice(p.retailPLN,profit,vat,p.t3)};
+    }).sort(function(a,b){ return String(a.model).localeCompare(String(b.model)); });
+    box.innerHTML='<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap;"><input type="text" id="cpQuotesSearch" placeholder="搜索型号" style="border:1px solid var(--border);border-radius:var(--radius);padding:8px 10px;font-size:13px;width:240px;"><span style="font-size:12.5px;color:var(--text-faint);">报价月份：11 · PLN</span><span id="cpQuotesCount" style="font-size:12.5px;color:var(--text-faint);margin-left:auto;"></span></div>'
+      +'<div style="overflow:auto;border:1px solid var(--border);border-radius:var(--radius);"><table style="width:100%;border-collapse:collapse;font-size:13px;"><thead><tr style="background:var(--surface-alt);color:var(--text-dim);"><th style="text-align:left;padding:9px 12px;">品牌</th><th style="text-align:left;padding:9px 12px;">型号</th><th style="text-align:left;padding:9px 12px;">EAN</th><th style="text-align:right;padding:9px 12px;">含税零售价</th><th style="text-align:right;padding:9px 12px;">最终采购价（不含税）</th></tr></thead><tbody id="cpQuotesTbody"></tbody></table></div>';
+    var draw=function(){
+      var q=(document.getElementById('cpQuotesSearch').value||'').trim().toLowerCase();
+      var list=data.filter(function(d){ return !q || (String(d.model)+' '+d.ean).toLowerCase().indexOf(q)>=0; });
+      document.getElementById('cpQuotesTbody').innerHTML=list.map(function(d){ return '<tr style="border-top:1px solid var(--border-soft);"><td style="padding:8px 12px;">'+esc(d.brand)+'</td><td style="padding:8px 12px;font-weight:600;">'+esc(d.model)+'</td><td style="padding:8px 12px;font-family:\'IBM Plex Mono\',monospace;">'+esc(d.ean)+'</td><td style="padding:8px 12px;text-align:right;font-family:\'IBM Plex Mono\',monospace;">'+Number(d.retail).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})+'</td><td style="padding:8px 12px;text-align:right;font-family:\'IBM Plex Mono\',monospace;font-weight:700;">'+Number(d.price).toFixed(2)+'</td></tr>'; }).join('');
+      document.getElementById('cpQuotesCount').textContent=list.length+' / '+data.length;
+    };
+    document.getElementById('cpQuotesSearch').addEventListener('input',draw);
+    draw();
+  }catch(e){ console.error('renderCpQuotes',e); }
+}
 const CUSTOMER_LIMITED_ACCESS_EMAILS = {
   'm.gorecki@eltrox.pl': ['returns'],
   'aneta.pokos@action.pl': ['returns'],
@@ -13124,7 +13150,12 @@ const I18N_DICT = [
 ["报价管理","Quotation Management","Zarządzanie wycenami"],
 ["暂无报价","No quotations yet","Brak wycen"],
 ["库存管理","Inventory Management","Zarządzanie zapasami"],
-["暂无库存","No inventory yet","Brak stanów magazynowych"]
+["暂无库存","No inventory yet","Brak stanów magazynowych"],
+["含税零售价","Retail price (incl. VAT)","Cena detaliczna brutto"],
+["最终采购价","Final purchase price","Cena zakupu"],
+["不含税","excl. VAT","bez VAT"],
+["报价月份","Quotation month","Miesiąc wyceny"],
+["搜索型号","Search model","Szukaj modelu"]
 ];
 I18N_DICT.sort((a,b)=>b[0].length-a[0].length);
 

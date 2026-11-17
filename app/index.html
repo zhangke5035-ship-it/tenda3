@@ -4980,7 +4980,8 @@ function custTypeClass(code){ const t=(CUSTOMERS[code]||{}).type; return t==='ag
 function custTypeLabel(code){ const t=(CUSTOMERS[code]||{}).type; return t==='agent' ? '代理商' : (t==='prospect' ? '待开发客户' : '直接客户'); }
 
 function visibleRows(){
-  return activeQuarterFilter==='ALL' ? priceList : priceList.filter(r=>(r.quarter||'Q3')===activeQuarterFilter);
+  const _pl = priceList.filter(r => custCountry(r.cust) === '波兰');
+  return activeQuarterFilter === 'ALL' ? _pl : _pl.filter(r => (r.quarter||'Q3') === activeQuarterFilter);
 }
 function uniqueCustomers(){ return [...new Set(visibleRows().map(p=>p.cust))]; }
 function uniqueProducts(){ return [...new Set(visibleRows().map(p=>p.product))]; }

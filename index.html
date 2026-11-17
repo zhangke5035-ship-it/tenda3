@@ -4853,7 +4853,7 @@ let activeCustFilter = [];
 let filterCustPanelOpen = false;
 let activeCountryFilter = [];
 let filterCountryPanelOpen = false;
-let activeQuarterFilter = 'Q4';
+let activeQuarterFilter = 'ALL';
 function getLatestMonthKey(){
   var _rowsQ = priceList.filter(function(r){ return !activeQuarterFilter || activeQuarterFilter==='ALL' || r.quarter===activeQuarterFilter; });
   var months = (_rowsQ.length?_rowsQ:priceList).map(function(r){ return monthKey(r.month); }).filter(Boolean);

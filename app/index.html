@@ -4853,7 +4853,7 @@ let activeCustFilter = [];
 let filterCustPanelOpen = false;
 let activeCountryFilter = [];
 let filterCountryPanelOpen = false;
-let activeQuarterFilter = 'Q3';
+let activeQuarterFilter = 'Q4';
 function getLatestMonthKey(){
   var _rowsQ = priceList.filter(function(r){ return !activeQuarterFilter || activeQuarterFilter==='ALL' || r.quarter===activeQuarterFilter; });
   var months = (_rowsQ.length?_rowsQ:priceList).map(function(r){ return monthKey(r.month); }).filter(Boolean);
@@ -5167,7 +5167,7 @@ function monthLabel(key){
 
 function renderQuarterTabs(){
   const quarters = ['Q4','Q3','Q2','ALL'];
-  const labelMap = {Q4:'Q4（待录入）', Q3:'Q3（当前）', Q2:'Q2（上一季度）', ALL:'全部季度'};
+  const labelMap = {Q4:'Q4（当前）', Q3:'Q3（上一季度）', Q2:'Q2（更早）', ALL:'全部季度'};
   const countFor = q => q==='ALL' ? priceList.length : priceList.filter(r=>(r.quarter||'Q3')===q).length;
   const el = document.getElementById('quarterSelect');
   if (!el) return;
@@ -5183,7 +5183,7 @@ function renderQuarterTabs(){
 }
 
 function renderMonthTabs(){
-  const monthKeys = [...new Set(priceList.map(function(r){ return monthKey(r.month); }).filter(Boolean))].sort();
+  const monthKeys = [...new Set(visibleRows().map(function(r){ return monthKey(r.month); }).filter(Boolean))].sort();
   const el = document.getElementById('filterMonthSelect');
   if (!el) return;
   el.innerHTML = monthKeys.map(m=>{
@@ -12526,7 +12526,10 @@ const I18N_DICT = [
 ["解析失败","Parse failed","Błąd analizy pliku"],
 ["保存失败","Save failed","Zapis nie powiódł się"],
 ["导入预览","Import preview","Podgląd importu"],
-["合计（折合 CNY）","Total (CNY equivalent)","Razem (równowartość CNY)"]
+["合计（折合 CNY）","Total (CNY equivalent)","Razem (równowartość CNY)"],
+["Q4（当前）","Q4 (current)","Q4 (bieżący)"],
+["Q3（上一季度）","Q3 (previous quarter)","Q3 (poprzedni kwartał)"],
+["Q2（更早）","Q2 (earlier)","Q2 (wcześniej)"]
 ];
 I18N_DICT.sort((a,b)=>b[0].length-a[0].length);
 

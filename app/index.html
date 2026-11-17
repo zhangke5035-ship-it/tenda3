@@ -2648,7 +2648,7 @@
 .ti-tab{background:none;border:none;padding:10px 18px;font-size:13px;font-weight:600;color:var(--text-dim);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;}
 .ti-tab.active{color:var(--copper);border-bottom-color:var(--copper);}
 .ti-pane{display:none;} .ti-pane.active{display:block;}
-.ti-kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:16px;}
+.ti-kpis{display:grid;grid-template-columns:repeat(7,1fr);gap:12px;margin-bottom:16px;}
 .ti-grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;}
 .ti-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px;min-width:0;}
 .ti-card h3{margin:0 0 12px 0;font-size:14px;font-weight:600;}
@@ -2791,12 +2791,15 @@
     if(!S.aging.length&&!S.master.length){p.innerHTML='<div class="ti-card"><div class="ti-empty">暂无数据，请到「每周导入」上传库存 Excel</div></div>';return;}
     var T=C.T,L=C.list;
     var inStock=L.filter(function(x){return x.tq>0;}).length;
+    var sTr=0,sPr=0;L.forEach(function(x){sTr+=x.t2||0;sPr+=x.pr||0;});
     var h='<div class="ti-kpis">'
      +'<div class="inv-stat-card"><div class="inv-stat-label">总库存 Total Qty</div><div class="inv-stat-value">'+fN(T.qty)+'</div><div class="inv-stat-delta" style="font-size:12px;color:var(--text-faint);margin-top:6px;">库龄表合计（件）</div></div>'
      +'<div class="inv-stat-card"><div class="inv-stat-label">总金额 Total Amount</div><div class="inv-stat-value">'+fA(T.amt)+'</div><div class="inv-stat-delta" style="font-size:12px;color:var(--text-faint);margin-top:6px;">库龄表合计</div></div>'
      +'<div class="inv-stat-card"><div class="inv-stat-label">超 180 天金额</div><div class="inv-stat-value" style="color:var(--alert);">'+fA(T.old)+'</div><div class="inv-stat-delta" style="font-size:12px;color:var(--text-faint);margin-top:6px;">181 天以上</div></div>'
      +'<div class="inv-stat-card"><div class="inv-stat-label">超 180 天占比</div><div class="inv-stat-value warn">'+(T.amt?fP(T.old/T.amt):'--')+'</div><div class="inv-stat-delta" style="font-size:12px;color:var(--text-faint);margin-top:6px;">占总金额</div></div>'
      +'<div class="inv-stat-card"><div class="inv-stat-label">有库存型号数</div><div class="inv-stat-value">'+inStock+'</div><div class="inv-stat-delta" style="font-size:12px;color:var(--text-faint);margin-top:6px;">型号清单内 '+L.length+' 个</div></div>'
+     +'<div class="inv-stat-card"><div class="inv-stat-label">在途数量 In transit</div><div class="inv-stat-value" style="color:var(--amber);">'+fN(sTr)+'</div><div class="inv-stat-delta" style="font-size:12px;color:var(--text-faint);margin-top:6px;">在途表计划备货合计</div></div>'
+     +'<div class="inv-stat-card"><div class="inv-stat-label">在制数量 In production</div><div class="inv-stat-value" style="color:var(--teal);">'+fN(sPr)+'</div><div class="inv-stat-delta" style="font-size:12px;color:var(--text-faint);margin-top:6px;">工厂在制合计</div></div>'
      +'</div>';
     /* brand */
     var br={};L.forEach(function(x){var b=x.brand||'其他';var o=br[b]||(br[b]={n:0,q:0,a:0,a0:0,a1:0,q2:0,a2:0});if(x.tq>0)o.n++;o.q+=x.tq;o.a+=x.ta;o.a0+=x.a0;o.a1+=x.a1;o.q2+=x.q2;o.a2+=x.a2;});

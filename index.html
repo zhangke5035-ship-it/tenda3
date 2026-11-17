@@ -1144,6 +1144,9 @@
         <div class="navitem" data-cpview="quotes">
           <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="9" y1="13" x2="15" y2="13"></line><line x1="9" y1="17" x2="15" y2="17"></line></svg></span>报价管理
         </div>
+        <div class="navitem" data-cpview="inventory">
+          <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8l-9-5-9 5v8l9 5 9-5z"></path><path d="M3 8l9 5 9-5"></path><path d="M12 13v8"></path></svg></span>库存管理
+        </div>
       </nav>
     </aside>
     <div class="cp-shell-main">
@@ -1225,6 +1228,12 @@
         <thead><tr><th>产品型号</th><th>EAN</th><th>数量</th></tr></thead>
         <tbody id="cpOrderItemsTbody"></tbody>
       </table></div>
+    </div>
+    </div>
+    <div id="cpViewInventory" class="cp-view hidden">
+    <div class="cp-card">
+      <div class="cp-card-head"><h2>库存管理</h2></div>
+      <div style="text-align:center;color:var(--text-faint);padding:40px 20px;">暂无库存</div>
     </div>
     </div>
     <div id="cpViewQuotes" class="cp-view hidden">
@@ -10394,7 +10403,7 @@ const CUSTOMER_LIMITED_ACCESS_EMAILS = {
 const CUSTOMER_DEFAULT_VIEW = {
   'p.piotrowski@eltrox.pl': 'newproducts'
 };
-const CP_VIEW_ID_MAP = { newproducts: 'cpViewNewProducts', orders: 'cpViewOrders', returns: 'cpViewReturns', quotes: 'cpViewQuotes' };
+const CP_VIEW_ID_MAP = { newproducts: 'cpViewNewProducts', orders: 'cpViewOrders', returns: 'cpViewReturns', quotes: 'cpViewQuotes', inventory: 'cpViewInventory' };
 function applyCustomerDefaultView(session){
   const userEmail = ((session && session.user && session.user.email) || '').toLowerCase();
   const defaultView = CUSTOMER_DEFAULT_VIEW[userEmail];
@@ -13113,7 +13122,9 @@ const I18N_DICT = [
 ["Q3（上一季度）","Q3 (previous quarter)","Q3 (poprzedni kwartał)"],
 ["Q2（更早）","Q2 (earlier)","Q2 (wcześniej)"],
 ["报价管理","Quotation Management","Zarządzanie wycenami"],
-["暂无报价","No quotations yet","Brak wycen"]
+["暂无报价","No quotations yet","Brak wycen"],
+["库存管理","Inventory Management","Zarządzanie zapasami"],
+["暂无库存","No inventory yet","Brak stanów magazynowych"]
 ];
 I18N_DICT.sort((a,b)=>b[0].length-a[0].length);
 
@@ -15783,6 +15794,8 @@ function cpInitNav(){
       if(raView) raView.classList.toggle('hidden', view!=='returns');
       const quotesView = document.getElementById('cpViewQuotes');
       if(quotesView) quotesView.classList.toggle('hidden', view!=='quotes');
+      const invView = document.getElementById('cpViewInventory');
+      if(invView) invView.classList.toggle('hidden', view!=='inventory');
       if(detailView) detailView.classList.add('hidden');
     });
   });

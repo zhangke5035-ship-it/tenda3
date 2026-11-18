@@ -10184,7 +10184,7 @@ function renderCpQuotes(code){
     CPQ.code=code;
     var box=document.getElementById('cpQuotesBody'); if(!box) return;
     var rows=[];
-    try{ rows=priceList.filter(function(p){ return p.cust===code && String(p.month)==='11' && p.retailPLN; }); }catch(e){}
+    try{ var cpqMonth = 0; priceList.forEach(function(p){ if(p.cust == code && p.retailPLN){ var mn = Number(p.month)||0; if(mn > cpqMonth) cpqMonth = mn; } }); CPQ.month = cpqMonth; rows = priceList.filter(function(p){ return p.cust == code && Number(p.month) === cpqMonth && p.retailPLN; }); }catch(e){}
     if(!rows.length){ box.innerHTML='<div style="text-align:center;color:var(--text-faint);padding:40px 20px;">'+cpEsc(cpT('noQuote'))+'</div>'; return; }
     if(!document.getElementById('cpqStyle')){
       var st=document.createElement('style'); st.id='cpqStyle';
@@ -10215,7 +10215,7 @@ function renderCpQuotes(code){
       +'<select id="cpqCat" class="cpq-ctl">'+opt(cats,CPQ.cat,cpT('allCat'))+'</select>'
       +'<select id="cpqLife" class="cpq-ctl">'+opt(lifes,CPQ.life,cpT('allLife'))+'</select>'
       +'<label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;user-select:none;"><input type="checkbox" id="cpqStock" style="accent-color:#FF6900;width:15px;height:15px;"'+(CPQ.stock?' checked':'')+'>'+cpEsc(cpT('inStock'))+'</label>'
-      +'<span style="font-size:12.5px;margin-left:6px;padding-left:14px;border-left:1px solid var(--border);color:var(--text-faint);">'+cpEsc(cpT('month'))+': 11 · PLN</span></div>'
+      +'<span style="font-size:12.5px;margin-left:6px;padding-left:14px;border-left:1px solid var(--border);color:var(--text-faint);">'+cpEsc(cpT('month'))+': '+(CPQ.month||'')+' · PLN</span></div>'
       +'<div style="display:flex;align-items:center;gap:14px;"><span id="cpQuotesCount" style="font-size:13px;color:var(--text-faint);"></span>'
       +'<div style="position:relative;"><button type="button" class="cpq-btn" id="cpqExportBtn">'+cpEsc(cpT('exportBtn'))+' ▾</button><div class="cpq-menu" id="cpqMenu" style="display:none;"><button type="button" id="cpqXls">'+cpEsc(cpT('xls'))+'</button><button type="button" id="cpqPdf">'+cpEsc(cpT('pdf'))+'</button></div></div></div></div>'
       +'<div id="cpQuotesPrintRoot"><div style="overflow:auto;border:1px solid var(--border);border-radius:var(--radius);"><table style="width:100%;border-collapse:collapse;font-size:12.5px;"><thead><tr style="background:var(--surface-alt);color:var(--text-dim);">'

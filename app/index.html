@@ -10116,8 +10116,8 @@ var CP_T = {
   copy:['复制地址','Copy address','Kopiuj adres'],
   copied:['已复制','Copied!','Skopiowano!'],
   retAddr:['退货仓库地址','Return Warehouse Address','Adres magazynu zwrotów'],
-  company:['公司','Company','Firma'],
-  phone:['电话','Phone','Telefon'],
+  company:['公司名称','Company Name','Nazwa firmy'],
+  phone:['联系电话','Contact Phone','Telefon kontaktowy'],
   email:['邮箱','Email','E-mail']
 };
 function cpL(){ var l=(typeof currentLang!=='undefined'&&currentLang)||'en'; return l==='zh'?0:(l==='pl'?2:1); }
@@ -10131,7 +10131,7 @@ function cpCopyText(text){
 /* ---------- top announcement bar: structured, copyable, clickable e-mail ---------- */
 function renderCpAnnouncement(){
   var textEl=document.getElementById('cpAnnouncementText'); if(!textEl||!CP_ANN_MSG) return;
-  var msg=CP_ANN_MSG;
+  var msg=CP_ANN_MSG.replace(/[｜│]/g,'|');
   var m=msg.match(/Return Warehouse Address\s*[—–-]\s*[^:|]+:\s*([^|]+)/i);
   var ph=(msg.match(/Contact Phone:\s*([^|]+)/i)||[])[1];
   var em=(msg.match(/Email:\s*([^\s|]+)/i)||[])[1];
@@ -10139,16 +10139,16 @@ function renderCpAnnouncement(){
   if(!m||!em){ textEl.textContent=msg; return; }
   if(!document.getElementById('cpaStyle')){
     var st=document.createElement('style'); st.id='cpaStyle';
-    st.textContent='.cpa-sep{margin:0 10px;opacity:.45}.cpa-copy{position:relative;display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;margin-left:4px;border:none;background:transparent;border-radius:4px;cursor:pointer;color:inherit;vertical-align:middle}.cpa-copy:hover{background:rgba(0,0,0,.07)}.cpa-copy.ok{color:#16A34A}.cpa-tip{position:absolute;bottom:130%;left:50%;transform:translateX(-50%);background:#111827;color:#fff;font-size:10px;padding:2px 7px;border-radius:4px;white-space:nowrap;pointer-events:none}.cpa-mail{color:inherit;font-weight:600;text-decoration:none}.cpa-mail:hover{text-decoration:underline}';
+    st.textContent='.cpa-seg{white-space:nowrap}.cpa-sep{margin:0 10px;opacity:.45}.cpa-copy{position:relative;display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;margin-left:4px;border:none;background:transparent;border-radius:4px;cursor:pointer;color:inherit;vertical-align:middle}.cpa-copy:hover{background:rgba(0,0,0,.07)}.cpa-copy.ok{color:#16A34A}.cpa-tip{position:absolute;bottom:130%;left:50%;transform:translateX(-50%);background:#111827;color:#fff;font-size:10px;padding:2px 7px;border-radius:4px;white-space:nowrap;pointer-events:none}.cpa-mail{color:inherit;font-weight:600;text-decoration:none}.cpa-mail:hover{text-decoration:underline}';
     document.head.appendChild(st);
   }
   var addr=m[1].trim();
   var ICON_COPY='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>';
   var ICON_OK='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
-  var h='<b>'+cpEsc(cpT('retAddr'))+':</b> '+cpEsc(addr)+'<button type="button" class="cpa-copy" id="cpaCopyBtn" title="'+cpEsc(cpT('copy'))+'" aria-label="'+cpEsc(cpT('copy'))+'">'+ICON_COPY+'</button>';
-  if(co) h+='<span class="cpa-sep">|</span><b>'+cpEsc(cpT('company'))+':</b> '+cpEsc(co.trim());
-  if(ph) h+='<span class="cpa-sep">|</span><b>'+cpEsc(cpT('phone'))+':</b> '+cpEsc(ph.trim());
-  h+='<span class="cpa-sep">|</span><b>'+cpEsc(cpT('email'))+':</b> <a class="cpa-mail" href="mailto:'+cpEsc(em)+'">'+cpEsc(em)+'</a>';
+  var h='<span class="cpa-seg"><b>'+cpEsc(cpT('retAddr'))+':</b> '+cpEsc(addr)+'<button type="button" class="cpa-copy" id="cpaCopyBtn" title="'+cpEsc(cpT('copy'))+'" aria-label="'+cpEsc(cpT('copy'))+'">'+ICON_COPY+'</button></span>';
+  if(co) h+='<span class="cpa-sep">|</span><span class="cpa-seg"><b>'+cpEsc(cpT('company'))+':</b> '+cpEsc(co.trim())+'</span>';
+  if(ph) h+='<span class="cpa-sep">|</span><span class="cpa-seg"><b>'+cpEsc(cpT('phone'))+':</b> '+cpEsc(ph.trim())+'</span>';
+  h+='<span class="cpa-sep">|</span><span class="cpa-seg"><b>'+cpEsc(cpT('email'))+':</b> <a class="cpa-mail" href="mailto:'+cpEsc(em)+'">'+cpEsc(em)+'</a></span>';
   textEl.innerHTML=h;
   var btn=document.getElementById('cpaCopyBtn'), timer=null;
   btn.addEventListener('click',function(){
@@ -10203,8 +10203,9 @@ function renderCpQuotes(code){
     }).sort(function(a,b){ return String(a.model).localeCompare(String(b.model)); });
     var uniq=function(k){ var o={},a=[]; data.forEach(function(d){ if(d[k]&&!o[d[k]]){ o[d[k]]=1; a.push(d[k]); } }); return a.sort(); };
     var cats=uniq('cat'), lifes=uniq('life');
+    var hasVer=data.some(function(d){ return !!d.ver; });
     var opt=function(list,cur,all){ return '<option value="">'+cpEsc(all)+'</option>'+list.map(function(x){ return '<option value="'+cpEsc(x)+'"'+(x===cur?' selected':'')+'>'+cpEsc(x)+'</option>'; }).join(''); };
-    var TH='style="text-align:left;padding:9px 12px;"', THR='style="text-align:right;padding:9px 12px;"';
+    var TH='style="text-align:left;padding:9px 12px;white-space:nowrap;"', THR='style="text-align:right;padding:9px 12px;white-space:nowrap;"';
     box.innerHTML='<div class="cpq-noprint" style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px;">'
       +'<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">'
       +'<input type="text" id="cpQuotesSearch" class="cpq-ctl" style="width:230px;" placeholder="'+cpEsc(cpT('search'))+'" value="'+cpEsc(CPQ.search)+'">'
@@ -10215,7 +10216,7 @@ function renderCpQuotes(code){
       +'<div style="display:flex;align-items:center;gap:14px;"><span id="cpQuotesCount" style="font-size:13px;color:var(--text-faint);"></span>'
       +'<div style="position:relative;"><button type="button" class="cpq-btn" id="cpqExportBtn">'+cpEsc(cpT('exportBtn'))+' ▾</button><div class="cpq-menu" id="cpqMenu" style="display:none;"><button type="button" id="cpqXls">'+cpEsc(cpT('xls'))+'</button><button type="button" id="cpqPdf">'+cpEsc(cpT('pdf'))+'</button></div></div></div></div>'
       +'<div id="cpQuotesPrintRoot"><div style="overflow:auto;border:1px solid var(--border);border-radius:var(--radius);"><table style="width:100%;border-collapse:collapse;font-size:13px;"><thead><tr style="background:var(--surface-alt);color:var(--text-dim);">'
-      +'<th '+TH+'>类目</th><th '+TH+'>品牌</th><th '+TH+'>产品型号</th><th '+TH+'>版本号</th><th '+TH+'>产品信息描述</th><th '+TH+'>EAN</th><th '+TH+'>生命周期</th><th '+THR+'>含税零售价</th><th '+THR+'>库存数量</th><th '+THR+'>最终采购价（不含税）</th><th '+TH+'>CN编码</th><th '+TH+'>Split Payment</th>'
+      +'<th '+TH+'>类目</th><th '+TH+'>品牌</th><th '+TH+'>产品型号</th>'+(hasVer?'<th '+TH+'>版本号</th>':'')+'<th '+TH+'>产品信息描述</th><th '+TH+'>EAN</th><th '+TH+'>生命周期</th><th '+THR+'>含税零售价</th><th '+THR+'>库存数量</th><th '+THR+'>最终采购价（不含税）</th><th '+TH+'>CN编码</th><th '+TH+'>Split Payment</th>'
       +'</tr></thead><tbody id="cpQuotesTbody"></tbody></table></div></div><div id="cpqPager" class="cpq-noprint"></div>';
     var MONO='font-family:\'IBM Plex Mono\',monospace;';
     var filtered=[];
@@ -10233,14 +10234,14 @@ function renderCpQuotes(code){
       document.getElementById('cpQuotesTbody').innerHTML=show.length?show.map(function(d){
         var cb=''; try{ cb=categoryClass(d.cat); }catch(e){}
         return '<tr style="border-top:1px solid var(--border-soft);"><td style="padding:8px 12px;white-space:nowrap;">'+(d.cat?'<span class="cat-badge '+cpEsc(cb)+'">'+cpEsc(d.cat)+'</span>':'')+'</td><td style="padding:8px 12px;">'+cpEsc(d.brand)+'</td>'
-          +'<td style="padding:8px 12px;font-weight:600;">'+cpEsc(d.model)+(d.isNew?'<span class="new-badge">NEW</span>':'')+'</td>'
-          +'<td style="padding:8px 12px;">'+cpEsc(d.ver)+'</td><td style="padding:8px 12px;max-width:300px;">'+cpEsc(d.desc)+'</td>'
-          +'<td style="padding:8px 12px;'+MONO+'">'+cpEsc(d.ean)+'</td><td style="padding:8px 12px;">'+cpEsc(d.life)+'</td>'
+          +'<td style="padding:8px 12px;font-weight:600;white-space:nowrap;">'+cpEsc(d.model)+(d.isNew?'<span class="new-badge">NEW</span>':'')+'</td>'
+          +''+(hasVer?'<td style="padding:8px 12px;">'+cpEsc(d.ver)+'</td>':'')+'<td style="padding:8px 12px;min-width:360px;max-width:560px;line-height:1.4;">'+cpEsc(d.desc)+'</td>'
+          +'<td style="padding:8px 12px;'+MONO+'">'+cpEsc(d.ean)+'</td><td style="padding:8px 12px;white-space:nowrap;">'+cpEsc(d.life)+'</td>'
           +'<td style="padding:8px 12px;text-align:right;'+MONO+'">'+Number(d.retail).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})+'</td>'
           +'<td style="padding:8px 12px;text-align:right;'+MONO+(d.stock>0?'color:var(--good);font-weight:700;':'color:var(--text-faint);')+'">'+(d.stock==null?'':Number(d.stock).toLocaleString('en-US'))+'</td>'
           +'<td style="padding:8px 12px;text-align:right;'+MONO+'font-weight:700;">'+Number(d.price).toFixed(2)+'</td>'
           +'<td style="padding:8px 12px;">'+cpEsc(d.cn)+'</td><td style="padding:8px 12px;">'+cpEsc(d.sp)+'</td></tr>';
-      }).join(''):'<tr><td colspan="12" style="text-align:center;color:var(--text-faint);padding:30px;">'+cpEsc(cpT('none'))+'</td></tr>';
+      }).join(''):'<tr><td colspan="'+(hasVer?12:11)+'" style="text-align:center;color:var(--text-faint);padding:30px;">'+cpEsc(cpT('none'))+'</td></tr>';
       document.getElementById('cpQuotesCount').innerHTML='<b style="color:var(--text);">'+filtered.length+'</b> / '+data.length;
       document.getElementById('cpqExportBtn').disabled=!filtered.length;
       /* pager */

@@ -24,6 +24,7 @@
   html,body{margin:0;padding:0;height:100%;}
   body{background:var(--bg);color:var(--text);font-family:'IBM Plex Sans','IBM Plex Sans SC',sans-serif;font-size:14px;-webkit-font-smoothing:antialiased;}
   .mono{font-family:'IBM Plex Mono',monospace;}
+  .new-badge{display:inline-block;margin-left:6px;padding:1px 7px;border-radius:9px;font-size:10px;font-weight:700;background:var(--copper-soft);color:var(--copper);vertical-align:middle;letter-spacing:.3px;}
   .price-page-link{color:var(--copper);text-decoration:none;font-weight:600;}
   .price-page-link:hover{text-decoration:underline;}
   #priceDetailTable.price-hide-category .price-col-category{display:none;}
@@ -5783,7 +5784,7 @@ function renderPriceTable(){
       <td class="num-cell"><input type="checkbox" class="price-row-check" data-id="${p.id}" ${priceSelectedIds.has(p.id)?'checked':''}></td>
       <td class="price-col-category"><span class="cat-badge ${categoryClass(productType(p.product))}">${productType(p.product)}</span></td>
       <td class="price-col-brand">${p.brand||productBrand(p.product)}</td>
-      <td title="${productDescription(p.product)}">${p.product}${p.category?` <span style="color:var(--text-faint);font-size:11px;">(${p.category})</span>`:''}</td>
+      <td title="${productDescription(p.product)}">${p.product}${(window.newOfModel && window.newOfModel(p.product)) ? '<span class="new-badge">新品</span>' : ''}${p.category?` <span style="color:var(--text-faint);font-size:11px;">(${p.category})</span>`:''}</td>
       <td class="price-col-version">${p.version || dash}</td>
       <td class="desc price-col-desc" style="max-width:260px;"><div class="desc-edit" contenteditable="true" data-product="${p.product}" onblur="saveProductDescription(this)" onkeydown="invDescKeydown(event,this)">${productDescription(p.product)}</div></td>
       <td class="num-cell">${(p.ean || eanOf(p.product)) || dash}</td>
@@ -10088,14 +10089,15 @@ function renderCpQuotes(code){
       var profit=(p.brand==='IP-COM')?10:(code==='ELTROX'?11:7);
       var brand='Tenda'; try{ brand=rowBrand(p)||'Tenda'; }catch(e){}
       var gx=function(fn,a){ try{ return fn(a)||''; }catch(e){ return ''; } };
-      return {brand:brand,model:p.product,ver:p.version||'',desc:gx(productDescription,p.product),ean:p.ean||gx(eanOf,p.product),life:gx(lifecycleOf,p.product),retail:p.retailPLN,price:computeFinalPurchasePrice(p.retailPLN,profit,vat,p.t3),cn:p.cnCode||(xm(p.product).cn||''),sp:p.splitPayment||(xm(p.product).sp||'')};
+      var isNew=false; try{ isNew=!!(window.newOfModel&&window.newOfModel(p.product)); }catch(e){}
+      return {isNew:isNew,brand:brand,model:p.product,ver:p.version||'',desc:gx(productDescription,p.product),ean:p.ean||gx(eanOf,p.product),life:gx(lifecycleOf,p.product),retail:p.retailPLN,price:computeFinalPurchasePrice(p.retailPLN,profit,vat,p.t3),cn:p.cnCode||(xm(p.product).cn||''),sp:p.splitPayment||(xm(p.product).sp||'')};
     }).sort(function(a,b){ return String(a.model).localeCompare(String(b.model)); });
     box.innerHTML='<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap;"><input type="text" id="cpQuotesSearch" placeholder="搜索型号" style="border:1px solid var(--border);border-radius:var(--radius);padding:8px 10px;font-size:13px;width:240px;"><span style="font-size:12.5px;color:var(--text-faint);">报价月份：11 · PLN</span><span id="cpQuotesCount" style="font-size:12.5px;color:var(--text-faint);margin-left:auto;"></span></div>'
       +'<div style="overflow:auto;border:1px solid var(--border);border-radius:var(--radius);"><table style="width:100%;border-collapse:collapse;font-size:13px;"><thead><tr style="background:var(--surface-alt);color:var(--text-dim);"><th style="text-align:left;padding:9px 12px;">品牌</th><th style="text-align:left;padding:9px 12px;">产品型号</th><th style="text-align:left;padding:9px 12px;">版本号</th><th style="text-align:left;padding:9px 12px;">产品信息描述</th><th style="text-align:left;padding:9px 12px;">EAN</th><th style="text-align:left;padding:9px 12px;">生命周期</th><th style="text-align:right;padding:9px 12px;">含税零售价</th><th style="text-align:right;padding:9px 12px;">库存数量</th><th style="text-align:right;padding:9px 12px;">最终采购价（不含税）</th><th style="text-align:left;padding:9px 12px;">CN编码</th><th style="text-align:left;padding:9px 12px;">Split Payment</th></tr></thead><tbody id="cpQuotesTbody"></tbody></table></div>';
     var draw=function(){
       var q=(document.getElementById('cpQuotesSearch').value||'').trim().toLowerCase();
       var list=data.filter(function(d){ return !q || (String(d.model)+' '+d.ean+' '+d.desc).toLowerCase().indexOf(q)>=0; });
-      document.getElementById('cpQuotesTbody').innerHTML=list.map(function(d){ return '<tr style="border-top:1px solid var(--border-soft);"><td style="padding:8px 12px;">'+esc(d.brand)+'</td><td style="padding:8px 12px;font-weight:600;">'+esc(d.model)+'</td><td style="padding:8px 12px;">'+esc(d.ver)+'</td><td style="padding:8px 12px;max-width:300px;">'+esc(d.desc)+'</td><td style="padding:8px 12px;font-family:\'IBM Plex Mono\',monospace;">'+esc(d.ean)+'</td><td style="padding:8px 12px;">'+esc(d.life)+'</td><td style="padding:8px 12px;text-align:right;font-family:\'IBM Plex Mono\',monospace;">'+Number(d.retail).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})+'</td><td style="padding:8px 12px;text-align:right;font-family:\'IBM Plex Mono\',monospace;'+(d.stock>0?'color:var(--good);font-weight:700;':'color:var(--text-faint);')+'">'+(d.stock==null?'':Number(d.stock).toLocaleString('en-US'))+'</td><td style="padding:8px 12px;text-align:right;font-family:\'IBM Plex Mono\',monospace;font-weight:700;">'+Number(d.price).toFixed(2)+'</td><td style="padding:8px 12px;">'+esc(d.cn)+'</td><td style="padding:8px 12px;">'+esc(d.sp)+'</td></tr>'; }).join('');
+      document.getElementById('cpQuotesTbody').innerHTML=list.map(function(d){ return '<tr style="border-top:1px solid var(--border-soft);"><td style="padding:8px 12px;">'+esc(d.brand)+'</td><td style="padding:8px 12px;font-weight:600;">'+esc(d.model)+(d.isNew?'<span class="new-badge">NEW</span>':'')+'</td><td style="padding:8px 12px;">'+esc(d.ver)+'</td><td style="padding:8px 12px;max-width:300px;">'+esc(d.desc)+'</td><td style="padding:8px 12px;font-family:\'IBM Plex Mono\',monospace;">'+esc(d.ean)+'</td><td style="padding:8px 12px;">'+esc(d.life)+'</td><td style="padding:8px 12px;text-align:right;font-family:\'IBM Plex Mono\',monospace;">'+Number(d.retail).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})+'</td><td style="padding:8px 12px;text-align:right;font-family:\'IBM Plex Mono\',monospace;'+(d.stock>0?'color:var(--good);font-weight:700;':'color:var(--text-faint);')+'">'+(d.stock==null?'':Number(d.stock).toLocaleString('en-US'))+'</td><td style="padding:8px 12px;text-align:right;font-family:\'IBM Plex Mono\',monospace;font-weight:700;">'+Number(d.price).toFixed(2)+'</td><td style="padding:8px 12px;">'+esc(d.cn)+'</td><td style="padding:8px 12px;">'+esc(d.sp)+'</td></tr>'; }).join('');
       document.getElementById('cpQuotesCount').textContent=list.length+' / '+data.length;
     };
     document.getElementById('cpQuotesSearch').addEventListener('input',draw);
@@ -14537,6 +14539,7 @@ var NEWX=[['Pro-7-Lite / i33',/Pro[ \-]?7[ \-]?Lite|(^|[^A-Za-z0-9])i33(?![0-9])
 function normFam(x){ return String(x||'').replace(/\(.*?\)/g,'').replace(/[^A-Za-z0-9]/g,'').toUpperCase(); }
 var NEWRE=NEWP.slice().sort(function(a,b){return b.length-a.length;}).map(function(n){ return [n,new RegExp('(^|[^A-Za-z0-9])'+n.replace(/ /g,'[ \\-]?')+'(?![0-9]|[ \\-]?Pro)','i')]; });
 function newOf(p){ p=String(p||''); for(var x=0;x<NEWX.length;x++){ if(NEWX[x][1].test(p)) return NEWX[x][0]; } for(var k=0;k<NEWRE.length;k++){ var n=NEWRE[k][0]; var re=/ Pro$/.test(n)?new RegExp('(^|[^A-Za-z0-9])'+n.replace(/ /g,'[ \\-]?')+'(?![A-Za-z0-9])','i'):NEWRE[k][1]; if(re.test(p)) return n; } return null; }
+window.newOfModel = newOf;
 function plNewProd(){
   var anchor=document.getElementById('plLinePanel'); if(!anchor) return;
   var host=document.getElementById('plNewProd');

@@ -10317,7 +10317,7 @@ const CUSTOMER_LIMITED_ACCESS_EMAILS = {
 const CUSTOMER_DEFAULT_VIEW = {
   'p.piotrowski@eltrox.pl': 'newproducts'
 };
-const CP_VIEW_ID_MAP = { newproducts: 'cpViewNewProducts', orders: 'cpViewOrders', returns: 'cpViewReturns', quotes: 'cpViewQuotes' };
+const CP_VIEW_ID_MAP = { newproducts: 'cpViewNewProducts', orders: 'cpViewOrders', returns: 'cpViewReturns', quotes: 'cpViewQuotes', psi: 'cpViewPsi' };
 function applyCustomerDefaultView(session){
   try{ const sv=localStorage.getItem('cp_last_view'); const tb=sv&&document.querySelector('#cpNav .navitem[data-cpview="'+sv+'"]'); if(tb && tb.style.display!=='none' && !tb.hidden){ document.querySelectorAll('#cpNav .navitem').forEach(function(n){ n.classList.remove('active'); }); Object.keys(CP_VIEW_ID_MAP).forEach(function(k){ const el=document.getElementById(CP_VIEW_ID_MAP[k]); if(el) el.classList.add('hidden'); }); const dv=document.getElementById('cpViewOrderDetail'); if(dv) dv.classList.add('hidden'); tb.classList.add('active'); const tv=document.getElementById(CP_VIEW_ID_MAP[sv]); if(tv) tv.classList.remove('hidden'); setTimeout(function(){ try{ tb.click(); }catch(e){} },300); return; } }catch(e){}
   const userEmail = ((session && session.user && session.user.email) || '').toLowerCase();
@@ -13051,7 +13051,55 @@ const I18N_DICT = [
 ["暂无库存数据","No inventory data","Brak danych"],
 ["在途数量","In transit","W drodze"],
 ["预计到货","Est. delivery","Szac. dostawa"],
-["2027年1月","Jan 2027","styczeń 2027"]
+["2027年1月","Jan 2027","styczeń 2027"],
+["库存与补货","Stock & Replenishment","Zapasy i uzupełnienia"],
+["界面演示:以下为模拟数据,暂未接入真实上传与保存","UI demo: mock data only, upload and saving are not connected yet","Wersja demo: dane przykładowe, wgrywanie i zapis nie są jeszcze aktywne"],
+["客户库存与智能补货分析 (PSI)","Customer Stock & Smart Replenishment (PSI)","Analiza zapasów i uzupełnień klienta (PSI)"],
+["当前数据周期:2026年第46周","Data period: 2026 week 46","Okres danych: tydzień 46/2026"],
+["建议每周一更新库存与上周销量以获得精准补货建议","Update stock and last week sales every Monday for accurate suggestions","Aktualizuj stany i sprzedaż co poniedziałek, aby uzyskać trafne propozycje"],
+["上传记录","Upload history","Historia wgrań"],
+["下载预填模板","Download prefilled template","Pobierz szablon"],
+["上传本周库存/销售报告","Upload weekly stock/sales report","Wgraj raport zapasów/sprzedaży"],
+["客户现有总库存 (件)","Total customer stock (pcs)","Łączny zapas klienta (szt.)"],
+["覆盖","Covers","Obejmuje"],
+["个活跃合作型号","active models","aktywnych modeli"],
+["上周终端总销量 (件)","Last week sell-out (pcs)","Sprzedaż w zeszłym tygodniu (szt.)"],
+["较前一周环比稳步增长","Steady growth vs. previous week","Stały wzrost wobec poprzedniego tygodnia"],
+["急需/预警补货 SKU","SKUs to restock (urgent/warning)","SKU do uzupełnienia (pilne/ostrzeżenie)"],
+["其中","of which","w tym"],
+["款可售不足 1.5 wk","SKUs with under 1.5 wk of supply","SKU z zapasem poniżej 1,5 tyg."],
+["淘汰期积压预警","End-of-life overstock alert","Alert nadmiaru wycofywanych"],
+["系统已自动屏蔽其补货建议,建议加速清仓","Restock suggestions are suppressed; clear stock faster","Propozycje uzupełnień wyłączone; zalecana wyprzedaż"],
+["全部","All","Wszystkie"],
+["需补货","To restock","Do uzupełnienia"],
+["淘汰期积压","EOL overstock","Nadmiar wycofywanych"],
+["目标安全库存周期:","Target safety stock:","Docelowy zapas bezpieczeństwa:"],
+["客户现有库存","Customer stock","Zapas klienta"],
+["近4周均销","4-week avg. sales","Śr. sprzedaż 4 tyg."],
+["预计可售周数","Weeks of supply","Zapas w tygodniach"],
+["Tenda在途 / 可售","Tenda in transit / available","Tenda w drodze / dostępne"],
+["采购价(不含税)","Purchase price (excl. VAT)","Cena zakupu (bez VAT)"],
+["建议补货量(可微调)","Suggested qty (editable)","Sugerowana ilość (edytowalna)"],
+["系统建议:","Suggested:","Sugestia:"],
+["(极缺)","(critical)","(krytyczny)"],
+["(偏低)","(low)","(niski)"],
+["(积压)","(overstock)","(nadmiar)"],
+["(健康)","(healthy)","(zdrowy)"],
+["已选补货型号:","Models selected:","Wybrane modele:"],
+["补货总数量:","Total quantity:","Łączna ilość:"],
+["预估采购总额(不含税):","Est. total (excl. VAT):","Szac. wartość (bez VAT):"],
+["一键生成补货订单","Create replenishment order","Utwórz zamówienie uzupełniające"],
+["上传每周库存与销售报告 (PSI)","Upload weekly stock & sales report (PSI)","Wgraj tygodniowy raport zapasów i sprzedaży (PSI)"],
+["点击或拖拽 Excel 文件至此区域上传","Click or drop an Excel file here","Kliknij lub upuść plik Excel tutaj"],
+["支持 .xlsx / .xls / .csv 格式,系统将自动校验 EAN 编码与库存数值逻辑","Supports .xlsx / .xls / .csv; EAN codes and stock values are validated automatically","Obsługa .xlsx / .xls / .csv; kody EAN i stany są weryfikowane automatycznie"],
+["仅需填写「当前期末库存」与「本周实际销量」,其余字段系统自动匹配。","Only fill in closing stock and weekly sales; other fields are matched automatically.","Wystarczy podać stan końcowy i sprzedaż tygodniową; reszta uzupełni się automatycznie."],
+["周报上传历史记录","Weekly upload history","Historia tygodniowych wgrań"],
+["已生效","Active","Aktywny"],
+["已归档","Archived","Zarchiwizowany"],
+["未收录","Not listed","Nieujęty"],
+["成熟期","Mature","Dojrzały"],
+["淘汰期","End of life","Wycofywany"],
+["成长期","Growth","Wzrost"]
 ];
 I18N_DICT.sort((a,b)=>b[0].length-a[0].length);
 
@@ -14443,6 +14491,158 @@ if(document.readyState === 'loading'){
 </script>
 </body>
 </html>
+<script>
+/* PSI_UI_DEMO */
+(function(){
+  var DATA=[
+    {id:1,cat:'Mesh路由系统',model:'#MW5G(3-pack)',desc:'Tenda nova MW5G(3-pack) AC1500 Dual-band Whole Home Mesh Wi-Fi 5 System (3 Pack)',ean:'6932849430387',life:'未收录',stock:45,sales:[18,20,22,20],tenda:0,transit:30,price:183.97},
+    {id:2,cat:'4G/5G路由器',model:'4G03 Prov2.0',desc:'N300 4G LTE Wi-Fi Router',ean:'6932849430738',life:'未收录',stock:120,sales:[25,28,30,29],tenda:500,transit:0,price:107.99},
+    {id:3,cat:'4G/5G路由器',model:'4G05',desc:'Tenda 4G05 N300 WiFi 4 4G LTE Router',ean:'6932849430752',life:'成熟期',stock:15,sales:[32,35,30,35],tenda:800,transit:0,price:107.99},
+    {id:4,cat:'4G/5G路由器',model:'4G06',desc:'Tenda 4G06 N300 WiFi 4 4G VoLTE Router',ean:'6932849430417',life:'淘汰期',stock:340,sales:[12,10,8,6],tenda:1533,transit:0,price:135.13},
+    {id:5,cat:'4G/5G路由器',model:'5G06',desc:'TENDA 5G06 AX3000 Wi-Fi6 5G NR Router',ean:'6932849460094',life:'成长期',stock:18,sales:[14,16,18,20],tenda:179,transit:150,price:650.68},
+    {id:6,cat:'无线路由器',model:'A18 Pro',desc:'TENDA A18 Pro AC1200 Dual-Band Wi-Fi Range Extender',ean:'6932849424546',life:'成熟期',stock:85,sales:[40,42,38,44],tenda:600,transit:50,price:64.58},
+    {id:7,cat:'无线路由器',model:'A33V2.0',isNew:1,desc:'Tenda A33 AX3000 WiFi 6 Dual Band Wall Plugged Range Extender',ean:'6932849426625',life:'成长期',stock:10,sales:[22,25,28,30],tenda:190,transit:0,price:124.27}
+  ];
+  var HIST=[
+    ['2026年第46周 (11.09 - 11.15)','2026-11-16 10:24','7','633','已生效'],
+    ['2026年第45周 (11.02 - 11.08)','2026-11-09 14:15','7','689','已归档'],
+    ['2026年第44周 (10.26 - 11.01)','2026-11-02 09:40','6','712','已归档']
+  ];
+  var ST={q:'',f:'all',weeks:4,custom:{},modal:0,drawer:0};
+  function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+  function fmt(n){return Number(n).toLocaleString('en-US');}
+  function money(n){return Number(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});}
+  function enrich(){
+    return DATA.map(function(d){
+      var avg=Math.round(d.sales.reduce(function(a,b){return a+b;},0)/d.sales.length);
+      var last=d.sales[d.sales.length-1];
+      var wos=avg>0?+(d.stock/avg).toFixed(1):99;
+      var raw=ST.weeks*avg-d.stock-d.transit; if(d.life==='淘汰期') raw=0;
+      var sug=Math.max(0,Math.ceil(raw/5)*5);
+      var status='healthy';
+      if(d.life==='淘汰期'&&d.stock>avg*4) status='obsolete';
+      else if(wos<1.5&&d.life!=='淘汰期') status='urgent';
+      else if(wos<3&&d.life!=='淘汰期') status='warning';
+      var fin=ST.custom[d.id]!==undefined?ST.custom[d.id]:sug;
+      return Object.assign({},d,{avg:avg,last:last,wos:wos,sug:sug,fin:fin,status:status});
+    });
+  }
+  function injectCss(){
+    if(document.getElementById('psiStyle'))return;
+    var s=document.createElement('style');s.id='psiStyle';
+    s.textContent='.psi-card{border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;cursor:pointer;background:var(--surface);}.psi-card.on{border-color:#FF6900;background:#FFF7F0;}.psi-card .t{font-size:12px;color:var(--text-dim);}.psi-card .n{font-size:24px;font-weight:700;margin-top:4px;}.psi-card .s{font-size:11.5px;color:var(--text-faint);margin-top:3px;}'
+    +'.psi-btn{height:34px;padding:0 14px;border:1px solid var(--border);background:var(--surface);border-radius:var(--radius);font-size:12.5px;cursor:pointer;color:var(--text);}.psi-btn.pri{background:#FF6900;border-color:#FF6900;color:#fff;font-weight:600;}.psi-btn:disabled{opacity:.45;cursor:not-allowed;}'
+    +'.psi-tab{padding:5px 12px;font-size:12.5px;border-radius:5px;cursor:pointer;color:var(--text-dim);}.psi-tab.on{background:#fff;color:var(--text);font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.08);}'
+    +'.psi-pill{display:inline-block;padding:2px 9px;border-radius:999px;font-size:11.5px;font-weight:600;white-space:nowrap;}'
+    +'.psi-step{width:24px;height:24px;border:1px solid var(--border);background:#fff;border-radius:4px;cursor:pointer;}.psi-qty{width:58px;height:26px;text-align:center;border:1px solid var(--border);border-radius:4px;font-weight:700;}'
+    +'.psi-mask{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;display:flex;align-items:center;justify-content:center;}.psi-box{background:#fff;border-radius:10px;padding:22px;width:480px;max-width:92vw;}.psi-drawer{position:fixed;top:0;right:0;bottom:0;width:400px;max-width:92vw;background:#fff;z-index:201;padding:22px;box-shadow:-4px 0 18px rgba(0,0,0,.15);overflow:auto;}'
+    +'.psi-toast{position:fixed;top:70px;right:24px;background:#1F2937;color:#fff;padding:10px 16px;border-radius:6px;font-size:13px;z-index:300;}';
+    document.head.appendChild(s);
+  }
+  function toast(m){var e=document.createElement('div');e.className='psi-toast';e.textContent=m;document.body.appendChild(e);setTimeout(function(){e.remove();},3200);}
+  var SL={urgent:['(极缺)','#FDE8E8','#C81E1E'],warning:['(偏低)','#FFEDD5','#C2410C'],obsolete:['(积压)','#FEF3C7','#92400E'],healthy:['(健康)','#DCFCE7','#166534']};
+  function render(){
+    var root=document.getElementById('cpViewPsi'); if(!root) return;
+    injectCss();
+    var rows=enrich();
+    var tot=rows.reduce(function(a,r){return a+r.stock;},0), last=rows.reduce(function(a,r){return a+r.last;},0);
+    var urg=rows.filter(function(r){return r.status==='urgent';}).length, war=rows.filter(function(r){return r.status==='warning';}).length, obs=rows.filter(function(r){return r.status==='obsolete';}).length;
+    var units=rows.reduce(function(a,r){return a+r.fin;},0), amt=rows.reduce(function(a,r){return a+r.fin*r.price;},0), sel=rows.filter(function(r){return r.fin>0;}).length;
+    var q=ST.q.trim().toLowerCase();
+    var list=rows.filter(function(r){
+      if(q&&(r.model+' '+r.ean+' '+r.desc).toLowerCase().indexOf(q)<0) return false;
+      if(ST.f==='urgent') return r.status==='urgent'||r.status==='warning';
+      if(ST.f==='obsolete') return r.status==='obsolete';
+      return true;
+    });
+    var h='';
+    h+='<div style="background:#FFF7E6;border:1px solid #FFD591;color:#AD6800;border-radius:6px;padding:8px 12px;font-size:12.5px;margin-bottom:12px;">界面演示:以下为模拟数据,暂未接入真实上传与保存</div>';
+    h+='<div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;"><div><div style="font-size:16px;font-weight:700;">客户库存与智能补货分析 (PSI)</div><div style="font-size:12px;color:var(--text-faint);margin-top:4px;">当前数据周期:2026年第46周 · 建议每周一更新库存与上周销量以获得精准补货建议</div></div>';
+    h+='<div style="display:flex;gap:8px;flex-wrap:wrap;"><button class="psi-btn" data-a="hist">上传记录</button><button class="psi-btn" data-a="tpl">下载预填模板</button><button class="psi-btn pri" data-a="up">上传本周库存/销售报告</button></div></div>';
+    h+='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;margin-bottom:16px;">';
+    h+='<div class="psi-card'+(ST.f==='all'?' on':'')+'" data-f="all"><div class="t">客户现有总库存 (件)</div><div class="n">'+fmt(tot)+'</div><div class="s">覆盖 '+rows.length+' 个活跃合作型号</div></div>';
+    h+='<div class="psi-card" style="cursor:default;"><div class="t">上周终端总销量 (件)</div><div class="n">'+fmt(last)+'</div><div class="s">较前一周环比稳步增长</div></div>';
+    h+='<div class="psi-card'+(ST.f==='urgent'?' on':'')+'" data-f="urgent"><div class="t" style="color:#C81E1E;">急需/预警补货 SKU</div><div class="n" style="color:#C81E1E;">'+(urg+war)+'</div><div class="s">其中 '+urg+' 款可售不足 1.5 wk</div></div>';
+    h+='<div class="psi-card'+(ST.f==='obsolete'?' on':'')+'" data-f="obsolete"><div class="t">淘汰期积压预警</div><div class="n" style="color:#B45309;">'+obs+'</div><div class="s">系统已自动屏蔽其补货建议,建议加速清仓</div></div></div>';
+    h+='<div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;"><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">';
+    h+='<input id="psiSearch" class="cpq-ctl" style="width:220px;" placeholder="'+esc(typeof cpT==='function'?cpT('search'):'')+'" value="'+esc(ST.q)+'">';
+    h+='<div style="display:flex;background:#F1F3F5;padding:3px;border-radius:7px;"><span class="psi-tab'+(ST.f==='all'?' on':'')+'" data-f="all">全部 ('+rows.length+')</span><span class="psi-tab'+(ST.f==='urgent'?' on':'')+'" data-f="urgent">需补货 ('+(urg+war)+')</span><span class="psi-tab'+(ST.f==='obsolete'?' on':'')+'" data-f="obsolete">淘汰期积压 ('+obs+')</span></div></div>';
+    h+='<div style="font-size:12.5px;display:flex;align-items:center;gap:8px;">目标安全库存周期:<select id="psiWeeks" class="cpq-ctl" style="height:32px;">';
+    [[3,'3 wk'],[4,'4 wk'],[6,'6 wk'],[8,'8 wk']].forEach(function(o){h+='<option value="'+o[0]+'"'+(ST.weeks===o[0]?' selected':'')+'>'+o[1]+'</option>';});
+    h+='</select></div></div>';
+    var TH='style="text-align:left;padding:9px 10px;white-space:normal;vertical-align:bottom;line-height:1.3;"', THR='style="text-align:right;padding:9px 10px;white-space:normal;vertical-align:bottom;line-height:1.3;"';
+    h+='<div style="overflow:auto;border:1px solid var(--border);border-radius:var(--radius);"><table style="width:100%;border-collapse:collapse;font-size:12.5px;"><thead><tr style="background:var(--surface-alt);color:var(--text-dim);font-size:11.5px;">';
+    h+='<th '+TH+'>类目</th><th '+TH+'>产品型号</th><th '+TH+'>EAN</th><th '+TH+'>生命周期</th><th '+THR+'>客户现有库存</th><th '+THR+'>近4周均销</th><th '+THR+'>预计可售周数</th><th '+THR+'>Tenda在途 / 可售</th><th '+THR+'>采购价(不含税)</th><th style="text-align:center;padding:9px 10px;background:#FFF7F0;">建议补货量(可微调)</th></tr></thead><tbody>';
+    if(!list.length) h+='<tr><td colspan="10" style="text-align:center;padding:30px;color:var(--text-faint);">暂无数据</td></tr>';
+    list.forEach(function(r){
+      var s=SL[r.status];
+      h+='<tr style="border-top:1px solid var(--border);">';
+      h+='<td style="padding:8px 10px;white-space:nowrap;"><span style="background:#FFF1E6;color:#C2410C;border-radius:999px;padding:2px 9px;font-size:11.5px;">'+esc(r.cat)+'</span></td>';
+      h+='<td style="padding:8px 10px;"><b>'+esc(r.model)+'</b>'+(r.isNew?' <span class="new-badge">NEW</span>':'')+'<div style="font-size:11px;color:var(--text-faint);max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="'+esc(r.desc)+'">'+esc(r.desc)+'</div></td>';
+      h+='<td style="padding:8px 10px;font-family:\'IBM Plex Mono\',monospace;">'+esc(r.ean)+'</td><td style="padding:8px 10px;white-space:nowrap;">'+esc(r.life)+'</td>';
+      h+='<td style="padding:8px 10px;text-align:right;font-weight:700;">'+fmt(r.stock)+'</td>';
+      h+='<td style="padding:8px 10px;text-align:right;"><b>'+r.avg+'</b> / wk<div style="font-size:11px;color:var(--text-faint);">'+r.last+'</div></td>';
+      h+='<td style="padding:8px 10px;text-align:right;"><span class="psi-pill" style="background:'+s[1]+';color:'+s[2]+';">'+r.wos+' wk '+s[0]+'</span></td>';
+      h+='<td style="padding:8px 10px;text-align:right;"><div style="color:#2563EB;font-weight:600;">'+fmt(r.transit)+'</div><div style="font-size:11px;color:var(--text-faint);">'+fmt(r.tenda)+'</div></td>';
+      h+='<td style="padding:8px 10px;text-align:right;font-weight:700;">'+money(r.price)+'</td>';
+      h+='<td style="padding:8px 10px;text-align:center;background:#FFFBF7;white-space:nowrap;"><button class="psi-step" data-d="-5" data-id="'+r.id+'">-</button> <input class="psi-qty" type="number" min="0" data-id="'+r.id+'" value="'+r.fin+'"> <button class="psi-step" data-d="5" data-id="'+r.id+'">+</button>'+((r.sug>0&&r.fin!==r.sug)?'<div style="font-size:10.5px;color:var(--text-faint);margin-top:3px;">系统建议: '+r.sug+'</div>':'')+'</td></tr>';
+    });
+    h+='</tbody></table></div>';
+    h+='<div style="position:sticky;bottom:0;margin-top:14px;background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:12px 16px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;box-shadow:0 -2px 10px rgba(0,0,0,.05);">';
+    h+='<div style="display:flex;gap:22px;flex-wrap:wrap;font-size:12.5px;"><span>已选补货型号:<b>'+sel+'</b></span><span>补货总数量:<b>'+fmt(units)+'</b></span><span>预估采购总额(不含税):<b style="color:#C81E1E;font-size:15px;">'+money(amt)+' PLN</b></span></div>';
+    h+='<button class="psi-btn pri" data-a="order"'+(units===0?' disabled':'')+'>一键生成补货订单</button></div>';
+    if(ST.modal) h+='<div class="psi-mask" data-a="closem"><div class="psi-box"><div style="display:flex;justify-content:space-between;font-weight:700;margin-bottom:12px;"><span>上传每周库存与销售报告 (PSI)</span><span style="cursor:pointer;" data-a="closem">✕</span></div><div style="border:2px dashed #D1D5DB;border-radius:8px;padding:30px;text-align:center;cursor:pointer;" data-a="fake"><div style="font-weight:600;">点击或拖拽 Excel 文件至此区域上传</div><div style="font-size:12px;color:var(--text-faint);margin-top:6px;">支持 .xlsx / .xls / .csv 格式,系统将自动校验 EAN 编码与库存数值逻辑</div></div><div style="font-size:11.5px;color:var(--text-faint);margin-top:12px;">仅需填写「当前期末库存」与「本周实际销量」,其余字段系统自动匹配。</div></div></div>';
+    if(ST.drawer){ h+='<div class="psi-mask" data-a="closed" style="justify-content:flex-end;"></div><div class="psi-drawer"><div style="display:flex;justify-content:space-between;font-weight:700;margin-bottom:14px;"><span>周报上传历史记录</span><span style="cursor:pointer;" data-a="closed">✕</span></div>';
+      HIST.forEach(function(x){h+='<div style="border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:10px;font-size:12.5px;"><div style="display:flex;justify-content:space-between;font-weight:700;"><span>'+x[0]+'</span><span style="color:#166534;">'+x[4]+'</span></div><div style="color:var(--text-faint);margin-top:4px;">'+x[1]+'</div><div style="color:var(--text-faint);">'+x[2]+' · '+x[3]+'</div></div>';});
+      h+='</div>'; }
+    var st=root.scrollTop; var focusSearch=document.activeElement&&document.activeElement.id==='psiSearch';
+    root.innerHTML=h;
+    if(focusSearch){var i=document.getElementById('psiSearch');i.focus();i.setSelectionRange(i.value.length,i.value.length);}
+  }
+  function bind(){
+    var root=document.getElementById('cpViewPsi'); if(!root||root.__b) return; root.__b=1;
+    root.addEventListener('click',function(e){
+      var el=e.target.closest('[data-a],[data-f],.psi-step'); if(!el) return;
+      if(el.classList.contains('psi-step')){var id=+el.dataset.id;var r=enrich().filter(function(x){return x.id===id;})[0];ST.custom[id]=Math.max(0,r.fin+Number(el.dataset.d));render();return;}
+      if(el.dataset.f){ST.f=(ST.f===el.dataset.f&&el.classList.contains('psi-card'))?'all':el.dataset.f;render();return;}
+      var a=el.dataset.a;
+      if(a==='closem'&&e.target!==el&&!e.target.dataset.a) return;
+      if(a==='up'){ST.modal=1;render();}
+      else if(a==='closem'){ST.modal=0;render();}
+      else if(a==='hist'){ST.drawer=1;render();}
+      else if(a==='closed'){ST.drawer=0;render();}
+      else if(a==='tpl'){toast('演示:预填模板下载暂未开放');}
+      else if(a==='fake'){ST.modal=0;render();toast('演示:上传功能暂未开放');}
+      else if(a==='order'){toast('演示:补货订单暂未生成');}
+    });
+    root.addEventListener('input',function(e){
+      if(e.target.id==='psiSearch'){ST.q=e.target.value;render();}
+      else if(e.target.classList.contains('psi-qty')){ST.custom[+e.target.dataset.id]=Math.max(0,parseInt(e.target.value)||0);}
+    });
+    root.addEventListener('change',function(e){
+      if(e.target.id==='psiWeeks'){ST.weeks=+e.target.value;ST.custom={};render();}
+      else if(e.target.classList.contains('psi-qty')){render();}
+    });
+  }
+  function init(){
+    var nav=document.getElementById('cpNav'); var quotes=document.getElementById('cpViewQuotes');
+    if(!nav||!quotes||document.getElementById('cpViewPsi')) return;
+    var v=document.createElement('div'); v.id='cpViewPsi'; v.className='cp-view hidden'; quotes.parentNode.insertBefore(v,quotes.nextSibling);
+    var orders=nav.querySelector('.navitem[data-cpview="orders"]');
+    var n=document.createElement('div'); n.className='navitem'; n.dataset.cpview='psi';
+    n.innerHTML='<span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg></span>库存与补货';
+    if(orders&&orders.nextSibling) nav.insertBefore(n,orders.nextSibling); else nav.appendChild(n);
+    n.addEventListener('click',function(){
+      nav.querySelectorAll('.navitem').forEach(function(b){b.classList.remove('active');}); n.classList.add('active');
+      document.querySelectorAll('.cp-view').forEach(function(x){x.classList.add('hidden');}); v.classList.remove('hidden');
+      try{localStorage.setItem('cp_last_view','psi');}catch(e){}
+      bind(); render();
+    });
+    nav.querySelectorAll('.navitem').forEach(function(b){ if(b!==n) b.addEventListener('click',function(){ v.classList.add('hidden'); }); });
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init); else init();
+})();
+</script>
 <script>
 document.getElementById('logoutBtn').addEventListener('click', async function(){
   try{

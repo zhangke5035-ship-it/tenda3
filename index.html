@@ -10078,12 +10078,17 @@ function renderCpQuotes(code){
     try{ rows=priceList.filter(function(p){ return p.cust===code && String(p.month)==='11' && p.retailPLN; }); }catch(e){}
     if(!rows.length){ box.innerHTML='<div style="text-align:center;color:var(--text-faint);padding:40px 20px;">暂无报价</div>'; return; }
     var esc=function(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); };
+    var kq=function(s){ return String(s||'').trim().replace(/\s+/g,'').replace(/（/g,'(').replace(/）/g,')').toLowerCase(); };
+    var sv=function(k){ return k.replace(/v\d+(?:\.\d+)?(?=\(|$)/,''); };
+    var ex={};
+    try{ priceList.forEach(function(q){ if(q.cnCode||q.splitPayment){ var k=kq(q.product); if(!ex[k]) ex[k]={cn:q.cnCode||'',sp:q.splitPayment||''}; var k2=sv(k); if(!ex[k2]) ex[k2]={cn:q.cnCode||'',sp:q.splitPayment||''}; } }); }catch(e){}
+    var xm=function(n){ var k=kq(n); return ex[k]||ex[sv(k)]||{}; };
     var data=rows.map(function(p){
       var vat=p.vatRate!=null?p.vatRate:0.23;
       var profit=(p.brand==='IP-COM')?10:(code==='ELTROX'?11:7);
       var brand='Tenda'; try{ brand=rowBrand(p)||'Tenda'; }catch(e){}
       var gx=function(fn,a){ try{ return fn(a)||''; }catch(e){ return ''; } };
-      return {brand:brand,model:p.product,ver:p.version||'',desc:gx(productDescription,p.product),ean:p.ean||gx(eanOf,p.product),life:gx(lifecycleOf,p.product),retail:p.retailPLN,price:computeFinalPurchasePrice(p.retailPLN,profit,vat,p.t3),cn:p.cnCode||'',sp:p.splitPayment||''};
+      return {brand:brand,model:p.product,ver:p.version||'',desc:gx(productDescription,p.product),ean:p.ean||gx(eanOf,p.product),life:gx(lifecycleOf,p.product),retail:p.retailPLN,price:computeFinalPurchasePrice(p.retailPLN,profit,vat,p.t3),cn:p.cnCode||(xm(p.product).cn||''),sp:p.splitPayment||(xm(p.product).sp||'')};
     }).sort(function(a,b){ return String(a.model).localeCompare(String(b.model)); });
     box.innerHTML='<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap;"><input type="text" id="cpQuotesSearch" placeholder="搜索型号" style="border:1px solid var(--border);border-radius:var(--radius);padding:8px 10px;font-size:13px;width:240px;"><span style="font-size:12.5px;color:var(--text-faint);">报价月份：11 · PLN</span><span id="cpQuotesCount" style="font-size:12.5px;color:var(--text-faint);margin-left:auto;"></span></div>'
       +'<div style="overflow:auto;border:1px solid var(--border);border-radius:var(--radius);"><table style="width:100%;border-collapse:collapse;font-size:13px;"><thead><tr style="background:var(--surface-alt);color:var(--text-dim);"><th style="text-align:left;padding:9px 12px;">品牌</th><th style="text-align:left;padding:9px 12px;">产品型号</th><th style="text-align:left;padding:9px 12px;">版本号</th><th style="text-align:left;padding:9px 12px;">产品信息描述</th><th style="text-align:left;padding:9px 12px;">EAN</th><th style="text-align:left;padding:9px 12px;">生命周期</th><th style="text-align:right;padding:9px 12px;">含税零售价</th><th style="text-align:right;padding:9px 12px;">库存数量</th><th style="text-align:right;padding:9px 12px;">最终采购价（不含税）</th><th style="text-align:left;padding:9px 12px;">CN编码</th><th style="text-align:left;padding:9px 12px;">Split Payment</th></tr></thead><tbody id="cpQuotesTbody"></tbody></table></div>';

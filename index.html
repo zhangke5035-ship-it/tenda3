@@ -5145,6 +5145,12 @@ function eanOf(product){ return EAN_MAP[product] || EAN_MAP_LC[(product||'').toL
 
 /* ============ 产品简短描述（按 tendacn.com/pl 产品线归类，非逐款独立文案） ============ */
 const DESCRIPTION_RULES = [
+  [/^hg24\b/i, 'Tenda HG24 BE3600 Wi-Fi 7 + 4*GE XPON ONT'],
+  [/^hg22v\b/i, 'Tenda HG22V AX3000 Wi-Fi 6 + 4*GE + 1*POTS + 1*USB2.0 XPON ONT'],
+  [/^hg22\b/i, 'Tenda HG22 AX3000 Wi-Fi 6 + 4*GE + XPON ONT'],
+  [/^hg15c\b/i, 'Tenda HG15C AX1500 Wi-Fi 6 xPON ONT'],
+  [/^hg1\b/i, 'Tenda HG1 v3.1 Single Port XPON ONT'],
+  [/^hg\d/i, 'Tenda xPON ONT Wi-Fi Router'],
   [/^nova\b|^mw\d|^mx\d|^me\d\s*pro|^ee\d\s*pro|^ee3s|^me3s/i, 'Mesh全屋路由系统：多节点自动组网、无缝漫游，消除信号盲区，适合大户型全屋Wi-Fi覆盖。'],
   [/^u\d|^w311mi/i, 'USB无线网卡：即插即用，为台式机/笔记本升级Wi-Fi 6无线连接能力。'],
   [/^o[1346890]\b|^os\d|^o1-5g/i, '室外定向CPE：支持点对点/点对多点远距离无线桥接，适用于监控回传、农场园区等场景，最远可达数公里。'],

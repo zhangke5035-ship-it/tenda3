@@ -10181,7 +10181,7 @@ function cpqBuildPages(cur,total){
   return out;
 }
 function cpqCsv(rows){
-  var cols=[['Category','catEn'],['Brand','brand'],['Product Model','model'],['Version','ver'],['Product Description','desc'],['EAN','ean'],['Lifecycle','life'],['Retail Price (incl. VAT, PLN)','retail'],['Stock Quantity','stock'],['In Transit','transit'],['In Transit ETA','etaEn'],['Final Purchase Price (excl. VAT, PLN)','price'],['CN Code','cn'],['Split Payment','sp']];
+  var cols=[['Category','catEn'],['Brand','brand'],['Product Model','model'],['Version','ver'],['Product Description','desc'],['EAN','ean'],['Lifecycle','life'],['Stock Quantity','stock'],['In Transit','transit'],['In Transit ETA','etaEn'],['Retail Price (incl. VAT, PLN)','retail'],['Final Purchase Price (excl. VAT, PLN)','price'],['CN Code','cn'],['Split Payment','sp']];
   var cell=function(v){ var s=v==null?'':String(v); return /[",\n\r]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s; };
   var lines=[cols.map(function(c){return cell(c[0]);}).join(',')];
   rows.forEach(function(r){ lines.push(cols.map(function(c){ var v=r[c[1]]; if(c[1]==='price') v=Number(v).toFixed(2); if(c[1]==='ean') v=v?'="'+v+'"':''; return cell(v); }).join(',')); });
@@ -10229,7 +10229,7 @@ function renderCpQuotes(code){
       +'<div style="display:flex;align-items:center;gap:14px;"><span id="cpQuotesCount" style="font-size:13px;color:var(--text-faint);"></span>'
       +'<div style="position:relative;"><button type="button" class="cpq-btn" id="cpqExportBtn">'+cpEsc(cpT('exportBtn'))+' ▾</button><div class="cpq-menu" id="cpqMenu" style="display:none;"><button type="button" id="cpqXls">'+cpEsc(cpT('xls'))+'</button><button type="button" id="cpqPdf">'+cpEsc(cpT('pdf'))+'</button></div></div></div></div>'
       +'<div id="cpQuotesPrintRoot"><div style="overflow:auto;border:1px solid var(--border);border-radius:var(--radius);"><table style="width:100%;border-collapse:collapse;font-size:12.5px;"><thead><tr style="background:var(--surface-alt);color:var(--text-dim);">'
-      +'<th '+TH+'>类目</th><th '+TH+'>品牌</th><th '+TH+'>产品型号</th>'+(hasVer?'<th '+TH+'>版本号</th>':'')+'<th '+TH+'>产品信息描述</th><th '+TH+'>EAN</th><th '+TH+'>生命周期</th><th '+THR+'>含税零售价</th><th '+THR+'>库存数量</th><th '+THR+'>在途数量</th><th '+THR+'>最终采购价（不含税）</th><th '+TH+'>CN编码</th><th '+TH+'>Split Payment</th>'
+      +'<th '+TH+'>类目</th><th '+TH+'>品牌</th><th '+TH+'>产品型号</th>'+(hasVer?'<th '+TH+'>版本号</th>':'')+'<th '+TH+'>产品信息描述</th><th '+TH+'>EAN</th><th '+TH+'>生命周期</th><th '+THR+'>库存数量</th><th '+THR+'>在途数量</th><th '+THR+'>含税零售价</th><th '+THR+'>最终采购价（不含税）</th><th '+TH+'>CN编码</th><th '+TH+'>Split Payment</th>'
       +'</tr></thead><tbody id="cpQuotesTbody"></tbody></table></div></div><div id="cpqPager" class="cpq-noprint"></div>';
     var MONO='font-family:\'IBM Plex Mono\',monospace;';
     var filtered=[];
@@ -10250,9 +10250,9 @@ function renderCpQuotes(code){
           +'<td style="padding:8px 8px;font-weight:600;white-space:nowrap;">'+cpEsc(d.model)+(d.isNew?'<span class="new-badge">NEW</span>':'')+'</td>'
           +''+(hasVer?'<td style="padding:8px 8px;">'+cpEsc(d.ver)+'</td>':'')+'<td style="padding:8px 8px;min-width:180px;max-width:280px;line-height:1.4;">'+cpEsc(d.desc)+'</td>'
           +'<td style="padding:8px 8px;'+MONO+'">'+cpEsc(d.ean)+'</td><td style="padding:8px 8px;white-space:nowrap;">'+cpEsc(d.life)+'</td>'
-          +'<td style="padding:8px 8px;text-align:right;'+MONO+'">'+Number(d.retail).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})+'</td>'
           +'<td style="padding:8px 8px;text-align:right;'+MONO+(d.stock>0?'color:var(--good);font-weight:700;':'color:var(--text-faint);')+'">'+(d.stock==null?'':Number(d.stock).toLocaleString('en-US'))+'</td>'
           +'<td style="padding:8px 8px;text-align:right;'+MONO+(d.transit>0?'color:#B45309;font-weight:700;':'color:var(--text-faint);')+'">'+(d.transit>0?'<span class="cpq-tw">'+Number(d.transit).toLocaleString('en-US')+'<span class="cpq-tip">预计到货: 2027年1月</span></span>':'0')+'</td>'
+          +'<td style="padding:8px 8px;text-align:right;'+MONO+'">'+Number(d.retail).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})+'</td>'
           +'<td style="padding:8px 8px;text-align:right;'+MONO+'font-weight:700;">'+Number(d.price).toFixed(2)+'</td>'
           +'<td style="padding:8px 8px;white-space:nowrap;">'+cpEsc(d.cn)+'</td><td style="padding:8px 8px;white-space:nowrap;">'+cpEsc(d.sp)+'</td></tr>';
       }).join(''):'<tr><td colspan="'+(hasVer?13:12)+'" style="text-align:center;color:var(--text-faint);padding:30px;">'+cpEsc(cpT('none'))+'</td></tr>';

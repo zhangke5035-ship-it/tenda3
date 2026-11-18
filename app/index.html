@@ -11289,6 +11289,14 @@ function exportPriceWorkbookXLSX(mode, filename){
     tier1:'一级报价', tier2:'二级报价', tier3:'三级报价', profitPct:'代理商利润点位 (%)', final:'最终采购价',
     cnCode:'CN编码', splitPayment:'Split Payment', pkg:'包装尺寸', page:'产品页面'
   };
+  /* export in the language currently selected in the UI */
+  const _xl = (typeof currentLang !== 'undefined' && currentLang) ? currentLang : 'zh';
+  const _HEAD = {
+    en: {category:'Category',brand:'Brand',product:'Product Model',version:'Version',desc:'Product Description',ean:'EAN',lifecycle:'Lifecycle',cust:'Customer',country:'Country',currency:'Currency',retail:'Retail Price (incl. VAT)',vat:'VAT Rate',net:'Net Price (excl. VAT)',prevNet:'Prev. Month Net Price (ref.)',qoqAbs:'MoM Change (PLN)',qoqPct:'MoM Change (%)',tier1:'Tier 1 Price',tier2:'Tier 2 Price',tier3:'Tier 3 Price',profitPct:'Agent Margin (%)',final:'Final Purchase Price',cnCode:'CN Code',splitPayment:'Split Payment',pkg:'Package Size',page:'Product Page'},
+    pl: {category:'Kategoria',brand:'Marka',product:'Model produktu',version:'Wersja',desc:'Opis produktu',ean:'EAN',lifecycle:'Cykl życia',cust:'Klient',country:'Kraj',currency:'Waluta',retail:'Cena detaliczna (z VAT)',vat:'Stawka VAT',net:'Cena netto (bez VAT)',prevNet:'Cena netto w poprzednim miesiącu (ref.)',qoqAbs:'Zmiana m/m (PLN)',qoqPct:'Zmiana m/m (%)',tier1:'Cena poziom 1',tier2:'Cena poziom 2',tier3:'Cena poziom 3',profitPct:'Marża agenta (%)',final:'Ostateczna cena zakupu',cnCode:'Kod CN',splitPayment:'Split Payment',pkg:'Wymiary opakowania',page:'Strona produktu'}
+  };
+  if (_HEAD[_xl]) Object.assign(headerMap, _HEAD[_xl]);
+
   const colIdx = {};
   colKeys.forEach(function(k,i){ colIdx[k] = i; });
   const colLetter = function(k){ return XLSX.utils.encode_col(colIdx[k]); };
@@ -11329,6 +11337,18 @@ function exportPriceWorkbookXLSX(mode, filename){
     if (includeProfit) rec.profitPct = profitPct;
     return rec;
   });
+
+  if (_xl !== 'zh') {
+    const _CAT = {'Mesh路由系统':['Mesh Systems','Systemy Mesh'],'USB无线网卡':['USB Wi-Fi Adapters','Karty USB Wi-Fi'],'室外CPE':['Outdoor CPE','CPE zewnętrzne'],'4G/5G路由器':['4G/5G Routers','Routery 4G/5G'],'交换机':['Switches','Switche'],'NVR录像机':['NVR Recorders','Rejestratory NVR'],'智能摄像机':['IP Cameras','Kamery IP'],'企业AP/天线':['Enterprise AP/Antenna','AP/Antena biznesowa'],'网络配件':['Network Accessories','Akcesoria sieciowe'],'无线路由器':['Wireless Routers','Routery bezprzewodowe']};
+    const _LIFE = {'成长期':['Growth','Wzrost'],'成熟期':['Mature','Dojrzały'],'衰退期':['Declining','Spadek'],'淘汰期':['End of life','Wycofywany'],'未收录':['Not listed','Nieuwzględnione']};
+    const _CTRY = {'波兰':['Poland','Polska'],'捷克':['Czech Republic','Czechy'],'乌克兰':['Ukraine','Ukraina']};
+    const ix = _xl === 'en' ? 0 : 1;
+    records.forEach(function(rec){
+      if (_CAT[rec.category]) rec.category = _CAT[rec.category][ix];
+      if (_LIFE[rec.lifecycle]) rec.lifecycle = _LIFE[rec.lifecycle][ix];
+      if (_CTRY[rec.country]) rec.country = _CTRY[rec.country][ix];
+    });
+  }
 
   const aoa = [colKeys.map(function(k){ return headerMap[k]; })];
   records.forEach(function(rec){ aoa.push(colKeys.map(function(k){ return (rec[k]===null||rec[k]===undefined) ? '' : rec[k]; })); });

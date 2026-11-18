@@ -2942,7 +2942,7 @@
   function pushRemote(){
     if(!ADMIN||typeof sb==='undefined')return Promise.resolve();
     var C=compute();var asof=S.meta.stockAsOf||'';
-    var rows=C.list.filter(function(x){return x.avail>0&&String(x.brand).trim().toLowerCase()==='tenda';}).map(function(x){return {brand:x.brand,category:x.cat,model:x.model,version:x.ver,ean:x.ean,description:x.desc,qty:x.avail,qty_per_box:String(x.box==null?'':x.box),as_of:asof};});
+    var rows=C.list.filter(function(x){return (x.avail>0||x.t2>0)&&String(x.brand).trim().toLowerCase()==='tenda';}).map(function(x){return {brand:x.brand,category:x.cat,model:x.model,version:x.ver,ean:x.ean,description:x.desc,qty:x.avail,in_transit:x.t2||0,qty_per_box:String(x.box==null?'':x.box),as_of:asof};});
     return sb.from('tenda_inventory_snapshot').upsert({id:1,payload:S,as_of:asof,updated_at:new Date().toISOString(),updated_by:EMAIL})
       .then(function(r){if(r.error)throw r.error;return sb.from('tenda_inventory_portal').delete().gt('id',0);})
       .then(function(r){if(r.error)throw r.error;var p=Promise.resolve();for(var i=0;i<rows.length;i+=200){(function(ch){p=p.then(function(){return sb.from('tenda_inventory_portal').insert(ch).then(function(r2){if(r2.error)throw r2.error;});});})(rows.slice(i,i+200));}return p;})
@@ -10180,7 +10180,7 @@ function cpqBuildPages(cur,total){
   return out;
 }
 function cpqCsv(rows){
-  var cols=[['Category','catEn'],['Brand','brand'],['Product Model','model'],['Version','ver'],['Product Description','desc'],['EAN','ean'],['Lifecycle','life'],['Retail Price (incl. VAT, PLN)','retail'],['Stock Quantity','stock'],['Final Purchase Price (excl. VAT, PLN)','price'],['CN Code','cn'],['Split Payment','sp']];
+  var cols=[['Category','catEn'],['Brand','brand'],['Product Model','model'],['Version','ver'],['Product Description','desc'],['EAN','ean'],['Lifecycle','life'],['Retail Price (incl. VAT, PLN)','retail'],['Stock Quantity','stock'],['In Transit','transit'],['Final Purchase Price (excl. VAT, PLN)','price'],['CN Code','cn'],['Split Payment','sp']];
   var cell=function(v){ var s=v==null?'':String(v); return /[",\n\r]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s; };
   var lines=[cols.map(function(c){return cell(c[0]);}).join(',')];
   rows.forEach(function(r){ lines.push(cols.map(function(c){ var v=r[c[1]]; if(c[1]==='price') v=Number(v).toFixed(2); if(c[1]==='ean') v=v?'="'+v+'"':''; return cell(v); }).join(',')); });
@@ -10211,7 +10211,7 @@ function renderCpQuotes(code){
       var brand='Tenda'; try{ brand=rowBrand(p)||'Tenda'; }catch(e){}
       var gx=function(fn,a){ try{ return fn(a)||''; }catch(e){ return ''; } };
       var isNew=false; try{ isNew=!!(window.newOfModel&&window.newOfModel(p.product)); }catch(e){}
-      return {isNew:isNew,brand:brand,model:p.product,ver:p.version||'',desc:gx(productDescription,p.product),ean:p.ean||gx(eanOf,p.product),life:gx(lifecycleOf,p.product),cat:gx(productType,p.product),catEn:(CP_CAT_EN[gx(productType,p.product)]||gx(productType,p.product)),retail:p.retailPLN,price:computeFinalPurchasePrice(p.retailPLN,profit,vat,p.t3),cn:p.cnCode||(xm(p.product).cn||''),sp:p.splitPayment||(xm(p.product).sp||''),stock:null};
+      return {isNew:isNew,brand:brand,model:p.product,ver:p.version||'',desc:gx(productDescription,p.product),ean:p.ean||gx(eanOf,p.product),life:gx(lifecycleOf,p.product),cat:gx(productType,p.product),catEn:(CP_CAT_EN[gx(productType,p.product)]||gx(productType,p.product)),retail:p.retailPLN,price:computeFinalPurchasePrice(p.retailPLN,profit,vat,p.t3),cn:p.cnCode||(xm(p.product).cn||''),sp:p.splitPayment||(xm(p.product).sp||''),stock:null,transit:0};
     }).sort(function(a,b){ return String(a.model).localeCompare(String(b.model)); });
     var uniq=function(k){ var o={},a=[]; data.forEach(function(d){ if(d[k]&&!o[d[k]]){ o[d[k]]=1; a.push(d[k]); } }); return a.sort(); };
     var cats=uniq('cat'), lifes=uniq('life');
@@ -10228,7 +10228,7 @@ function renderCpQuotes(code){
       +'<div style="display:flex;align-items:center;gap:14px;"><span id="cpQuotesCount" style="font-size:13px;color:var(--text-faint);"></span>'
       +'<div style="position:relative;"><button type="button" class="cpq-btn" id="cpqExportBtn">'+cpEsc(cpT('exportBtn'))+' ▾</button><div class="cpq-menu" id="cpqMenu" style="display:none;"><button type="button" id="cpqXls">'+cpEsc(cpT('xls'))+'</button><button type="button" id="cpqPdf">'+cpEsc(cpT('pdf'))+'</button></div></div></div></div>'
       +'<div id="cpQuotesPrintRoot"><div style="overflow:auto;border:1px solid var(--border);border-radius:var(--radius);"><table style="width:100%;border-collapse:collapse;font-size:13px;"><thead><tr style="background:var(--surface-alt);color:var(--text-dim);">'
-      +'<th '+TH+'>类目</th><th '+TH+'>品牌</th><th '+TH+'>产品型号</th>'+(hasVer?'<th '+TH+'>版本号</th>':'')+'<th '+TH+'>产品信息描述</th><th '+TH+'>EAN</th><th '+TH+'>生命周期</th><th '+THR+'>含税零售价</th><th '+THR+'>库存数量</th><th '+THR+'>最终采购价（不含税）</th><th '+TH+'>CN编码</th><th '+TH+'>Split Payment</th>'
+      +'<th '+TH+'>类目</th><th '+TH+'>品牌</th><th '+TH+'>产品型号</th>'+(hasVer?'<th '+TH+'>版本号</th>':'')+'<th '+TH+'>产品信息描述</th><th '+TH+'>EAN</th><th '+TH+'>生命周期</th><th '+THR+'>含税零售价</th><th '+THR+'>库存数量</th><th '+THR+'>在途数量</th><th '+THR+'>最终采购价（不含税）</th><th '+TH+'>CN编码</th><th '+TH+'>Split Payment</th>'
       +'</tr></thead><tbody id="cpQuotesTbody"></tbody></table></div></div><div id="cpqPager" class="cpq-noprint"></div>';
     var MONO='font-family:\'IBM Plex Mono\',monospace;';
     var filtered=[];
@@ -10251,6 +10251,7 @@ function renderCpQuotes(code){
           +'<td style="padding:8px 12px;'+MONO+'">'+cpEsc(d.ean)+'</td><td style="padding:8px 12px;white-space:nowrap;">'+cpEsc(d.life)+'</td>'
           +'<td style="padding:8px 12px;text-align:right;'+MONO+'">'+Number(d.retail).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})+'</td>'
           +'<td style="padding:8px 12px;text-align:right;'+MONO+(d.stock>0?'color:var(--good);font-weight:700;':'color:var(--text-faint);')+'">'+(d.stock==null?'':Number(d.stock).toLocaleString('en-US'))+'</td>'
+          +'<td style="padding:8px 12px;text-align:right;'+MONO+(d.transit>0?'color:#B45309;font-weight:700;':'color:var(--text-faint);')+'">'+(d.transit>0?Number(d.transit).toLocaleString('en-US'):'0')+'</td>'
           +'<td style="padding:8px 12px;text-align:right;'+MONO+'font-weight:700;">'+Number(d.price).toFixed(2)+'</td>'
           +'<td style="padding:8px 12px;">'+cpEsc(d.cn)+'</td><td style="padding:8px 12px;">'+cpEsc(d.sp)+'</td></tr>';
       }).join(''):'<tr><td colspan="'+(hasVer?12:11)+'" style="text-align:center;color:var(--text-faint);padding:30px;">'+cpEsc(cpT('none'))+'</td></tr>';
@@ -10293,14 +10294,14 @@ function renderCpQuotes(code){
       document.querySelectorAll('#langSwitcher .lang-btn').forEach(function(b){ b.addEventListener('click',function(){ setTimeout(function(){ try{ renderCpQuotes(CPQ.code); renderCpAnnouncement(); }catch(e){} },0); }); });
     }
     /* stock quantities (cached) */
-    var applyStock=function(map){ data.forEach(function(d){ var k=kq(d.model); var qn=map[k]; if(qn==null) qn=map[sv(k)]; if(qn == null && d.ean) qn = map['e:'+String(d.ean).trim()]; d.stock=(qn==null)?0:qn; }); draw(); };
+    var applyStock=function(map){ data.forEach(function(d){ var k=kq(d.model); var qn=map[k]; if(qn==null) qn=map[sv(k)]; if(qn == null && d.ean) qn = map['e:'+String(d.ean).trim()]; var tn=map['t:'+k]; if(tn==null) tn=map['t:'+sv(k)]; if(tn==null && d.ean) tn=map['t:e:'+String(d.ean).trim()]; d.transit=tn||0; d.stock=(qn==null)?0:qn; }); draw(); };
     draw();
     if(CPQ.stockMap){ applyStock(CPQ.stockMap); }
     else{
       try{
-        sb.from('tenda_inventory_portal').select('model,qty,ean').limit(2000).then(function(r){
+        sb.from('tenda_inventory_portal').select('model,qty,ean,in_transit').limit(2000).then(function(r){
           if(r.error||!r.data) return;
-          var m={}; r.data.forEach(function(x){ var k=kq(x.model); m[k]=(m[k]||0)+Number(x.qty||0); if(x.ean){ var ek='e:'+String(x.ean).trim(); m[ek]=(m[ek]||0)+Number(x.qty||0); } });
+          var m={}; r.data.forEach(function(x){ var k=kq(x.model); m[k]=(m[k]||0)+Number(x.qty||0); var tr=Number(x.in_transit||0); m['t:'+k]=(m['t:'+k]||0)+tr; if(x.ean){ var tk='t:e:'+String(x.ean).trim(); m[tk]=(m[tk]||0)+tr; } if(x.ean){ var ek='e:'+String(x.ean).trim(); m[ek]=(m[ek]||0)+Number(x.qty||0); } });
           CPQ.stockMap=m; applyStock(m);
         });
       }catch(e){}
@@ -13045,7 +13046,8 @@ const I18N_DICT = [
 ["库存数量","Stock quantity","Stan magazynowy"],
 ["每箱数量","Qty per carton","Ilość w kartonie"],
 ["库存更新时间","Stock updated","Aktualizacja stanu"],
-["暂无库存数据","No inventory data","Brak danych"]
+["暂无库存数据","No inventory data","Brak danych"],
+["在途数量","In transit","W drodze"]
 ];
 I18N_DICT.sort((a,b)=>b[0].length-a[0].length);
 

@@ -10061,7 +10061,7 @@ async function loadCpAnnouncement(){
   try{
     const { data, error } = await sb.from('announcements').select('message').eq('is_active', true).order('created_at', { ascending: false }).limit(1);
     if (error || !data || !data.length){ bar.classList.remove('show'); return; }
-    textEl.textContent = data[0].message;
+    CP_ANN_MSG = data[0].message; renderCpAnnouncement();
     bar.classList.add('show');
     if (typeof translateTextNodes === 'function') translateTextNodes(bar);
   }catch(err){ console.error('loadCpAnnouncement', err); bar.classList.remove('show'); }
@@ -10094,13 +10094,99 @@ async function showCustomerApp(session, customerCode){
   applyCustomerAccessRestrictions(session);
 }
 
+var CPQ = {code:null, search:'', cat:'', life:'', stock:false, page:1, size:20, stockMap:null, printing:false, bound:false};
+var CP_ANN_MSG = '';
+var CP_T = {
+  search:['搜索型号或 EAN','Search model or EAN','Szukaj modelu lub EAN'],
+  allCat:['全部分类','All Categories','Wszystkie kategorie'],
+  allLife:['全部生命周期','All Lifecycle','Wszystkie cykle życia'],
+  inStock:['仅看有货','In Stock Only','Tylko dostępne'],
+  month:['报价月份','Quotation month','Miesiąc wyceny'],
+  exportBtn:['导出报价单','Export Quotation','Eksportuj wycenę'],
+  xls:['导出为 Excel (.csv)','Export as Excel (.csv)','Eksport do Excel (.csv)'],
+  pdf:['导出为 PDF','Export as PDF','Eksport do PDF'],
+  showing:['显示','Showing','Wyświetlanie'],
+  of:['共','of','z'],
+  items:['项','items','pozycji'],
+  perPage:['条/页','/ page','/ str.'],
+  goTo:['跳至','Go to','Idź do'],
+  none:['没有符合条件的产品','No products match your filters.','Brak produktów spełniających kryteria.'],
+  noQuote:['暂无报价','No quotations yet','Brak wycen'],
+  copy:['复制地址','Copy address','Kopiuj adres'],
+  copied:['已复制','Copied!','Skopiowano!'],
+  retAddr:['退货仓库地址','Return Warehouse Address','Adres magazynu zwrotów'],
+  company:['公司','Company','Firma'],
+  phone:['电话','Phone','Telefon'],
+  email:['邮箱','Email','E-mail']
+};
+function cpL(){ var l=(typeof currentLang!=='undefined'&&currentLang)||'en'; return l==='zh'?0:(l==='pl'?2:1); }
+function cpT(k){ return CP_T[k][cpL()]; }
+function cpEsc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+function cpCopyText(text){
+  try{ if(navigator.clipboard&&navigator.clipboard.writeText) return navigator.clipboard.writeText(text); }catch(e){}
+  return new Promise(function(res){ var ta=document.createElement('textarea'); ta.value=text; ta.style.cssText='position:fixed;opacity:0'; document.body.appendChild(ta); ta.select(); try{ document.execCommand('copy'); }catch(e){} document.body.removeChild(ta); res(); });
+}
+
+/* ---------- top announcement bar: structured, copyable, clickable e-mail ---------- */
+function renderCpAnnouncement(){
+  var textEl=document.getElementById('cpAnnouncementText'); if(!textEl||!CP_ANN_MSG) return;
+  var msg=CP_ANN_MSG;
+  var m=msg.match(/Return Warehouse Address\s*[—–-]\s*[^:|]+:\s*([^|]+)/i);
+  var ph=(msg.match(/Contact Phone:\s*([^|]+)/i)||[])[1];
+  var em=(msg.match(/Email:\s*([^\s|]+)/i)||[])[1];
+  var co=(msg.match(/Company Name:\s*([^|]+)/i)||[])[1];
+  if(!m||!em){ textEl.textContent=msg; return; }
+  if(!document.getElementById('cpaStyle')){
+    var st=document.createElement('style'); st.id='cpaStyle';
+    st.textContent='.cpa-sep{margin:0 10px;opacity:.45}.cpa-copy{position:relative;display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;margin-left:4px;border:none;background:transparent;border-radius:4px;cursor:pointer;color:inherit;vertical-align:middle}.cpa-copy:hover{background:rgba(0,0,0,.07)}.cpa-copy.ok{color:#16A34A}.cpa-tip{position:absolute;bottom:130%;left:50%;transform:translateX(-50%);background:#111827;color:#fff;font-size:10px;padding:2px 7px;border-radius:4px;white-space:nowrap;pointer-events:none}.cpa-mail{color:inherit;font-weight:600;text-decoration:none}.cpa-mail:hover{text-decoration:underline}';
+    document.head.appendChild(st);
+  }
+  var addr=m[1].trim();
+  var ICON_COPY='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>';
+  var ICON_OK='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+  var h='<b>'+cpEsc(cpT('retAddr'))+':</b> '+cpEsc(addr)+'<button type="button" class="cpa-copy" id="cpaCopyBtn" title="'+cpEsc(cpT('copy'))+'" aria-label="'+cpEsc(cpT('copy'))+'">'+ICON_COPY+'</button>';
+  if(co) h+='<span class="cpa-sep">|</span><b>'+cpEsc(cpT('company'))+':</b> '+cpEsc(co.trim());
+  if(ph) h+='<span class="cpa-sep">|</span><b>'+cpEsc(cpT('phone'))+':</b> '+cpEsc(ph.trim());
+  h+='<span class="cpa-sep">|</span><b>'+cpEsc(cpT('email'))+':</b> <a class="cpa-mail" href="mailto:'+cpEsc(em)+'">'+cpEsc(em)+'</a>';
+  textEl.innerHTML=h;
+  var btn=document.getElementById('cpaCopyBtn'), timer=null;
+  btn.addEventListener('click',function(){
+    cpCopyText(addr).then(function(){
+      btn.classList.add('ok'); btn.innerHTML=ICON_OK+'<span class="cpa-tip">'+cpEsc(cpT('copied'))+'</span>';
+      clearTimeout(timer); timer=setTimeout(function(){ btn.classList.remove('ok'); btn.innerHTML=ICON_COPY; },2000);
+    });
+  });
+}
+
+/* ---------- quotation table: filters, export, pagination ---------- */
+function cpqBuildPages(cur,total){
+  if(total<=7){ var a=[]; for(var i=1;i<=total;i++) a.push(i); return a; }
+  var set={}; [1,total,cur,cur-1,cur+1].forEach(function(p){ if(p>=1&&p<=total) set[p]=1; });
+  var s=Object.keys(set).map(Number).sort(function(a,b){return a-b;}), out=[];
+  s.forEach(function(p,i){ if(i>0&&p-s[i-1]>1) out.push('…'); out.push(p); });
+  return out;
+}
+function cpqCsv(rows){
+  var cols=[['Brand','brand'],['Product Model','model'],['Version','ver'],['Product Description','desc'],['EAN','ean'],['Lifecycle','life'],['Retail Price (incl. VAT, PLN)','retail'],['Stock Quantity','stock'],['Final Purchase Price (excl. VAT, PLN)','price'],['CN Code','cn'],['Split Payment','sp']];
+  var cell=function(v){ var s=v==null?'':String(v); return /[",\n\r]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s; };
+  var lines=[cols.map(function(c){return cell(c[0]);}).join(',')];
+  rows.forEach(function(r){ lines.push(cols.map(function(c){ var v=r[c[1]]; if(c[1]==='price') v=Number(v).toFixed(2); if(c[1]==='ean') v=v?'="'+v+'"':''; return cell(v); }).join(',')); });
+  var blob=new Blob(['﻿'+lines.join('\r\n')],{type:'text/csv;charset=utf-8;'});
+  var url=URL.createObjectURL(blob), a=document.createElement('a');
+  a.href=url; a.download='Tenda_Quotation_11_PLN.csv'; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+}
 function renderCpQuotes(code){
   try{
+    CPQ.code=code;
     var box=document.getElementById('cpQuotesBody'); if(!box) return;
     var rows=[];
     try{ rows=priceList.filter(function(p){ return p.cust===code && String(p.month)==='11' && p.retailPLN; }); }catch(e){}
-    if(!rows.length){ box.innerHTML='<div style="text-align:center;color:var(--text-faint);padding:40px 20px;">暂无报价</div>'; return; }
-    var esc=function(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); };
+    if(!rows.length){ box.innerHTML='<div style="text-align:center;color:var(--text-faint);padding:40px 20px;">'+cpEsc(cpT('noQuote'))+'</div>'; return; }
+    if(!document.getElementById('cpqStyle')){
+      var st=document.createElement('style'); st.id='cpqStyle';
+      st.textContent='.cpq-ctl{height:36px;border:1px solid var(--border);border-radius:var(--radius);padding:0 10px;font-size:13px;background:var(--surface);color:var(--text);font-family:inherit}.cpq-ctl:focus{outline:2px solid #FF6900;outline-offset:-1px}.cpq-btn{height:36px;padding:0 16px;border:none;border-radius:var(--radius);background:#FF6900;color:#fff;font-size:13px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px}.cpq-btn:hover{filter:brightness(.95)}.cpq-btn:disabled{opacity:.5;cursor:default}.cpq-menu{position:absolute;right:0;top:40px;min-width:220px;background:#fff;border:1px solid var(--border);border-radius:6px;box-shadow:0 8px 24px rgba(0,0,0,.12);z-index:30;padding:4px 0}.cpq-menu button{display:block;width:100%;text-align:left;padding:9px 14px;border:none;background:none;font-size:13px;cursor:pointer;color:var(--text)}.cpq-menu button:hover{background:var(--surface-alt)}.cpq-pg{min-width:32px;height:32px;padding:0 8px;border:1px solid var(--border);background:#fff;border-radius:4px;font-size:13px;cursor:pointer;color:var(--text)}.cpq-pg:hover{background:var(--surface-alt)}.cpq-pg:disabled{opacity:.4;cursor:default}.cpq-pg.on{background:#FF6900;border-color:#FF6900;color:#fff}@media print{body *{visibility:hidden}#cpQuotesPrintRoot,#cpQuotesPrintRoot *{visibility:visible}#cpQuotesPrintRoot{position:absolute;left:0;top:0;width:100%}.cpq-noprint{display:none!important}}';
+      document.head.appendChild(st);
+    }
     var kq=function(s){ return String(s||'').trim().replace(/\s+/g,'').replace(/（/g,'(').replace(/）/g,')').toLowerCase(); };
     var sv=function(k){ return k.replace(/v\d+(?:\.\d+)?(?=\(|$)/,''); };
     var ex={};
@@ -10112,27 +10198,98 @@ function renderCpQuotes(code){
       var brand='Tenda'; try{ brand=rowBrand(p)||'Tenda'; }catch(e){}
       var gx=function(fn,a){ try{ return fn(a)||''; }catch(e){ return ''; } };
       var isNew=false; try{ isNew=!!(window.newOfModel&&window.newOfModel(p.product)); }catch(e){}
-      return {isNew:isNew,brand:brand,model:p.product,ver:p.version||'',desc:gx(productDescription,p.product),ean:p.ean||gx(eanOf,p.product),life:gx(lifecycleOf,p.product),retail:p.retailPLN,price:computeFinalPurchasePrice(p.retailPLN,profit,vat,p.t3),cn:p.cnCode||(xm(p.product).cn||''),sp:p.splitPayment||(xm(p.product).sp||'')};
+      return {isNew:isNew,brand:brand,model:p.product,ver:p.version||'',desc:gx(productDescription,p.product),ean:p.ean||gx(eanOf,p.product),life:gx(lifecycleOf,p.product),cat:gx(productType,p.product),retail:p.retailPLN,price:computeFinalPurchasePrice(p.retailPLN,profit,vat,p.t3),cn:p.cnCode||(xm(p.product).cn||''),sp:p.splitPayment||(xm(p.product).sp||''),stock:null};
     }).sort(function(a,b){ return String(a.model).localeCompare(String(b.model)); });
-    box.innerHTML='<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap;"><input type="text" id="cpQuotesSearch" placeholder="搜索型号" style="border:1px solid var(--border);border-radius:var(--radius);padding:8px 10px;font-size:13px;width:240px;"><span style="font-size:12.5px;color:var(--text-faint);">报价月份：11 · PLN</span><span id="cpQuotesCount" style="font-size:12.5px;color:var(--text-faint);margin-left:auto;"></span></div>'
-      +'<div style="overflow:auto;border:1px solid var(--border);border-radius:var(--radius);"><table style="width:100%;border-collapse:collapse;font-size:13px;"><thead><tr style="background:var(--surface-alt);color:var(--text-dim);"><th style="text-align:left;padding:9px 12px;">品牌</th><th style="text-align:left;padding:9px 12px;">产品型号</th><th style="text-align:left;padding:9px 12px;">版本号</th><th style="text-align:left;padding:9px 12px;">产品信息描述</th><th style="text-align:left;padding:9px 12px;">EAN</th><th style="text-align:left;padding:9px 12px;">生命周期</th><th style="text-align:right;padding:9px 12px;">含税零售价</th><th style="text-align:right;padding:9px 12px;">库存数量</th><th style="text-align:right;padding:9px 12px;">最终采购价（不含税）</th><th style="text-align:left;padding:9px 12px;">CN编码</th><th style="text-align:left;padding:9px 12px;">Split Payment</th></tr></thead><tbody id="cpQuotesTbody"></tbody></table></div>';
+    var uniq=function(k){ var o={},a=[]; data.forEach(function(d){ if(d[k]&&!o[d[k]]){ o[d[k]]=1; a.push(d[k]); } }); return a.sort(); };
+    var cats=uniq('cat'), lifes=uniq('life');
+    var opt=function(list,cur,all){ return '<option value="">'+cpEsc(all)+'</option>'+list.map(function(x){ return '<option value="'+cpEsc(x)+'"'+(x===cur?' selected':'')+'>'+cpEsc(x)+'</option>'; }).join(''); };
+    var TH='style="text-align:left;padding:9px 12px;"', THR='style="text-align:right;padding:9px 12px;"';
+    box.innerHTML='<div class="cpq-noprint" style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px;">'
+      +'<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">'
+      +'<input type="text" id="cpQuotesSearch" class="cpq-ctl" style="width:230px;" placeholder="'+cpEsc(cpT('search'))+'" value="'+cpEsc(CPQ.search)+'">'
+      +'<select id="cpqCat" class="cpq-ctl">'+opt(cats,CPQ.cat,cpT('allCat'))+'</select>'
+      +'<select id="cpqLife" class="cpq-ctl">'+opt(lifes,CPQ.life,cpT('allLife'))+'</select>'
+      +'<label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;user-select:none;"><input type="checkbox" id="cpqStock" style="accent-color:#FF6900;width:15px;height:15px;"'+(CPQ.stock?' checked':'')+'>'+cpEsc(cpT('inStock'))+'</label>'
+      +'<span style="font-size:12.5px;color:var(--text-faint);">'+cpEsc(cpT('month'))+': 11 · PLN</span></div>'
+      +'<div style="display:flex;align-items:center;gap:14px;"><span id="cpQuotesCount" style="font-size:13px;color:var(--text-faint);"></span>'
+      +'<div style="position:relative;"><button type="button" class="cpq-btn" id="cpqExportBtn">'+cpEsc(cpT('exportBtn'))+' ▾</button><div class="cpq-menu" id="cpqMenu" style="display:none;"><button type="button" id="cpqXls">'+cpEsc(cpT('xls'))+'</button><button type="button" id="cpqPdf">'+cpEsc(cpT('pdf'))+'</button></div></div></div></div>'
+      +'<div id="cpQuotesPrintRoot"><div style="overflow:auto;border:1px solid var(--border);border-radius:var(--radius);"><table style="width:100%;border-collapse:collapse;font-size:13px;"><thead><tr style="background:var(--surface-alt);color:var(--text-dim);">'
+      +'<th '+TH+'>品牌</th><th '+TH+'>产品型号</th><th '+TH+'>版本号</th><th '+TH+'>产品信息描述</th><th '+TH+'>EAN</th><th '+TH+'>生命周期</th><th '+THR+'>含税零售价</th><th '+THR+'>库存数量</th><th '+THR+'>最终采购价（不含税）</th><th '+TH+'>CN编码</th><th '+TH+'>Split Payment</th>'
+      +'</tr></thead><tbody id="cpQuotesTbody"></tbody></table></div></div><div id="cpqPager" class="cpq-noprint"></div>';
+    var MONO='font-family:\'IBM Plex Mono\',monospace;';
+    var filtered=[];
     var draw=function(){
-      var q=(document.getElementById('cpQuotesSearch').value||'').trim().toLowerCase();
-      var list=data.filter(function(d){ return !q || (String(d.model)+' '+d.ean+' '+d.desc).toLowerCase().indexOf(q)>=0; });
-      document.getElementById('cpQuotesTbody').innerHTML=list.map(function(d){ return '<tr style="border-top:1px solid var(--border-soft);"><td style="padding:8px 12px;">'+esc(d.brand)+'</td><td style="padding:8px 12px;font-weight:600;">'+esc(d.model)+(d.isNew?'<span class="new-badge">NEW</span>':'')+'</td><td style="padding:8px 12px;">'+esc(d.ver)+'</td><td style="padding:8px 12px;max-width:300px;">'+esc(d.desc)+'</td><td style="padding:8px 12px;font-family:\'IBM Plex Mono\',monospace;">'+esc(d.ean)+'</td><td style="padding:8px 12px;">'+esc(d.life)+'</td><td style="padding:8px 12px;text-align:right;font-family:\'IBM Plex Mono\',monospace;">'+Number(d.retail).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})+'</td><td style="padding:8px 12px;text-align:right;font-family:\'IBM Plex Mono\',monospace;'+(d.stock>0?'color:var(--good);font-weight:700;':'color:var(--text-faint);')+'">'+(d.stock==null?'':Number(d.stock).toLocaleString('en-US'))+'</td><td style="padding:8px 12px;text-align:right;font-family:\'IBM Plex Mono\',monospace;font-weight:700;">'+Number(d.price).toFixed(2)+'</td><td style="padding:8px 12px;">'+esc(d.cn)+'</td><td style="padding:8px 12px;">'+esc(d.sp)+'</td></tr>'; }).join('');
-      document.getElementById('cpQuotesCount').textContent=list.length+' / '+data.length;
-    };
-    document.getElementById('cpQuotesSearch').addEventListener('input',draw);
-    draw();
-    try{
-      var kk=function(s){ return String(s||'').trim().replace(/\s+/g,'').replace(/（/g,'(').replace(/）/g,')').toLowerCase(); };
-      sb.from('tenda_inventory_portal').select('model,qty').limit(2000).then(function(r){
-        if(r.error||!r.data) return;
-        var m={}; r.data.forEach(function(x){ var k=kk(x.model); m[k]=(m[k]||0)+Number(x.qty||0); });
-        data.forEach(function(d){ var k=kk(d.model); var q=m[k]; if(q==null) q=m[k.replace(/v\d+(?:\.\d+)?(?=\(|$)/,'')]; if(q==null) q=m[k.replace(/v\d+(?:\.\d+)?(?=\(|$)/,'')]; d.stock=(q==null)?0:q; });
-        draw();
+      var q=CPQ.search.trim().toLowerCase();
+      filtered=data.filter(function(d){
+        if(q&&(String(d.model)+' '+d.ean).toLowerCase().indexOf(q)<0) return false;
+        if(CPQ.cat&&d.cat!==CPQ.cat) return false;
+        if(CPQ.life&&d.life!==CPQ.life) return false;
+        if(CPQ.stock&&!(d.stock>0)) return false;
+        return true;
       });
-    }catch(e){}
+      var pages=Math.max(1,Math.ceil(filtered.length/CPQ.size)); if(CPQ.page>pages) CPQ.page=pages; if(CPQ.page<1) CPQ.page=1;
+      var show=CPQ.printing?filtered:filtered.slice((CPQ.page-1)*CPQ.size,CPQ.page*CPQ.size);
+      document.getElementById('cpQuotesTbody').innerHTML=show.length?show.map(function(d){
+        return '<tr style="border-top:1px solid var(--border-soft);"><td style="padding:8px 12px;">'+cpEsc(d.brand)+'</td>'
+          +'<td style="padding:8px 12px;font-weight:600;">'+cpEsc(d.model)+(d.isNew?'<span class="new-badge">NEW</span>':'')+'</td>'
+          +'<td style="padding:8px 12px;">'+cpEsc(d.ver)+'</td><td style="padding:8px 12px;max-width:300px;">'+cpEsc(d.desc)+'</td>'
+          +'<td style="padding:8px 12px;'+MONO+'">'+cpEsc(d.ean)+'</td><td style="padding:8px 12px;">'+cpEsc(d.life)+'</td>'
+          +'<td style="padding:8px 12px;text-align:right;'+MONO+'">'+Number(d.retail).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})+'</td>'
+          +'<td style="padding:8px 12px;text-align:right;'+MONO+(d.stock>0?'color:var(--good);font-weight:700;':'color:var(--text-faint);')+'">'+(d.stock==null?'':Number(d.stock).toLocaleString('en-US'))+'</td>'
+          +'<td style="padding:8px 12px;text-align:right;'+MONO+'font-weight:700;">'+Number(d.price).toFixed(2)+'</td>'
+          +'<td style="padding:8px 12px;">'+cpEsc(d.cn)+'</td><td style="padding:8px 12px;">'+cpEsc(d.sp)+'</td></tr>';
+      }).join(''):'<tr><td colspan="11" style="text-align:center;color:var(--text-faint);padding:30px;">'+cpEsc(cpT('none'))+'</td></tr>';
+      document.getElementById('cpQuotesCount').innerHTML='<b style="color:var(--text);">'+filtered.length+'</b> / '+data.length;
+      document.getElementById('cpqExportBtn').disabled=!filtered.length;
+      /* pager */
+      var from=filtered.length?(CPQ.page-1)*CPQ.size+1:0, to=Math.min(CPQ.page*CPQ.size,filtered.length);
+      var pg=document.getElementById('cpqPager');
+      pg.innerHTML='<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:12px 2px 0;font-size:13px;color:var(--text-dim);">'
+        +'<div>'+cpEsc(cpT('showing'))+' <b>'+from+'-'+to+'</b> '+cpEsc(cpT('of'))+' <b>'+filtered.length+'</b> '+cpEsc(cpT('items'))+'</div>'
+        +'<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">'
+        +'<select id="cpqSize" class="cpq-ctl" style="height:32px;">'+[10,20,50,100].map(function(n){ return '<option value="'+n+'"'+(n===CPQ.size?' selected':'')+'>'+n+' '+cpEsc(cpT('perPage'))+'</option>'; }).join('')+'</select>'
+        +'<div style="display:flex;align-items:center;gap:4px;"><button type="button" class="cpq-pg" data-p="'+(CPQ.page-1)+'"'+(CPQ.page<=1?' disabled':'')+'>‹</button>'
+        +cpqBuildPages(CPQ.page,pages).map(function(p){ return p==='…'?'<span style="padding:0 4px;color:var(--text-faint);">…</span>':'<button type="button" class="cpq-pg'+(p===CPQ.page?' on':'')+'" data-p="'+p+'">'+p+'</button>'; }).join('')
+        +'<button type="button" class="cpq-pg" data-p="'+(CPQ.page+1)+'"'+(CPQ.page>=pages?' disabled':'')+'>›</button></div>'
+        +'<span>'+cpEsc(cpT('goTo'))+' <input type="text" id="cpqJump" class="cpq-ctl" style="width:52px;height:32px;text-align:center;"></span></div></div>';
+      pg.querySelectorAll('button[data-p]').forEach(function(b){ b.onclick=function(){ CPQ.page=Number(b.getAttribute('data-p')); draw(); }; });
+      document.getElementById('cpqSize').onchange=function(){ CPQ.size=Number(this.value); CPQ.page=1; draw(); };
+      var jmp=document.getElementById('cpqJump'); jmp.oninput=function(){ this.value=this.value.replace(/\D/g,''); };
+      jmp.onkeydown=function(e){ if(e.key==='Enter'){ var n=parseInt(this.value,10); if(!isNaN(n)){ CPQ.page=Math.min(pages,Math.max(1,n)); draw(); } } };
+    };
+    /* controls */
+    var onSearch=document.getElementById('cpQuotesSearch');
+    onSearch.addEventListener('input',function(){ CPQ.search=this.value; CPQ.page=1; draw(); });
+    document.getElementById('cpqCat').onchange=function(){ CPQ.cat=this.value; CPQ.page=1; draw(); };
+    document.getElementById('cpqLife').onchange=function(){ CPQ.life=this.value; CPQ.page=1; draw(); };
+    document.getElementById('cpqStock').onchange=function(){ CPQ.stock=this.checked; CPQ.page=1; draw(); };
+    var menu=document.getElementById('cpqMenu');
+    document.getElementById('cpqExportBtn').onclick=function(e){ e.stopPropagation(); menu.style.display=menu.style.display==='none'?'block':'none'; };
+    document.getElementById('cpqXls').onclick=function(){ menu.style.display='none'; cpqCsv(filtered); };
+    document.getElementById('cpqPdf').onclick=function(){
+      menu.style.display='none'; CPQ.printing=true; draw();
+      var done=function(){ CPQ.printing=false; draw(); window.removeEventListener('afterprint',done); };
+      window.addEventListener('afterprint',done);
+      setTimeout(function(){ window.print(); },60);
+    };
+    if(!CPQ.bound){
+      CPQ.bound=true;
+      document.addEventListener('click',function(){ var m=document.getElementById('cpqMenu'); if(m) m.style.display='none'; });
+      document.querySelectorAll('#langSwitcher .lang-btn').forEach(function(b){ b.addEventListener('click',function(){ setTimeout(function(){ try{ renderCpQuotes(CPQ.code); renderCpAnnouncement(); }catch(e){} },0); }); });
+    }
+    /* stock quantities (cached) */
+    var applyStock=function(map){ data.forEach(function(d){ var k=kq(d.model); var qn=map[k]; if(qn==null) qn=map[sv(k)]; d.stock=(qn==null)?0:qn; }); draw(); };
+    draw();
+    if(CPQ.stockMap){ applyStock(CPQ.stockMap); }
+    else{
+      try{
+        sb.from('tenda_inventory_portal').select('model,qty').limit(2000).then(function(r){
+          if(r.error||!r.data) return;
+          var m={}; r.data.forEach(function(x){ var k=kq(x.model); m[k]=(m[k]||0)+Number(x.qty||0); });
+          CPQ.stockMap=m; applyStock(m);
+        });
+      }catch(e){}
+    }
   }catch(e){ console.error('renderCpQuotes',e); }
 }
 const CUSTOMER_LIMITED_ACCESS_EMAILS = {

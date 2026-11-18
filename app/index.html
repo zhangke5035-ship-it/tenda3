@@ -10248,11 +10248,11 @@ function renderCpQuotes(code){
         var cb=''; try{ cb=categoryClass(d.cat); }catch(e){}
         return '<tr style="border-top:1px solid var(--border-soft);"><td style="padding:8px 8px;white-space:nowrap;">'+(d.cat?'<span class="cat-badge '+cpEsc(cb)+'">'+cpEsc(d.cat)+'</span>':'')+'</td><td style="padding:8px 8px;">'+cpEsc(d.brand)+'</td>'
           +'<td style="padding:8px 8px;font-weight:600;white-space:nowrap;">'+cpEsc(d.model)+(d.isNew?'<span class="new-badge">NEW</span>':'')+'</td>'
-          +''+(hasVer?'<td style="padding:8px 8px;">'+cpEsc(d.ver)+'</td>':'')+'<td style="padding:8px 8px;min-width:220px;max-width:340px;line-height:1.4;">'+cpEsc(d.desc)+'</td>'
+          +''+(hasVer?'<td style="padding:8px 8px;">'+cpEsc(d.ver)+'</td>':'')+'<td style="padding:8px 8px;min-width:180px;max-width:280px;line-height:1.4;">'+cpEsc(d.desc)+'</td>'
           +'<td style="padding:8px 8px;'+MONO+'">'+cpEsc(d.ean)+'</td><td style="padding:8px 8px;white-space:nowrap;">'+cpEsc(d.life)+'</td>'
           +'<td style="padding:8px 8px;text-align:right;'+MONO+'">'+Number(d.retail).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})+'</td>'
           +'<td style="padding:8px 8px;text-align:right;'+MONO+(d.stock>0?'color:var(--good);font-weight:700;':'color:var(--text-faint);')+'">'+(d.stock==null?'':Number(d.stock).toLocaleString('en-US'))+'</td>'
-          +'<td style="padding:8px 8px;text-align:right;'+MONO+(d.transit>0?'color:#B45309;font-weight:700;':'color:var(--text-faint);')+'">'+(d.transit>0?Number(d.transit).toLocaleString('en-US')+'<div style="font-size:11px;font-weight:400;color:var(--text-faint);white-space:nowrap;">预计到货 2027年1月</div>':'0')+'</td>'
+          +'<td style="padding:8px 8px;text-align:right;'+MONO+(d.transit>0?'color:#B45309;font-weight:700;':'color:var(--text-faint);')+'">'+(d.transit>0?Number(d.transit).toLocaleString('en-US')+'<div style="font-size:10.5px;font-weight:400;color:var(--text-faint);white-space:normal;line-height:1.25;max-width:84px;margin-left:auto;">预计到货 2027年1月</div>':'0')+'</td>'
           +'<td style="padding:8px 8px;text-align:right;'+MONO+'font-weight:700;">'+Number(d.price).toFixed(2)+'</td>'
           +'<td style="padding:8px 8px;">'+cpEsc(d.cn)+'</td><td style="padding:8px 8px;">'+cpEsc(d.sp)+'</td></tr>';
       }).join(''):'<tr><td colspan="'+(hasVer?12:11)+'" style="text-align:center;color:var(--text-faint);padding:30px;">'+cpEsc(cpT('none'))+'</td></tr>';

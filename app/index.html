@@ -10096,6 +10096,7 @@ async function showCustomerApp(session, customerCode){
 
 var CPQ = {code:null, search:'', cat:'', life:'', stock:false, page:1, size:20, stockMap:null, printing:false, bound:false};
 var CP_ANN_MSG = '';
+var CP_CAT_EN = {'无线路由器':'Wireless Routers','Mesh路由系统':'Mesh Systems','USB无线网卡':'USB Wi-Fi Adapters','室外CPE':'Outdoor CPE','4G/5G路由器':'4G/5G Routers','交换机':'Switches','NVR录像机':'NVR Recorders','智能摄像机':'Smart Cameras','企业AP/天线':'Enterprise AP/Antennas','网络配件':'Network Accessories'};
 var CP_T = {
   search:['搜索型号或 EAN','Search model or EAN','Szukaj modelu lub EAN'],
   allCat:['全部分类','All Categories','Wszystkie kategorie'],
@@ -10167,7 +10168,7 @@ function cpqBuildPages(cur,total){
   return out;
 }
 function cpqCsv(rows){
-  var cols=[['Brand','brand'],['Product Model','model'],['Version','ver'],['Product Description','desc'],['EAN','ean'],['Lifecycle','life'],['Retail Price (incl. VAT, PLN)','retail'],['Stock Quantity','stock'],['Final Purchase Price (excl. VAT, PLN)','price'],['CN Code','cn'],['Split Payment','sp']];
+  var cols=[['Category','catEn'],['Brand','brand'],['Product Model','model'],['Version','ver'],['Product Description','desc'],['EAN','ean'],['Lifecycle','life'],['Retail Price (incl. VAT, PLN)','retail'],['Stock Quantity','stock'],['Final Purchase Price (excl. VAT, PLN)','price'],['CN Code','cn'],['Split Payment','sp']];
   var cell=function(v){ var s=v==null?'':String(v); return /[",\n\r]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s; };
   var lines=[cols.map(function(c){return cell(c[0]);}).join(',')];
   rows.forEach(function(r){ lines.push(cols.map(function(c){ var v=r[c[1]]; if(c[1]==='price') v=Number(v).toFixed(2); if(c[1]==='ean') v=v?'="'+v+'"':''; return cell(v); }).join(',')); });
@@ -10198,7 +10199,7 @@ function renderCpQuotes(code){
       var brand='Tenda'; try{ brand=rowBrand(p)||'Tenda'; }catch(e){}
       var gx=function(fn,a){ try{ return fn(a)||''; }catch(e){ return ''; } };
       var isNew=false; try{ isNew=!!(window.newOfModel&&window.newOfModel(p.product)); }catch(e){}
-      return {isNew:isNew,brand:brand,model:p.product,ver:p.version||'',desc:gx(productDescription,p.product),ean:p.ean||gx(eanOf,p.product),life:gx(lifecycleOf,p.product),cat:gx(productType,p.product),retail:p.retailPLN,price:computeFinalPurchasePrice(p.retailPLN,profit,vat,p.t3),cn:p.cnCode||(xm(p.product).cn||''),sp:p.splitPayment||(xm(p.product).sp||''),stock:null};
+      return {isNew:isNew,brand:brand,model:p.product,ver:p.version||'',desc:gx(productDescription,p.product),ean:p.ean||gx(eanOf,p.product),life:gx(lifecycleOf,p.product),cat:gx(productType,p.product),catEn:(CP_CAT_EN[gx(productType,p.product)]||gx(productType,p.product)),retail:p.retailPLN,price:computeFinalPurchasePrice(p.retailPLN,profit,vat,p.t3),cn:p.cnCode||(xm(p.product).cn||''),sp:p.splitPayment||(xm(p.product).sp||''),stock:null};
     }).sort(function(a,b){ return String(a.model).localeCompare(String(b.model)); });
     var uniq=function(k){ var o={},a=[]; data.forEach(function(d){ if(d[k]&&!o[d[k]]){ o[d[k]]=1; a.push(d[k]); } }); return a.sort(); };
     var cats=uniq('cat'), lifes=uniq('life');
@@ -10214,7 +10215,7 @@ function renderCpQuotes(code){
       +'<div style="display:flex;align-items:center;gap:14px;"><span id="cpQuotesCount" style="font-size:13px;color:var(--text-faint);"></span>'
       +'<div style="position:relative;"><button type="button" class="cpq-btn" id="cpqExportBtn">'+cpEsc(cpT('exportBtn'))+' ▾</button><div class="cpq-menu" id="cpqMenu" style="display:none;"><button type="button" id="cpqXls">'+cpEsc(cpT('xls'))+'</button><button type="button" id="cpqPdf">'+cpEsc(cpT('pdf'))+'</button></div></div></div></div>'
       +'<div id="cpQuotesPrintRoot"><div style="overflow:auto;border:1px solid var(--border);border-radius:var(--radius);"><table style="width:100%;border-collapse:collapse;font-size:13px;"><thead><tr style="background:var(--surface-alt);color:var(--text-dim);">'
-      +'<th '+TH+'>品牌</th><th '+TH+'>产品型号</th><th '+TH+'>版本号</th><th '+TH+'>产品信息描述</th><th '+TH+'>EAN</th><th '+TH+'>生命周期</th><th '+THR+'>含税零售价</th><th '+THR+'>库存数量</th><th '+THR+'>最终采购价（不含税）</th><th '+TH+'>CN编码</th><th '+TH+'>Split Payment</th>'
+      +'<th '+TH+'>类目</th><th '+TH+'>品牌</th><th '+TH+'>产品型号</th><th '+TH+'>版本号</th><th '+TH+'>产品信息描述</th><th '+TH+'>EAN</th><th '+TH+'>生命周期</th><th '+THR+'>含税零售价</th><th '+THR+'>库存数量</th><th '+THR+'>最终采购价（不含税）</th><th '+TH+'>CN编码</th><th '+TH+'>Split Payment</th>'
       +'</tr></thead><tbody id="cpQuotesTbody"></tbody></table></div></div><div id="cpqPager" class="cpq-noprint"></div>';
     var MONO='font-family:\'IBM Plex Mono\',monospace;';
     var filtered=[];
@@ -10230,7 +10231,8 @@ function renderCpQuotes(code){
       var pages=Math.max(1,Math.ceil(filtered.length/CPQ.size)); if(CPQ.page>pages) CPQ.page=pages; if(CPQ.page<1) CPQ.page=1;
       var show=CPQ.printing?filtered:filtered.slice((CPQ.page-1)*CPQ.size,CPQ.page*CPQ.size);
       document.getElementById('cpQuotesTbody').innerHTML=show.length?show.map(function(d){
-        return '<tr style="border-top:1px solid var(--border-soft);"><td style="padding:8px 12px;">'+cpEsc(d.brand)+'</td>'
+        var cb=''; try{ cb=categoryClass(d.cat); }catch(e){}
+        return '<tr style="border-top:1px solid var(--border-soft);"><td style="padding:8px 12px;white-space:nowrap;">'+(d.cat?'<span class="cat-badge '+cpEsc(cb)+'">'+cpEsc(d.cat)+'</span>':'')+'</td><td style="padding:8px 12px;">'+cpEsc(d.brand)+'</td>'
           +'<td style="padding:8px 12px;font-weight:600;">'+cpEsc(d.model)+(d.isNew?'<span class="new-badge">NEW</span>':'')+'</td>'
           +'<td style="padding:8px 12px;">'+cpEsc(d.ver)+'</td><td style="padding:8px 12px;max-width:300px;">'+cpEsc(d.desc)+'</td>'
           +'<td style="padding:8px 12px;'+MONO+'">'+cpEsc(d.ean)+'</td><td style="padding:8px 12px;">'+cpEsc(d.life)+'</td>'
@@ -10238,7 +10240,7 @@ function renderCpQuotes(code){
           +'<td style="padding:8px 12px;text-align:right;'+MONO+(d.stock>0?'color:var(--good);font-weight:700;':'color:var(--text-faint);')+'">'+(d.stock==null?'':Number(d.stock).toLocaleString('en-US'))+'</td>'
           +'<td style="padding:8px 12px;text-align:right;'+MONO+'font-weight:700;">'+Number(d.price).toFixed(2)+'</td>'
           +'<td style="padding:8px 12px;">'+cpEsc(d.cn)+'</td><td style="padding:8px 12px;">'+cpEsc(d.sp)+'</td></tr>';
-      }).join(''):'<tr><td colspan="11" style="text-align:center;color:var(--text-faint);padding:30px;">'+cpEsc(cpT('none'))+'</td></tr>';
+      }).join(''):'<tr><td colspan="12" style="text-align:center;color:var(--text-faint);padding:30px;">'+cpEsc(cpT('none'))+'</td></tr>';
       document.getElementById('cpQuotesCount').innerHTML='<b style="color:var(--text);">'+filtered.length+'</b> / '+data.length;
       document.getElementById('cpqExportBtn').disabled=!filtered.length;
       /* pager */

@@ -36,6 +36,8 @@
   #priceDetailTable.price-hide-splitpay .price-col-splitpay{display:none;}
   #priceDetailTable.price-hide-pkgdim .price-col-pkg{display:none;}
   #priceDetailTable.price-hide-page .price-col-page{display:none;}
+  #priceDetailTable .price-col-page{white-space:nowrap;min-width:64px;}
+  .price-page-link{white-space:nowrap;}
   .dim-control-panel{display:flex;flex-direction:column;gap:8px;margin-right:auto;}
   .dim-group{display:flex;align-items:center;flex-wrap:wrap;gap:10px;}
   .dim-group-title{flex-shrink:0;font-size:12px;font-weight:600;color:var(--text-faint);min-width:76px;}
@@ -10169,7 +10171,7 @@ function cpqBuildPages(cur,total){
   return out;
 }
 function cpqCsv(rows){
-  var cols=[['Category','catEn'],['Brand','brand'],['Product Model','model'],['Version','ver'],['Product Description','desc'],['EAN','ean'],['Lifecycle','life'],['Stock Quantity','stock'],['In Transit','transit'],['In Transit ETA','etaEn'],['Retail Price (incl. VAT, PLN)','retail'],['Final Purchase Price (excl. VAT, PLN)','price'],['CN Code','cn'],['Split Payment','sp']];
+  var cols=[['Category','catEn'],['Brand','brand'],['Product Model','model'],['Version','ver'],['Product Description','desc'],['EAN','ean'],['Lifecycle','life'],['Stock Quantity','stock'],['In Transit','transit'],['In Transit ETA','etaEn'],['Retail Price (incl. VAT, PLN)','retail'],['Final Purchase Price (excl. VAT, PLN)','price'],['CN Code','cn'],['Split Payment','sp'],['Product Page','page']];
   var cell=function(v){ var s=v==null?'':String(v); return /[",\n\r]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s; };
   var lines=[cols.map(function(c){return cell(c[0]);}).join(',')];
   rows.forEach(function(r){ lines.push(cols.map(function(c){ var v=r[c[1]]; if(c[1]==='price') v=Number(v).toFixed(2); if(c[1]==='ean') v=v?'="'+v+'"':''; return cell(v); }).join(',')); });
@@ -10200,7 +10202,7 @@ function renderCpQuotes(code){
       var brand='Tenda'; try{ brand=rowBrand(p)||'Tenda'; }catch(e){}
       var gx=function(fn,a){ try{ return fn(a)||''; }catch(e){ return ''; } };
       var isNew=false; try{ isNew=!!(window.newOfModel&&window.newOfModel(p.product)); }catch(e){}
-      return {isNew:isNew,brand:brand,model:p.product,ver:p.version||'',desc:gx(productDescription,p.product),ean:p.ean||gx(eanOf,p.product),life:gx(lifecycleOf,p.product),cat:gx(productType,p.product),catEn:(CP_CAT_EN[gx(productType,p.product)]||gx(productType,p.product)),retail:p.retailPLN,price:computeFinalPurchasePrice(p.retailPLN,profit,vat,p.t3),cn:p.cnCode||(xm(p.product).cn||''),sp:p.splitPayment||(xm(p.product).sp||''),stock:null,transit:0,etaEn:''};
+      return {isNew:isNew,brand:brand,model:p.product,ver:p.version||'',desc:gx(productDescription,p.product),ean:p.ean||gx(eanOf,p.product),life:gx(lifecycleOf,p.product),cat:gx(productType,p.product),catEn:(CP_CAT_EN[gx(productType,p.product)]||gx(productType,p.product)),retail:p.retailPLN,price:computeFinalPurchasePrice(p.retailPLN,profit,vat,p.t3),cn:p.cnCode||(xm(p.product).cn||''),sp:p.splitPayment||(xm(p.product).sp||''),stock:null,transit:0,etaEn:'',page:p.productPage||''};
     }).sort(function(a,b){ return String(a.model).localeCompare(String(b.model)); });
     var uniq=function(k){ var o={},a=[]; data.forEach(function(d){ if(d[k]&&!o[d[k]]){ o[d[k]]=1; a.push(d[k]); } }); return a.sort(); };
     var cats=uniq('cat'), lifes=uniq('life');
@@ -10217,7 +10219,7 @@ function renderCpQuotes(code){
       +'<div style="display:flex;align-items:center;gap:14px;"><span id="cpQuotesCount" style="font-size:13px;color:var(--text-faint);"></span>'
       +'<div style="position:relative;"><button type="button" class="cpq-btn" id="cpqExportBtn">'+cpEsc(cpT('exportBtn'))+' ▾</button><div class="cpq-menu" id="cpqMenu" style="display:none;"><button type="button" id="cpqXls">'+cpEsc(cpT('xls'))+'</button><button type="button" id="cpqPdf">'+cpEsc(cpT('pdf'))+'</button></div></div></div></div>'
       +'<div id="cpQuotesPrintRoot"><div style="overflow:auto;border:1px solid var(--border);border-radius:var(--radius);"><table style="width:100%;border-collapse:collapse;font-size:12.5px;"><thead><tr style="background:var(--surface-alt);color:var(--text-dim);">'
-      +'<th '+TH+'>类目</th><th '+TH+'>品牌</th><th '+TH+'>产品型号</th>'+(hasVer?'<th '+TH+'>版本号</th>':'')+'<th '+TH+'>产品信息描述</th><th '+TH+'>EAN</th><th '+TH+'>生命周期</th><th '+THR+'>库存数量</th><th '+THR+'>在途数量</th><th '+THR+'>含税零售价</th><th '+THR+'>最终采购价（不含税）</th><th '+TH+'>CN编码</th><th '+TH+'>Split Payment</th>'
+      +'<th '+TH+'>类目</th><th '+TH+'>品牌</th><th '+TH+'>产品型号</th>'+(hasVer?'<th '+TH+'>版本号</th>':'')+'<th '+TH+'>产品信息描述</th><th '+TH+'>EAN</th><th '+TH+'>生命周期</th><th '+THR+'>库存数量</th><th '+THR+'>在途数量</th><th '+THR+'>含税零售价</th><th '+THR+'>最终采购价（不含税）</th><th '+TH+'>CN编码</th><th '+TH+'>Split Payment</th><th '+TH+'>产品页面</th>'
       +'</tr></thead><tbody id="cpQuotesTbody"></tbody></table></div></div><div id="cpqPager" class="cpq-noprint"></div>';
     var MONO='font-family:\'IBM Plex Mono\',monospace;';
     var filtered=[];
@@ -10242,8 +10244,8 @@ function renderCpQuotes(code){
           +'<td style="padding:8px 8px;text-align:right;'+MONO+(d.transit>0?'color:#B45309;font-weight:700;':'color:var(--text-faint);')+'">'+(d.transit>0?'<span class="cpq-tw">'+Number(d.transit).toLocaleString('en-US')+'<span class="cpq-tip">预计到货: 2027年1月</span></span>':'0')+'</td>'
           +'<td style="padding:8px 8px;text-align:right;'+MONO+'">'+Number(d.retail).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})+'</td>'
           +'<td style="padding:8px 8px;text-align:right;'+MONO+'font-weight:700;">'+Number(d.price).toFixed(2)+'</td>'
-          +'<td style="padding:8px 8px;white-space:nowrap;">'+cpEsc(d.cn)+'</td><td style="padding:8px 8px;white-space:nowrap;">'+cpEsc(d.sp)+'</td></tr>';
-      }).join(''):'<tr><td colspan="'+(hasVer?13:12)+'" style="text-align:center;color:var(--text-faint);padding:30px;">'+cpEsc(cpT('none'))+'</td></tr>';
+          +'<td style="padding:8px 8px;white-space:nowrap;">'+cpEsc(d.cn)+'</td><td style="padding:8px 8px;white-space:nowrap;">'+cpEsc(d.sp)+'</td><td style="padding:8px 8px;white-space:nowrap;text-align:center;">'+(d.page&&/^https?:\/\//.test(d.page)?'<a href="'+cpEsc(d.page)+'" target="_blank" rel="noopener" style="color:#FF6900;font-weight:600;text-decoration:none;" title="'+cpEsc(d.model)+'">↗</a>':'<span style="color:var(--text-faint);">—</span>')+'</td></tr>';
+      }).join(''):'<tr><td colspan="'+(hasVer?14:13)+'" style="text-align:center;color:var(--text-faint);padding:30px;">'+cpEsc(cpT('none'))+'</td></tr>';
       document.getElementById('cpQuotesCount').innerHTML='<b style="color:var(--text);">'+filtered.length+'</b> / '+data.length;
       document.getElementById('cpqExportBtn').disabled=!filtered.length;
       /* pager */
@@ -13107,7 +13109,8 @@ const I18N_DICT = [
 ["未收录","Not listed","Nieujęty"],
 ["成熟期","Mature","Dojrzały"],
 ["淘汰期","End of life","Wycofywany"],
-["成长期","Growth","Wzrost"]
+["成长期","Growth","Wzrost"],
+["产品页面","Product page","Strona produktu"]
 ];
 I18N_DICT.sort((a,b)=>b[0].length-a[0].length);
 

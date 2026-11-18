@@ -5231,6 +5231,11 @@ async function saveProductDescription(el){
 /* ============ 产品类目（参考 tendacn.com/pl 产品线分类，按型号命名规律归类） ============ */
 const CATEGORY_RULES = [
   /* added: models that previously fell through to the default category */
+  [/^ph\d/i, '网络配件'],
+  [/^t10\b|^m3\b|^ew\d/i, 'Mesh路由系统'],
+  [/^w30e|^cpe6s/i, '企业AP/天线'],
+  [/^f\d{4}p|^f\d{4}-/i, '交换机'],
+  [/^ac1000/i, '网络配件'],
   [/^nvr|^tn3\d|^tk\d/i, 'NVR录像机'],
   [/^bc\d|^tc\d|^ic6/i, '智能摄像机'],
   [/^tem\d|^sm\d|^sx\d|^sgf\d/i, '交换机'],
@@ -5248,6 +5253,7 @@ const CATEGORY_RULES = [
 ];
 function productType(product){
   if(!product) return '无线路由器';
+  product = String(product).replace(/^#/, '');
   for(const [re, cat] of CATEGORY_RULES){
     if(re.test(product)) return cat;
   }

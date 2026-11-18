@@ -10293,14 +10293,14 @@ function renderCpQuotes(code){
       document.querySelectorAll('#langSwitcher .lang-btn').forEach(function(b){ b.addEventListener('click',function(){ setTimeout(function(){ try{ renderCpQuotes(CPQ.code); renderCpAnnouncement(); }catch(e){} },0); }); });
     }
     /* stock quantities (cached) */
-    var applyStock=function(map){ data.forEach(function(d){ var k=kq(d.model); var qn=map[k]; if(qn==null) qn=map[sv(k)]; d.stock=(qn==null)?0:qn; }); draw(); };
+    var applyStock=function(map){ data.forEach(function(d){ var k=kq(d.model); var qn=map[k]; if(qn==null) qn=map[sv(k)]; if(qn == null && d.ean) qn = map['e:'+String(d.ean).trim()]; d.stock=(qn==null)?0:qn; }); draw(); };
     draw();
     if(CPQ.stockMap){ applyStock(CPQ.stockMap); }
     else{
       try{
-        sb.from('tenda_inventory_portal').select('model,qty').limit(2000).then(function(r){
+        sb.from('tenda_inventory_portal').select('model,qty,ean').limit(2000).then(function(r){
           if(r.error||!r.data) return;
-          var m={}; r.data.forEach(function(x){ var k=kq(x.model); m[k]=(m[k]||0)+Number(x.qty||0); });
+          var m={}; r.data.forEach(function(x){ var k=kq(x.model); m[k]=(m[k]||0)+Number(x.qty||0); if(x.ean){ var ek='e:'+String(x.ean).trim(); m[ek]=(m[ek]||0)+Number(x.qty||0); } });
           CPQ.stockMap=m; applyStock(m);
         });
       }catch(e){}

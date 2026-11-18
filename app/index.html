@@ -784,6 +784,7 @@
   .cat-badge.cat-cpe{background:var(--good-soft);color:var(--good);}
   .cat-badge.cat-4g{background:var(--copper-soft);color:var(--copper);}
   .cat-ont{background:#E0F2FE;color:#075985;}
+  .cat-ext{background:#F3E8FF;color:#6B21A8;}
   .cat-badge.cat-switch{background:#EAF0F6;color:#3D6690;}
   .cat-badge.cat-nvr{background:var(--alert-soft);color:var(--alert);}
   .cat-badge.cat-cam{background:#F7EDF9;color:#9A3FAE;}
@@ -5221,6 +5222,9 @@ async function saveProductDescription(el){
 
 /* ============ 产品类目（参考 tendacn.com/pl 产品线分类，按型号命名规律归类） ============ */
 const CATEGORY_RULES = [
+  [/^f1\d{2,3}|^ism\d/i, '交换机'],
+  [/^gs[fs]\d/i, '网络配件'],
+  [/^a\d{1,2}(?![0-9])/i, '无线扩展器'],
   [/^hg\d/i, 'ONT路由器'],
   /* added: models that previously fell through to the default category */
   [/^ph\d/i, '网络配件'],
@@ -5251,7 +5255,7 @@ function productType(product){
   }
   return '无线路由器';
 }
-const CATEGORY_LIST = ['ONT路由器','Mesh路由系统','USB无线网卡','室外CPE','4G/5G路由器','交换机','NVR录像机','智能摄像机','企业AP/天线','网络配件','无线路由器'];
+const CATEGORY_LIST = ['无线扩展器','ONT路由器','Mesh路由系统','USB无线网卡','室外CPE','4G/5G路由器','交换机','NVR录像机','智能摄像机','企业AP/天线','网络配件','无线路由器'];
 const BRAND_LIST = ['Tenda','IP-COM'];
 const IPCOM_MODELS = new Set(['M20-PoE','M20-8G-PoE','M30','M50-F','W36AP','W37AP','W39AP','Pro-6-IW','W63AP','iUAP-AC-LITE','Pro-6-LR','iUAP-AC-M','AC1000','EW9+EP9x2','EW12','EW15D','CPE3','CPE5','CPE5 Kit','CPE6S','CPE6S Kit','CPE9','CPE12','CPE12 Kit','CPE13','iLBE-M5','iLBE-5AC','BS9','ANT12-5G360','ANT16-5G120','ANT19-5G120','ANT30-5G','G1005V4.0','G1005V3.0','G1008MV2.0','G1008MV3.0','G1016D','G1016G','G1024D','G1024G','G1050F','F1106P-4-63W','F1118P-16-150W','F1126P-24-250W','G1105PD','G1105P-4-63W','G1110PF-8-102W','G1110PF-8-120W','G1120P-16-150W','G1128P-24-250W','G1120P-16-250W','G1128P-24-410W','G2205D','G2208D','G2216D','G2224D','G2226F','G2210P-8-120W','G2220P-16-250W','G2228P-24-410W','G2210P-8-102W','G2206P-4-63W','G3310P-8-150W','G3318P-16-250W','G3326P-24-410W','G3328F','G3350F','G3310F','G5328P-24-410W','G5328F','G5324-16F','G5328X','G5328XP-24-410W','X5308F','G311SM','G511MM','G511SM','IPC3B24C(4mm)','IPC3T24C(4mm)','NVR3108','NVR3116','NVR3104-4P','NVR3108-8P','IPC3B24C(6mm)','IPC3T24C(2.8mm)','Pro-6-M','Pro-6-Mini','Pro-6-Lite','G1106P-4-70WV1.0','G1110P-8-120WV1.0','Pro-7-LR'].map(s=>s.toLowerCase()));
 function rowBrand(p){ return (p&&p.brand)||productBrand(p&&p.product); }
@@ -5260,6 +5264,7 @@ function categoryClass(cat){
   return ({
     'Mesh路由系统':'cat-mesh','USB无线网卡':'cat-usb','室外CPE':'cat-cpe','4G/5G路由器':'cat-4g',
     'ONT路由器':'cat-ont',
+    '无线扩展器':'cat-ext',
     '交换机':'cat-switch','NVR录像机':'cat-nvr','智能摄像机':'cat-cam','企业AP/天线':'cat-ap',
     '网络配件':'cat-acc','无线路由器':'cat-router'
   })[cat] || 'cat-router';
@@ -10102,7 +10107,7 @@ async function showCustomerApp(session, customerCode){
 
 var CPQ = {code:null, search:'', cat:'', life:'', stock:false, page:1, size:20, stockMap:null, printing:false, bound:false};
 var CP_ANN_MSG = '';
-var CP_CAT_EN = {'无线路由器':'Wireless Routers','Mesh路由系统':'Mesh Systems','USB无线网卡':'USB Wi-Fi Adapters','室外CPE':'Outdoor CPE','4G/5G路由器':'4G/5G Routers','ONT路由器':'ONT Routers','交换机':'Switches','NVR录像机':'NVR Recorders','智能摄像机':'Smart Cameras','企业AP/天线':'Enterprise AP/Antennas','网络配件':'Network Accessories'};
+var CP_CAT_EN = {'无线路由器':'Wireless Routers','Mesh路由系统':'Mesh Systems','USB无线网卡':'USB Wi-Fi Adapters','室外CPE':'Outdoor CPE','4G/5G路由器':'4G/5G Routers','ONT路由器':'ONT Routers','无线扩展器':'Wireless Range Extenders','交换机':'Switches','NVR录像机':'NVR Recorders','智能摄像机':'Smart Cameras','企业AP/天线':'Enterprise AP/Antennas','网络配件':'Network Accessories'};
 var CP_T = {
   search:['搜索型号或 EAN','Search model or EAN','Szukaj modelu lub EAN'],
   allCat:['全部分类','All Categories','Wszystkie kategorie'],
@@ -10206,7 +10211,7 @@ function renderCpQuotes(code){
       var gx=function(fn,a){ try{ return fn(a)||''; }catch(e){ return ''; } };
       var isNew=false; try{ isNew=!!(window.newOfModel&&window.newOfModel(p.product)); }catch(e){}
       return {isNew:isNew,brand:brand,model:p.product,ver:p.version||'',desc:gx(productDescription,p.product),ean:p.ean||gx(eanOf,p.product),life:gx(lifecycleOf,p.product),cat:gx(productType,p.product),catEn:(CP_CAT_EN[gx(productType,p.product)]||gx(productType,p.product)),retail:p.retailPLN,price:computeFinalPurchasePrice(p.retailPLN,profit,vat,p.t3),cn:p.cnCode||(xm(p.product).cn||''),sp:p.splitPayment||(xm(p.product).sp||''),stock:null,transit:0,etaEn:'',page:p.productPage||''};
-    }).sort(function(a,b){ var ORD=['无线路由器','Mesh路由系统','4G/5G路由器','ONT路由器','企业AP/天线','室外CPE','USB无线网卡','交换机','NVR录像机','智能摄像机','网络配件']; var ia=ORD.indexOf(a.cat), ib=ORD.indexOf(b.cat); if(ia<0) ia=99; if(ib<0) ib=99; if(ia!==ib) return ia-ib; return String(a.model).replace(/^#/,'').localeCompare(String(b.model).replace(/^#/,''),'en',{numeric:true,sensitivity:'base'}); });
+    }).sort(function(a,b){ var ORD=['无线路由器','无线扩展器','Mesh路由系统','4G/5G路由器','ONT路由器','企业AP/天线','室外CPE','USB无线网卡','交换机','NVR录像机','智能摄像机','网络配件']; var ia=ORD.indexOf(a.cat), ib=ORD.indexOf(b.cat); if(ia<0) ia=99; if(ib<0) ib=99; if(ia!==ib) return ia-ib; return String(a.model).replace(/^#/,'').localeCompare(String(b.model).replace(/^#/,''),'en',{numeric:true,sensitivity:'base'}); });
     var uniq=function(k){ var o={},a=[]; data.forEach(function(d){ if(d[k]&&!o[d[k]]){ o[d[k]]=1; a.push(d[k]); } }); return a.sort(); };
     var cats=uniq('cat'), lifes=uniq('life');
     var hasVer=data.some(function(d){ return !!d.ver; });
@@ -11344,7 +11349,7 @@ function exportPriceWorkbookXLSX(mode, filename){
   });
 
   if (_xl !== 'zh') {
-    const _CAT = {'Mesh路由系统':['Mesh Systems','Systemy Mesh'],'USB无线网卡':['USB Wi-Fi Adapters','Karty USB Wi-Fi'],'室外CPE':['Outdoor CPE','CPE zewnętrzne'],'4G/5G路由器':['4G/5G Routers','Routery 4G/5G'],'ONT路由器':['ONT Routers','Routery ONT'],'交换机':['Switches','Switche'],'NVR录像机':['NVR Recorders','Rejestratory NVR'],'智能摄像机':['IP Cameras','Kamery IP'],'企业AP/天线':['Enterprise AP/Antenna','AP/Antena biznesowa'],'网络配件':['Network Accessories','Akcesoria sieciowe'],'无线路由器':['Wireless Routers','Routery bezprzewodowe']};
+    const _CAT = {'Mesh路由系统':['Mesh Systems','Systemy Mesh'],'USB无线网卡':['USB Wi-Fi Adapters','Karty USB Wi-Fi'],'室外CPE':['Outdoor CPE','CPE zewnętrzne'],'4G/5G路由器':['4G/5G Routers','Routery 4G/5G'],'ONT路由器':['ONT Routers','Routery ONT'],'无线扩展器':['Wireless Range Extenders','Wzmacniacze Wi-Fi'],'交换机':['Switches','Switche'],'NVR录像机':['NVR Recorders','Rejestratory NVR'],'智能摄像机':['IP Cameras','Kamery IP'],'企业AP/天线':['Enterprise AP/Antenna','AP/Antena biznesowa'],'网络配件':['Network Accessories','Akcesoria sieciowe'],'无线路由器':['Wireless Routers','Routery bezprzewodowe']};
     const _LIFE = {'成长期':['Growth','Wzrost'],'成熟期':['Mature','Dojrzały'],'衰退期':['Declining','Spadek'],'淘汰期':['End of life','Wycofywany'],'未收录':['Not listed','Nieuwzględnione']};
     const _CTRY = {'波兰':['Poland','Polska'],'捷克':['Czech Republic','Czechy'],'乌克兰':['Ukraine','Ukraina']};
     const ix = _xl === 'en' ? 0 : 1;
@@ -13114,7 +13119,8 @@ const I18N_DICT = [
 ["淘汰期","End of life","Wycofywany"],
 ["成长期","Growth","Wzrost"],
 ["产品页面","Product page","Strona produktu"],
-["ONT路由器","ONT Routers","Routery ONT"]
+["ONT路由器","ONT Routers","Routery ONT"],
+["无线扩展器","Wireless Range Extenders","Wzmacniacze Wi-Fi"]
 ];
 I18N_DICT.sort((a,b)=>b[0].length-a[0].length);
 

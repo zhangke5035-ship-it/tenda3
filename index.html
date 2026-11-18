@@ -10203,7 +10203,7 @@ function renderCpQuotes(code){
       var gx=function(fn,a){ try{ return fn(a)||''; }catch(e){ return ''; } };
       var isNew=false; try{ isNew=!!(window.newOfModel&&window.newOfModel(p.product)); }catch(e){}
       return {isNew:isNew,brand:brand,model:p.product,ver:p.version||'',desc:gx(productDescription,p.product),ean:p.ean||gx(eanOf,p.product),life:gx(lifecycleOf,p.product),cat:gx(productType,p.product),catEn:(CP_CAT_EN[gx(productType,p.product)]||gx(productType,p.product)),retail:p.retailPLN,price:computeFinalPurchasePrice(p.retailPLN,profit,vat,p.t3),cn:p.cnCode||(xm(p.product).cn||''),sp:p.splitPayment||(xm(p.product).sp||''),stock:null,transit:0,etaEn:'',page:p.productPage||''};
-    }).sort(function(a,b){ return String(a.model).localeCompare(String(b.model)); });
+    }).sort(function(a,b){ var ORD=['无线路由器','Mesh路由系统','4G/5G路由器','企业AP/天线','室外CPE','USB无线网卡','交换机','NVR录像机','智能摄像机','网络配件']; var ia=ORD.indexOf(a.cat), ib=ORD.indexOf(b.cat); if(ia<0) ia=99; if(ib<0) ib=99; if(ia!==ib) return ia-ib; return String(a.model).replace(/^#/,'').localeCompare(String(b.model).replace(/^#/,''),'en',{numeric:true,sensitivity:'base'}); });
     var uniq=function(k){ var o={},a=[]; data.forEach(function(d){ if(d[k]&&!o[d[k]]){ o[d[k]]=1; a.push(d[k]); } }); return a.sort(); };
     var cats=uniq('cat'), lifes=uniq('life');
     var hasVer=data.some(function(d){ return !!d.ver; });

@@ -5200,7 +5200,7 @@ function stockListDescription(product){
 function productDescription(product){
   if(!product) return '';
   if (productDescriptionOverrides[product]) return productDescriptionOverrides[product];
-  { const _k=String(product).replace(/^#/,'').toLowerCase(); const _sd0=({'w39ap':'IP-COM W39AP AX3000 Dual-Band Gigabit Wi-Fi 6 In-Wall AP','w37ap':'IP-COM W37AP AX1500 Wi-Fi 6 Dual Band Gigabit In-Wall AP','w36ap':'IP-COM W36AP AC1200 Dual Band Gigabit In-Wall Access Point'})[_k]; if(_sd0) return _sd0; }
+  { const _k=String(product).replace(/^#/,'').toLowerCase(); const _sd0=({'w39ap':'IP-COM W39AP AX3000 Dual-Band Gigabit Wi-Fi 6 In-Wall AP','w37ap':'IP-COM W37AP AX1500 Wi-Fi 6 Dual Band Gigabit In-Wall AP','w36ap':'IP-COM W36AP AC1200 Dual Band Gigabit In-Wall Access Point','pse15f':'IP-COM PSE15F 10/100Mbps PoE Injector','pse30g-at':'IP-COM PSE30G-AT 802.3at Gigabit PoE Injector','f1118p-16-150w':'IP-COM F1118P-16-150W 16FE+2GE/1SFP Unmanaged Switch With 16-Port PoE','f1106p-4-63w':'IP-COM F1106P-4-63W 6-Port 10/100M Unmanaged Switch With 4-Port PoE'})[_k]; if(_sd0) return _sd0; }
   const _sd = stockListDescription(product); if (_sd) return _sd;
   const ean = eanOf(product);
   if (ean && EAN_DESCRIPTION_MAP[ean]) return EAN_DESCRIPTION_MAP[ean];

@@ -14958,8 +14958,8 @@ function lineGen(cfg){
   })();
   host.querySelectorAll('.lgItem').forEach(function(el){ el.onclick=function(){ var n=S[+el.getAttribute('data-i')].name; hid[n]=!hid[n]; lineGen(cfg); }; });
 }
-var NEWP=['BE12 Pro','AX12','AX12 Pro','A33','MX12','ME6 Pro','Pro-7-Lite / i33','Pro-7-M / OAP3600','Pro-6-M / OAP3000','TEM2005D','TEM2008D','T/SC9-A&B 套装','I/SM105HP','SX108','I/SM105P','SGF2'];
-var NEWX=[['Pro-7-Lite / i33',/Pro[ \-]?7[ \-]?Lite|(^|[^A-Za-z0-9])i33(?![0-9])/i],['Pro-7-M / OAP3600',/Pro[ \-]?7[ \-]?M(?![A-Za-z0-9])|OAP[ \-]?3600/i],['Pro-6-M / OAP3000',/Pro[ \-]?6[ \-]?M(?![A-Za-z0-9])|OAP[ \-]?3000/i],['TEM2005D',/TEM[ \-]?2005D/i],['TEM2008D',/TEM[ \-]?2008D/i],['T/SC9-A&B 套装',/SC9/i],['I/SM105HP',/SM1?05HP/i],['SX108',/(^|[^A-Za-z0-9])SX108(?![0-9])/i],['I/SM105P',/SM105P/i],['SGF2',/(^|[^A-Za-z0-9])SGF2(?![0-9])/i]];
+var NEWP=['BE12 Pro','BE3','AX12','AX12 Pro','A33','MX12','ME6 Pro','Pro-7-Lite / i33','Pro-7-M / OAP3600','Pro-6-M / OAP3000','TEM2005D','TEM2008D','T/SC9-A&B 套装','I/SM105HP','SX108','I/SM105P','SGF2'];
+var NEWX=[['BE3',/(^|[^A-Za-z0-9])BE3V\d/i],['Pro-7-Lite / i33',/Pro[ \-]?7[ \-]?Lite|(^|[^A-Za-z0-9])i33(?![0-9])/i],['Pro-7-M / OAP3600',/Pro[ \-]?7[ \-]?M(?![A-Za-z0-9])|OAP[ \-]?3600/i],['Pro-6-M / OAP3000',/Pro[ \-]?6[ \-]?M(?![A-Za-z0-9])|OAP[ \-]?3000/i],['TEM2005D',/TEM[ \-]?2005D/i],['TEM2008D',/TEM[ \-]?2008D/i],['T/SC9-A&B 套装',/SC9/i],['I/SM105HP',/SM1?05HP/i],['SX108',/(^|[^A-Za-z0-9])SX108(?![0-9])/i],['I/SM105P',/SM105P/i],['SGF2',/(^|[^A-Za-z0-9])SGF2(?![0-9])/i]];
 function normFam(x){ return String(x||'').replace(/\(.*?\)/g,'').replace(/[^A-Za-z0-9]/g,'').toUpperCase(); }
 var NEWRE=NEWP.slice().sort(function(a,b){return b.length-a.length;}).map(function(n){ return [n,new RegExp('(^|[^A-Za-z0-9])'+n.replace(/ /g,'[ \\-]?')+'(?![0-9]|[ \\-]?Pro)','i')]; });
 function newOf(p){ p=String(p||''); for(var x=0;x<NEWX.length;x++){ if(NEWX[x][1].test(p)) return NEWX[x][0]; } for(var k=0;k<NEWRE.length;k++){ var n=NEWRE[k][0]; var re=/ Pro$/.test(n)?new RegExp('(^|[^A-Za-z0-9])'+n.replace(/ /g,'[ \\-]?')+'(?![A-Za-z0-9])','i'):NEWRE[k][1]; if(re.test(p)) return n; } return null; }

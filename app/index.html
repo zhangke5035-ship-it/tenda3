@@ -10318,6 +10318,8 @@ const CUSTOMER_DEFAULT_VIEW = {
 };
 const CP_VIEW_ID_MAP = { newproducts: 'cpViewNewProducts', orders: 'cpViewOrders', returns: 'cpViewReturns', quotes: 'cpViewQuotes' };
 function applyCustomerDefaultView(session){
+  try{ const sv=localStorage.getItem('cp_last_view'); if(sv){ setTimeout(function(){ const b2=document.querySelector('#cpNav .navitem[data-cpview="'+sv+'"]'); if(b2 && b2.style.display!=='none' && !b2.hidden && !b2.classList.contains('active') && b2.offsetParent!==null) b2.click(); },500); } }catch(e){}
+  if(localStorage.getItem('cp_last_view')) return;
   const userEmail = ((session && session.user && session.user.email) || '').toLowerCase();
   const defaultView = CUSTOMER_DEFAULT_VIEW[userEmail];
   if (!defaultView) return;
@@ -14418,7 +14420,7 @@ function cpInitNav(){
     btn.addEventListener('click', ()=>{
       nav.querySelectorAll('.navitem').forEach(b=>b.classList.remove('active'));
       btn.classList.add('active');
-      const view = btn.dataset.cpview;
+      const view = btn.dataset.cpview; try{ localStorage.setItem('cp_last_view', view); }catch(e){}
       const npView = document.getElementById('cpViewNewProducts');
       const ordersView = document.getElementById('cpViewOrders');
       const raView = document.getElementById('cpViewReturns');

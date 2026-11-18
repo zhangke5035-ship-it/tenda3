@@ -1372,7 +1372,6 @@
         <div class="navgroup-head"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg></span>报价管理<span class="chevron">▾</span></div>
         <div class="navgroup-body">
           <div class="navitem sub" data-view="pricing-customer"><span class="dot"></span>客户报价</div>
-          <div class="navitem sub" data-view="pricing-hq"><span class="dot"></span>总部报价</div>
         </div>
       </div>
 
@@ -2070,33 +2069,6 @@
       </div>
     </section>
 
-    <section class="view" id="view-pricing-hq">
-      <div class="viewhead">
-        <div><h2>报价管理 · 总部报价</h2><p>总部下发的产品结算价与指导零售价</p></div>
-      </div>
-        <div class="notebox">
-          总部报价子模块框架已搭建，具体字段与数据将在后续录入（如总部指导零售价、总部结算价、生效日期等）。
-        </div>
-        <div class="panel">
-          <div class="panel-head"><h3>新增总部报价</h3></div>
-          <div class="form-grid">
-            <div class="field"><label>产品型号</label><input id="hq_product" list="hqModelDatalist" placeholder="例如 W15-Pro"></div>
-            <div class="field"><label>总部指导零售价 (PLN)</label><input id="hq_retail" type="number" placeholder="199"></div>
-            <div class="field"><label>总部结算价 (PLN)</label><input id="hq_settle" type="number" placeholder="120"></div>
-            <div class="field"><label>盈亏平衡价 (USD)</label><input id="hq_breakeven" type="number" step="0.01" placeholder="24.05"></div>
-            <div class="field"><label>生效日期</label><input id="hq_date" type="date"></div>
-          </div>
-          <button class="btn" id="addHqPriceBtn">新增</button>
-        </div>
-        <div class="panel">
-          <div class="panel-head"><h3>总部报价列表</h3></div>
-          <table>
-            <thead><tr><th>产品型号</th><th>总部指导零售价(PLN)</th><th>总部结算价(PLN)</th><th>盈亏平衡价(USD)</th><th>生效日期</th><th></th></tr></thead>
-            <tbody id="hqPriceTableBody"></tbody>
-          </table>
-        </div>
-
-      </section>
 
     <section class="view" id="view-expense-reimbursement">
       <div class="viewhead">
@@ -5106,6 +5078,22 @@ var SEP_PRICE_OVERRIDES = {
   });
   priceList = priceList.concat(addRows);
 })();
+/* fill missing product page links (Tenda models): reuse same-model link, else derive from site pattern */
+setTimeout(function(){
+  try{
+    var known={};
+    priceList.forEach(function(p){ if(p.productPage && !known[p.product]) known[p.product]=p.productPage; });
+    priceList.forEach(function(p){
+      if(p.productPage) return;
+      if(known[p.product]){ p.productPage=known[p.product]; return; }
+      var brand='Tenda'; try{ brand=rowBrand(p)||'Tenda'; }catch(e){}
+      if(String(brand).toLowerCase()!=='tenda') return;
+      var base=String(p.product||'').replace(/^#/,'').replace(/[\(（][^\)）]*[\)）]/g,'').replace(/只装/g,'').replace(/\s+/g,'').trim();
+      if(!base) return;
+      p.productPage='https://www.tendacn.com/pl/product/'+encodeURIComponent(base);
+    });
+  }catch(e){ console.error('productPage fill',e); }
+},0);
 
 let marketingActivityItemsByActivity = {};
 let promotions = [

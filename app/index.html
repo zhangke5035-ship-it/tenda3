@@ -10218,14 +10218,14 @@ function renderCpQuotes(code){
     var cats=uniq('cat'), lifes=uniq('life');
     var hasVer=data.some(function(d){ return !!d.ver; });
     var opt=function(list,cur,all){ return '<option value="">'+cpEsc(all)+'</option>'+list.map(function(x){ return '<option value="'+cpEsc(x)+'"'+(x===cur?' selected':'')+'>'+cpEsc(x)+'</option>'; }).join(''); };
-    var TH='style="text-align:left;padding:9px 8px;white-space:nowrap;"', THR='style="text-align:right;padding:9px 8px;white-space:nowrap;"';
+    var TH='style="text-align:left;padding:9px 8px;white-space:normal;vertical-align:bottom;line-height:1.3;"', THR='style="text-align:right;padding:9px 8px;white-space:normal;vertical-align:bottom;line-height:1.3;"';
     box.innerHTML='<div class="cpq-noprint" style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px;">'
       +'<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">'
       +'<input type="text" id="cpQuotesSearch" class="cpq-ctl" style="width:230px;" placeholder="'+cpEsc(cpT('search'))+'" value="'+cpEsc(CPQ.search)+'">'
       +'<select id="cpqCat" class="cpq-ctl">'+opt(cats,CPQ.cat,cpT('allCat'))+'</select>'
       +'<select id="cpqLife" class="cpq-ctl">'+opt(lifes,CPQ.life,cpT('allLife'))+'</select>'
       +'<label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;user-select:none;"><input type="checkbox" id="cpqStock" style="accent-color:#FF6900;width:15px;height:15px;"'+(CPQ.stock?' checked':'')+'>'+cpEsc(cpT('inStock'))+'</label>'
-      +'<span style="font-size:12.5px;color:var(--text-faint);">'+cpEsc(cpT('month'))+': 11 · PLN</span></div>'
+      +'<span style="font-size:12.5px;margin-left:6px;padding-left:14px;border-left:1px solid var(--border);color:var(--text-faint);">'+cpEsc(cpT('month'))+': 11 · PLN</span></div>'
       +'<div style="display:flex;align-items:center;gap:14px;"><span id="cpQuotesCount" style="font-size:13px;color:var(--text-faint);"></span>'
       +'<div style="position:relative;"><button type="button" class="cpq-btn" id="cpqExportBtn">'+cpEsc(cpT('exportBtn'))+' ▾</button><div class="cpq-menu" id="cpqMenu" style="display:none;"><button type="button" id="cpqXls">'+cpEsc(cpT('xls'))+'</button><button type="button" id="cpqPdf">'+cpEsc(cpT('pdf'))+'</button></div></div></div></div>'
       +'<div id="cpQuotesPrintRoot"><div style="overflow:auto;border:1px solid var(--border);border-radius:var(--radius);"><table style="width:100%;border-collapse:collapse;font-size:12.5px;"><thead><tr style="background:var(--surface-alt);color:var(--text-dim);">'
@@ -10252,10 +10252,10 @@ function renderCpQuotes(code){
           +'<td style="padding:8px 8px;'+MONO+'">'+cpEsc(d.ean)+'</td><td style="padding:8px 8px;white-space:nowrap;">'+cpEsc(d.life)+'</td>'
           +'<td style="padding:8px 8px;text-align:right;'+MONO+'">'+Number(d.retail).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})+'</td>'
           +'<td style="padding:8px 8px;text-align:right;'+MONO+(d.stock>0?'color:var(--good);font-weight:700;':'color:var(--text-faint);')+'">'+(d.stock==null?'':Number(d.stock).toLocaleString('en-US'))+'</td>'
-          +'<td style="padding:8px 8px;text-align:right;'+MONO+(d.transit>0?'color:#B45309;font-weight:700;':'color:var(--text-faint);')+'">'+(d.transit>0?Number(d.transit).toLocaleString('en-US')+'<div style="font-size:10.5px;font-weight:400;color:var(--text-faint);white-space:normal;line-height:1.25;max-width:84px;margin-left:auto;">预计到货 2027年1月</div>':'0')+'</td>'
+          +'<td style="padding:8px 8px;text-align:right;'+MONO+(d.transit>0?'color:#B45309;font-weight:700;':'color:var(--text-faint);')+'">'+(d.transit>0?Number(d.transit).toLocaleString('en-US')+'<div style="font-size:11px;font-weight:400;color:#4B5563;white-space:normal;line-height:1.3;max-width:96px;margin-left:auto;">预计到货 2027年1月</div>':'0')+'</td>'
           +'<td style="padding:8px 8px;text-align:right;'+MONO+'font-weight:700;">'+Number(d.price).toFixed(2)+'</td>'
-          +'<td style="padding:8px 8px;">'+cpEsc(d.cn)+'</td><td style="padding:8px 8px;">'+cpEsc(d.sp)+'</td></tr>';
-      }).join(''):'<tr><td colspan="'+(hasVer?12:11)+'" style="text-align:center;color:var(--text-faint);padding:30px;">'+cpEsc(cpT('none'))+'</td></tr>';
+          +'<td style="padding:8px 8px;white-space:nowrap;">'+cpEsc(d.cn)+'</td><td style="padding:8px 8px;white-space:nowrap;">'+cpEsc(d.sp)+'</td></tr>';
+      }).join(''):'<tr><td colspan="'+(hasVer?13:12)+'" style="text-align:center;color:var(--text-faint);padding:30px;">'+cpEsc(cpT('none'))+'</td></tr>';
       document.getElementById('cpQuotesCount').innerHTML='<b style="color:var(--text);">'+filtered.length+'</b> / '+data.length;
       document.getElementById('cpqExportBtn').disabled=!filtered.length;
       /* pager */

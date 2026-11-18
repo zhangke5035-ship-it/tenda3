@@ -5230,6 +5230,12 @@ async function saveProductDescription(el){
 
 /* ============ 产品类目（参考 tendacn.com/pl 产品线分类，按型号命名规律归类） ============ */
 const CATEGORY_RULES = [
+  /* added: models that previously fell through to the default category */
+  [/^nvr|^tn3\d|^tk\d/i, 'NVR录像机'],
+  [/^bc\d|^tc\d|^ic6/i, '智能摄像机'],
+  [/^tem\d|^sm\d|^sx\d|^sgf\d/i, '交换机'],
+  [/^tsc\d/i, '网络配件'],
+  [/^i\d{2}(?![0-9])|^oap\d|^pro-7/i, '企业AP/天线'],
   [/^nova\b|^mw\d|^mx\d|^me\d\s*pro|^ee\d\s*pro|^ee3s|^me3s/i, 'Mesh路由系统'],
   [/^u\d|^w311mi/i, 'USB无线网卡'],
   [/^o[1346890]\b|^os\d|^o1-5g/i, '室外CPE'],

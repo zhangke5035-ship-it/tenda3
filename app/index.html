@@ -14686,6 +14686,7 @@ if(document.readyState === 'loading'){
   var SL={urgent:['(极缺)','#FDE8E8','#C81E1E'],warning:['(偏低)','#FFEDD5','#C2410C'],obsolete:['(积压)','#FEF3C7','#92400E'],healthy:['(健康)','#DCFCE7','#166534']};
   function render(){
     var root = document.getElementById('cpViewPsi'); if(!root) return;
+    if(!_loaded && !_loading) loadImports();
     injectCss();
     var L = (typeof currentLang!=='undefined') ? currentLang : 'zh', T = function(z,e,p){ return L==='en'?e:(L==='pl'?p:z); };
     var wk = function(w){ var m = /(\d+)年第(\d+)周/.exec(w||''); if(!m) return w||'—'; return L==='en'?('Week '+m[2]+'/'+m[1]):(L==='pl'?('Tydzień '+m[2]+'/'+m[1]):w); };

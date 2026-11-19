@@ -14553,8 +14553,43 @@ if(document.readyState === 'loading'){
     {id:6,cat:'无线扩展器',model:'A18 Pro',desc:'TENDA A18 Pro AC1200 Dual-Band Wi-Fi Range Extender',ean:'6932849424546',life:'成熟期',stock:85,sales:[40,42,38,44],tenda:600,transit:50,price:64.58},
     {id:7,cat:'无线扩展器',model:'A33V2.0',isNew:1,desc:'Tenda A33 AX3000 WiFi 6 Dual Band Wall Plugged Range Extender',ean:'6932849426625',life:'成长期',stock:10,sales:[22,25,28,30],tenda:190,transit:0,price:124.27}
   ];
+  var REPORT = [["A18",7],["TEG1024D",1],["G0-5G-PoE",1],["TEG1005M",8],["nova EX3(2-pack)",1],["TEG1128P-24-410W",1],["TEG2216D",2],["TEG2228P-24-410W",1],["TX12 PRO",3],["TEG2224D",2],["TC3T24C(4MM)",2],["Nova EX12(2-pack)",2],["ME3 Pro(2-pack)V2.0",3],["ME6 Pro(3-pack)",3],["TFC100A",3],["TEG2220P-16-250W",3],["W30E",4],["EE3 Pro(2-pack)",4],["TC3B24C(4MM)",4],["TEG1050F",4],["4G06",6],["TC3B24C(6MM)",5],["TX2L Pro",11],["ME6 Pro(2-pack)",9],["TE3L",10],["TEG1110PF-8-120W",10],["TEG2205D",17],["TEG1124P-24-250W",10],["O6",8],["TEG1120P-16-250W",11],["G0-8G-PoE",11],["TEM2007X",13],["T10",16],["TEG1005D",25],["SM105V2.0",26],["CT100 32GB SD Card",21],["4G08",23],["U2",27],["BE12 Pro",27],["4G03 Pro v2.0",44],["RP7",30],["nova MW6(3-pack)",33],["TE6L Pro",33],["TEG1105PD",40],["i24",35],["O9",34],["A18 Pro",37],["TEF1110P-8-63W",38],["U11",38],["TEM2010X",51],["TEG2210P-8-120W",50],["TEG2208D",52],["nova MW6(2-pack)",52],["AC10",67],["i29",73],["TEG1016G",104],["TEG1105P-4-63W",95],["5G06",91],["MW5G(3-pack)",99],["TX12L Pro",119],["SG105",146],["TEF1109P-8-102W",144],["A9",184],["TEG1008M",176],["N301",420]];
+  var _bdKey = '', _bd = [], _bdFetch = 0, _psiMap = null;
+  function _kn(s){ return String(s||'').replace(/^#/,'').replace(/\s+/g,'').replace(/（/g,'(').replace(/）/g,')').toLowerCase(); }
+  function _sk(s){ return String(s||'').trim().replace(/\s+/g,'').replace(/（/g,'(').replace(/）/g,')').toLowerCase(); }
+  function buildData(){
+    try{
+      var code = (typeof CPQ!=='undefined' && CPQ.code) || '';
+      var sm = (typeof CPQ!=='undefined' && CPQ.stockMap) || _psiMap;
+      var key = priceList.length+'|'+code+'|'+(sm?1:0);
+      if(key===_bdKey) return _bd;
+      if(!sm && !_bdFetch && typeof sb!=='undefined'){
+        _bdFetch = 1;
+        try{ sb.from('tenda_inventory_portal').select('model,qty,in_transit').limit(2000).then(function(r){
+          if(r.error||!r.data) return;
+          var m = {}; r.data.forEach(function(x){ var k=_sk(x.model); m[k]=(m[k]||0)+Number(x.qty||0); m['t:'+k]=(m['t:'+k]||0)+Number(x.in_transit||0); });
+          _psiMap = m; _bdKey = ''; try{ render(); }catch(e){}
+        }); }catch(e){}
+      }
+      var mon = 0; priceList.forEach(function(p){ if(p.cust===code && Number(p.month)>mon) mon = Number(p.month); });
+      var idx = {}, any = {};
+      priceList.forEach(function(p){ var k=_kn(p.product); if(!any[k]) any[k]=p; if(p.cust===code && Number(p.month)===mon && !idx[k]) idx[k]=p; });
+      _bd = REPORT.map(function(r,i){
+        var m = r[0], k = _kn(m), p = idx[k] || any[k] || null, name = p ? String(p.product).replace(/^#/,'') : m, sk = _sk(p?p.product:m);
+        var ean = ''; try{ ean = (p && p.ean) || eanOf(p?p.product:m) || ''; }catch(e){}
+        var life = '未收录'; try{ life = lifecycleOf(p?p.product:m) || '未收录'; }catch(e){}
+        var isNew = 0; try{ isNew = newOf(p?p.product:m) ? 1 : 0; }catch(e){}
+        var desc = ''; try{ desc = productDescription(name) || ''; }catch(e){}
+        var cat = '无线路由器'; try{ cat = productType(name); }catch(e){}
+        var ts = sm ? (sm[sk]||0) : 0, tr = sm ? (sm['t:'+sk]||0) : 0;
+        return {id:i+1,cat:cat,model:name,isNew:isNew,desc:desc,ean:ean,life:life,stock:r[1],sales:[0,0,0,0],tenda:ts,transit:tr,price:Number((p&&p.t3)||0)};
+      }).sort(function(a,b){ return b.stock-a.stock; });
+      _bdKey = key; return _bd;
+    }catch(e){ return DATA; }
+  }
+
   var HIST=[
-    ['2026年第46周 (11.09 - 11.15)','2026-11-16 10:24','7','633','已生效'],
+    ['2026年第47周 (11.16 - 11.22)','2026-11-19 10:00','65','2630','已生效'],
     ['2026年第45周 (11.02 - 11.08)','2026-11-09 14:15','7','689','已归档'],
     ['2026年第44周 (10.26 - 11.01)','2026-11-02 09:40','6','712','已归档']
   ];
@@ -14563,7 +14598,7 @@ if(document.readyState === 'loading'){
   function fmt(n){return Number(n).toLocaleString('en-US');}
   function money(n){return Number(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});}
   function enrich(){
-    return DATA.map(function(d){
+    return buildData().map(function(d){
       var avg=Math.round(d.sales.reduce(function(a,b){return a+b;},0)/d.sales.length);
       var last=d.sales[d.sales.length-1];
       var wos=avg>0?+(d.stock/avg).toFixed(1):99;
@@ -14607,7 +14642,7 @@ if(document.readyState === 'loading'){
     });
     var h='';
     h+='<div style="background:#FFF7E6;border:1px solid #FFD591;color:#AD6800;border-radius:6px;padding:8px 12px;font-size:12.5px;margin-bottom:12px;">界面演示:以下为模拟数据,暂未接入真实上传与保存</div>';
-    h+='<div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;"><div><div style="font-size:16px;font-weight:700;">客户库存与智能补货分析 (PSI)</div><div style="font-size:12px;color:var(--text-faint);margin-top:4px;">当前数据周期:2026年第46周 · 建议每周一更新库存与上周销量以获得精准补货建议</div></div>';
+    h+='<div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;"><div><div style="font-size:16px;font-weight:700;">客户库存与智能补货分析 (PSI)</div><div style="font-size:12px;color:var(--text-faint);margin-top:4px;">当前数据周期:2026年第47周 · 建议每周一更新库存与上周销量以获得精准补货建议</div></div>';
     h+='<div style="display:flex;gap:8px;flex-wrap:wrap;"><button class="psi-btn" data-a="hist">上传记录</button><button class="psi-btn" data-a="tpl">下载预填模板</button><button class="psi-btn pri" data-a="up">上传本周库存/销售报告</button></div></div>';
     h+='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;margin-bottom:16px;">';
     h+='<div class="psi-card'+(ST.f==='all'?' on':'')+'" data-f="all"><div class="t">客户现有总库存 (件)</div><div class="n">'+fmt(tot)+'</div><div class="s">覆盖 '+rows.length+' 个活跃合作型号</div></div>';

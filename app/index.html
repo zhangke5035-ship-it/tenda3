@@ -13100,13 +13100,13 @@ const I18N_DICT = [
 ["预计到货","Est. delivery","Szac. dostawa"],
 ["2027年1月","Jan 2027","styczeń 2027"],
 ["库存与补货","Stock & Replenishment","Zapasy i uzupełnienia"],
-["界面演示:以下为模拟数据,暂未接入真实上传与保存","UI demo: mock data only, upload and saving are not connected yet","Wersja demo: dane przykładowe, wgrywanie i zapis nie są jeszcze aktywne"],
+["'+_banner()+'","UI demo: mock data only, upload and saving are not connected yet","Wersja demo: dane przykładowe, wgrywanie i zapis nie są jeszcze aktywne"],
 ["客户库存与智能补货分析 (PSI)","Customer Stock & Smart Replenishment (PSI)","Analiza zapasów i uzupełnień klienta (PSI)"],
 ["当前数据周期:2026年第46周","Data period: 2026 week 46","Okres danych: tydzień 46/2026"],
 ["建议每周一更新库存与上周销量以获得精准补货建议","Update stock and last week sales every Monday for accurate suggestions","Aktualizuj stany i sprzedaż co poniedziałek, aby uzyskać trafne propozycje"],
 ["上传记录","Upload history","Historia wgrań"],
 ["下载预填模板","Download prefilled template","Pobierz szablon"],
-["上传本周库存/销售报告","Upload weekly stock/sales report","Wgraj raport zapasów/sprzedaży"],
+["一键导入本周库存","Upload weekly stock/sales report","Wgraj raport zapasów/sprzedaży"],
 ["客户现有总库存 (件)","Total customer stock (pcs)","Łączny zapas klienta (szt.)"],
 ["覆盖","Covers","Obejmuje"],
 ["个活跃合作型号","active models","aktywnych modeli"],
@@ -14553,15 +14553,68 @@ if(document.readyState === 'loading'){
     {id:6,cat:'无线扩展器',model:'A18 Pro',desc:'TENDA A18 Pro AC1200 Dual-Band Wi-Fi Range Extender',ean:'6932849424546',life:'成熟期',stock:85,sales:[40,42,38,44],tenda:600,transit:50,price:64.58},
     {id:7,cat:'无线扩展器',model:'A33V2.0',isNew:1,desc:'Tenda A33 AX3000 WiFi 6 Dual Band Wall Plugged Range Extender',ean:'6932849426625',life:'成长期',stock:10,sales:[22,25,28,30],tenda:190,transit:0,price:124.27}
   ];
-  var REPORT = [["A18",7],["TEG1024D",1],["G0-5G-PoE",1],["TEG1005M",8],["nova EX3(2-pack)",1],["TEG1128P-24-410W",1],["TEG2216D",2],["TEG2228P-24-410W",1],["TX12 PRO",3],["TEG2224D",2],["TC3T24C(4MM)",2],["Nova EX12(2-pack)",2],["ME3 Pro(2-pack)V2.0",3],["ME6 Pro(3-pack)",3],["TFC100A",3],["TEG2220P-16-250W",3],["W30E",4],["EE3 Pro(2-pack)",4],["TC3B24C(4MM)",4],["TEG1050F",4],["4G06",6],["TC3B24C(6MM)",5],["TX2L Pro",11],["ME6 Pro(2-pack)",9],["TE3L",10],["TEG1110PF-8-120W",10],["TEG2205D",17],["TEG1124P-24-250W",10],["O6",8],["TEG1120P-16-250W",11],["G0-8G-PoE",11],["TEM2007X",13],["T10",16],["TEG1005D",25],["SM105V2.0",26],["CT100 32GB SD Card",21],["4G08",23],["U2",27],["BE12 Pro",27],["4G03 Pro v2.0",44],["RP7",30],["nova MW6(3-pack)",33],["TE6L Pro",33],["TEG1105PD",40],["i24",35],["O9",34],["A18 Pro",37],["TEF1110P-8-63W",38],["U11",38],["TEM2010X",51],["TEG2210P-8-120W",50],["TEG2208D",52],["nova MW6(2-pack)",52],["AC10",67],["i29",73],["TEG1016G",104],["TEG1105P-4-63W",95],["5G06",91],["MW5G(3-pack)",99],["TX12L Pro",119],["SG105",146],["TEF1109P-8-102W",144],["A9",184],["TEG1008M",176],["N301",420]];
-  var _bdKey = '', _bd = [], _bdFetch = 0, _psiMap = null;
+  var ALIAS = {"repeatertendaa18ac1200mbps":"A18","switchtendateg1024d":"TEG1024D","routertendapoeg05gpoe":"G0-5G-PoE","switchtendateg1005m":"TEG1005M","meshtendanovaex32packwifi6mesh":"nova EX3(2-pack)","switchpoetendateg1128p24410w":"TEG1128P-24-410W","switchtendazarzdzalnyteg2216d":"TEG2216D","switchpoetendazarzdzalnyteg2228p24410w":"TEG2228P-24-410W","routertendatx12prowifi6":"TX12 PRO","switchtendazarzdzalnyteg2224d":"TEG2224D","kameratendatc3t24cps4mm4mpsmartfullcolorturret":"TC3T24C(4MM)","meshtendanovaex122pack":"Nova EX12(2-pack)","meshtendame3prowifi7mesh2pack":"ME3 Pro(2-pack)V2.0","meshtendame6prowifi7mesh3packbe5100":"ME6 Pro(3-pack)","mediakonwertertendatfc100a":"TFC100A","switchpoetendazarzdzalnyteg2220p16250w":"TEG2220P-16-250W","routertendaw30ewifi6":"W30E","meshtendanovaee3pro2packwifi7mesh":"EE3 Pro(2-pack)","kameratendatc3b24cps4mm4mpsmartfullcolorbullet":"TC3B24C(4MM)","switchtendateg1050f48ge2sfp":"TEG1050F","routertenda4g06lte":"4G06","kameratendatc3b24cps6mm4mpsmartfullcolorbullet":"TC3B24C(6MM)","routertendatx2lprowifi6":"TX2L Pro","meshtendame6prowifi7mesh2packbe5100":"ME6 Pro(2-pack)","routertendate3lwifi7":"TE3L","switchpoetendateg1110pf8120w":"TEG1110PF-8-120W","switchtendazarzdzalnyteg2205d":"TEG2205D","switchpoetendateg1124p24250w":"TEG1124P-24-250W","aptendacpeo6":"O6","switchpoetendateg1120p16250w":"TEG1120P-16-250W","routertendapoeg08gpoe":"G0-8G-PoE","switchtendatem2007x":"TEM2007X","repeatertendat10":"T10","switchtendateg1005dv4":"TEG1005D","switchtendasm105ethernet25g":"SM105V2.0","tendact10032gbsdcardtendact10032gbsdcard":"CT100 32GB SD Card","routertenda4g08lteac1200dualbandwifi4g":"4G08","adapterwifiusbtendau2wifi6ax300":"U2","routertendabe12prowifi7":"BE12 Pro","routertenda4g03prolte4g":"4G03 Pro v2.0","kameratendarp75mp":"RP7","domowysystemwifitendameshnovamw63pack":"nova MW6(3-pack)","routertendate6lprowifi7":"TE6L Pro","switchpoetendateg1105pd":"TEG1105PD","aptendai24":"i24","aptendacpeo9":"O9","repeatertendaa18proac1200":"A18 Pro","switchpoetendatef1110p863w":"TEF1110P-8-63W","adapterwifiusbtendau11wifi6":"U11","switchtendatem2010x25ge10gsfp":"TEM2010X","switchpoetendateg2210p8120w":"TEG2210P-8-120W","switchtendazarzdzalnyteg2208d":"TEG2208D","domowysystemwifitendameshnovamw62pack":"nova MW6(2-pack)","routertendaac10":"AC10","aptendai29ax3000wifi6":"i29","switchtendateg1016g":"TEG1016G","switchpoetendateg1105p463w":"TEG1105P-4-63W","routertenda5g065gax3000simwifi6":"5G06","domowysystemwifitendameshnovamw5g3pack":"MW5G(3-pack)","routertendatx12lprowifi6":"TX12L Pro","switchtendasg105":"SG105","switchpoetendatef1109p8102w":"TEF1109P-8-102W","repeatertendaa9":"A9","switchtendateg1008mgigabitethernet":"TEG1008M","routertendan301":"N301"};
+  var LATEST = null, _loading = 0, _loaded = 0, _bdKey = '', _bd = [], _bdFetch = 0, _psiMap = null, _pk = null, _pkN = -1;
   function _kn(s){ return String(s||'').replace(/^#/,'').replace(/\s+/g,'').replace(/（/g,'(').replace(/）/g,')').toLowerCase(); }
   function _sk(s){ return String(s||'').trim().replace(/\s+/g,'').replace(/（/g,'(').replace(/）/g,')').toLowerCase(); }
+  function _norm(s){ return String(s||'').toLowerCase().replace(/[^a-z0-9]/g,''); }
+  function _prodKeys(){
+    if(_pk && _pkN===priceList.length) return _pk;
+    _pk = {}; _pkN = priceList.length;
+    priceList.forEach(function(p){ var raw = String(p.product||'').replace(/^#/,''); var k = _norm(raw.replace(/v\d+(\.\d+)*$/i,'')); if(k && !_pk[k]) _pk[k] = raw.replace(/v\d+(\.\d+)*$/i,''); });
+    return _pk;
+  }
+  function matchModel(name){
+    var n = _norm(name); if(ALIAS[n]) return ALIAS[n];
+    var pk = _prodKeys(), best = '', bl = 0;
+    Object.keys(pk).forEach(function(k){ if(k.length>=4 && n.indexOf(k)>=0 && k.length>bl){ best = k; bl = k.length; } });
+    return best ? pk[best] : '';
+  }
+  function fmtTime(s){ try{ return new Date(s).toLocaleString('zh-CN',{hour12:false}); }catch(e){ return String(s||''); } }
+  function isoWeek(d){ var x = new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())); var n = x.getUTCDay()||7; x.setUTCDate(x.getUTCDate()+4-n); var y0 = new Date(Date.UTC(x.getUTCFullYear(),0,1)); return x.getUTCFullYear()+'年第'+Math.ceil(((x-y0)/86400000+1)/7)+'周'; }
+  function _banner(){
+    if(!LATEST) return _loaded ? '尚未导入库存报告。请点击右上角「一键导入本周库存」上传 .xlsx 文件(列: Nazwa krótka / Stan dost.)' : '正在加载导入记录…';
+    return '最近导入: '+fmtTime(LATEST.created_at)+' · '+(LATEST.file_name||'')+' · '+LATEST.row_count+' 个品名 / '+fmt(LATEST.total_qty)+' 件。每周请重新导入以更新库存(销量数据暂未提供)';
+  }
+  function _period(){ return '当前数据周期:'+(LATEST?(LATEST.week_label||'—'):'—')+' · 建议每周一导入最新库存以获得补货建议'; }
+  function loadImports(){
+    if(_loading || typeof sb==='undefined') return; _loading = 1;
+    try{ sb.from('customer_stock_imports').select('id,created_at,file_name,week_label,row_count,total_qty,rows').order('created_at',{ascending:false}).limit(30).then(function(r){
+      _loading = 0; _loaded = 1; if(r.error||!r.data) return;
+      HIST.length = 0;
+      r.data.forEach(function(x,i){ HIST.push([(x.week_label||'')+' · '+(x.file_name||''), fmtTime(x.created_at), x.row_count+' 个品名', fmt(x.total_qty)+' 件', i===0?'已生效':'已归档']); });
+      LATEST = r.data[0]||null; _bdKey = ''; try{ render(); }catch(e){}
+    }); }catch(e){ _loading = 0; }
+  }
+  function pick(){ var inp = document.createElement('input'); inp.type = 'file'; inp.accept = '.xlsx,.xls,.csv'; inp.onchange = function(){ if(inp.files[0]) doImport(inp.files[0]); }; inp.click(); }
+  function doImport(f){
+    var rd = new FileReader();
+    rd.onload = function(){
+      try{
+        var wb = XLSX.read(rd.result,{type:'array'}), ws = wb.Sheets[wb.SheetNames[0]], arr = XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+        var hn = 0, hq = 1; (arr[0]||[]).forEach(function(c,i){ var s = String(c).toLowerCase(); if(/nazwa|name|型号|produkt|model/.test(s)) hn = i; else if(/stan|stock|qty|ilo|库存|数量/.test(s)) hq = i; });
+        var map = {}; arr.slice(1).forEach(function(r){ var n = String(r[hn]||'').trim(), q = Number(String(r[hq]).replace(/[\s]/g,'').replace(',','.')); if(n && q>0) map[n] = (map[n]||0)+Math.round(q); });
+        var rows = Object.keys(map).map(function(n){ return {n:n,q:map[n]}; });
+        if(!rows.length){ toast('未识别到有效库存行(需要列: Nazwa krótka / Stan dost.)'); return; }
+        var tot = rows.reduce(function(a,r){ return a+r.q; },0);
+        sb.from('customer_stock_imports').insert({file_name:f.name,week_label:isoWeek(new Date()),row_count:rows.length,total_qty:tot,rows:rows}).then(function(r){
+          if(r.error){ toast('导入失败: '+r.error.message); return; }
+          toast('导入成功: '+rows.length+' 个品名 / '+fmt(tot)+' 件'); loadImports();
+        });
+      }catch(e){ toast('文件解析失败,请检查格式'); }
+    };
+    rd.readAsArrayBuffer(f);
+  }
+  function tpl(){
+    try{ var aoa = [['Nazwa krótka','Stan dost.']]; ((LATEST&&LATEST.rows)||[]).forEach(function(r){ aoa.push([r.n,'']); });
+      var wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(aoa),'Arkusz1'); XLSX.writeFile(wb,'Stock_template.xlsx'); }catch(e){ toast('模板生成失败'); }
+  }
   function buildData(){
     try{
-      var code = (typeof CPQ!=='undefined' && CPQ.code) || '';
+      if(!_loaded && !_loading) loadImports();
+      var code = (typeof CPQ!=='undefined' && CPQ.code) || 'ELTROX';
       var sm = (typeof CPQ!=='undefined' && CPQ.stockMap) || _psiMap;
-      var key = priceList.length+'|'+code+'|'+(sm?1:0);
+      var key = priceList.length+'|'+code+'|'+(sm?1:0)+'|'+(LATEST?LATEST.id:0);
       if(key===_bdKey) return _bd;
       if(!sm && !_bdFetch && typeof sb!=='undefined'){
         _bdFetch = 1;
@@ -14574,25 +14627,27 @@ if(document.readyState === 'loading'){
       var mon = 0; priceList.forEach(function(p){ if(p.cust===code && Number(p.month)>mon) mon = Number(p.month); });
       var idx = {}, any = {};
       priceList.forEach(function(p){ var k=_kn(p.product); if(!any[k]) any[k]=p; if(p.cust===code && Number(p.month)===mon && !idx[k]) idx[k]=p; });
-      _bd = REPORT.map(function(r,i){
-        var m = r[0], k = _kn(m), p = idx[k] || any[k] || null, name = p ? String(p.product).replace(/^#/,'') : m, sk = _sk(p?p.product:m);
-        var ean = ''; try{ ean = (p && p.ean) || eanOf(p?p.product:m) || ''; }catch(e){}
-        var life = '未收录'; try{ life = lifecycleOf(p?p.product:m) || '未收录'; }catch(e){}
-        var isNew = 0; try{ isNew = newOf(p?p.product:m) ? 1 : 0; }catch(e){}
-        var desc = ''; try{ desc = productDescription(name) || ''; }catch(e){}
-        var cat = '无线路由器'; try{ cat = productType(name); }catch(e){}
+      var agg = {}, order = [];
+      ((LATEST&&LATEST.rows)||[]).forEach(function(r){ var m = matchModel(r.n); var kk = m ? 'm:'+_kn(m) : 'u:'+r.n; if(!agg[kk]){ agg[kk] = {m:m,n:r.n,q:0}; order.push(kk); } agg[kk].q += Number(r.q)||0; });
+      _bd = order.map(function(kk,i){
+        var a = agg[kk], m = a.m, p = m ? (idx[_kn(m)] || any[_kn(m)] || null) : null, name = p ? String(p.product).replace(/^#/,'') : (m||a.n), sk = _sk(p?p.product:m);
+        var ean = '', life = '未收录', isNew = 0, desc = '', cat = m ? '无线路由器' : '未匹配', price = 0;
+        if(m){
+          try{ ean = (p && p.ean) || eanOf(p?p.product:m) || ''; }catch(e){}
+          try{ life = lifecycleOf(p?p.product:m) || '未收录'; }catch(e){}
+          try{ isNew = newOf(p?p.product:m) ? 1 : 0; }catch(e){}
+          try{ desc = productDescription(name) || ''; }catch(e){}
+          try{ cat = productType(name); }catch(e){}
+          try{ if(p && p.retailPLN){ var vat = p.vatRate!=null ? p.vatRate : 0.23; var br = 'Tenda'; try{ br = rowBrand(p)||'Tenda'; }catch(e){} price = Number(computeFinalPurchasePrice(p.retailPLN, br==='IP-COM'?10:(code==='ELTROX'?11:7), vat, p.t3))||0; } }catch(e){}
+        } else { desc = a.n; }
         var ts = sm ? (sm[sk]||0) : 0, tr = sm ? (sm['t:'+sk]||0) : 0;
-        return {id:i+1,cat:cat,model:name,isNew:isNew,desc:desc,ean:ean,life:life,stock:r[1],sales:[0,0,0,0],tenda:ts,transit:tr,price:Number((p&&p.t3)||0)};
+        return {id:i+1,cat:cat,model:name,isNew:isNew,desc:desc,ean:ean,life:life,stock:a.q,sales:[0,0,0,0],tenda:ts,transit:tr,price:price};
       }).sort(function(a,b){ return b.stock-a.stock; });
       _bdKey = key; return _bd;
-    }catch(e){ return DATA; }
+    }catch(e){ return []; }
   }
 
-  var HIST=[
-    ['2026年第47周 (11.16 - 11.22)','2026-11-19 10:00','65','2630','已生效'],
-    ['2026年第45周 (11.02 - 11.08)','2026-11-09 14:15','7','689','已归档'],
-    ['2026年第44周 (10.26 - 11.01)','2026-11-02 09:40','6','712','已归档']
-  ];
+  var HIST = [];
   var ST={q:'',f:'all',weeks:4,custom:{},modal:0,drawer:0};
   function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
   function fmt(n){return Number(n).toLocaleString('en-US');}
@@ -14642,8 +14697,8 @@ if(document.readyState === 'loading'){
     });
     var h='';
     h+='<div style="background:#FFF7E6;border:1px solid #FFD591;color:#AD6800;border-radius:6px;padding:8px 12px;font-size:12.5px;margin-bottom:12px;">界面演示:以下为模拟数据,暂未接入真实上传与保存</div>';
-    h+='<div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;"><div><div style="font-size:16px;font-weight:700;">客户库存与智能补货分析 (PSI)</div><div style="font-size:12px;color:var(--text-faint);margin-top:4px;">当前数据周期:2026年第47周 · 建议每周一更新库存与上周销量以获得精准补货建议</div></div>';
-    h+='<div style="display:flex;gap:8px;flex-wrap:wrap;"><button class="psi-btn" data-a="hist">上传记录</button><button class="psi-btn" data-a="tpl">下载预填模板</button><button class="psi-btn pri" data-a="up">上传本周库存/销售报告</button></div></div>';
+    h+='<div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;"><div><div style="font-size:16px;font-weight:700;">客户库存与智能补货分析 (PSI)</div><div style="font-size:12px;color:var(--text-faint);margin-top:4px;">'+_period()+'</div></div>';
+    h+='<div style="display:flex;gap:8px;flex-wrap:wrap;"><button class="psi-btn" data-a="hist">导入记录</button><button class="psi-btn" data-a="tpl">下载预填模板</button><button class="psi-btn pri" data-a="up">上传本周库存/销售报告</button></div></div>';
     h+='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;margin-bottom:16px;">';
     h+='<div class="psi-card'+(ST.f==='all'?' on':'')+'" data-f="all"><div class="t">客户现有总库存 (件)</div><div class="n">'+fmt(tot)+'</div><div class="s">覆盖 '+rows.length+' 个活跃合作型号</div></div>';
     h+='<div class="psi-card" style="cursor:default;"><div class="t">上周终端总销量 (件)</div><div class="n">'+fmt(last)+'</div><div class="s">较前一周环比稳步增长</div></div>';
@@ -14692,11 +14747,11 @@ if(document.readyState === 'loading'){
       if(el.dataset.f){ST.f=(ST.f===el.dataset.f&&el.classList.contains('psi-card'))?'all':el.dataset.f;render();return;}
       var a=el.dataset.a;
       if(a==='closem'&&e.target!==el&&!e.target.dataset.a) return;
-      if(a==='up'){ST.modal=1;render();}
+      if(a==='up'){pick();}
       else if(a==='closem'){ST.modal=0;render();}
       else if(a==='hist'){ST.drawer=1;render();}
       else if(a==='closed'){ST.drawer=0;render();}
-      else if(a==='tpl'){toast('演示:预填模板下载暂未开放');}
+      else if(a==='tpl'){tpl();}
       else if(a==='fake'){ST.modal=0;render();toast('演示:上传功能暂未开放');}
       else if(a==='order'){toast('演示:补货订单暂未生成');}
     });

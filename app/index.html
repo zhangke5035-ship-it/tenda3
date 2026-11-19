@@ -14703,19 +14703,15 @@ if(document.readyState === 'loading'){
     h+='<div style="display:flex;gap:8px;flex-wrap:wrap;"><button class="psi-btn" data-a="hist">导入记录</button><button class="psi-btn pri" data-a="up">一键导入本周库存</button></div></div>';
     h+='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;margin-bottom:16px;">';
     h+='<div class="psi-card'+(ST.f==='all'?' on':'')+'" data-f="all"><div class="t">客户现有总库存 (件)</div><div class="n">'+fmt(tot)+'</div><div class="s">覆盖 '+rows.length+' 个活跃合作型号</div></div>';
-    h+='<div class="psi-card" style="cursor:default;"><div class="t">上周终端总销量 (件)</div><div class="n">'+fmt(last)+'</div><div class="s">较前一周环比稳步增长</div></div>';
-    h+='<div class="psi-card'+(ST.f==='urgent'?' on':'')+'" data-f="urgent"><div class="t" style="color:#C81E1E;">急需/预警补货 SKU</div><div class="n" style="color:#C81E1E;">'+(urg+war)+'</div><div class="s">其中 '+urg+' 款可售不足 1.5 wk</div></div>';
-    h+='<div class="psi-card'+(ST.f==='obsolete'?' on':'')+'" data-f="obsolete"><div class="t">淘汰期积压预警</div><div class="n" style="color:#B45309;">'+obs+'</div><div class="s">系统已自动屏蔽其补货建议,建议加速清仓</div></div></div>';
+    h+='</div>';
     h+='<div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;"><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">';
     h+='<input id="psiSearch" class="cpq-ctl" style="width:220px;" placeholder="'+esc(typeof cpT==='function'?cpT('search'):'')+'" value="'+esc(ST.q)+'">';
-    h+='<div style="display:flex;background:#F1F3F5;padding:3px;border-radius:7px;"><span class="psi-tab'+(ST.f==='all'?' on':'')+'" data-f="all">全部 ('+rows.length+')</span><span class="psi-tab'+(ST.f==='urgent'?' on':'')+'" data-f="urgent">需补货 ('+(urg+war)+')</span><span class="psi-tab'+(ST.f==='obsolete'?' on':'')+'" data-f="obsolete">淘汰期积压 ('+obs+')</span></div></div>';
-    h+='<div style="font-size:12.5px;display:flex;align-items:center;gap:8px;">目标安全库存周期:<select id="psiWeeks" class="cpq-ctl" style="height:32px;">';
-    [[3,'3 wk'],[4,'4 wk'],[6,'6 wk'],[8,'8 wk']].forEach(function(o){h+='<option value="'+o[0]+'"'+(ST.weeks===o[0]?' selected':'')+'>'+o[1]+'</option>';});
-    h+='</select></div></div>';
+    h+='</div>';
+    h+='</div>';
     var TH='style="text-align:left;padding:9px 10px;white-space:normal;vertical-align:bottom;line-height:1.3;"', THR='style="text-align:right;padding:9px 10px;white-space:normal;vertical-align:bottom;line-height:1.3;"';
     h+='<div style="overflow:auto;border:1px solid var(--border);border-radius:var(--radius);"><table style="width:100%;border-collapse:collapse;font-size:12.5px;"><thead><tr style="background:var(--surface-alt);color:var(--text-dim);font-size:11.5px;">';
-    h+='<th '+TH+'>类目</th><th '+TH+'>产品型号</th><th '+TH+'>EAN</th><th '+TH+'>生命周期</th><th '+THR+'>客户现有库存</th><th '+THR+'>预计可售周数</th><th '+THR+'>Tenda在途 / 可售</th></tr></thead><tbody>';
-    if(!list.length) h+='<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--text-faint);">暂无数据</td></tr>';
+    h+='<th '+TH+'>类目</th><th '+TH+'>产品型号</th><th '+TH+'>EAN</th><th '+TH+'>生命周期</th><th '+THR+'>客户现有库存</th><th '+THR+'>Tenda在途 / 可售</th></tr></thead><tbody>';
+    if(!list.length) h+='<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--text-faint);">暂无数据</td></tr>';
     list.forEach(function(r){
       var s=SL[r.status];
       h+='<tr style="border-top:1px solid var(--border);">';
@@ -14723,7 +14719,6 @@ if(document.readyState === 'loading'){
       h+='<td style="padding:8px 10px;"><b>'+esc(r.model)+'</b>'+(r.isNew?' <span class="new-badge">NEW</span>':'')+'<div style="font-size:11px;color:var(--text-faint);max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="'+esc(r.desc)+'">'+esc(r.desc)+'</div></td>';
       h+='<td style="padding:8px 10px;font-family:\'IBM Plex Mono\',monospace;">'+esc(r.ean)+'</td><td style="padding:8px 10px;white-space:nowrap;">'+esc(r.life)+'</td>';
       h+='<td style="padding:8px 10px;text-align:right;font-weight:700;">'+fmt(r.stock)+'</td>';
-      h+='<td style="padding:8px 10px;text-align:right;"><span class="psi-pill" style="background:'+s[1]+';color:'+s[2]+';">'+r.wos+' wk '+s[0]+'</span></td>';
       h+='<td style="padding:8px 10px;text-align:right;"><div style="color:#2563EB;font-weight:600;">'+fmt(r.transit)+'</div><div style="font-size:11px;color:var(--text-faint);">'+fmt(r.tenda)+'</div></td>';
       h+='</tr>';
     });

@@ -10208,7 +10208,7 @@ function cpqBuildPages(cur,total){
   return out;
 }
 function cpqCsv(rows){
-  var cols=[['Category','catEn'],['Brand','brand'],['Product Model','model'],['Version','ver'],['Product Description','desc'],['EAN','ean'],['Lifecycle','life'],['Stock Quantity','stock'],['In Transit','transit'],['In Transit ETA','etaEn'],['Retail Price (incl. VAT, PLN)','retail'],['Final Purchase Price (excl. VAT, PLN)','price'],['CN Code','cn'],['Split Payment','sp'],['Product Page','page']];
+  var cols=[['Category','catEn'],['Brand','brand'],['Product Model','model'],['Version','ver'],['Product Description','desc'],['EAN','ean'],['Lifecycle','life'],['Eltrox Stock'+((typeof CPQ!=='undefined'&&CPQ.eltWeek)?' '+CPQ.eltWeek:''),'elt'],['Tenda Stock','stock'],['In Transit','transit'],['In Transit ETA','etaEn'],['Retail Price (incl. VAT, PLN)','retail'],['Final Purchase Price (excl. VAT, PLN)','price'],['CN Code','cn'],['Split Payment','sp'],['Product Page','page']];
   var cell=function(v){ var s=v==null?'':String(v); return /[",\n\r]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s; };
   var lines=[cols.map(function(c){return cell(c[0]);}).join(',')];
   rows.forEach(function(r){ lines.push(cols.map(function(c){ var v=r[c[1]]; if(c[1]==='price') v=Number(v).toFixed(2); if(c[1]==='ean') v=v?'="'+v+'"':''; return cell(v); }).join(',')); });
@@ -10327,7 +10327,7 @@ function renderCpQuotes(code){
     draw();
     try{ if(window.psiStockLookup) window.psiStockLookup(function(info){
       var L = (typeof currentLang!=='undefined') ? currentLang : 'zh';
-      var wm = /(\d+)$/.exec(String(info.week||'').replace(/周$/,'')); var wl = wm ? ' W'+wm[1] : '';
+      var wm = /(\d+)$/.exec(String(info.week||'').replace(/周$/,'')); var wl = wm ? ' W'+wm[1] : ''; CPQ.eltWeek = wl.trim();
       var th = document.getElementById('cpqEltTh'); if(th) th.textContent = (L==='en'?'Eltrox stock':(L==='pl'?'Stan Eltrox':'Eltrox库存'))+wl;
       data.forEach(function(d){ if(!info.has){ d.elt = null; return; } var k = String(d.model||'').replace(/^#/,'').replace(/\s+/g,'').toLowerCase(); var v = info.map[k]; if(v==null) v = info.map[k.replace(/v\d+(\.\d+)*$/,'')]; d.elt = v||0; });
       draw();

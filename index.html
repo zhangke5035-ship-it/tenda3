@@ -10256,7 +10256,7 @@ function renderCpQuotes(code){
       +'<div style="display:flex;align-items:center;gap:14px;"><span id="cpQuotesCount" style="font-size:13px;color:var(--text-faint);"></span>'
       +'<div style="position:relative;"><button type="button" class="cpq-btn" id="cpqExportBtn">'+cpEsc(cpT('exportBtn'))+' ▾</button><div class="cpq-menu" id="cpqMenu" style="display:none;"><button type="button" id="cpqXls">'+cpEsc(cpT('xls'))+'</button><button type="button" id="cpqPdf">'+cpEsc(cpT('pdf'))+'</button></div></div></div></div>'
       +'<div id="cpQuotesPrintRoot"><div style="overflow:auto;border:1px solid var(--border);border-radius:var(--radius);"><table style="width:100%;border-collapse:collapse;font-size:12.5px;"><thead><tr style="background:var(--surface-alt);color:var(--text-dim);">'
-      +'<th '+TH+'>类目</th><th '+TH+'>品牌</th><th '+TH+'>产品型号</th>'+(hasVer?'<th '+TH+'>版本号</th>':'')+'<th '+TH+'>产品信息描述</th><th '+TH+'>EAN</th><th '+TH+'>生命周期</th><th '+THR+'>库存数量</th><th '+THR+'>在途数量</th><th '+THR+'>含税零售价</th><th '+THR+'>最终采购价（不含税）</th><th '+TH+'>CN编码</th><th '+TH+'>Split Payment</th><th '+TH+'>产品页面</th>'
+      +'<th '+TH+'>类目</th><th '+TH+'>品牌</th><th '+TH+'>产品型号</th>'+(hasVer?'<th '+TH+'>版本号</th>':'')+'<th '+TH+'>产品信息描述</th><th '+TH+'>EAN</th><th '+TH+'>生命周期</th><th '+THR+'>TENDA库存</th><th '+THR+'>TENDA在途</th><th '+THR+'>含税零售价</th><th '+THR+'>最终采购价（不含税）</th><th '+TH+'>CN编码</th><th '+TH+'>Split Payment</th><th '+TH+'>产品页面</th>'
       +'</tr></thead><tbody id="cpQuotesTbody"></tbody></table></div></div><div id="cpqPager" class="cpq-noprint"></div>';
     var MONO='font-family:\'IBM Plex Mono\',monospace;';
     var filtered=[];
@@ -13097,6 +13097,8 @@ const I18N_DICT = [
 ["库存更新时间","Stock updated","Aktualizacja stanu"],
 ["暂无库存数据","No inventory data","Brak danych"],
 ["在途数量","In transit","W drodze"],
+["TENDA库存","Tenda stock","Stan Tenda"],
+["TENDA在途","Tenda in transit","Tenda w drodze"],
 ["预计到货","Est. delivery","Szac. dostawa"],
 ["2027年1月","Jan 2027","styczeń 2027"],
 ["库存上传","Stock Upload","Wgrywanie stanów"],

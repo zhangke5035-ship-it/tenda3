@@ -10256,7 +10256,7 @@ function renderCpQuotes(code){
       +'<div style="display:flex;align-items:center;gap:14px;"><span id="cpQuotesCount" style="font-size:13px;color:var(--text-faint);"></span>'
       +'<div style="position:relative;"><button type="button" class="cpq-btn" id="cpqExportBtn">'+cpEsc(cpT('exportBtn'))+' ▾</button><div class="cpq-menu" id="cpqMenu" style="display:none;"><button type="button" id="cpqXls">'+cpEsc(cpT('xls'))+'</button><button type="button" id="cpqPdf">'+cpEsc(cpT('pdf'))+'</button></div></div></div></div>'
       +'<div id="cpQuotesPrintRoot"><div style="overflow:auto;border:1px solid var(--border);border-radius:var(--radius);"><table style="width:100%;border-collapse:collapse;font-size:12.5px;"><thead><tr style="background:var(--surface-alt);color:var(--text-dim);">'
-      +'<th '+TH+'>类目</th><th '+TH+'>品牌</th><th '+TH+'>产品型号</th>'+(hasVer?'<th '+TH+'>版本号</th>':'')+'<th '+TH+'>产品信息描述</th><th '+TH+'>EAN</th><th '+TH+'>生命周期</th><th '+THR+'>TENDA库存</th><th '+THR+'>TENDA在途</th><th '+THR+'>含税零售价</th><th '+THR+'>最终采购价（不含税）</th><th '+TH+'>CN编码</th><th '+TH+'>Split Payment</th><th '+TH+'>产品页面</th>'
+      +'<th '+TH+'>类目</th><th '+TH+'>品牌</th><th '+TH+'>产品型号</th>'+(hasVer?'<th '+TH+'>版本号</th>':'')+'<th '+TH+'>产品信息描述</th><th '+TH+'>EAN</th><th '+TH+'>生命周期</th><th id="cpqEltTh" '+THR+'>Eltrox库存</th><th '+THR+'>TENDA库存</th><th '+THR+'>TENDA在途</th><th '+THR+'>含税零售价</th><th '+THR+'>最终采购价（不含税）</th><th '+TH+'>CN编码</th><th '+TH+'>Split Payment</th><th '+TH+'>产品页面</th>'
       +'</tr></thead><tbody id="cpQuotesTbody"></tbody></table></div></div><div id="cpqPager" class="cpq-noprint"></div>';
     var MONO='font-family:\'IBM Plex Mono\',monospace;';
     var filtered=[];
@@ -10277,12 +10277,13 @@ function renderCpQuotes(code){
           +'<td style="padding:8px 8px;font-weight:600;white-space:nowrap;">'+cpEsc(d.model)+(d.isNew?'<span class="new-badge">NEW</span>':'')+'</td>'
           +''+(hasVer?'<td style="padding:8px 8px;">'+cpEsc(d.ver)+'</td>':'')+'<td style="padding:8px 8px;min-width:180px;max-width:280px;line-height:1.4;">'+cpEsc(d.desc)+'</td>'
           +'<td style="padding:8px 8px;'+MONO+'">'+cpEsc(d.ean)+'</td><td style="padding:8px 8px;white-space:nowrap;">'+cpEsc(d.life)+'</td>'
+          +'<td style="padding:8px 8px;text-align:right;'+MONO+((d.elt>0)?'font-weight:700;':'color:var(--text-faint);')+'">'+(d.elt==null?'—':Number(d.elt).toLocaleString('en-US'))+'</td>'
           +'<td style="padding:8px 8px;text-align:right;'+MONO+(d.stock>0?'color:var(--good);font-weight:700;':'color:var(--text-faint);')+'">'+(d.stock==null?'':Number(d.stock).toLocaleString('en-US'))+'</td>'
           +'<td style="padding:8px 8px;text-align:right;'+MONO+(d.transit>0?'color:#B45309;font-weight:700;':'color:var(--text-faint);')+'">'+(d.transit>0?'<span class="cpq-tw">'+Number(d.transit).toLocaleString('en-US')+'<span class="cpq-tip">预计到货: 2027年1月</span></span>':'0')+'</td>'
           +'<td style="padding:8px 8px;text-align:right;'+MONO+'">'+Number(d.retail).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})+'</td>'
           +'<td style="padding:8px 8px;text-align:right;'+MONO+'font-weight:700;">'+Number(d.price).toFixed(2)+'</td>'
           +'<td style="padding:8px 8px;white-space:nowrap;">'+cpEsc(d.cn)+'</td><td style="padding:8px 8px;white-space:nowrap;">'+cpEsc(d.sp)+'</td><td style="padding:8px 8px;white-space:nowrap;text-align:center;">'+(d.page&&/^https?:\/\//.test(d.page)?'<a href="'+cpEsc(d.page)+'" target="_blank" rel="noopener" style="color:#FF6900;font-weight:600;text-decoration:none;" title="'+cpEsc(d.model)+'">↗</a>':'<span style="color:var(--text-faint);">—</span>')+'</td></tr>';
-      }).join(''):'<tr><td colspan="'+(hasVer?14:13)+'" style="text-align:center;color:var(--text-faint);padding:30px;">'+cpEsc(cpT('none'))+'</td></tr>';
+      }).join(''):'<tr><td colspan="'+(hasVer?15:14)+'" style="text-align:center;color:var(--text-faint);padding:30px;">'+cpEsc(cpT('none'))+'</td></tr>';
       document.getElementById('cpQuotesCount').innerHTML='<b style="color:var(--text);">'+filtered.length+'</b> / '+data.length;
       document.getElementById('cpqExportBtn').disabled=!filtered.length;
       /* pager */
@@ -10324,6 +10325,13 @@ function renderCpQuotes(code){
     /* stock quantities (cached) */
     var applyStock=function(map){ data.forEach(function(d){ var k=kq(d.model); var qn=map[k]; if(qn==null) qn=map[sv(k)]; if(qn == null && d.ean) qn = map['e:'+String(d.ean).trim()]; var tn=map['t:'+k]; if(tn==null) tn=map['t:'+sv(k)]; if(tn==null && d.ean) tn=map['t:e:'+String(d.ean).trim()]; d.transit=tn||0; d.etaEn=d.transit>0?'Jan 2027':''; d.stock=(qn==null)?0:qn; }); draw(); };
     draw();
+    try{ if(window.psiStockLookup) window.psiStockLookup(function(info){
+      var L = (typeof currentLang!=='undefined') ? currentLang : 'zh';
+      var wm = /(\d+)$/.exec(String(info.week||'').replace(/周$/,'')); var wl = wm ? ' W'+wm[1] : '';
+      var th = document.getElementById('cpqEltTh'); if(th) th.textContent = (L==='en'?'Eltrox stock':(L==='pl'?'Stan Eltrox':'Eltrox库存'))+wl;
+      data.forEach(function(d){ if(!info.has){ d.elt = null; return; } var k = String(d.model||'').replace(/^#/,'').replace(/\s+/g,'').toLowerCase(); var v = info.map[k]; if(v==null) v = info.map[k.replace(/v\d+(\.\d+)*$/,'')]; d.elt = v||0; });
+      draw();
+    }); }catch(e){}
     if(CPQ.stockMap){ applyStock(CPQ.stockMap); }
     else{
       try{
@@ -14612,6 +14620,11 @@ if(document.readyState === 'loading'){
     try{ var aoa = [['Nazwa krótka','Stan dost.']]; ((LATEST&&LATEST.rows)||[]).forEach(function(r){ aoa.push([r.n,'']); });
       var wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(aoa),'Arkusz1'); XLSX.writeFile(wb,'Stock_template.xlsx'); }catch(e){ toast('模板生成失败'); }
   }
+  window.psiStockLookup = function(cb){
+    function done(){ try{ var map = {}, cur = LATEST; if(cur && cur.rows){ cur.rows.forEach(function(r){ var m = matchModel(r.n); if(!m) return; var k = _kn(m); map[k] = (map[k]||0)+Number(r.q||0); }); } cb({map:map,week:cur?cur.week_label:'',has:!!cur}); }catch(e){} }
+    if(_loaded){ done(); return; }
+    loadImports(); var n = 0; var iv = setInterval(function(){ if(_loaded || ++n>40){ clearInterval(iv); done(); } },250);
+  };
   function buildData(){
     try{
       if(!_loaded && !_loading) loadImports();

@@ -13099,14 +13099,13 @@ const I18N_DICT = [
 ["在途数量","In transit","W drodze"],
 ["预计到货","Est. delivery","Szac. dostawa"],
 ["2027年1月","Jan 2027","styczeń 2027"],
-["库存与补货","Stock & Replenishment","Zapasy i uzupełnienia"],
-["'+_banner()+'","UI demo: mock data only, upload and saving are not connected yet","Wersja demo: dane przykładowe, wgrywanie i zapis nie są jeszcze aktywne"],
-["客户库存与智能补货分析 (PSI)","Customer Stock & Smart Replenishment (PSI)","Analiza zapasów i uzupełnień klienta (PSI)"],
+["库存上传","Stock Upload","Wgrywanie stanów"],
+["客户库存上传","Customer Stock Upload","Wgrywanie stanów klienta"],
 ["当前数据周期:2026年第46周","Data period: 2026 week 46","Okres danych: tydzień 46/2026"],
 ["建议每周一更新库存与上周销量以获得精准补货建议","Update stock and last week sales every Monday for accurate suggestions","Aktualizuj stany i sprzedaż co poniedziałek, aby uzyskać trafne propozycje"],
 ["上传记录","Upload history","Historia wgrań"],
 ["下载预填模板","Download prefilled template","Pobierz szablon"],
-["一键导入本周库存","Upload weekly stock/sales report","Wgraj raport zapasów/sprzedaży"],
+["一键导入本周库存","Import this week's stock","Importuj stany z tego tygodnia"],
 ["客户现有总库存 (件)","Total customer stock (pcs)","Łączny zapas klienta (szt.)"],
 ["覆盖","Covers","Obejmuje"],
 ["个活跃合作型号","active models","aktywnych modeli"],
@@ -14573,10 +14572,11 @@ if(document.readyState === 'loading'){
   function fmtTime(s){ try{ return new Date(s).toLocaleString('zh-CN',{hour12:false}); }catch(e){ return String(s||''); } }
   function isoWeek(d){ var x = new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())); var n = x.getUTCDay()||7; x.setUTCDate(x.getUTCDate()+4-n); var y0 = new Date(Date.UTC(x.getUTCFullYear(),0,1)); return x.getUTCFullYear()+'年第'+Math.ceil(((x-y0)/86400000+1)/7)+'周'; }
   function _banner(){
-    if(!LATEST) return _loaded ? '尚未导入库存报告。请点击右上角「一键导入本周库存」上传 .xlsx 文件(列: Nazwa krótka / Stan dost.)' : '正在加载导入记录…';
-    return '最近导入: '+fmtTime(LATEST.created_at)+' · '+(LATEST.file_name||'')+' · '+LATEST.row_count+' 个品名 / '+fmt(LATEST.total_qty)+' 件。每周请重新导入以更新库存(销量数据暂未提供)';
+    var L = (typeof currentLang!=='undefined') ? currentLang : 'zh', T = function(z,e,p){ return L==='en'?e:(L==='pl'?p:z); };
+    if(!LATEST) return _loaded ? T('尚未导入库存报告。请点击右上角「一键导入本周库存」上传 .xlsx 文件(列: Nazwa krótka / Stan dost.)','No stock report imported yet. Click "Import this week\'s stock" (columns: Nazwa krótka / Stan dost.)','Brak zaimportowanego raportu. Kliknij "Importuj stany z tego tygodnia" (kolumny: Nazwa krótka / Stan dost.)') : T('正在加载导入记录…','Loading import history…','Ładowanie historii importów…');
+    return T('最近导入: ','Last import: ','Ostatni import: ')+fmtTime(LATEST.created_at)+' · '+(LATEST.file_name||'')+' · '+LATEST.row_count+T(' 个品名 / ',' items / ',' pozycji / ')+fmt(LATEST.total_qty)+T(' 件。每周请重新导入以更新库存',' pcs. Re-import weekly to refresh stock',' szt. Importuj co tydzień, aby odświeżyć stany');
   }
-  function _period(){ return '当前数据周期:'+(LATEST?(LATEST.week_label||'—'):'—')+' · 建议每周一导入最新库存以获得补货建议'; }
+  function _period(){ var L = (typeof currentLang!=='undefined') ? currentLang : 'zh'; var w = LATEST?(LATEST.week_label||'—'):'—'; return L==='en'?'Data period: '+w:(L==='pl'?'Okres danych: '+w:'当前数据周期:'+w+' · 建议每周一导入最新库存'); }
   function loadImports(){
     if(_loading || typeof sb==='undefined') return; _loading = 1;
     try{ sb.from('customer_stock_imports').select('id,created_at,file_name,week_label,row_count,total_qty,rows').order('created_at',{ascending:false}).limit(30).then(function(r){
@@ -14696,9 +14696,9 @@ if(document.readyState === 'loading'){
       return true;
     });
     var h='';
-    h+='<div style="background:#FFF7E6;border:1px solid #FFD591;color:#AD6800;border-radius:6px;padding:8px 12px;font-size:12.5px;margin-bottom:12px;">界面演示:以下为模拟数据,暂未接入真实上传与保存</div>';
-    h+='<div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;"><div><div style="font-size:16px;font-weight:700;">客户库存与智能补货分析 (PSI)</div><div style="font-size:12px;color:var(--text-faint);margin-top:4px;">'+_period()+'</div></div>';
-    h+='<div style="display:flex;gap:8px;flex-wrap:wrap;"><button class="psi-btn" data-a="hist">导入记录</button><button class="psi-btn" data-a="tpl">下载预填模板</button><button class="psi-btn pri" data-a="up">上传本周库存/销售报告</button></div></div>';
+    h+='<div style="background:#FFF7E6;border:1px solid #FFD591;color:#AD6800;border-radius:6px;padding:8px 12px;font-size:12.5px;margin-bottom:12px;">'+_banner()+'</div>';
+    h+='<div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;"><div><div style="font-size:16px;font-weight:700;">客户库存上传</div><div style="font-size:12px;color:var(--text-faint);margin-top:4px;">'+_period()+'</div></div>';
+    h+='<div style="display:flex;gap:8px;flex-wrap:wrap;"><button class="psi-btn" data-a="hist">导入记录</button><button class="psi-btn" data-a="tpl">下载预填模板</button><button class="psi-btn pri" data-a="up">一键导入本周库存</button></div></div>';
     h+='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;margin-bottom:16px;">';
     h+='<div class="psi-card'+(ST.f==='all'?' on':'')+'" data-f="all"><div class="t">客户现有总库存 (件)</div><div class="n">'+fmt(tot)+'</div><div class="s">覆盖 '+rows.length+' 个活跃合作型号</div></div>';
     h+='<div class="psi-card" style="cursor:default;"><div class="t">上周终端总销量 (件)</div><div class="n">'+fmt(last)+'</div><div class="s">较前一周环比稳步增长</div></div>';
@@ -14770,7 +14770,7 @@ if(document.readyState === 'loading'){
     var v=document.createElement('div'); v.id='cpViewPsi'; v.className='cp-view hidden'; quotes.parentNode.insertBefore(v,quotes.nextSibling);
     var orders=nav.querySelector('.navitem[data-cpview="orders"]');
     var n=document.createElement('div'); n.className='navitem'; n.dataset.cpview='psi';
-    n.innerHTML='<span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg></span>库存与补货';
+    n.innerHTML='<span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg></span>库存上传';
     if(orders&&orders.nextSibling) nav.insertBefore(n,orders.nextSibling); else nav.appendChild(n);
     n.addEventListener('click',function(){
       nav.querySelectorAll('.navitem').forEach(function(b){b.classList.remove('active');}); n.classList.add('active');

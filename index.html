@@ -14555,7 +14555,7 @@ if(document.readyState === 'loading'){
     {id:7,cat:'无线扩展器',model:'A33V2.0',isNew:1,desc:'Tenda A33 AX3000 WiFi 6 Dual Band Wall Plugged Range Extender',ean:'6932849426625',life:'成长期',stock:10,sales:[22,25,28,30],tenda:190,transit:0,price:124.27}
   ];
   var ALIAS = {"repeatertendaa18ac1200mbps":"A18","switchtendateg1024d":"TEG1024D","routertendapoeg05gpoe":"G0-5G-PoE","switchtendateg1005m":"TEG1005M","meshtendanovaex32packwifi6mesh":"nova EX3(2-pack)","switchpoetendateg1128p24410w":"TEG1128P-24-410W","switchtendazarzdzalnyteg2216d":"TEG2216D","switchpoetendazarzdzalnyteg2228p24410w":"TEG2228P-24-410W","routertendatx12prowifi6":"TX12 PRO","switchtendazarzdzalnyteg2224d":"TEG2224D","kameratendatc3t24cps4mm4mpsmartfullcolorturret":"TC3T24C(4MM)","meshtendanovaex122pack":"Nova EX12(2-pack)","meshtendame3prowifi7mesh2pack":"ME3 Pro(2-pack)V2.0","meshtendame6prowifi7mesh3packbe5100":"ME6 Pro(3-pack)","mediakonwertertendatfc100a":"TFC100A","switchpoetendazarzdzalnyteg2220p16250w":"TEG2220P-16-250W","routertendaw30ewifi6":"W30E","meshtendanovaee3pro2packwifi7mesh":"EE3 Pro(2-pack)","kameratendatc3b24cps4mm4mpsmartfullcolorbullet":"TC3B24C(4MM)","switchtendateg1050f48ge2sfp":"TEG1050F","routertenda4g06lte":"4G06","kameratendatc3b24cps6mm4mpsmartfullcolorbullet":"TC3B24C(6MM)","routertendatx2lprowifi6":"TX2L Pro","meshtendame6prowifi7mesh2packbe5100":"ME6 Pro(2-pack)","routertendate3lwifi7":"TE3L","switchpoetendateg1110pf8120w":"TEG1110PF-8-120W","switchtendazarzdzalnyteg2205d":"TEG2205D","switchpoetendateg1124p24250w":"TEG1124P-24-250W","aptendacpeo6":"O6","switchpoetendateg1120p16250w":"TEG1120P-16-250W","routertendapoeg08gpoe":"G0-8G-PoE","switchtendatem2007x":"TEM2007X","repeatertendat10":"T10","switchtendateg1005dv4":"TEG1005D","switchtendasm105ethernet25g":"SM105V2.0","tendact10032gbsdcardtendact10032gbsdcard":"CT100 32GB SD Card","routertenda4g08lteac1200dualbandwifi4g":"4G08","adapterwifiusbtendau2wifi6ax300":"U2","routertendabe12prowifi7":"BE12 Pro","routertenda4g03prolte4g":"4G03 Pro v2.0","kameratendarp75mp":"RP7","domowysystemwifitendameshnovamw63pack":"nova MW6(3-pack)","routertendate6lprowifi7":"TE6L Pro","switchpoetendateg1105pd":"TEG1105PD","aptendai24":"i24","aptendacpeo9":"O9","repeatertendaa18proac1200":"A18 Pro","switchpoetendatef1110p863w":"TEF1110P-8-63W","adapterwifiusbtendau11wifi6":"U11","switchtendatem2010x25ge10gsfp":"TEM2010X","switchpoetendateg2210p8120w":"TEG2210P-8-120W","switchtendazarzdzalnyteg2208d":"TEG2208D","domowysystemwifitendameshnovamw62pack":"nova MW6(2-pack)","routertendaac10":"AC10","aptendai29ax3000wifi6":"i29","switchtendateg1016g":"TEG1016G","switchpoetendateg1105p463w":"TEG1105P-4-63W","routertenda5g065gax3000simwifi6":"5G06","domowysystemwifitendameshnovamw5g3pack":"MW5G(3-pack)","routertendatx12lprowifi6":"TX12L Pro","switchtendasg105":"SG105","switchpoetendatef1109p8102w":"TEF1109P-8-102W","repeatertendaa9":"A9","switchtendateg1008mgigabitethernet":"TEG1008M","routertendan301":"N301"};
-  var LATEST = null, _loading = 0, _loaded = 0, _bdKey = '', _bd = [], _bdFetch = 0, _psiMap = null, _pk = null, _pkN = -1;
+  var IMPORTS = [], LATEST = null, _loading = 0, _loaded = 0, _bdKey = '', _bd = [], _bdFetch = 0, _psiMap = null, _pk = null, _pkN = -1;
   function _kn(s){ return String(s||'').replace(/^#/,'').replace(/\s+/g,'').replace(/（/g,'(').replace(/）/g,')').toLowerCase(); }
   function _sk(s){ return String(s||'').trim().replace(/\s+/g,'').replace(/（/g,'(').replace(/）/g,')').toLowerCase(); }
   function _norm(s){ return String(s||'').toLowerCase().replace(/[^a-z0-9]/g,''); }
@@ -14571,6 +14571,7 @@ if(document.readyState === 'loading'){
     Object.keys(pk).forEach(function(k){ if(k.length>=4 && n.indexOf(k)>=0 && k.length>bl){ best = k; bl = k.length; } });
     return best ? pk[best] : '';
   }
+  function CUR(){ return IMPORTS.filter(function(x){ return x.id===ST.detail; })[0]||null; }
   function fmtTime(s){ try{ return new Date(s).toLocaleString('zh-CN',{hour12:false}); }catch(e){ return String(s||''); } }
   function isoWeek(d){ var x = new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())); var n = x.getUTCDay()||7; x.setUTCDate(x.getUTCDate()+4-n); var y0 = new Date(Date.UTC(x.getUTCFullYear(),0,1)); return x.getUTCFullYear()+'年第'+Math.ceil(((x-y0)/86400000+1)/7)+'周'; }
   function _banner(){
@@ -14585,7 +14586,7 @@ if(document.readyState === 'loading'){
       _loading = 0; _loaded = 1; if(r.error||!r.data) return;
       HIST.length = 0;
       r.data.forEach(function(x,i){ HIST.push([(x.week_label||'')+' · '+(x.file_name||''), fmtTime(x.created_at), x.row_count+' 个品名', fmt(x.total_qty)+' 件', i===0?'已生效':'已归档']); });
-      LATEST = r.data[0]||null; _bdKey = ''; try{ render(); }catch(e){}
+      IMPORTS = r.data; LATEST = r.data[0]||null; _bdKey = ''; try{ render(); }catch(e){}
     }); }catch(e){ _loading = 0; }
   }
   function pick(){ var inp = document.createElement('input'); inp.type = 'file'; inp.accept = '.xlsx,.xls,.csv'; inp.onchange = function(){ if(inp.files[0]) doImport(inp.files[0]); }; inp.click(); }
@@ -14616,7 +14617,7 @@ if(document.readyState === 'loading'){
       if(!_loaded && !_loading) loadImports();
       var code = (typeof CPQ!=='undefined' && CPQ.code) || 'ELTROX';
       var sm = (typeof CPQ!=='undefined' && CPQ.stockMap) || _psiMap;
-      var key = priceList.length+'|'+code+'|'+(sm?1:0)+'|'+(LATEST?LATEST.id:0);
+      var key = priceList.length+'|'+code+'|'+(sm?1:0)+'|'+(CUR()?CUR().id:0);
       if(key===_bdKey) return _bd;
       if(!sm && !_bdFetch && typeof sb!=='undefined'){
         _bdFetch = 1;
@@ -14630,7 +14631,7 @@ if(document.readyState === 'loading'){
       var idx = {}, any = {};
       priceList.forEach(function(p){ var k=_kn(p.product); if(!any[k]) any[k]=p; if(p.cust===code && Number(p.month)===mon && !idx[k]) idx[k]=p; });
       var agg = {}, order = [];
-      ((LATEST&&LATEST.rows)||[]).forEach(function(r){ var m = matchModel(r.n); var kk = m ? 'm:'+_kn(m) : 'u:'+r.n; if(!agg[kk]){ agg[kk] = {m:m,n:r.n,q:0}; order.push(kk); } agg[kk].q += Number(r.q)||0; });
+      ((CUR()&&CUR().rows)||[]).forEach(function(r){ var m = matchModel(r.n); var kk = m ? 'm:'+_kn(m) : 'u:'+r.n; if(!agg[kk]){ agg[kk] = {m:m,n:r.n,q:0}; order.push(kk); } agg[kk].q += Number(r.q)||0; });
       _bd = order.map(function(kk,i){
         var a = agg[kk], m = a.m, p = m ? (idx[_kn(m)] || any[_kn(m)] || null) : null, name = p ? String(p.product).replace(/^#/,'') : (m||a.n), sk = _sk(p?p.product:m);
         var ean = '', life = '未收录', isNew = 0, desc = '', cat = m ? '无线路由器' : '未匹配', price = 0;
@@ -14684,52 +14685,46 @@ if(document.readyState === 'loading'){
   function toast(m){var e=document.createElement('div');e.className='psi-toast';e.textContent=m;document.body.appendChild(e);setTimeout(function(){e.remove();},3200);}
   var SL={urgent:['(极缺)','#FDE8E8','#C81E1E'],warning:['(偏低)','#FFEDD5','#C2410C'],obsolete:['(积压)','#FEF3C7','#92400E'],healthy:['(健康)','#DCFCE7','#166534']};
   function render(){
-    var root=document.getElementById('cpViewPsi'); if(!root) return;
+    var root = document.getElementById('cpViewPsi'); if(!root) return;
     injectCss();
-    var rows=enrich();
-    var tot=rows.reduce(function(a,r){return a+r.stock;},0), last=rows.reduce(function(a,r){return a+r.last;},0);
-    var urg=rows.filter(function(r){return r.status==='urgent';}).length, war=rows.filter(function(r){return r.status==='warning';}).length, obs=rows.filter(function(r){return r.status==='obsolete';}).length;
-    var units=rows.reduce(function(a,r){return a+r.fin;},0), amt=rows.reduce(function(a,r){return a+r.fin*r.price;},0), sel=rows.filter(function(r){return r.fin>0;}).length;
-    var q=ST.q.trim().toLowerCase();
-    var list=rows.filter(function(r){
-      if(q&&(r.model+' '+r.ean+' '+r.desc).toLowerCase().indexOf(q)<0) return false;
-      if(ST.f==='urgent') return r.status==='urgent'||r.status==='warning';
-      if(ST.f==='obsolete') return r.status==='obsolete';
-      return true;
-    });
-    var h='';
-    h+='<div style="background:#FFF7E6;border:1px solid #FFD591;color:#AD6800;border-radius:6px;padding:8px 12px;font-size:12.5px;margin-bottom:12px;">'+_banner()+'</div>';
-    h+='<div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;"><div><div style="font-size:16px;font-weight:700;">客户库存上传</div><div style="font-size:12px;color:var(--text-faint);margin-top:4px;">'+_period()+'</div></div>';
-    h+='<div style="display:flex;gap:8px;flex-wrap:wrap;"><button class="psi-btn" data-a="hist">导入记录</button><button class="psi-btn pri" data-a="up">一键导入本周库存</button></div></div>';
-    h+='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;margin-bottom:16px;">';
-    h+='<div class="psi-card'+(ST.f==='all'?' on':'')+'" data-f="all"><div class="t">客户现有总库存 (件)</div><div class="n">'+fmt(tot)+'</div><div class="s">覆盖 '+rows.length+' 个活跃合作型号</div></div>';
-    h+='</div>';
-    h+='<div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;"><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">';
-    h+='<input id="psiSearch" class="cpq-ctl" style="width:220px;" placeholder="'+esc(typeof cpT==='function'?cpT('search'):'')+'" value="'+esc(ST.q)+'">';
-    h+='</div>';
-    h+='</div>';
-    var TH='style="text-align:left;padding:9px 10px;white-space:normal;vertical-align:bottom;line-height:1.3;"', THR='style="text-align:right;padding:9px 10px;white-space:normal;vertical-align:bottom;line-height:1.3;"';
-    h+='<div style="overflow:auto;border:1px solid var(--border);border-radius:var(--radius);"><table style="width:100%;border-collapse:collapse;font-size:12.5px;"><thead><tr style="background:var(--surface-alt);color:var(--text-dim);font-size:11.5px;">';
-    h+='<th '+TH+'>类目</th><th '+TH+'>产品型号</th><th '+TH+'>EAN</th><th '+TH+'>生命周期</th><th '+THR+'>客户现有库存</th><th '+THR+'>Tenda在途 / 可售</th></tr></thead><tbody>';
-    if(!list.length) h+='<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--text-faint);">暂无数据</td></tr>';
-    list.forEach(function(r){
-      var s=SL[r.status];
-      h+='<tr style="border-top:1px solid var(--border);">';
-      h+='<td style="padding:8px 10px;white-space:nowrap;"><span style="background:#FFF1E6;color:#C2410C;border-radius:999px;padding:2px 9px;font-size:11.5px;">'+esc(r.cat)+'</span></td>';
-      h+='<td style="padding:8px 10px;"><b>'+esc(r.model)+'</b>'+(r.isNew?' <span class="new-badge">NEW</span>':'')+'<div style="font-size:11px;color:var(--text-faint);max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="'+esc(r.desc)+'">'+esc(r.desc)+'</div></td>';
-      h+='<td style="padding:8px 10px;font-family:\'IBM Plex Mono\',monospace;">'+esc(r.ean)+'</td><td style="padding:8px 10px;white-space:nowrap;">'+esc(r.life)+'</td>';
-      h+='<td style="padding:8px 10px;text-align:right;font-weight:700;">'+fmt(r.stock)+'</td>';
-      h+='<td style="padding:8px 10px;text-align:right;"><div style="color:#2563EB;font-weight:600;">'+fmt(r.transit)+'</div><div style="font-size:11px;color:var(--text-faint);">'+fmt(r.tenda)+'</div></td>';
-      h+='</tr>';
-    });
-    h+='</tbody></table></div>';
-    if(ST.modal) h+='<div class="psi-mask" data-a="closem"><div class="psi-box"><div style="display:flex;justify-content:space-between;font-weight:700;margin-bottom:12px;"><span>上传每周库存与销售报告 (PSI)</span><span style="cursor:pointer;" data-a="closem">✕</span></div><div style="border:2px dashed #D1D5DB;border-radius:8px;padding:30px;text-align:center;cursor:pointer;" data-a="fake"><div style="font-weight:600;">点击或拖拽 Excel 文件至此区域上传</div><div style="font-size:12px;color:var(--text-faint);margin-top:6px;">支持 .xlsx / .xls / .csv 格式,系统将自动校验 EAN 编码与库存数值逻辑</div></div><div style="font-size:11.5px;color:var(--text-faint);margin-top:12px;">仅需填写「当前期末库存」与「本周实际销量」,其余字段系统自动匹配。</div></div></div>';
-    if(ST.drawer){ h+='<div class="psi-mask" data-a="closed" style="justify-content:flex-end;"></div><div class="psi-drawer"><div style="display:flex;justify-content:space-between;font-weight:700;margin-bottom:14px;"><span>周报上传历史记录</span><span style="cursor:pointer;" data-a="closed">✕</span></div>';
-      HIST.forEach(function(x){h+='<div style="border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:10px;font-size:12.5px;"><div style="display:flex;justify-content:space-between;font-weight:700;"><span>'+x[0]+'</span><span style="color:#166534;">'+x[4]+'</span></div><div style="color:var(--text-faint);margin-top:4px;">'+x[1]+'</div><div style="color:var(--text-faint);">'+x[2]+' · '+x[3]+'</div></div>';});
-      h+='</div>'; }
-    var st=root.scrollTop; var focusSearch=document.activeElement&&document.activeElement.id==='psiSearch';
-    root.innerHTML=h;
-    if(focusSearch){var i=document.getElementById('psiSearch');i.focus();i.setSelectionRange(i.value.length,i.value.length);}
+    var L = (typeof currentLang!=='undefined') ? currentLang : 'zh', T = function(z,e,p){ return L==='en'?e:(L==='pl'?p:z); };
+    var wk = function(w){ var m = /(\d+)年第(\d+)周/.exec(w||''); if(!m) return w||'—'; return L==='en'?('Week '+m[2]+'/'+m[1]):(L==='pl'?('Tydzień '+m[2]+'/'+m[1]):w); };
+    var TH = 'style="text-align:left;padding:10px 12px;white-space:nowrap;"', THR = 'style="text-align:right;padding:10px 12px;white-space:nowrap;"';
+    var h = '';
+    if(!ST.detail){
+      h += '<div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;"><div><div style="font-size:16px;font-weight:700;">'+T('客户库存上传','Customer Stock Upload','Wgrywanie stanów klienta')+'</div><div style="font-size:12px;color:var(--text-faint);margin-top:4px;">'+T('每周导入一次库存报告 (Nazwa krótka / Stan dost.),点击记录查看型号明细','Import your stock report weekly (Nazwa krótka / Stan dost.); click a record to view model details','Importuj raport stanów co tydzień (Nazwa krótka / Stan dost.); kliknij rekord, aby zobaczyć szczegóły')+'</div></div>';
+      h += '<div style="display:flex;gap:8px;"><button class="psi-btn pri" data-a="up">'+T('一键导入本周库存','Import this week\'s stock','Importuj stany z tego tygodnia')+'</button></div></div>';
+      h += '<div style="overflow:auto;border:1px solid var(--border);border-radius:var(--radius);"><table style="width:100%;border-collapse:collapse;font-size:13px;"><thead><tr style="background:var(--surface-alt);color:var(--text-dim);font-size:11.5px;">';
+      h += '<th '+TH+'>'+T('导入时间','Imported at','Czas importu')+'</th><th '+TH+'>'+T('数据周期','Period','Okres')+'</th><th '+THR+'>'+T('总库存数量','Total stock','Stan łączny')+'</th><th '+THR+'>'+T('品名数','Items','Pozycji')+'</th><th '+TH+'>'+T('文件','File','Plik')+'</th><th '+TH+'>'+T('状态','Status','Status')+'</th></tr></thead><tbody>';
+      if(!_loaded) h += '<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--text-faint);">'+T('加载中…','Loading…','Ładowanie…')+'</td></tr>';
+      else if(!IMPORTS.length) h += '<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--text-faint);">'+T('暂无导入记录,请点击右上角「一键导入本周库存」','No imports yet. Click "Import this week\'s stock".','Brak importów. Kliknij "Importuj stany z tego tygodnia".')+'</td></tr>';
+      IMPORTS.forEach(function(x,i){
+        h += '<tr data-a="open" data-id="'+x.id+'" style="border-top:1px solid var(--border);cursor:pointer;"><td style="padding:11px 12px;white-space:nowrap;">'+esc(fmtTime(x.created_at))+'</td><td style="padding:11px 12px;white-space:nowrap;">'+esc(wk(x.week_label))+'</td><td style="padding:11px 12px;text-align:right;font-weight:700;">'+fmt(x.total_qty)+'</td><td style="padding:11px 12px;text-align:right;">'+x.row_count+'</td><td style="padding:11px 12px;color:var(--text-dim);">'+esc(x.file_name||'')+'</td><td style="padding:11px 12px;white-space:nowrap;"><span style="color:'+(i===0?'#166534':'var(--text-faint)')+';">'+(i===0?T('已生效','Current','Aktualny'):T('已归档','Archived','Archiwum'))+'</span> <span style="color:#C2410C;">›</span></td></tr>';
+      });
+      h += '</tbody></table></div>';
+    } else {
+      var cur = CUR(), rows = enrich();
+      var q = ST.q.trim().toLowerCase();
+      var list = rows.filter(function(r){ return !q || (r.model+' '+r.ean+' '+r.desc).toLowerCase().indexOf(q)>=0; });
+      var tot = rows.reduce(function(a,r){ return a+r.stock; },0);
+      h += '<div style="margin-bottom:12px;"><button class="psi-btn" data-a="back">← '+T('返回','Back','Wróć')+'</button></div>';
+      h += '<div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:16px;margin-bottom:14px;"><div style="font-size:16px;font-weight:700;">'+esc(wk(cur&&cur.week_label))+' · '+T('库存明细','Stock details','Szczegóły stanów')+'</div><div style="font-size:12px;color:var(--text-faint);">'+esc(cur?fmtTime(cur.created_at):'')+' · '+esc(cur&&cur.file_name||'')+' · '+T('总库存 ','Total ','Razem ')+'<b>'+fmt(tot)+'</b></div></div>';
+      h += '<div style="margin-bottom:12px;"><input id="psiSearch" class="cpq-ctl" style="width:240px;" placeholder="'+esc(typeof cpT==='function'?cpT('search'):'')+'" value="'+esc(ST.q)+'"></div>';
+      h += '<div style="overflow:auto;border:1px solid var(--border);border-radius:var(--radius);"><table style="width:100%;border-collapse:collapse;font-size:12.5px;"><thead><tr style="background:var(--surface-alt);color:var(--text-dim);font-size:11.5px;">';
+      h += '<th '+TH+'>'+T('类目','Category','Kategoria')+'</th><th '+TH+'>'+T('产品型号','Model','Model')+'</th><th '+TH+'>EAN</th><th '+TH+'>'+T('生命周期','Lifecycle','Cykl życia')+'</th><th '+THR+'>'+T('客户现有库存','Customer stock','Stan klienta')+'</th><th '+THR+'>'+T('TENDA在途 / 可售','Tenda in transit / available','Tenda w drodze / dost.')+'</th></tr></thead><tbody>';
+      if(!list.length) h += '<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--text-faint);">'+T('暂无数据','No data','Brak danych')+'</td></tr>';
+      list.forEach(function(r){
+        h += '<tr style="border-top:1px solid var(--border);"><td style="padding:8px 12px;white-space:nowrap;"><span style="background:#FFF1E6;color:#C2410C;border-radius:999px;padding:2px 9px;font-size:11.5px;">'+esc(r.cat)+'</span></td>';
+        h += '<td style="padding:8px 12px;"><b>'+esc(r.model)+'</b>'+(r.isNew?' <span class="new-badge">NEW</span>':'')+'<div style="font-size:11px;color:var(--text-faint);max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="'+esc(r.desc)+'">'+esc(r.desc)+'</div></td>';
+        h += '<td style="padding:8px 12px;font-family:\'IBM Plex Mono\',monospace;">'+esc(r.ean)+'</td><td style="padding:8px 12px;white-space:nowrap;">'+esc(r.life)+'</td>';
+        h += '<td style="padding:8px 12px;text-align:right;font-weight:700;">'+fmt(r.stock)+'</td>';
+        h += '<td style="padding:8px 12px;text-align:right;"><div style="color:#2563EB;font-weight:600;">'+fmt(r.transit)+'</div><div style="font-size:11px;color:var(--text-faint);">'+fmt(r.tenda)+'</div></td></tr>';
+      });
+      h += '</tbody></table></div>';
+    }
+    var focusSearch = document.activeElement && document.activeElement.id === 'psiSearch';
+    root.innerHTML = h;
+    if(focusSearch){ var i = document.getElementById('psiSearch'); if(i){ i.focus(); i.setSelectionRange(i.value.length,i.value.length); } }
   }
   function bind(){
     var root=document.getElementById('cpViewPsi'); if(!root||root.__b) return; root.__b=1;
@@ -14741,7 +14736,8 @@ if(document.readyState === 'loading'){
       if(a==='closem'&&e.target!==el&&!e.target.dataset.a) return;
       if(a==='up'){pick();}
       else if(a==='closem'){ST.modal=0;render();}
-      else if(a==='hist'){ST.drawer=1;render();}
+      else if(a==='open'){ST.detail=+el.dataset.id;ST.q='';_bdKey='';render();}
+      else if(a==='back'){ST.detail=null;ST.q='';render();}
       else if(a==='closed'){ST.drawer=0;render();}
       else if(a==='tpl'){tpl();}
       else if(a==='fake'){ST.modal=0;render();toast('演示:上传功能暂未开放');}

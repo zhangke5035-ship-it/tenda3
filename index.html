@@ -14700,7 +14700,7 @@ if(document.readyState === 'loading'){
     var h='';
     h+='<div style="background:#FFF7E6;border:1px solid #FFD591;color:#AD6800;border-radius:6px;padding:8px 12px;font-size:12.5px;margin-bottom:12px;">'+_banner()+'</div>';
     h+='<div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;"><div><div style="font-size:16px;font-weight:700;">客户库存上传</div><div style="font-size:12px;color:var(--text-faint);margin-top:4px;">'+_period()+'</div></div>';
-    h+='<div style="display:flex;gap:8px;flex-wrap:wrap;"><button class="psi-btn" data-a="hist">导入记录</button><button class="psi-btn" data-a="tpl">下载预填模板</button><button class="psi-btn pri" data-a="up">一键导入本周库存</button></div></div>';
+    h+='<div style="display:flex;gap:8px;flex-wrap:wrap;"><button class="psi-btn" data-a="hist">导入记录</button><button class="psi-btn pri" data-a="up">一键导入本周库存</button></div></div>';
     h+='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;margin-bottom:16px;">';
     h+='<div class="psi-card'+(ST.f==='all'?' on':'')+'" data-f="all"><div class="t">客户现有总库存 (件)</div><div class="n">'+fmt(tot)+'</div><div class="s">覆盖 '+rows.length+' 个活跃合作型号</div></div>';
     h+='<div class="psi-card" style="cursor:default;"><div class="t">上周终端总销量 (件)</div><div class="n">'+fmt(last)+'</div><div class="s">较前一周环比稳步增长</div></div>';
@@ -14714,8 +14714,8 @@ if(document.readyState === 'loading'){
     h+='</select></div></div>';
     var TH='style="text-align:left;padding:9px 10px;white-space:normal;vertical-align:bottom;line-height:1.3;"', THR='style="text-align:right;padding:9px 10px;white-space:normal;vertical-align:bottom;line-height:1.3;"';
     h+='<div style="overflow:auto;border:1px solid var(--border);border-radius:var(--radius);"><table style="width:100%;border-collapse:collapse;font-size:12.5px;"><thead><tr style="background:var(--surface-alt);color:var(--text-dim);font-size:11.5px;">';
-    h+='<th '+TH+'>类目</th><th '+TH+'>产品型号</th><th '+TH+'>EAN</th><th '+TH+'>生命周期</th><th '+THR+'>客户现有库存</th><th '+THR+'>近4周均销</th><th '+THR+'>预计可售周数</th><th '+THR+'>Tenda在途 / 可售</th><th '+THR+'>采购价(不含税)</th><th style="text-align:center;padding:9px 10px;background:#FFF7F0;">建议补货量(可微调)</th></tr></thead><tbody>';
-    if(!list.length) h+='<tr><td colspan="10" style="text-align:center;padding:30px;color:var(--text-faint);">暂无数据</td></tr>';
+    h+='<th '+TH+'>类目</th><th '+TH+'>产品型号</th><th '+TH+'>EAN</th><th '+TH+'>生命周期</th><th '+THR+'>客户现有库存</th><th '+THR+'>预计可售周数</th><th '+THR+'>Tenda在途 / 可售</th></tr></thead><tbody>';
+    if(!list.length) h+='<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--text-faint);">暂无数据</td></tr>';
     list.forEach(function(r){
       var s=SL[r.status];
       h+='<tr style="border-top:1px solid var(--border);">';
@@ -14723,16 +14723,11 @@ if(document.readyState === 'loading'){
       h+='<td style="padding:8px 10px;"><b>'+esc(r.model)+'</b>'+(r.isNew?' <span class="new-badge">NEW</span>':'')+'<div style="font-size:11px;color:var(--text-faint);max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="'+esc(r.desc)+'">'+esc(r.desc)+'</div></td>';
       h+='<td style="padding:8px 10px;font-family:\'IBM Plex Mono\',monospace;">'+esc(r.ean)+'</td><td style="padding:8px 10px;white-space:nowrap;">'+esc(r.life)+'</td>';
       h+='<td style="padding:8px 10px;text-align:right;font-weight:700;">'+fmt(r.stock)+'</td>';
-      h+='<td style="padding:8px 10px;text-align:right;"><b>'+r.avg+'</b> / wk<div style="font-size:11px;color:var(--text-faint);">'+r.last+'</div></td>';
       h+='<td style="padding:8px 10px;text-align:right;"><span class="psi-pill" style="background:'+s[1]+';color:'+s[2]+';">'+r.wos+' wk '+s[0]+'</span></td>';
       h+='<td style="padding:8px 10px;text-align:right;"><div style="color:#2563EB;font-weight:600;">'+fmt(r.transit)+'</div><div style="font-size:11px;color:var(--text-faint);">'+fmt(r.tenda)+'</div></td>';
-      h+='<td style="padding:8px 10px;text-align:right;font-weight:700;">'+money(r.price)+'</td>';
-      h+='<td style="padding:8px 10px;text-align:center;background:#FFFBF7;white-space:nowrap;"><button class="psi-step" data-d="-5" data-id="'+r.id+'">-</button> <input class="psi-qty" type="number" min="0" data-id="'+r.id+'" value="'+r.fin+'"> <button class="psi-step" data-d="5" data-id="'+r.id+'">+</button>'+((r.sug>0&&r.fin!==r.sug)?'<div style="font-size:10.5px;color:var(--text-faint);margin-top:3px;">系统建议: '+r.sug+'</div>':'')+'</td></tr>';
+      h+='</tr>';
     });
     h+='</tbody></table></div>';
-    h+='<div style="position:sticky;bottom:0;margin-top:14px;background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:12px 16px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;box-shadow:0 -2px 10px rgba(0,0,0,.05);">';
-    h+='<div style="display:flex;gap:22px;flex-wrap:wrap;font-size:12.5px;"><span>已选补货型号:<b>'+sel+'</b></span><span>补货总数量:<b>'+fmt(units)+'</b></span><span>预估采购总额(不含税):<b style="color:#C81E1E;font-size:15px;">'+money(amt)+' PLN</b></span></div>';
-    h+='<button class="psi-btn pri" data-a="order"'+(units===0?' disabled':'')+'>一键生成补货订单</button></div>';
     if(ST.modal) h+='<div class="psi-mask" data-a="closem"><div class="psi-box"><div style="display:flex;justify-content:space-between;font-weight:700;margin-bottom:12px;"><span>上传每周库存与销售报告 (PSI)</span><span style="cursor:pointer;" data-a="closem">✕</span></div><div style="border:2px dashed #D1D5DB;border-radius:8px;padding:30px;text-align:center;cursor:pointer;" data-a="fake"><div style="font-weight:600;">点击或拖拽 Excel 文件至此区域上传</div><div style="font-size:12px;color:var(--text-faint);margin-top:6px;">支持 .xlsx / .xls / .csv 格式,系统将自动校验 EAN 编码与库存数值逻辑</div></div><div style="font-size:11.5px;color:var(--text-faint);margin-top:12px;">仅需填写「当前期末库存」与「本周实际销量」,其余字段系统自动匹配。</div></div></div>';
     if(ST.drawer){ h+='<div class="psi-mask" data-a="closed" style="justify-content:flex-end;"></div><div class="psi-drawer"><div style="display:flex;justify-content:space-between;font-weight:700;margin-bottom:14px;"><span>周报上传历史记录</span><span style="cursor:pointer;" data-a="closed">✕</span></div>';
       HIST.forEach(function(x){h+='<div style="border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:10px;font-size:12.5px;"><div style="display:flex;justify-content:space-between;font-weight:700;"><span>'+x[0]+'</span><span style="color:#166534;">'+x[4]+'</span></div><div style="color:var(--text-faint);margin-top:4px;">'+x[1]+'</div><div style="color:var(--text-faint);">'+x[2]+' · '+x[3]+'</div></div>';});
